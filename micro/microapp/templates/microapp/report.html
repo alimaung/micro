@@ -1,0 +1,492 @@
+{% extends 'microapp/base.html' %}
+{% load static %}
+
+{% block title %}Report Generation - Microfilm Processing System{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'microapp/css/report.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="report-container">
+        <div class="report-header">
+            <h1>Report Generation</h1>
+            <p>Create customized reports for microfilm processing projects</p>
+        </div>
+
+        <div class="report-layout">
+            <!-- Preview Panel - Left Side -->
+            <div class="preview-panel">
+                <div class="panel-header">
+                    <h2><i class="fas fa-file-pdf"></i> Report Preview</h2>
+                    <div class="preview-actions">
+                        <button id="toggle-fullscreen-btn" class="icon-btn" title="Toggle Fullscreen">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="preview-container">
+                    <div class="pdf-viewer" id="pdf-preview">
+                        <div class="pdf-header">
+                            <div class="logo">
+                                <i class="fas fa-microchip"></i> MicroSMA
+                            </div>
+                            <div class="title">Project Processing Report</div>
+                            <div class="date">Generated: <span id="report-date">{% now "F d, Y" %}</span></div>
+                        </div>
+                        
+                        <div class="pdf-section">
+                            <h2>Project Overview</h2>
+                            <div class="pdf-table">
+                                <table>
+                                    <tr>
+                                        <th>Project ID:</th>
+                                        <td id="pdf-project-id">PRJ-2023-0156</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Project Name:</th>
+                                        <td id="pdf-project-name">City Archives Digitization</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Start Date:</th>
+                                        <td id="pdf-start-date">March 15, 2023</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Completion:</th>
+                                        <td id="pdf-completion">98%</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <div class="pdf-section">
+                            <h2>Processing Statistics</h2>
+                            <div class="pdf-table">
+                                <table>
+                                    <tr>
+                                        <th>Total Documents:</th>
+                                        <td id="pdf-total-docs">1,246</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Total Films:</th>
+                                        <td id="pdf-total-films">8</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Total Pages:</th>
+                                        <td id="pdf-total-pages">5,832</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Avg. Quality Score:</th>
+                                        <td id="pdf-quality-score">94.3%</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <div class="pdf-section">
+                            <h2>Film Details</h2>
+                            <div class="pdf-table-full">
+                                <table id="pdf-film-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Film #</th>
+                                            <th>Documents</th>
+                                            <th>Pages</th>
+                                            <th>Date Created</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>F001</td>
+                                            <td>157</td>
+                                            <td>724</td>
+                                            <td>Mar 17, 2023</td>
+                                            <td><span class="status completed">Completed</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>F002</td>
+                                            <td>142</td>
+                                            <td>698</td>
+                                            <td>Mar 21, 2023</td>
+                                            <td><span class="status completed">Completed</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>F003</td>
+                                            <td>173</td>
+                                            <td>842</td>
+                                            <td>Mar 26, 2023</td>
+                                            <td><span class="status completed">Completed</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>F004</td>
+                                            <td>164</td>
+                                            <td>756</td>
+                                            <td>Apr 02, 2023</td>
+                                            <td><span class="status completed">Completed</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <div class="pdf-section" id="pdf-handoff-section">
+                            <h2>Handoff History</h2>
+                            <div class="pdf-table-full">
+                                <table id="pdf-handoff-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Method</th>
+                                            <th>Destination</th>
+                                            <th>Films</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Apr 05, 2023</td>
+                                            <td>USB Drive</td>
+                                            <td>Client Office</td>
+                                            <td>F001, F002</td>
+                                            <td><span class="status completed">Delivered</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Apr 12, 2023</td>
+                                            <td>Network Transfer</td>
+                                            <td>Client Server</td>
+                                            <td>F003, F004</td>
+                                            <td><span class="status completed">Delivered</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <div class="pdf-footer">
+                            <div class="page-number">Page 1 of 1</div>
+                            <div class="copyright">© 2023 MicroSMA Processing System</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Configuration Panel - Right Side -->
+            <div class="config-panel">
+                <div class="panel-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-search"></i> Project Selection</h2>
+                    </div>
+                    <div class="section-content">
+                        <div class="search-bar">
+                            <input type="text" id="project-search" placeholder="Search projects...">
+                            <button id="search-btn"><i class="fas fa-search"></i></button>
+                        </div>
+                        
+                        <div class="project-list" id="project-list">
+                            <div class="project-item selected" data-project-id="PRJ-2023-0156">
+                                <div class="project-details">
+                                    <div class="project-name">City Archives Digitization</div>
+                                    <div class="project-info">
+                                        <span class="project-id">PRJ-2023-0156</span>
+                                        <span class="project-date">Mar 15, 2023</span>
+                                    </div>
+                                </div>
+                                <div class="project-progress">
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 98%;"></div>
+                                    </div>
+                                    <div class="progress-text">98%</div>
+                                </div>
+                            </div>
+                            
+                            <div class="project-item" data-project-id="PRJ-2023-0142">
+                                <div class="project-details">
+                                    <div class="project-name">County Records Preservation</div>
+                                    <div class="project-info">
+                                        <span class="project-id">PRJ-2023-0142</span>
+                                        <span class="project-date">Feb 28, 2023</span>
+                                    </div>
+                                </div>
+                                <div class="project-progress">
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 100%;"></div>
+                                    </div>
+                                    <div class="progress-text">100%</div>
+                                </div>
+                            </div>
+                            
+                            <div class="project-item" data-project-id="PRJ-2023-0187">
+                                <div class="project-details">
+                                    <div class="project-name">Historical Society Collection</div>
+                                    <div class="project-info">
+                                        <span class="project-id">PRJ-2023-0187</span>
+                                        <span class="project-date">Apr 10, 2023</span>
+                                    </div>
+                                </div>
+                                <div class="project-progress">
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 65%;"></div>
+                                    </div>
+                                    <div class="progress-text">65%</div>
+                                </div>
+                            </div>
+                            
+                            <div class="project-item" data-project-id="PRJ-2023-0194">
+                                <div class="project-details">
+                                    <div class="project-name">Municipal Records Archive</div>
+                                    <div class="project-info">
+                                        <span class="project-id">PRJ-2023-0194</span>
+                                        <span class="project-date">Apr 22, 2023</span>
+                                    </div>
+                                </div>
+                                <div class="project-progress">
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 42%;"></div>
+                                    </div>
+                                    <div class="progress-text">42%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="panel-section">
+                    <div class="section-header collapsible">
+                        <h2><i class="fas fa-filter"></i> Report Content</h2>
+                        <i class="fas fa-chevron-down toggle-icon"></i>
+                    </div>
+                    <div class="section-content">
+                        <div class="filter-group">
+                            <h3>Include Sections</h3>
+                            <div class="checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="include-overview" checked>
+                                    <span class="checkbox-text">Project Overview</span>
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="include-stats" checked>
+                                    <span class="checkbox-text">Processing Statistics</span>
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="include-films" checked>
+                                    <span class="checkbox-text">Film Details</span>
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="include-handoffs" checked>
+                                    <span class="checkbox-text">Handoff History</span>
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="include-charts">
+                                    <span class="checkbox-text">Visual Charts</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <h3>Film Data Filters</h3>
+                            <div class="checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="filter-all-films" checked>
+                                    <span class="checkbox-text">All Films</span>
+                                </label>
+                                <div class="range-filter">
+                                    <label>Date Range:</label>
+                                    <div class="date-range">
+                                        <input type="date" id="film-date-start" value="2023-03-01">
+                                        <span>to</span>
+                                        <input type="date" id="film-date-end" value="2023-04-30">
+                                    </div>
+                                </div>
+                                <div class="select-filter">
+                                    <label>Status:</label>
+                                    <select id="film-status-filter">
+                                        <option value="all">All Statuses</option>
+                                        <option value="completed">Completed Only</option>
+                                        <option value="processing">In Processing</option>
+                                        <option value="queued">Queued</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <h3>Document Data Filters</h3>
+                            <div class="checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="show-doc-details">
+                                    <span class="checkbox-text">Show Document Details</span>
+                                </label>
+                                <div class="select-filter">
+                                    <label>Document Type:</label>
+                                    <select id="doc-type-filter">
+                                        <option value="all">All Types</option>
+                                        <option value="legal">Legal Documents</option>
+                                        <option value="historical">Historical Records</option>
+                                        <option value="certificates">Certificates</option>
+                                        <option value="correspondence">Correspondence</option>
+                                    </select>
+                                </div>
+                                <div class="range-filter">
+                                    <label>Quality Score:</label>
+                                    <div class="range-inputs">
+                                        <input type="range" id="quality-score" min="0" max="100" value="75">
+                                        <span id="quality-score-value">75%+</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <h3>Handoff Data Filters</h3>
+                            <div class="checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="show-handoff" checked>
+                                    <span class="checkbox-text">Include Handoff History</span>
+                                </label>
+                                <div class="select-filter">
+                                    <label>Handoff Method:</label>
+                                    <select id="handoff-method-filter">
+                                        <option value="all">All Methods</option>
+                                        <option value="usb">USB Drive</option>
+                                        <option value="network">Network Transfer</option>
+                                        <option value="email">Email</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="panel-section">
+                    <div class="section-header collapsible">
+                        <h2><i class="fas fa-cog"></i> Report Options</h2>
+                        <i class="fas fa-chevron-down toggle-icon"></i>
+                    </div>
+                    <div class="section-content">
+                        <div class="option-group">
+                            <h3>Format Options</h3>
+                            <div class="radio-group">
+                                <label class="radio-label">
+                                    <input type="radio" name="format" value="pdf" checked>
+                                    <span class="radio-text">PDF Document</span>
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="format" value="xlsx">
+                                    <span class="radio-text">Excel Spreadsheet</span>
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="format" value="html">
+                                    <span class="radio-text">Web Page (HTML)</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="option-group">
+                            <h3>Additional Options</h3>
+                            <div class="checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="include-logo" checked>
+                                    <span class="checkbox-text">Include Company Logo</span>
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="include-pagination" checked>
+                                    <span class="checkbox-text">Page Numbers</span>
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="include-toc">
+                                    <span class="checkbox-text">Table of Contents</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="actions-section">
+                    <button id="generate-report-btn" class="action-btn primary">
+                        <i class="fas fa-sync-alt"></i> Generate Report
+                    </button>
+                    
+                    <div class="generation-progress" id="generation-progress">
+                        <div class="progress-status">
+                            <span class="status-text">Generating report...</span>
+                            <span class="percentage">0%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="action-buttons">
+                        <button id="download-btn" class="action-btn" disabled>
+                            <i class="fas fa-download"></i> Download
+                        </button>
+                        <button id="export-btn" class="action-btn" disabled>
+                            <i class="fas fa-file-export"></i> Export
+                        </button>
+                        <button id="share-btn" class="action-btn" disabled>
+                            <i class="fas fa-share-alt"></i> Share
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Share Modal -->
+    <div class="modal" id="share-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Share Report</h2>
+                <button class="close-btn"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="share-options">
+                    <div class="option-group">
+                        <h3>Share via Email</h3>
+                        <div class="form-group">
+                            <label for="share-email">Recipient Email:</label>
+                            <input type="email" id="share-email" placeholder="Enter email address">
+                        </div>
+                        <div class="form-group">
+                            <label for="share-message">Message (Optional):</label>
+                            <textarea id="share-message" placeholder="Add a brief message..."></textarea>
+                        </div>
+                        <button class="action-btn primary" id="send-email-btn">
+                            <i class="fas fa-paper-plane"></i> Send Email
+                        </button>
+                    </div>
+                    
+                    <div class="option-group">
+                        <h3>Share Link</h3>
+                        <div class="form-group">
+                            <label for="share-link">Report Link:</label>
+                            <div class="copy-link">
+                                <input type="text" id="share-link" value="https://microsma.com/reports/PRJ-2023-0156" readonly>
+                                <button class="copy-btn" id="copy-link-btn">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="share-social">
+                            <button class="social-btn teams">
+                                <i class="fab fa-microsoft"></i> Teams
+                            </button>
+                            <button class="social-btn slack">
+                                <i class="fab fa-slack"></i> Slack
+                            </button>
+                            <button class="social-btn drive">
+                                <i class="fab fa-google-drive"></i> Drive
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'microapp/js/report.js' %}"></script>
+{% endblock %} 

@@ -1,0 +1,577 @@
+/* Machine Management Styles */
+:root {
+    --online-color: #2ecc71;
+    --offline-color: #e74c3c;
+    --maintenance-color: #f39c12;
+    --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --transition-speed: 0.3s;
+}
+
+#machine-management-container {
+    padding: 0 1rem;
+}
+
+.settings-section-header {
+    margin-bottom: 2rem;
+}
+
+.section-description {
+    color: #6c757d;
+    font-size: 0.95rem;
+    margin-top: 0.5rem;
+}
+
+/* Metrics Panel */
+.machine-metrics-panel {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.metric-card {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: var(--card-shadow);
+    display: flex;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    flex: 1;
+    min-width: 200px;
+    transition: transform var(--transition-speed);
+}
+
+.metric-card:hover {
+    transform: translateY(-4px);
+}
+
+.metric-icon {
+    background: rgba(13, 110, 253, 0.1);
+    border-radius: 50%;
+    width: 3.5rem;
+    height: 3.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    color: #0d6efd;
+    font-size: 1.25rem;
+}
+
+.metric-icon.online {
+    background: rgba(46, 204, 113, 0.1);
+    color: var(--online-color);
+}
+
+.metric-icon.offline {
+    background: rgba(231, 76, 60, 0.1);
+    color: var(--offline-color);
+}
+
+.metric-icon.maintenance {
+    background: rgba(243, 156, 18, 0.1);
+    color: var(--maintenance-color);
+}
+
+.metric-data {
+    display: flex;
+    flex-direction: column;
+}
+
+.metric-value {
+    font-size: 1.75rem;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.metric-label {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+/* Control Panel */
+.machine-management-controls {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    gap: 1rem;
+}
+
+.filter-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    flex: 3;
+}
+
+.filter-group {
+    min-width: 150px;
+    flex: 1;
+}
+
+.search-group {
+    flex: 2;
+    max-width: 400px;
+}
+
+.search-input-wrapper {
+    position: relative;
+}
+
+.search-input-wrapper i {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6c757d;
+}
+
+.search-input-wrapper input {
+    padding-left: 35px;
+}
+
+.view-controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.toggle-group {
+    display: flex;
+    background: #f0f0f0;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.toggle-group input[type="radio"] {
+    display: none;
+}
+
+.toggle-group label {
+    padding: 0.5rem 0.75rem;
+    cursor: pointer;
+    margin: 0;
+    transition: all var(--transition-speed);
+}
+
+.toggle-group input[type="radio"]:checked + label {
+    background: #0d6efd;
+    color: white;
+}
+
+#add-machine-btn {
+    white-space: nowrap;
+}
+
+/* Machine Grid */
+.machine-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1.5rem;
+}
+
+.list-view .machine-grid {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Machine Cards */
+.machine-card {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: var(--card-shadow);
+    overflow: hidden;
+    transition: transform var(--transition-speed), box-shadow var(--transition-speed);
+}
+
+.machine-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+}
+
+.machine-card.offline {
+    border-left: 4px solid var(--offline-color);
+}
+
+.machine-card.maintenance {
+    border-left: 4px solid var(--maintenance-color);
+}
+
+.machine-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.machine-info h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.machine-status {
+    display: flex;
+    align-items: center;
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+}
+
+.ping-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--online-color);
+    margin-right: 0.5rem;
+    position: relative;
+}
+
+.ping-dot:after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: var(--online-color);
+    opacity: 0.5;
+    animation: ping 1.5s ease-in-out infinite;
+}
+
+.ping-dot.offline {
+    background: var(--offline-color);
+}
+
+.ping-dot.offline:after {
+    display: none;
+}
+
+.ping-dot.maintenance {
+    background: var(--maintenance-color);
+}
+
+.ping-dot.maintenance:after {
+    background: var(--maintenance-color);
+    animation: ping 3s ease-in-out infinite;
+}
+
+@keyframes ping {
+    0% {
+        transform: scale(1);
+        opacity: 0.5;
+    }
+    70% {
+        transform: scale(2);
+        opacity: 0;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 0;
+    }
+}
+
+.machine-actions {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.machine-actions a {
+    color: #6c757d;
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all var(--transition-speed);
+}
+
+.machine-actions a:hover {
+    background: rgba(13, 110, 253, 0.1);
+    color: #0d6efd;
+}
+
+.action-power:hover {
+    background: rgba(231, 76, 60, 0.1) !important;
+    color: var(--offline-color) !important;
+}
+
+.machine-body {
+    padding: 1.25rem;
+}
+
+.machine-details {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.detail-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.detail-label {
+    font-size: 0.75rem;
+    color: #6c757d;
+    margin-bottom: 0.25rem;
+}
+
+.detail-value {
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.detail-value i {
+    margin-right: 0.25rem;
+}
+
+/* Performance Metrics */
+.machine-subtabs {
+    display: flex;
+    border-bottom: 1px solid #e9ecef;
+    margin-bottom: 1rem;
+}
+
+.subtab {
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+    color: #6c757d;
+    position: relative;
+    transition: color var(--transition-speed);
+}
+
+.subtab.active {
+    color: #0d6efd;
+}
+
+.subtab.active:after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: #0d6efd;
+}
+
+.machine-subtab-content {
+    display: none;
+}
+
+.machine-subtab-content.active {
+    display: block;
+}
+
+.performance-metrics {
+    display: flex;
+    justify-content: space-around;
+    padding: 0.5rem 0;
+}
+
+.metric {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.circular-progress {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: conic-gradient(
+        #0d6efd calc(var(--progress) * 1%),
+        #e9ecef calc(var(--progress) * 1%)
+    );
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.circular-progress::before {
+    content: '';
+    position: absolute;
+    width: 70%;
+    height: 70%;
+    background: white;
+    border-radius: 50%;
+}
+
+.progress-value {
+    position: relative;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.metric[data-type="cpu"] .circular-progress {
+    background: conic-gradient(
+        #0d6efd calc(var(--progress) * 1%),
+        #e9ecef calc(var(--progress) * 1%)
+    );
+}
+
+.metric[data-type="ram"] .circular-progress {
+    background: conic-gradient(
+        #6610f2 calc(var(--progress) * 1%),
+        #e9ecef calc(var(--progress) * 1%)
+    );
+}
+
+.metric[data-type="disk"] .circular-progress {
+    background: conic-gradient(
+        #20c997 calc(var(--progress) * 1%),
+        #e9ecef calc(var(--progress) * 1%)
+    );
+}
+
+/* System Info */
+.system-info-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.system-info-list li {
+    display: flex;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+.system-info-list li span {
+    font-weight: 600;
+    min-width: 100px;
+    display: inline-block;
+}
+
+/* Offline & Maintenance Messages */
+.offline-message,
+.maintenance-message {
+    text-align: center;
+    padding: 1.5rem 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+}
+
+.offline-message i,
+.maintenance-message i {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.offline-message i {
+    color: var(--offline-color);
+}
+
+.maintenance-message i {
+    color: var(--maintenance-color);
+}
+
+.offline-message p,
+.maintenance-message p {
+    margin: 0;
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+.maintenance-timer {
+    background: rgba(243, 156, 18, 0.1);
+    border-radius: 4px;
+    padding: 0.5rem 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.timer-label {
+    color: #6c757d;
+}
+
+.timer-value {
+    font-weight: 600;
+    color: var(--maintenance-color);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 992px) {
+    .machine-grid {
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .machine-metrics-panel {
+        flex-direction: column;
+    }
+    
+    .metric-card {
+        width: 100%;
+    }
+    
+    .machine-management-controls {
+        flex-direction: column;
+    }
+    
+    .filter-controls {
+        width: 100%;
+    }
+    
+    .view-controls {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .machine-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Dark Mode */
+@media (prefers-color-scheme: dark) {
+    .metric-card,
+    .machine-card {
+        background: #2d2d2d;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    }
+    
+    .section-description,
+    .metric-label,
+    .detail-label,
+    .machine-status,
+    .subtab,
+    .offline-message p,
+    .maintenance-message p,
+    .timer-label {
+        color: #adb5bd;
+    }
+    
+    .toggle-group {
+        background: #212529;
+    }
+    
+    .machine-header {
+        border-bottom-color: #343a40;
+    }
+    
+    .machine-subtabs {
+        border-bottom-color: #343a40;
+    }
+    
+    .circular-progress::before {
+        background: #2d2d2d;
+    }
+    
+    .maintenance-timer {
+        background: rgba(243, 156, 18, 0.05);
+    }
+} 

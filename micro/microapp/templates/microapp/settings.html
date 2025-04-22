@@ -1,0 +1,839 @@
+{% extends 'microapp/base.html' %}
+{% load static %}
+
+{% block title %}Settings - Microfilm Processing System{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'microapp/css/settings.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="settings-container">
+    <!-- Header Section -->
+    <div class="settings-header">
+        <h1><i class="fas fa-cog"></i> System Settings</h1>
+        <p>Configure your Microfilm Processing System to meet your organization's needs</p>
+        
+        <div class="dashboard-stats">
+            <div class="stat-card users">
+                <div class="stat-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>Total Users</h3>
+                    <div class="stat-value">1,248</div>
+                    <div class="stat-trend positive">+4.3% this week</div>
+                </div>
+                <div class="stat-chart">
+                    <div class="sparkline-up"></div>
+                </div>
+            </div>
+            
+            <div class="stat-card machines">
+                <div class="stat-icon">
+                    <i class="fas fa-desktop"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>Active Machines</h3>
+                    <div class="stat-value">312</div>
+                    <div class="stat-indicator">
+                        <span class="ping-dot online"></span> All systems operational
+                    </div>
+                </div>
+                <div class="stat-chart">
+                    <div class="sparkline-stable"></div>
+                </div>
+            </div>
+            
+            <div class="stat-card software">
+                <div class="stat-icon">
+                    <i class="fas fa-microchip"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>Installed Software</h3>
+                    <div class="stat-value">589</div>
+                    <div class="stat-info">64 licenses expiring soon</div>
+                </div>
+                <div class="stat-chart">
+                    <div class="sparkline-down-up"></div>
+                </div>
+            </div>
+            
+            <div class="stat-card alerts">
+                <div class="stat-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>Open Issues</h3>
+                    <div class="stat-value">12</div>
+                    <a href="#" class="stat-action">View All</a>
+                </div>
+                <div class="stat-chart">
+                    <div class="sparkline-down"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Settings Panel -->
+    <div class="settings-layout">
+        <!-- Settings Navigation -->
+        <div class="settings-nav">
+            <ul class="nav-tabs">
+                <li class="active" data-tab="general">
+                    <i class="fas fa-sliders-h"></i> General
+                </li>
+                <li data-tab="users">
+                    <i class="fas fa-users"></i> User Management
+                </li>
+                <li data-tab="machines">
+                    <i class="fas fa-desktop"></i> Machine Management
+                </li>
+                <li data-tab="software">
+                    <i class="fas fa-microchip"></i> Software Management
+                </li>
+                <li data-tab="notifications">
+                    <i class="fas fa-bell"></i> Notifications
+                </li>
+                <li data-tab="appearance">
+                    <i class="fas fa-paint-brush"></i> Appearance
+                </li>
+                <li data-tab="integrations">
+                    <i class="fas fa-plug"></i> Integrations
+                </li>
+                <li data-tab="analytics">
+                    <i class="fas fa-chart-bar"></i> Analytics
+                </li>
+            </ul>
+        </div>
+        
+        <!-- Settings Content -->
+        <div class="settings-content">
+            <!-- General Settings Tab -->
+            <div class="settings-tab active" id="general-tab">
+                <h2>General Settings</h2>
+                <div class="settings-section">
+                    <h3>System Configuration</h3>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label for="system-name">System Name</label>
+                            <span class="setting-desc">Name displayed throughout the application</span>
+                        </div>
+                        <div class="setting-control">
+                            <input type="text" id="system-name" value="Microfilm Processing System">
+                        </div>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Auto Updates</label>
+                            <span class="setting-desc">Automatically apply system updates</span>
+                        </div>
+                        <div class="setting-control">
+                            <label class="toggle">
+                                <input type="checkbox" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label for="backup-frequency">Auto-backup Frequency</label>
+                            <span class="setting-desc">How often to backup system data</span>
+                        </div>
+                        <div class="setting-control">
+                            <div class="range-slider">
+                                <input type="range" id="backup-frequency" min="1" max="7" value="3">
+                                <span class="range-value">3 days</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Update Channel</label>
+                            <span class="setting-desc">Which version stream to receive updates from</span>
+                        </div>
+                        <div class="setting-control">
+                            <div class="radio-group">
+                                <label class="radio">
+                                    <input type="radio" name="update-channel" checked>
+                                    <span class="radio-label">Stable</span>
+                                </label>
+                                <label class="radio">
+                                    <input type="radio" name="update-channel">
+                                    <span class="radio-label">Beta</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h3>Regional Settings</h3>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label for="language">Default Language</label>
+                            <span class="setting-desc">System-wide language setting</span>
+                        </div>
+                        <div class="setting-control">
+                            <select id="language">
+                                <option value="en">English</option>
+                                <option value="es">Spanish</option>
+                                <option value="fr">French</option>
+                                <option value="de">German</option>
+                                <option value="ja">Japanese</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label for="timezone">Time Zone</label>
+                            <span class="setting-desc">Used for timestamps and scheduling</span>
+                        </div>
+                        <div class="setting-control">
+                            <select id="timezone">
+                                <option value="utc">UTC</option>
+                                <option value="et" selected>Eastern Time (ET)</option>
+                                <option value="ct">Central Time (CT)</option>
+                                <option value="mt">Mountain Time (MT)</option>
+                                <option value="pt">Pacific Time (PT)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label for="date-format">Date Format</label>
+                            <span class="setting-desc">How dates are displayed</span>
+                        </div>
+                        <div class="setting-control">
+                            <select id="date-format">
+                                <option value="mdy">MM/DD/YYYY</option>
+                                <option value="dmy">DD/MM/YYYY</option>
+                                <option value="ymd">YYYY-MM-DD</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="settings-actions">
+                    <button class="btn secondary">Reset to Defaults</button>
+                    <button class="btn primary">Save Changes</button>
+                </div>
+            </div>
+            
+            <!-- User Management Tab -->
+            <div class="settings-tab" id="users-tab">
+                <div class="tab-header">
+                    <h2>User Management</h2>
+                    <div class="tab-actions">
+                        <button class="btn primary"><i class="fas fa-plus"></i> Add User</button>
+                    </div>
+                </div>
+                
+                <div class="subtabs">
+                    <div class="subtab active">All Users</div>
+                    <div class="subtab">Roles</div>
+                    <div class="subtab">Invitations</div>
+                    <div class="subtab">Audit Logs</div>
+                </div>
+                
+                <div class="filter-bar">
+                    <div class="filter-group">
+                        <label>Role:</label>
+                        <select>
+                            <option value="all">All Roles</option>
+                            <option value="admin">Administrators</option>
+                            <option value="operator">Operators</option>
+                            <option value="viewer">Viewers</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Status:</label>
+                        <div class="toggle-buttons">
+                            <button class="active">All</button>
+                            <button>Active</button>
+                            <button>Inactive</button>
+                        </div>
+                    </div>
+                    <div class="search-filter">
+                        <input type="text" placeholder="Search users...">
+                        <button><i class="fas fa-search"></i></button>
+                    </div>
+                </div>
+                
+                <div class="data-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th class="checkbox-cell">
+                                    <label class="checkbox">
+                                        <input type="checkbox">
+                                        <span class="checkmark"></span>
+                                    </label>
+                                </th>
+                                <th>Name <i class="fas fa-sort"></i></th>
+                                <th>Email <i class="fas fa-sort"></i></th>
+                                <th>Role <i class="fas fa-sort"></i></th>
+                                <th>Status <i class="fas fa-sort"></i></th>
+                                <th>Last Login <i class="fas fa-sort"></i></th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="checkbox-cell">
+                                    <label class="checkbox">
+                                        <input type="checkbox">
+                                        <span class="checkmark"></span>
+                                    </label>
+                                </td>
+                                <td>
+                                    <div class="user-info">
+                                        <div class="avatar">JD</div>
+                                        <span>John Doe</span>
+                                    </div>
+                                </td>
+                                <td>john.doe@example.com</td>
+                                <td><span class="badge role admin">Administrator</span></td>
+                                <td><span class="badge status active">Active</span></td>
+                                <td>Today, 9:42 AM</td>
+                                <td class="actions-cell">
+                                    <button class="icon-btn"><i class="fas fa-edit"></i></button>
+                                    <button class="icon-btn"><i class="fas fa-key"></i></button>
+                                    <button class="icon-btn"><i class="fas fa-trash-alt"></i></button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="checkbox-cell">
+                                    <label class="checkbox">
+                                        <input type="checkbox">
+                                        <span class="checkmark"></span>
+                                    </label>
+                                </td>
+                                <td>
+                                    <div class="user-info">
+                                        <div class="avatar">JS</div>
+                                        <span>Jane Smith</span>
+                                    </div>
+                                </td>
+                                <td>jane.smith@example.com</td>
+                                <td><span class="badge role operator">Operator</span></td>
+                                <td><span class="badge status active">Active</span></td>
+                                <td>Yesterday, 4:23 PM</td>
+                                <td class="actions-cell">
+                                    <button class="icon-btn"><i class="fas fa-edit"></i></button>
+                                    <button class="icon-btn"><i class="fas fa-key"></i></button>
+                                    <button class="icon-btn"><i class="fas fa-trash-alt"></i></button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="checkbox-cell">
+                                    <label class="checkbox">
+                                        <input type="checkbox">
+                                        <span class="checkmark"></span>
+                                    </label>
+                                </td>
+                                <td>
+                                    <div class="user-info">
+                                        <div class="avatar">RW</div>
+                                        <span>Robert Williams</span>
+                                    </div>
+                                </td>
+                                <td>robert.williams@example.com</td>
+                                <td><span class="badge role viewer">Viewer</span></td>
+                                <td><span class="badge status inactive">Inactive</span></td>
+                                <td>Jul 12, 2023</td>
+                                <td class="actions-cell">
+                                    <button class="icon-btn"><i class="fas fa-edit"></i></button>
+                                    <button class="icon-btn"><i class="fas fa-key"></i></button>
+                                    <button class="icon-btn"><i class="fas fa-trash-alt"></i></button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="checkbox-cell">
+                                    <label class="checkbox">
+                                        <input type="checkbox">
+                                        <span class="checkmark"></span>
+                                    </label>
+                                </td>
+                                <td>
+                                    <div class="user-info">
+                                        <div class="avatar">SJ</div>
+                                        <span>Sarah Johnson</span>
+                                    </div>
+                                </td>
+                                <td>sarah.johnson@example.com</td>
+                                <td><span class="badge role operator">Operator</span></td>
+                                <td><span class="badge status active">Active</span></td>
+                                <td>Today, 11:05 AM</td>
+                                <td class="actions-cell">
+                                    <button class="icon-btn"><i class="fas fa-edit"></i></button>
+                                    <button class="icon-btn"><i class="fas fa-key"></i></button>
+                                    <button class="icon-btn"><i class="fas fa-trash-alt"></i></button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="pagination">
+                    <button class="pagination-btn"><i class="fas fa-chevron-left"></i></button>
+                    <div class="pagination-pages">
+                        <button class="active">1</button>
+                        <button>2</button>
+                        <button>3</button>
+                        <span>...</span>
+                        <button>12</button>
+                    </div>
+                    <button class="pagination-btn"><i class="fas fa-chevron-right"></i></button>
+                </div>
+            </div>
+            
+            <!-- More tabs here... placeholder content -->
+            <div class="settings-tab" id="machines-tab">
+                <div class="tab-header">
+                    <h2>Machine Management</h2>
+                    <div class="tab-actions">
+                        <button class="btn primary"><i class="fas fa-plus"></i> Add Machine</button>
+                    </div>
+                </div>
+                
+                <div class="subtabs">
+                    <div class="subtab active">All Machines</div>
+                    <div class="subtab">Groups</div>
+                    <div class="subtab">Policies</div>
+                    <div class="subtab">Maintenance</div>
+                </div>
+                
+                <div class="view-toggle">
+                    <label>View:</label>
+                    <div class="toggle-buttons">
+                        <button class="active"><i class="fas fa-th"></i> Grid</button>
+                        <button><i class="fas fa-list"></i> List</button>
+                    </div>
+                </div>
+                
+                <div class="filter-bar">
+                    <div class="filter-group">
+                        <label>OS Type:</label>
+                        <div class="checkbox-group horizontal">
+                            <label class="checkbox-label">
+                                <input type="checkbox" checked>
+                                <span class="checkbox-text">Windows</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" checked>
+                                <span class="checkbox-text">Linux</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" checked>
+                                <span class="checkbox-text">macOS</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="filter-group">
+                        <label>Group:</label>
+                        <select>
+                            <option value="all">All Groups</option>
+                            <option value="scanners">Scanners</option>
+                            <option value="processors">Processors</option>
+                            <option value="storage">Storage</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Status:</label>
+                        <div class="toggle-buttons">
+                            <button class="active">All</button>
+                            <button>Online</button>
+                            <button>Offline</button>
+                        </div>
+                    </div>
+                    <div class="search-filter">
+                        <input type="text" placeholder="Search machines...">
+                        <button><i class="fas fa-search"></i></button>
+                    </div>
+                </div>
+                
+                <!-- Machine Grid View -->
+                <div class="machine-grid">
+                    <!-- Machine Card 1 -->
+                    <div class="machine-card online">
+                        <div class="machine-header">
+                            <div class="machine-name">SCAN-SRV-001</div>
+                            <div class="machine-status"><span class="ping-dot online"></span> Online</div>
+                        </div>
+                        <div class="machine-info">
+                            <div class="os-info">
+                                <i class="fab fa-windows"></i> Windows Server 2019
+                            </div>
+                            <div class="ip-info">192.168.1.101</div>
+                        </div>
+                        <div class="machine-metrics">
+                            <div class="metric">
+                                <div class="metric-label">CPU</div>
+                                <div class="metric-chart">
+                                    <div class="circular-progress" data-progress="35">
+                                        <span class="progress-value">35%</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-label">RAM</div>
+                                <div class="metric-chart">
+                                    <div class="circular-progress" data-progress="62">
+                                        <span class="progress-value">62%</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-label">Disk</div>
+                                <div class="metric-chart">
+                                    <div class="circular-progress" data-progress="47">
+                                        <span class="progress-value">47%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="machine-details">
+                            <div class="detail-item">
+                                <span class="detail-label">Last Check-in:</span>
+                                <span class="detail-value">2 minutes ago</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Group:</span>
+                                <span class="detail-value">Scanners</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Software:</span>
+                                <span class="detail-value">12 packages</span>
+                            </div>
+                        </div>
+                        <div class="machine-actions">
+                            <button class="icon-btn"><i class="fas fa-power-off"></i></button>
+                            <button class="icon-btn"><i class="fas fa-sync-alt"></i></button>
+                            <button class="icon-btn"><i class="fas fa-terminal"></i></button>
+                            <div class="dropdown">
+                                <button class="icon-btn"><i class="fas fa-ellipsis-v"></i></button>
+                                <div class="dropdown-menu">
+                                    <a href="#">Edit</a>
+                                    <a href="#">Remote Access</a>
+                                    <a href="#">Update Software</a>
+                                    <a href="#">View Logs</a>
+                                    <a href="#" class="danger">Decommission</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Machine Card 2 -->
+                    <div class="machine-card online">
+                        <div class="machine-header">
+                            <div class="machine-name">PROCESS-SRV-001</div>
+                            <div class="machine-status"><span class="ping-dot online"></span> Online</div>
+                        </div>
+                        <div class="machine-info">
+                            <div class="os-info">
+                                <i class="fab fa-linux"></i> Ubuntu 20.04 LTS
+                            </div>
+                            <div class="ip-info">192.168.1.102</div>
+                        </div>
+                        <div class="machine-metrics">
+                            <div class="metric">
+                                <div class="metric-label">CPU</div>
+                                <div class="metric-chart">
+                                    <div class="circular-progress" data-progress="78">
+                                        <span class="progress-value">78%</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-label">RAM</div>
+                                <div class="metric-chart">
+                                    <div class="circular-progress" data-progress="45">
+                                        <span class="progress-value">45%</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-label">Disk</div>
+                                <div class="metric-chart">
+                                    <div class="circular-progress" data-progress="32">
+                                        <span class="progress-value">32%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="machine-details">
+                            <div class="detail-item">
+                                <span class="detail-label">Last Check-in:</span>
+                                <span class="detail-value">Just now</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Group:</span>
+                                <span class="detail-value">Processors</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Software:</span>
+                                <span class="detail-value">8 packages</span>
+                            </div>
+                        </div>
+                        <div class="machine-actions">
+                            <button class="icon-btn"><i class="fas fa-power-off"></i></button>
+                            <button class="icon-btn"><i class="fas fa-sync-alt"></i></button>
+                            <button class="icon-btn"><i class="fas fa-terminal"></i></button>
+                            <div class="dropdown">
+                                <button class="icon-btn"><i class="fas fa-ellipsis-v"></i></button>
+                                <div class="dropdown-menu">
+                                    <a href="#">Edit</a>
+                                    <a href="#">Remote Access</a>
+                                    <a href="#">Update Software</a>
+                                    <a href="#">View Logs</a>
+                                    <a href="#" class="danger">Decommission</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Machine Card 3 -->
+                    <div class="machine-card offline">
+                        <div class="machine-header">
+                            <div class="machine-name">STORAGE-SRV-001</div>
+                            <div class="machine-status"><span class="ping-dot offline"></span> Offline</div>
+                        </div>
+                        <div class="machine-info">
+                            <div class="os-info">
+                                <i class="fab fa-windows"></i> Windows Server 2019
+                            </div>
+                            <div class="ip-info">192.168.1.103</div>
+                        </div>
+                        <div class="machine-metrics">
+                            <div class="metric">
+                                <div class="metric-label">CPU</div>
+                                <div class="metric-chart">
+                                    <div class="circular-progress offline" data-progress="0">
+                                        <span class="progress-value">--</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-label">RAM</div>
+                                <div class="metric-chart">
+                                    <div class="circular-progress offline" data-progress="0">
+                                        <span class="progress-value">--</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-label">Disk</div>
+                                <div class="metric-chart">
+                                    <div class="circular-progress offline" data-progress="0">
+                                        <span class="progress-value">--</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="machine-details">
+                            <div class="detail-item">
+                                <span class="detail-label">Last Check-in:</span>
+                                <span class="detail-value">2 days ago</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Group:</span>
+                                <span class="detail-value">Storage</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Software:</span>
+                                <span class="detail-value">6 packages</span>
+                            </div>
+                        </div>
+                        <div class="machine-actions">
+                            <button class="icon-btn disabled"><i class="fas fa-power-off"></i></button>
+                            <button class="icon-btn disabled"><i class="fas fa-sync-alt"></i></button>
+                            <button class="icon-btn disabled"><i class="fas fa-terminal"></i></button>
+                            <div class="dropdown">
+                                <button class="icon-btn"><i class="fas fa-ellipsis-v"></i></button>
+                                <div class="dropdown-menu">
+                                    <a href="#">Edit</a>
+                                    <a href="#" class="disabled">Remote Access</a>
+                                    <a href="#" class="disabled">Update Software</a>
+                                    <a href="#">View Logs</a>
+                                    <a href="#" class="danger">Decommission</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Machine Card 4 -->
+                    <div class="machine-card maintenance">
+                        <div class="machine-header">
+                            <div class="machine-name">SCAN-SRV-002</div>
+                            <div class="machine-status"><span class="ping-dot maintenance"></span> Maintenance</div>
+                        </div>
+                        <div class="machine-info">
+                            <div class="os-info">
+                                <i class="fab fa-apple"></i> macOS 12.3
+                            </div>
+                            <div class="ip-info">192.168.1.104</div>
+                        </div>
+                        <div class="machine-maintenance">
+                            <div class="maintenance-icon">
+                                <i class="fas fa-tools"></i>
+                            </div>
+                            <div class="maintenance-message">
+                                Scheduled maintenance in progress
+                            </div>
+                            <div class="maintenance-progress">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 75%"></div>
+                                </div>
+                                <div class="progress-text">75% Complete</div>
+                            </div>
+                            <div class="estimated-completion">
+                                Estimated completion: 45 minutes
+                            </div>
+                        </div>
+                        <div class="machine-details">
+                            <div class="detail-item">
+                                <span class="detail-label">Maintenance Type:</span>
+                                <span class="detail-value">System Update</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Group:</span>
+                                <span class="detail-value">Scanners</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Started:</span>
+                                <span class="detail-value">2 hours ago</span>
+                            </div>
+                        </div>
+                        <div class="machine-actions">
+                            <button class="icon-btn disabled"><i class="fas fa-power-off"></i></button>
+                            <button class="icon-btn"><i class="fas fa-sync-alt"></i></button>
+                            <button class="icon-btn disabled"><i class="fas fa-terminal"></i></button>
+                            <div class="dropdown">
+                                <button class="icon-btn"><i class="fas fa-ellipsis-v"></i></button>
+                                <div class="dropdown-menu">
+                                    <a href="#">Edit</a>
+                                    <a href="#" class="disabled">Remote Access</a>
+                                    <a href="#" class="disabled">Update Software</a>
+                                    <a href="#">View Logs</a>
+                                    <a href="#">Cancel Maintenance</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- OS Distribution Chart -->
+                <div class="chart-section">
+                    <h3>Machine Distribution</h3>
+                    <div class="charts-container">
+                        <div class="chart-card">
+                            <div class="chart-header">
+                                <h4>OS Distribution</h4>
+                            </div>
+                            <div class="chart-body">
+                                <div class="os-chart">
+                                    <div class="chart-bar-container">
+                                        <div class="chart-label">Windows</div>
+                                        <div class="chart-bar">
+                                            <div class="chart-bar-fill windows" style="width: 65%"></div>
+                                            <span class="chart-bar-value">65%</span>
+                                        </div>
+                                    </div>
+                                    <div class="chart-bar-container">
+                                        <div class="chart-label">Linux</div>
+                                        <div class="chart-bar">
+                                            <div class="chart-bar-fill linux" style="width: 25%"></div>
+                                            <span class="chart-bar-value">25%</span>
+                                        </div>
+                                    </div>
+                                    <div class="chart-bar-container">
+                                        <div class="chart-label">macOS</div>
+                                        <div class="chart-bar">
+                                            <div class="chart-bar-fill macos" style="width: 10%"></div>
+                                            <span class="chart-bar-value">10%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="chart-card">
+                            <div class="chart-header">
+                                <h4>Machine Status</h4>
+                            </div>
+                            <div class="chart-body">
+                                <div class="status-chart">
+                                    <div class="status-item">
+                                        <div class="status-color online"></div>
+                                        <div class="status-label">Online</div>
+                                        <div class="status-value">254</div>
+                                    </div>
+                                    <div class="status-item">
+                                        <div class="status-color offline"></div>
+                                        <div class="status-label">Offline</div>
+                                        <div class="status-value">32</div>
+                                    </div>
+                                    <div class="status-item">
+                                        <div class="status-color maintenance"></div>
+                                        <div class="status-label">Maintenance</div>
+                                        <div class="status-value">26</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="settings-tab" id="software-tab">
+                <h2>Software Management</h2>
+                <p class="placeholder-text">Software management content will appear here.</p>
+            </div>
+            
+            <div class="settings-tab" id="notifications-tab">
+                <h2>Notification Settings</h2>
+                <p class="placeholder-text">Notification settings content will appear here.</p>
+            </div>
+            
+            <div class="settings-tab" id="appearance-tab">
+                <h2>Appearance Settings</h2>
+                <p class="placeholder-text">Appearance settings content will appear here.</p>
+            </div>
+            
+            <div class="settings-tab" id="integrations-tab">
+                <h2>Integration Settings</h2>
+                <p class="placeholder-text">Integration settings content will appear here.</p>
+            </div>
+            
+            <div class="settings-tab" id="analytics-tab">
+                <h2>Analytics Dashboard</h2>
+                <p class="placeholder-text">Analytics dashboard content will appear here.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- System Info Footer -->
+<div class="system-info-footer">
+    <div class="system-info">
+        <span>Version 2.3.14</span>
+        <span>Uptime: 124 days, 7 hours</span>
+    </div>
+    <div class="footer-links">
+        <a href="#">Documentation</a>
+        <a href="#">Release Notes</a>
+        <a href="#">Privacy Policy</a>
+        <a href="#">Support</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'microapp/js/settings.js' %}"></script>
+{% endblock %} 

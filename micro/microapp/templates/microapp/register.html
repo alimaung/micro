@@ -1,0 +1,1427 @@
+{% extends 'microapp/base.html' %}
+
+{% block title %}Microfilm Processing Workflow{% endblock %}
+
+{% load static %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'microapp/css/register.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="register-container">
+    <!-- Workflow Progress Tracker -->
+    <div class="workflow-progress">
+        <div class="progress-steps">
+            <div class="progress-step active" data-step="1">
+                <div class="step-indicator">1</div>
+                <div class="step-label">Project Setup</div>
+            </div>
+            <div class="progress-step" data-step="2">
+                <div class="step-indicator">2</div>
+                <div class="step-label">Document Analysis</div>
+            </div>
+            <div class="progress-step" data-step="3">
+                <div class="step-indicator">3</div>
+                <div class="step-label">Workflow Determination</div>
+            </div>
+            <div class="progress-step" data-step="4">
+                <div class="step-indicator">4</div>
+                <div class="step-label">Reference Sheets</div>
+            </div>
+            <div class="progress-step" data-step="5">
+                <div class="step-indicator">5</div>
+                <div class="step-label">Film Allocation</div>
+            </div>
+            <div class="progress-step" data-step="6">
+                <div class="step-indicator">6</div>
+                <div class="step-label">Index Generation</div>
+            </div>
+            <div class="progress-step" data-step="7">
+                <div class="step-indicator">7</div>
+                <div class="step-label">Film Numbering</div>
+            </div>
+            <div class="progress-step" data-step="8">
+                <div class="step-indicator">8</div>
+                <div class="step-label">Distribution</div>
+            </div>
+            <div class="progress-step" data-step="9">
+                <div class="step-indicator">9</div>
+                <div class="step-label">Export</div>
+            </div>
+        </div>
+        <div class="progress-bar-container">
+            <div class="progress-bar-track">
+                <div class="progress-bar-fill" style="width: 11%;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="workflow-content">
+        <!-- Step 1: Project Setup Stage -->
+        <div class="workflow-step active" id="step-1">
+            <div class="workflow-step-header">
+                <h2>Project Setup</h2>
+                <div class="step-status">
+                    <span class="status-badge pending">
+                        <i class="fas fa-clock"></i>
+                        Awaiting Configuration
+                    </span>
+                </div>
+            </div>
+            
+            <div class="workflow-cards">
+                <!-- Project Setup Card -->
+                <div class="workflow-card primary-card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-folder-open"></i> Project Configuration</h3>
+                    </div>
+                    <div class="card-content">
+                        <div class="form-group">
+                            <label for="project-name">Project Name</label>
+                            <input type="text" id="project-name" class="form-input" placeholder="Enter a descriptive project name">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="project-folder">Source Folder</label>
+                            <div class="folder-input-container">
+                                <input type="text" id="project-folder" class="form-input" placeholder="Select source documents folder" readonly>
+                                <button class="browse-button">
+                                    <i class="fas fa-folder-open"></i>
+                                    Browse
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="output-folder">Output Destination</label>
+                            <div class="folder-input-container">
+                                <input type="text" id="output-folder" class="form-input" placeholder="Select output destination folder" readonly>
+                                <button class="browse-button">
+                                    <i class="fas fa-folder-open"></i>
+                                    Browse
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group half">
+                                <label for="film-type">Film Type</label>
+                                <select id="film-type" class="form-input">
+                                    <option value="16mm">16mm</option>
+                                    <option value="35mm">35mm</option>
+                                    <option value="hybrid">Hybrid (16mm + 35mm)</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group half">
+                                <label for="film-standard">Film Standard</label>
+                                <select id="film-standard" class="form-input">
+                                    <option value="ansi">ANSI Standard</option>
+                                    <option value="iso">ISO Standard</option>
+                                    <option value="custom">Custom</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="option-toggles">
+                            <div class="toggle-group">
+                                <span class="toggle-label">Enable Debug Mode</span>
+                                <label class="switch">
+                                    <input type="checkbox" id="debug-mode">
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                            
+                            <div class="toggle-group">
+                                <span class="toggle-label">Retain Source Files</span>
+                                <label class="switch">
+                                    <input type="checkbox" id="retain-sources" checked>
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                            
+                            <div class="toggle-group">
+                                <span class="toggle-label">Auto-detect Oversize</span>
+                                <label class="switch">
+                                    <input type="checkbox" id="auto-detect" checked>
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <button class="action-button primary" id="validate-project">
+                            <i class="fas fa-check-circle"></i>
+                            Validate Project
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Output Data Panel -->
+                <div class="workflow-card data-panel">
+                    <div class="card-header with-actions">
+                        <h3><i class="fas fa-code"></i> Project Data</h3>
+                        <div class="card-actions">
+                            <button class="panel-action" id="expand-data">
+                                <i class="fas fa-expand-alt"></i>
+                            </button>
+                            <button class="panel-action" id="copy-data">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <pre class="data-output">{
+  "project": {
+    "name": "",
+    "sourcePath": "",
+    "outputPath": "",
+    "filmType": "16mm",
+    "filmStandard": "ansi",
+    "options": {
+      "debugMode": false,
+      "retainSources": true,
+      "autoDetectOversize": true
+    }
+  }
+}</pre>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="workflow-navigation">
+                <div></div> <!-- Empty space for alignment -->
+                <button class="nav-button next" id="to-step-2" disabled>
+                    Continue to Document Analysis
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Step 2: Document Analysis Stage -->
+        <div class="workflow-step" id="step-2">
+            <div class="workflow-step-header">
+                <h2>Document Analysis</h2>
+                <div class="step-status">
+                    <span class="status-badge pending">
+                        <i class="fas fa-clock"></i>
+                        Ready to Analyze
+                    </span>
+                </div>
+            </div>
+            
+            <div class="workflow-cards">
+                <!-- Analysis Status Card -->
+                <div class="workflow-card primary-card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-search"></i> Document Analysis</h3>
+                    </div>
+                    <div class="card-content">
+                        <div class="analysis-status">
+                            <div class="status-section">
+                                <div class="document-counter">
+                                    <div class="counter-circle">
+                                        <span class="counter-value">0</span>
+                                    </div>
+                                    <span class="counter-label">Documents Found</span>
+                                </div>
+                                
+                                <div class="document-counter">
+                                    <div class="counter-circle">
+                                        <span class="counter-value">0</span>
+                                    </div>
+                                    <span class="counter-label">Pages Total</span>
+                                </div>
+                                
+                                <div class="document-counter">
+                                    <div class="counter-circle oversized">
+                                        <span class="counter-value">0</span>
+                                    </div>
+                                    <span class="counter-label">Oversized Detected</span>
+                                </div>
+                            </div>
+                            
+                            <div class="progress-section">
+                                <div class="progress-label">
+                                    <span>Analysis Progress</span>
+                                    <span class="progress-percentage">0%</span>
+                                </div>
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar-track">
+                                        <div class="progress-bar-fill" style="width: 0%;"></div>
+                                    </div>
+                                </div>
+                                <div class="progress-status">
+                                    <span id="analysis-status">Waiting to start...</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="document-preview">
+                            <h4>Document Preview</h4>
+                            <div class="preview-grid">
+                                <div class="preview-placeholder">
+                                    <i class="fas fa-file-alt"></i>
+                                </div>
+                                <div class="preview-placeholder">
+                                    <i class="fas fa-file-alt"></i>
+                                </div>
+                                <div class="preview-placeholder">
+                                    <i class="fas fa-file-alt"></i>
+                                </div>
+                                <div class="preview-placeholder">
+                                    <i class="fas fa-file-alt"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <button class="action-button primary" id="start-analysis">
+                            <i class="fas fa-play"></i>
+                            Start Analysis
+                        </button>
+                        <button class="action-button secondary" id="reset-analysis" disabled>
+                            <i class="fas fa-redo"></i>
+                            Reset
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Output Data Panel -->
+                <div class="workflow-card data-panel">
+                    <div class="card-header with-actions">
+                        <h3><i class="fas fa-code"></i> Analysis Data</h3>
+                        <div class="card-actions">
+                            <button class="panel-action" id="expand-analysis-data">
+                                <i class="fas fa-expand-alt"></i>
+                            </button>
+                            <button class="panel-action" id="copy-analysis-data">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <pre class="data-output">{
+  "analysis": {
+    "documentCount": 0,
+    "pageCount": 0,
+    "oversizedCount": 0,
+    "status": "pending",
+    "documentTypes": {},
+    "sizeDistribution": {}
+  }
+}</pre>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="workflow-navigation">
+                <button class="nav-button back" id="back-to-step-1">
+                    <i class="fas fa-arrow-left"></i>
+                    Back to Project Setup
+                </button>
+                <button class="nav-button next" id="to-step-3" disabled>
+                    Continue to Workflow Determination
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Step 3: Workflow Determination Stage -->
+        <div class="workflow-step" id="step-3">
+            <div class="workflow-step-header">
+                <h2>Workflow Determination</h2>
+                <div class="step-status">
+                    <span class="status-badge pending">
+                        <i class="fas fa-clock"></i>
+                        Awaiting Analysis
+                    </span>
+                </div>
+            </div>
+            
+            <div class="workflow-cards">
+                <!-- Workflow Selection Card -->
+                <div class="workflow-card primary-card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-sitemap"></i> Workflow Selection</h3>
+                    </div>
+                    <div class="card-content">
+                        <div class="workflow-diagram">
+                            <div class="document-node">
+                                <div class="node-icon">
+                                    <i class="fas fa-file-alt"></i>
+                                </div>
+                                <div class="node-label">Document Analysis</div>
+                            </div>
+                            
+                            <div class="decision-node">
+                                <div class="node-icon">
+                                    <i class="fas fa-question"></i>
+                                </div>
+                                <div class="node-label">Oversized Documents?</div>
+                                <div class="decision-paths">
+                                    <div class="path-yes">Yes</div>
+                                    <div class="path-no">No</div>
+                                </div>
+                            </div>
+                            
+                            <div class="workflow-branches">
+                                <div class="workflow-branch standard">
+                                    <div class="branch-header">
+                                        <div class="branch-icon">
+                                            <i class="fas fa-film"></i>
+                                        </div>
+                                        <h4>Standard Workflow</h4>
+                                        <span class="recommendation-badge">Recommended</span>
+                                    </div>
+                                    <div class="branch-description">
+                                        <p>Process all documents on 16mm film only. Ideal for standard document sizes and efficient storage.</p>
+                                        <ul class="branch-features">
+                                            <li><i class="fas fa-check"></i> Faster processing time</li>
+                                            <li><i class="fas fa-check"></i> Higher frame count per roll</li>
+                                            <li><i class="fas fa-check"></i> Cost-effective solution</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                
+                                <div class="workflow-branch oversized inactive">
+                                    <div class="branch-header">
+                                        <div class="branch-icon">
+                                            <i class="fas fa-film"></i><i class="fas fa-plus"></i><i class="fas fa-expand"></i>
+                                        </div>
+                                        <h4>Hybrid Workflow</h4>
+                                    </div>
+                                    <div class="branch-description">
+                                        <p>Process standard documents on 16mm film and oversized documents on 35mm film. Includes reference sheet generation.</p>
+                                        <ul class="branch-features">
+                                            <li><i class="fas fa-check"></i> Handles all document sizes</li>
+                                            <li><i class="fas fa-check"></i> Maintains document integrity</li>
+                                            <li><i class="fas fa-check"></i> Cross-references between film types</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <button class="action-button primary" id="select-standard-workflow">
+                            <i class="fas fa-check-circle"></i>
+                            Select Standard Workflow
+                        </button>
+                        <button class="action-button secondary" id="select-hybrid-workflow" disabled>
+                            <i class="fas fa-check-circle"></i>
+                            Select Hybrid Workflow
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Output Data Panel -->
+                <div class="workflow-card data-panel">
+                    <div class="card-header with-actions">
+                        <h3><i class="fas fa-code"></i> Workflow Data</h3>
+                        <div class="card-actions">
+                            <button class="panel-action" id="expand-workflow-data">
+                                <i class="fas fa-expand-alt"></i>
+                            </button>
+                            <button class="panel-action" id="copy-workflow-data">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <pre class="data-output">{
+  "workflow": {
+    "type": "pending",
+    "recommendationType": "standard",
+    "documentDistribution": {
+      "standard": 0,
+      "oversized": 0
+    }
+  }
+}</pre>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="workflow-navigation">
+                <button class="nav-button back" id="back-to-step-2">
+                    <i class="fas fa-arrow-left"></i>
+                    Back to Document Analysis
+                </button>
+                <button class="nav-button next" id="to-step-4" disabled>
+                    Continue to Reference Sheets
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Remaining steps would continue in the same pattern -->
+        <!-- For brevity, I'll show Step 4 as an example of the pattern -->
+        
+        <!-- Step 4: Reference Sheet Generation -->
+        <div class="workflow-step" id="step-4">
+            <div class="workflow-step-header">
+                <h2>Reference Sheet Generation</h2>
+                <div class="step-status">
+                    <span class="status-badge pending">
+                        <i class="fas fa-clock"></i>
+                        Workflow Dependent
+                    </span>
+                </div>
+            </div>
+            
+            <div class="workflow-cards">
+                <!-- Reference Sheet Card -->
+                <div class="workflow-card primary-card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-file-invoice"></i> Reference Sheet Generation</h3>
+                    </div>
+                    <div class="card-content">
+                        <div class="reference-generation">
+                            <div class="step-notice">
+                                <i class="fas fa-info-circle"></i>
+                                <span>This step is only required for Hybrid Workflow with oversized documents</span>
+                            </div>
+                            
+                            <div class="reference-status">
+                                <div class="status-message inactive">
+                                    <i class="fas fa-lock"></i>
+                                    <p>Reference sheet generation is currently inactive because Standard Workflow is selected.</p>
+                                    <p>To enable this step, go back and select Hybrid Workflow.</p>
+                                </div>
+                                
+                                <div class="reference-animation hidden">
+                                    <div class="document-visual">
+                                        <div class="document-image">
+                                            <i class="fas fa-file-alt"></i>
+                                        </div>
+                                        <div class="process-arrow">
+                                            <i class="fas fa-long-arrow-alt-right"></i>
+                                        </div>
+                                        <div class="reference-image">
+                                            <i class="fas fa-file-invoice"></i>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="progress-section">
+                                        <div class="progress-label">
+                                            <span>Generation Progress</span>
+                                            <span class="progress-percentage">0%</span>
+                                        </div>
+                                        <div class="progress-bar-container">
+                                            <div class="progress-bar-track">
+                                                <div class="progress-bar-fill" style="width: 0%;"></div>
+                                            </div>
+                                        </div>
+                                        <div class="progress-status">
+                                            <span id="reference-status">Waiting to start...</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <button class="action-button primary" id="generate-references" disabled>
+                        <i class="fas fa-play"></i>
+                            Generate Reference Sheets
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Output Data Panel -->
+                <div class="workflow-card data-panel">
+                    <div class="card-header with-actions">
+                        <h3><i class="fas fa-code"></i> Reference Sheet Data</h3>
+                        <div class="card-actions">
+                            <button class="panel-action" id="expand-reference-data">
+                                <i class="fas fa-expand-alt"></i>
+                            </button>
+                            <button class="panel-action" id="copy-reference-data">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <pre class="data-output">{
+  "referenceSheets": {
+    "status": "inactive",
+    "reason": "Standard workflow selected",
+    "sheetCount": 0,
+    "referencedDocuments": 0
+  }
+}</pre>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="workflow-navigation">
+                <button class="nav-button back" id="back-to-step-3">
+                    <i class="fas fa-arrow-left"></i>
+                    Back to Workflow Determination
+                </button>
+                <button class="nav-button next" id="to-step-5">
+                    Continue to Film Allocation
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+        
+            <!-- Step 5: Film Allocation Stage -->
+            <div class="workflow-step" id="step-5">
+                <div class="workflow-step-header">
+                    <h2>Film Allocation</h2>
+                    <div class="step-status">
+                        <span class="status-badge pending">
+                            <i class="fas fa-clock"></i>
+                            Awaiting Reference Sheets
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="workflow-cards">
+                    <!-- Film Allocation Card -->
+                    <div class="workflow-card primary-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-film"></i> Film Roll Allocation</h3>
+                        </div>
+                        <div class="card-content">
+                            <div class="film-allocation">
+                                <div class="allocation-summary">
+                                    <div class="allocation-item">
+                                        <span class="allocation-label">Estimated Total Films:</span>
+                                        <span class="allocation-value" id="total-films">0</span>
+                                    </div>
+                                    <div class="allocation-item">
+                                        <span class="allocation-label">Pages per Film Average:</span>
+                                        <span class="allocation-value" id="pages-per-film">0</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="film-type-controls">
+                                    <div class="film-toggle">
+                                        <span>16mm Film</span>
+                                        <label class="switch">
+                                            <input type="checkbox" id="show-16mm" checked>
+                                            <span class="slider round"></span>
+                                        </label>
+                                    </div>
+                                    <div class="film-toggle">
+                                        <span>35mm Film</span>
+                                        <label class="switch">
+                                            <input type="checkbox" id="show-35mm">
+                                            <span class="slider round"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="film-rolls-container">
+                                    <h4>16mm Film Rolls</h4>
+                                    <div class="film-rolls" id="16mm-rolls">
+                                        <div class="film-roll">
+                                            <div class="roll-header">
+                                                <span class="roll-id">Roll 16-001</span>
+                                                <span class="roll-capacity">
+                                                    <span class="capacity-used">0</span>/<span class="capacity-total">2500</span> frames
+                                                </span>
+                                            </div>
+                                            <div class="roll-usage-bar">
+                                                <div class="usage-fill" style="width: 0%"></div>
+                                            </div>
+                                            <div class="roll-documents">
+                                                <span class="document-count">0</span> documents
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="add-roll-button">
+                                            <i class="fas fa-plus-circle"></i>
+                                            <span>Add Film Roll</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="film-rolls hidden" id="35mm-rolls">
+                                        <h4>35mm Film Rolls</h4>
+                                        <div class="film-roll">
+                                            <div class="roll-header">
+                                                <span class="roll-id">Roll 35-001</span>
+                                                <span class="roll-capacity">
+                                                    <span class="capacity-used">0</span>/<span class="capacity-total">1200</span> frames
+                                                </span>
+                                            </div>
+                                            <div class="roll-usage-bar">
+                                                <div class="usage-fill" style="width: 0%"></div>
+                                            </div>
+                                            <div class="roll-documents">
+                                                <span class="document-count">0</span> documents
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="add-roll-button">
+                                            <i class="fas fa-plus-circle"></i>
+                                            <span>Add Film Roll</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="allocation-options">
+                                    <div class="option-group">
+                                        <label for="allocation-method">Allocation Method:</label>
+                                        <select id="allocation-method" class="form-input">
+                                            <option value="balanced">Balanced (Default)</option>
+                                            <option value="minimize-rolls">Minimize Film Rolls</option>
+                                            <option value="even-distribution">Even Distribution</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="option-group">
+                                        <label for="max-capacity">Max Capacity Utilization:</label>
+                                        <select id="max-capacity" class="form-input">
+                                            <option value="90">90% (Recommended)</option>
+                                            <option value="95">95%</option>
+                                            <option value="99">99% (Maximum)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <button class="action-button secondary" id="reset-allocation">
+                                <i class="fas fa-redo"></i>
+                                Reset Allocation
+                            </button>
+                            <button class="action-button primary" id="calculate-allocation">
+                                <i class="fas fa-calculator"></i>
+                                Calculate Allocation
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Output Data Panel -->
+                    <div class="workflow-card data-panel">
+                        <div class="card-header with-actions">
+                            <h3><i class="fas fa-code"></i> Allocation Data</h3>
+                            <div class="card-actions">
+                                <button class="panel-action" id="expand-allocation-data">
+                                    <i class="fas fa-expand-alt"></i>
+                                </button>
+                                <button class="panel-action" id="copy-allocation-data">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-content">
+                            <pre class="data-output">{
+        "allocation": {
+        "status": "pending",
+        "method": "balanced",
+        "maxCapacity": 90,
+        "films": {
+            "16mm": [],
+            "35mm": []
+        },
+        "statistics": {
+            "totalFilms": 0,
+            "averageUtilization": 0,
+            "documentDistribution": {
+            "16mm": 0,
+            "35mm": 0
+            }
+        }
+        }
+    }</pre>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="workflow-navigation">
+                    <button class="nav-button back" id="back-to-step-4">
+                        <i class="fas fa-arrow-left"></i>
+                        Back to Reference Sheets
+                    </button>
+                    <button class="nav-button next" id="to-step-6" disabled>
+                        Continue to Index Generation
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Step 6: Index Generation Stage -->
+            <div class="workflow-step" id="step-6">
+                <div class="workflow-step-header">
+                    <h2>Index Generation</h2>
+                    <div class="step-status">
+                        <span class="status-badge pending">
+                            <i class="fas fa-clock"></i>
+                            Awaiting Allocation
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="workflow-cards">
+                    <!-- Index Generation Card -->
+                    <div class="workflow-card primary-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-table"></i> Index Generation</h3>
+                        </div>
+                        <div class="card-content">
+                            <div class="index-controls">
+                                <div class="indexing-options">
+                                    <div class="option-group">
+                                        <label for="index-format">Index Format:</label>
+                                        <select id="index-format" class="form-input">
+                                            <option value="csv">CSV (Comma Separated)</option>
+                                            <option value="excel">Excel Spreadsheet</option>
+                                            <option value="pdf">PDF Document</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="option-group">
+                                        <label for="index-detail">Detail Level:</label>
+                                        <select id="index-detail" class="form-input">
+                                            <option value="standard">Standard</option>
+                                            <option value="detailed">Detailed</option>
+                                            <option value="comprehensive">Comprehensive</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="index-fields">
+                                    <h4>Index Fields</h4>
+                                    <div class="field-options">
+                                        <div class="field-option">
+                                            <input type="checkbox" id="field-document-id" checked>
+                                            <label for="field-document-id">Document ID</label>
+                                        </div>
+                                        <div class="field-option">
+                                            <input type="checkbox" id="field-film-number" checked>
+                                            <label for="field-film-number">Film Number</label>
+                                        </div>
+                                        <div class="field-option">
+                                            <input type="checkbox" id="field-frame-start" checked>
+                                            <label for="field-frame-start">Frame Start</label>
+                                        </div>
+                                        <div class="field-option">
+                                            <input type="checkbox" id="field-page-count" checked>
+                                            <label for="field-page-count">Page Count</label>
+                                        </div>
+                                        <div class="field-option">
+                                            <input type="checkbox" id="field-document-type" checked>
+                                            <label for="field-document-type">Document Type</label>
+                                        </div>
+                                        <div class="field-option">
+                                            <input type="checkbox" id="field-created-date">
+                                            <label for="field-created-date">Created Date</label>
+                                        </div>
+                                        <div class="field-option">
+                                            <input type="checkbox" id="field-modified-date">
+                                            <label for="field-modified-date">Modified Date</label>
+                                        </div>
+                                        <div class="field-option">
+                                            <input type="checkbox" id="field-file-size">
+                                            <label for="field-file-size">File Size</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="index-preview">
+                                <h4>Index Preview</h4>
+                                <div class="index-table-container">
+                                    <table class="index-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Document ID</th>
+                                                <th>Film #</th>
+                                                <th>Frame Start</th>
+                                                <th>Page Count</th>
+                                                <th>Document Type</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td colspan="5" class="empty-table">
+                                                    <div class="empty-state">
+                                                        <i class="fas fa-table"></i>
+                                                        <p>Generate the index to see a preview</p>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="table-pagination hidden">
+                                    <button class="pagination-button" disabled>
+                                        <i class="fas fa-chevron-left"></i>
+                                    </button>
+                                    <span class="pagination-info">Page 1 of 1</span>
+                                    <button class="pagination-button" disabled>
+                                        <i class="fas fa-chevron-right"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <button class="action-button primary" id="generate-index">
+                                <i class="fas fa-file-alt"></i>
+                                Generate Index
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Output Data Panel -->
+                    <div class="workflow-card data-panel">
+                        <div class="card-header with-actions">
+                            <h3><i class="fas fa-code"></i> Index Data</h3>
+                            <div class="card-actions">
+                                <button class="panel-action" id="expand-index-data">
+                                    <i class="fas fa-expand-alt"></i>
+                                </button>
+                                <button class="panel-action" id="copy-index-data">
+                                    <i class="fas fa-copy"></i>
+                        </button>
+                            </div>
+                        </div>
+                        <div class="card-content">
+                            <pre class="data-output">{
+        "indexing": {
+        "status": "pending",
+        "format": "csv",
+        "detailLevel": "standard",
+        "fields": ["documentId", "filmNumber", "frameStart", "pageCount", "documentType"],
+        "statistics": {
+            "totalEntries": 0,
+            "totalFilms": 0,
+            "totalFrames": 0
+        }
+        }
+    }</pre>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="workflow-navigation">
+                    <button class="nav-button back" id="back-to-step-5">
+                        <i class="fas fa-arrow-left"></i>
+                        Back to Film Allocation
+                    </button>
+                    <button class="nav-button next" id="to-step-7" disabled>
+                        Continue to Film Numbering
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Step 7: Film Number Assignment Stage -->
+            <div class="workflow-step" id="step-7">
+                <div class="workflow-step-header">
+                    <h2>Film Number Assignment</h2>
+                    <div class="step-status">
+                        <span class="status-badge pending">
+                            <i class="fas fa-clock"></i>
+                            Awaiting Index Generation
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="workflow-cards">
+                    <!-- Film Numbering Card -->
+                    <div class="workflow-card primary-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-hashtag"></i> Film Number Assignment</h3>
+                        </div>
+                        <div class="card-content">
+                            <div class="numbering-scheme">
+                                <div class="scheme-settings">
+                                    <div class="option-group">
+                                        <label for="numbering-prefix">Film ID Prefix:</label>
+                                        <input type="text" id="numbering-prefix" class="form-input" placeholder="MF" value="MF">
+                                    </div>
+                                    
+                                    <div class="option-group">
+                                        <label for="numbering-year">Include Year:</label>
+                                        <div class="toggle-with-value">
+                                            <label class="switch">
+                                                <input type="checkbox" id="include-year" checked>
+                                                <span class="slider round"></span>
+                                            </label>
+                                            <select id="numbering-year" class="form-input">
+                                                <option value="2023">2023</option>
+                                                <option value="2022">2022</option>
+                                                <option value="2021">2021</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="option-group">
+                                        <label for="sequence-digits">Sequence Digits:</label>
+                                        <select id="sequence-digits" class="form-input">
+                                            <option value="3">3 digits (001-999)</option>
+                                            <option value="4" selected>4 digits (0001-9999)</option>
+                                            <option value="5">5 digits (00001-99999)</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="option-group">
+                                        <label for="separation-char">Separator Character:</label>
+                                        <select id="separation-char" class="form-input">
+                                            <option value="dash">Dash (-)</option>
+                                            <option value="dot">Dot (.)</option>
+                                            <option value="underscore">Underscore (_)</option>
+                                            <option value="none">None</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="option-group">
+                                        <label for="starting-number">Starting Sequence Number:</label>
+                                        <input type="number" id="starting-number" class="form-input" value="1" min="1">
+                                    </div>
+                                </div>
+                                
+                                <div class="film-preview">
+                                    <h4>Film ID Preview</h4>
+                                    <div class="film-id-example">
+                                        <div class="film-id-card">
+                                            <span class="film-id-display">MF-2023-0001</span>
+                                            <span class="film-id-label">16mm Standard</span>
+                                        </div>
+                                        <div class="film-id-card">
+                                            <span class="film-id-display">MF-2023-0001L</span>
+                                            <span class="film-id-label">35mm Large</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="numbering-diagram">
+                                    <h4>Numbering Diagram</h4>
+                                    <div class="diagram-container">
+                                        <div class="diagram-film">
+                                            <span class="film-label">16mm Roll 1</span>
+                                            <div class="film-strip">
+                                                <div class="film-frame" data-id="D001">D001</div>
+                                                <div class="film-frame" data-id="D002">D002</div>
+                                                <div class="film-frame" data-id="D003">D003</div>
+                                            </div>
+                                            <div class="film-id">MF-2023-0001</div>
+                                        </div>
+                                        
+                                        <div class="diagram-film">
+                                            <span class="film-label">16mm Roll 2</span>
+                                            <div class="film-strip">
+                                                <div class="film-frame" data-id="D004">D004</div>
+                                                <div class="film-frame" data-id="D005">D005</div>
+                                                <div class="film-frame" data-id="D006">D006</div>
+                                            </div>
+                                            <div class="film-id">MF-2023-0002</div>
+                                        </div>
+                                        
+                                        <div class="diagram-film large-format">
+                                            <span class="film-label">35mm Roll</span>
+                                            <div class="film-strip">
+                                                <div class="film-frame large" data-id="D007">D007</div>
+                                                <div class="film-frame large" data-id="D008">D008</div>
+                                            </div>
+                                            <div class="film-id">MF-2023-0001L</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <button class="action-button secondary" id="reset-numbering">
+                                <i class="fas fa-undo"></i>
+                                Reset to Default
+                            </button>
+                            <button class="action-button primary" id="apply-numbering">
+                                <i class="fas fa-check"></i>
+                                Apply Numbering Scheme
+                            </button>
+        </div>
+    </div>
+                    
+                    <!-- Output Data Panel -->
+                    <div class="workflow-card data-panel">
+                        <div class="card-header with-actions">
+                            <h3><i class="fas fa-code"></i> Numbering Data</h3>
+                            <div class="card-actions">
+                                <button class="panel-action" id="expand-numbering-data">
+                                    <i class="fas fa-expand-alt"></i>
+                                </button>
+                                <button class="panel-action" id="copy-numbering-data">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-content">
+                            <pre class="data-output">{
+        "numbering": {
+        "status": "pending",
+        "scheme": {
+            "prefix": "MF",
+            "includeYear": true,
+            "year": "2023",
+            "sequenceDigits": 4,
+            "separator": "dash",
+            "startingNumber": 1
+        },
+        "assignments": {
+            "16mm": [],
+            "35mm": []
+        }
+        }
+    }</pre>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="workflow-navigation">
+                    <button class="nav-button back" id="back-to-step-6">
+                        <i class="fas fa-arrow-left"></i>
+                        Back to Index Generation
+                    </button>
+                    <button class="nav-button next" id="to-step-8" disabled>
+                        Continue to Document Distribution
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Step 8: Document Distribution Stage -->
+            <div class="workflow-step" id="step-8">
+                <div class="workflow-step-header">
+                    <h2>Document Distribution</h2>
+                    <div class="step-status">
+                        <span class="status-badge pending">
+                            <i class="fas fa-clock"></i>
+                            Awaiting Film Numbering
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="workflow-cards">
+                    <!-- Document Distribution Card -->
+                    <div class="workflow-card primary-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-folder-tree"></i> Document Distribution</h3>
+                        </div>
+                        <div class="card-content">
+                            <div class="distribution-controls">
+                                <div class="distribution-options">
+                                    <div class="option-group">
+                                        <label for="folder-structure">Folder Structure:</label>
+                                        <select id="folder-structure" class="form-input">
+                                            <option value="flat">Flat (All in one folder)</option>
+                                            <option value="by-film" selected>By Film Roll</option>
+                                            <option value="by-type">By Document Type</option>
+                                            <option value="hierarchical">Hierarchical (Type/Film)</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="option-group">
+                                        <label for="naming-pattern">File Naming Pattern:</label>
+                                        <select id="naming-pattern" class="form-input">
+                                            <option value="filmid_docid">[FilmID]_[DocID]</option>
+                                            <option value="docid_filmid">[DocID]_[FilmID]</option>
+                                            <option value="original">Original Filenames</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="option-group">
+                                        <div class="toggle-group">
+                                            <span class="toggle-label">Include Original Files</span>
+                                            <label class="switch">
+                                                <input type="checkbox" id="include-originals" checked>
+                                                <span class="slider round"></span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="option-group">
+                                        <div class="toggle-group">
+                                            <span class="toggle-label">Copy Index to Each Folder</span>
+                                            <label class="switch">
+                                                <input type="checkbox" id="copy-index-folders" checked>
+                                                <span class="slider round"></span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="folder-preview">
+                                    <h4>Folder Structure Preview</h4>
+                                    <div class="folder-tree">
+                                        <div class="tree-node root">
+                                            <i class="fas fa-folder-open"></i>
+                                            <span class="node-name">Output Folder</span>
+                                            <div class="tree-children">
+                                                <div class="tree-node">
+                                                    <i class="fas fa-folder"></i>
+                                                    <span class="node-name">MF-2023-0001</span>
+                                                    <div class="tree-children">
+                                                        <div class="tree-node">
+                                                            <i class="fas fa-file-alt"></i>
+                                                            <span class="node-name">MF-2023-0001_D001.pdf</span>
+                                                        </div>
+                                                        <div class="tree-node">
+                                                            <i class="fas fa-file-alt"></i>
+                                                            <span class="node-name">MF-2023-0001_D002.pdf</span>
+                                                        </div>
+                                                        <div class="tree-node">
+                                                            <i class="fas fa-file-excel"></i>
+                                                            <span class="node-name">MF-2023-0001_index.csv</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="tree-node">
+                                                    <i class="fas fa-folder"></i>
+                                                    <span class="node-name">MF-2023-0002</span>
+                                                </div>
+                                                <div class="tree-node">
+                                                    <i class="fas fa-folder"></i>
+                                                    <span class="node-name">MF-2023-0001L</span>
+                                                </div>
+                                                <div class="tree-node">
+                                                    <i class="fas fa-file-excel"></i>
+                                                    <span class="node-name">master_index.csv</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="distribution-progress hidden">
+                                <h4>Distribution Progress</h4>
+                                <div class="progress-section">
+                                    <div class="progress-label">
+                                        <span>Overall Progress</span>
+                                        <span class="progress-percentage">0%</span>
+                                    </div>
+                                    <div class="progress-bar-container">
+                                        <div class="progress-bar-track">
+                                            <div class="progress-bar-fill" style="width: 0%;"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="file-operations">
+                                    <div class="operation-log">
+                                        <div class="log-entry">
+                                            <span class="log-status success">
+                                                <i class="fas fa-check-circle"></i>
+                                            </span>
+                                            <span class="log-message">Created directory structure</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <button class="action-button primary" id="start-distribution">
+                                <i class="fas fa-play"></i>
+                                Start Distribution
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Output Data Panel -->
+                    <div class="workflow-card data-panel">
+                        <div class="card-header with-actions">
+                            <h3><i class="fas fa-code"></i> Distribution Data</h3>
+                            <div class="card-actions">
+                                <button class="panel-action" id="expand-distribution-data">
+                                    <i class="fas fa-expand-alt"></i>
+                                </button>
+                                <button class="panel-action" id="copy-distribution-data">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-content">
+                            <pre class="data-output">{
+        "distribution": {
+        "status": "pending",
+        "folderStructure": "by-film",
+        "namingPattern": "filmid_docid",
+        "options": {
+            "includeOriginals": true,
+            "copyIndexToFolders": true
+        },
+        "statistics": {
+            "totalFolders": 0,
+            "totalFiles": 0,
+            "totalSize": "0 MB"
+        }
+        }
+    }</pre>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="workflow-navigation">
+                    <button class="nav-button back" id="back-to-step-7">
+                        <i class="fas fa-arrow-left"></i>
+                        Back to Film Numbering
+                    </button>
+                    <button class="nav-button next" id="to-step-9" disabled>
+                        Continue to Export & Summary
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Step 9: Export & Summary Stage -->
+            <div class="workflow-step" id="step-9">
+                <div class="workflow-step-header">
+                    <h2>Export & Summary</h2>
+                    <div class="step-status">
+                        <span class="status-badge pending">
+                            <i class="fas fa-clock"></i>
+                            Awaiting Distribution
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="workflow-cards">
+                    <!-- Export & Summary Card -->
+                    <div class="workflow-card primary-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-file-export"></i> Project Summary & Export</h3>
+                        </div>
+                        <div class="card-content">
+                            <div class="summary-overview">
+                                <div class="summary-stats">
+                                    <div class="stat-card">
+                                        <div class="stat-icon">
+                                            <i class="fas fa-file-alt"></i>
+                                        </div>
+                                        <div class="stat-content">
+                                            <span class="stat-value" id="summary-documents">0</span>
+                                            <span class="stat-label">Documents</span>
+                                        </div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-icon">
+                                            <i class="fas fa-film"></i>
+                                        </div>
+                                        <div class="stat-content">
+                                            <span class="stat-value" id="summary-films">0</span>
+                                            <span class="stat-label">Film Rolls</span>
+                                        </div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-icon">
+                                            <i class="fas fa-clock"></i>
+                                        </div>
+                                        <div class="stat-content">
+                                            <span class="stat-value" id="summary-duration">0:00</span>
+                                            <span class="stat-label">Process Duration</span>
+                                        </div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-icon">
+                                            <i class="fas fa-hdd"></i>
+                                        </div>
+                                        <div class="stat-content">
+                                            <span class="stat-value" id="summary-size">0 MB</span>
+                                            <span class="stat-label">Total Size</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="workflow-summary">
+                                    <h4>Workflow Summary</h4>
+                                    <div class="workflow-timeline">
+                                        <div class="timeline-item">
+                                            <div class="timeline-icon completed">
+                                                <i class="fas fa-check"></i>
+                                            </div>
+                                            <div class="timeline-content">
+                                                <span class="timeline-title">Project Setup</span>
+                                                <span class="timeline-time">00:00:00</span>
+                                            </div>
+                                        </div>
+                                        <div class="timeline-item">
+                                            <div class="timeline-icon completed">
+                                                <i class="fas fa-check"></i>
+                                            </div>
+                                            <div class="timeline-content">
+                                                <span class="timeline-title">Document Analysis</span>
+                                                <span class="timeline-time">00:00:00</span>
+                                            </div>
+                                        </div>
+                                        <div class="timeline-item">
+                                            <div class="timeline-icon completed">
+                                                <i class="fas fa-check"></i>
+                                            </div>
+                                            <div class="timeline-content">
+                                                <span class="timeline-title">Workflow Determination</span>
+                                                <span class="timeline-time">00:00:00</span>
+                                            </div>
+                                        </div>
+                                        <div class="timeline-item">
+                                            <div class="timeline-icon completed">
+                                                <i class="fas fa-check"></i>
+                                            </div>
+                                            <div class="timeline-content">
+                                                <span class="timeline-title">Reference Sheet Generation</span>
+                                                <span class="timeline-time">00:00:00</span>
+                                            </div>
+                                        </div>
+                                        <div class="timeline-item">
+                                            <div class="timeline-icon completed">
+                                                <i class="fas fa-check"></i>
+                                            </div>
+                                            <div class="timeline-content">
+                                                <span class="timeline-title">Film Allocation</span>
+                                                <span class="timeline-time">00:00:00</span>
+                                            </div>
+                                        </div>
+                                        <div class="timeline-item">
+                                            <div class="timeline-icon completed">
+                                                <i class="fas fa-check"></i>
+                                            </div>
+                                            <div class="timeline-content">
+                                                <span class="timeline-title">Index Generation</span>
+                                                <span class="timeline-time">00:00:00</span>
+                                            </div>
+                                        </div>
+                                        <div class="timeline-item">
+                                            <div class="timeline-icon completed">
+                                                <i class="fas fa-check"></i>
+                                            </div>
+                                            <div class="timeline-content">
+                                                <span class="timeline-title">Film Numbering</span>
+                                                <span class="timeline-time">00:00:00</span>
+                                            </div>
+                                        </div>
+                                        <div class="timeline-item">
+                                            <div class="timeline-icon completed">
+                                                <i class="fas fa-check"></i>
+                                            </div>
+                                            <div class="timeline-content">
+                                                <span class="timeline-title">Document Distribution</span>
+                                                <span class="timeline-time">00:00:00</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="export-section">
+                                <h4>Available Exports</h4>
+                                <div class="export-files">
+                                    <div class="export-file">
+                                        <div class="file-icon">
+                                            <i class="fas fa-file-excel"></i>
+                                        </div>
+                                        <div class="file-details">
+                                            <span class="file-name">Master Index (CSV)</span>
+                                            <span class="file-info">125 entries, 10 KB</span>
+                                        </div>
+                                        <button class="file-download">
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'microapp/js/register.js' %}"></script>
+{% endblock %} 

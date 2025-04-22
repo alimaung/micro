@@ -1,0 +1,472 @@
+{% load static %}
+
+<div class="settings-section" id="machine-management-container">
+    <div class="settings-section-header">
+        <h2>Machine Management</h2>
+        <p class="section-description">Monitor and manage all connected SMA processing stations</p>
+    </div>
+
+    <div class="machine-metrics-panel">
+        <div class="metric-card">
+            <div class="metric-icon">
+                <i class="fas fa-server"></i>
+            </div>
+            <div class="metric-data">
+                <span class="metric-value">12</span>
+                <span class="metric-label">Total Machines</span>
+            </div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-icon online">
+                <i class="fas fa-plug"></i>
+            </div>
+            <div class="metric-data">
+                <span class="metric-value">8</span>
+                <span class="metric-label">Online</span>
+            </div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-icon offline">
+                <i class="fas fa-power-off"></i>
+            </div>
+            <div class="metric-data">
+                <span class="metric-value">3</span>
+                <span class="metric-label">Offline</span>
+            </div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-icon maintenance">
+                <i class="fas fa-tools"></i>
+            </div>
+            <div class="metric-data">
+                <span class="metric-value">1</span>
+                <span class="metric-label">Maintenance</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="machine-management-controls">
+        <div class="filter-controls">
+            <div class="filter-group">
+                <select id="os-type-filter" class="form-control">
+                    <option value="all">All OS Types</option>
+                    <option value="windows">Windows</option>
+                    <option value="linux">Linux</option>
+                    <option value="macos">macOS</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <select id="group-filter" class="form-control">
+                    <option value="all">All Groups</option>
+                    <option value="production">Production</option>
+                    <option value="testing">Testing</option>
+                    <option value="development">Development</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <select id="status-filter" class="form-control">
+                    <option value="all">All Statuses</option>
+                    <option value="online">Online</option>
+                    <option value="offline">Offline</option>
+                    <option value="maintenance">Maintenance</option>
+                </select>
+            </div>
+            <div class="filter-group search-group">
+                <div class="search-input-wrapper">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="machine-search" class="form-control" placeholder="Search machines...">
+                </div>
+            </div>
+        </div>
+        
+        <div class="view-controls">
+            <div class="toggle-group">
+                <input type="radio" id="grid-view" name="view-type" checked>
+                <label for="grid-view"><i class="fas fa-th"></i></label>
+                <input type="radio" id="list-view" name="view-type">
+                <label for="list-view"><i class="fas fa-list"></i></label>
+            </div>
+            <button id="add-machine-btn" class="btn btn-primary"><i class="fas fa-plus"></i> Add Machine</button>
+        </div>
+    </div>
+    
+    <div class="machine-grid">
+        <!-- Machine 1 -->
+        <div class="machine-card" data-os="windows" data-group="production">
+            <div class="machine-header">
+                <div class="machine-info">
+                    <h3 class="machine-name">SMA-PROD-01</h3>
+                    <div class="machine-status">
+                        <span class="ping-dot"></span>
+                        <span>Online</span>
+                    </div>
+                </div>
+                <div class="machine-actions">
+                    <a href="#" class="action-power" title="Power">
+                        <i class="fas fa-power-off"></i>
+                    </a>
+                    <a href="#" class="action-sync" title="Sync">
+                        <i class="fas fa-sync"></i>
+                    </a>
+                    <a href="#" class="action-terminal" title="Terminal">
+                        <i class="fas fa-terminal"></i>
+                    </a>
+                    <div class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right">
+                            <a href="#" class="dropdown-item" data-action="edit">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                            <a href="#" class="dropdown-item" data-action="remote">
+                                <i class="fas fa-desktop"></i> Remote Access
+                            </a>
+                            <a href="#" class="dropdown-item" data-action="update">
+                                <i class="fas fa-download"></i> Update Software
+                            </a>
+                            <a href="#" class="dropdown-item" data-action="logs">
+                                <i class="fas fa-clipboard-list"></i> View Logs
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" class="dropdown-item text-danger" data-action="decommission">
+                                <i class="fas fa-trash-alt"></i> Decommission
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="machine-body">
+                <div class="machine-details">
+                    <div class="detail-group">
+                        <div class="detail-label">OS</div>
+                        <div class="detail-value">
+                            <i class="fab fa-windows"></i> Windows 10 Pro
+                        </div>
+                    </div>
+                    <div class="detail-group">
+                        <div class="detail-label">IP</div>
+                        <div class="detail-value">192.168.1.101</div>
+                    </div>
+                    <div class="detail-group">
+                        <div class="detail-label">Group</div>
+                        <div class="detail-value">Production</div>
+                    </div>
+                    <div class="detail-group">
+                        <div class="detail-label">Last Seen</div>
+                        <div class="detail-value">Just now</div>
+                    </div>
+                </div>
+                
+                <div class="machine-stats">
+                    <div class="machine-subtabs">
+                        <div class="subtab active" data-target="performance-stats-1">Performance</div>
+                        <div class="subtab" data-target="system-info-1">System Info</div>
+                    </div>
+                    
+                    <div class="machine-subtab-content active" id="performance-stats-1">
+                        <div class="performance-metrics">
+                            <div class="metric" data-type="cpu">
+                                <div class="circular-progress" style="--progress: 45">
+                                    <div class="progress-circle"></div>
+                                    <div class="progress-value">45%</div>
+                                </div>
+                                <div class="metric-label">CPU</div>
+                            </div>
+                            <div class="metric" data-type="ram">
+                                <div class="circular-progress" style="--progress: 60">
+                                    <div class="progress-circle"></div>
+                                    <div class="progress-value">60%</div>
+                                </div>
+                                <div class="metric-label">RAM</div>
+                            </div>
+                            <div class="metric" data-type="disk">
+                                <div class="circular-progress" style="--progress: 35">
+                                    <div class="progress-circle"></div>
+                                    <div class="progress-value">35%</div>
+                                </div>
+                                <div class="metric-label">Disk</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="machine-subtab-content" id="system-info-1">
+                        <ul class="system-info-list">
+                            <li><span>CPU:</span> Intel Core i7-9700K</li>
+                            <li><span>RAM:</span> 32GB DDR4</li>
+                            <li><span>Storage:</span> 1TB SSD</li>
+                            <li><span>SMA Version:</span> 2.3.1</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Machine 2 - Offline -->
+        <div class="machine-card offline" data-os="windows" data-group="production">
+            <div class="machine-header">
+                <div class="machine-info">
+                    <h3 class="machine-name">SMA-PROD-02</h3>
+                    <div class="machine-status">
+                        <span class="ping-dot offline"></span>
+                        <span>Offline</span>
+                    </div>
+                </div>
+                <div class="machine-actions">
+                    <a href="#" class="action-power" title="Power">
+                        <i class="fas fa-power-off"></i>
+                    </a>
+                    <a href="#" class="action-sync" title="Sync">
+                        <i class="fas fa-sync"></i>
+                    </a>
+                    <a href="#" class="action-terminal" title="Terminal">
+                        <i class="fas fa-terminal"></i>
+                    </a>
+                    <div class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right">
+                            <a href="#" class="dropdown-item" data-action="edit">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                            <a href="#" class="dropdown-item disabled" data-action="remote">
+                                <i class="fas fa-desktop"></i> Remote Access
+                            </a>
+                            <a href="#" class="dropdown-item disabled" data-action="update">
+                                <i class="fas fa-download"></i> Update Software
+                            </a>
+                            <a href="#" class="dropdown-item" data-action="logs">
+                                <i class="fas fa-clipboard-list"></i> View Logs
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" class="dropdown-item text-danger" data-action="decommission">
+                                <i class="fas fa-trash-alt"></i> Decommission
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="machine-body">
+                <div class="machine-details">
+                    <div class="detail-group">
+                        <div class="detail-label">OS</div>
+                        <div class="detail-value">
+                            <i class="fab fa-windows"></i> Windows 10 Pro
+                        </div>
+                    </div>
+                    <div class="detail-group">
+                        <div class="detail-label">IP</div>
+                        <div class="detail-value">192.168.1.102</div>
+                    </div>
+                    <div class="detail-group">
+                        <div class="detail-label">Group</div>
+                        <div class="detail-value">Production</div>
+                    </div>
+                    <div class="detail-group">
+                        <div class="detail-label">Last Seen</div>
+                        <div class="detail-value">2 days ago</div>
+                    </div>
+                </div>
+                
+                <div class="machine-stats">
+                    <div class="offline-message">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p>Machine is offline. Last reported status on 01/05/2023.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Machine 3 - Maintenance -->
+        <div class="machine-card maintenance" data-os="linux" data-group="testing">
+            <div class="machine-header">
+                <div class="machine-info">
+                    <h3 class="machine-name">SMA-TEST-01</h3>
+                    <div class="machine-status">
+                        <span class="ping-dot maintenance"></span>
+                        <span>Maintenance</span>
+                    </div>
+                </div>
+                <div class="machine-actions">
+                    <a href="#" class="action-power" title="Power">
+                        <i class="fas fa-power-off"></i>
+                    </a>
+                    <a href="#" class="action-sync" title="Sync">
+                        <i class="fas fa-sync"></i>
+                    </a>
+                    <a href="#" class="action-terminal" title="Terminal">
+                        <i class="fas fa-terminal"></i>
+                    </a>
+                    <div class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right">
+                            <a href="#" class="dropdown-item" data-action="edit">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                            <a href="#" class="dropdown-item" data-action="remote">
+                                <i class="fas fa-desktop"></i> Remote Access
+                            </a>
+                            <a href="#" class="dropdown-item" data-action="update">
+                                <i class="fas fa-download"></i> Update Software
+                            </a>
+                            <a href="#" class="dropdown-item" data-action="logs">
+                                <i class="fas fa-clipboard-list"></i> View Logs
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" class="dropdown-item text-danger" data-action="decommission">
+                                <i class="fas fa-trash-alt"></i> Decommission
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="machine-body">
+                <div class="machine-details">
+                    <div class="detail-group">
+                        <div class="detail-label">OS</div>
+                        <div class="detail-value">
+                            <i class="fab fa-linux"></i> Ubuntu 20.04
+                        </div>
+                    </div>
+                    <div class="detail-group">
+                        <div class="detail-label">IP</div>
+                        <div class="detail-value">192.168.1.103</div>
+                    </div>
+                    <div class="detail-group">
+                        <div class="detail-label">Group</div>
+                        <div class="detail-value">Testing</div>
+                    </div>
+                    <div class="detail-group">
+                        <div class="detail-label">Last Seen</div>
+                        <div class="detail-value">5 hours ago</div>
+                    </div>
+                </div>
+                
+                <div class="machine-stats">
+                    <div class="maintenance-message">
+                        <i class="fas fa-tools"></i>
+                        <p>Scheduled maintenance: Hardware upgrade in progress.</p>
+                        <div class="maintenance-timer">
+                            <span class="timer-label">Estimated completion:</span>
+                            <span class="timer-value">2 hours</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Machine 4 -->
+        <div class="machine-card" data-os="macos" data-group="development">
+            <div class="machine-header">
+                <div class="machine-info">
+                    <h3 class="machine-name">SMA-DEV-01</h3>
+                    <div class="machine-status">
+                        <span class="ping-dot"></span>
+                        <span>Online</span>
+                    </div>
+                </div>
+                <div class="machine-actions">
+                    <a href="#" class="action-power" title="Power">
+                        <i class="fas fa-power-off"></i>
+                    </a>
+                    <a href="#" class="action-sync" title="Sync">
+                        <i class="fas fa-sync"></i>
+                    </a>
+                    <a href="#" class="action-terminal" title="Terminal">
+                        <i class="fas fa-terminal"></i>
+                    </a>
+                    <div class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right">
+                            <a href="#" class="dropdown-item" data-action="edit">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                            <a href="#" class="dropdown-item" data-action="remote">
+                                <i class="fas fa-desktop"></i> Remote Access
+                            </a>
+                            <a href="#" class="dropdown-item" data-action="update">
+                                <i class="fas fa-download"></i> Update Software
+                            </a>
+                            <a href="#" class="dropdown-item" data-action="logs">
+                                <i class="fas fa-clipboard-list"></i> View Logs
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" class="dropdown-item text-danger" data-action="decommission">
+                                <i class="fas fa-trash-alt"></i> Decommission
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="machine-body">
+                <div class="machine-details">
+                    <div class="detail-group">
+                        <div class="detail-label">OS</div>
+                        <div class="detail-value">
+                            <i class="fab fa-apple"></i> macOS 12.3
+                        </div>
+                    </div>
+                    <div class="detail-group">
+                        <div class="detail-label">IP</div>
+                        <div class="detail-value">192.168.1.104</div>
+                    </div>
+                    <div class="detail-group">
+                        <div class="detail-label">Group</div>
+                        <div class="detail-value">Development</div>
+                    </div>
+                    <div class="detail-group">
+                        <div class="detail-label">Last Seen</div>
+                        <div class="detail-value">Just now</div>
+                    </div>
+                </div>
+                
+                <div class="machine-stats">
+                    <div class="machine-subtabs">
+                        <div class="subtab active" data-target="performance-stats-4">Performance</div>
+                        <div class="subtab" data-target="system-info-4">System Info</div>
+                    </div>
+                    
+                    <div class="machine-subtab-content active" id="performance-stats-4">
+                        <div class="performance-metrics">
+                            <div class="metric" data-type="cpu">
+                                <div class="circular-progress" style="--progress: 25">
+                                    <div class="progress-circle"></div>
+                                    <div class="progress-value">25%</div>
+                                </div>
+                                <div class="metric-label">CPU</div>
+                            </div>
+                            <div class="metric" data-type="ram">
+                                <div class="circular-progress" style="--progress: 40">
+                                    <div class="progress-circle"></div>
+                                    <div class="progress-value">40%</div>
+                                </div>
+                                <div class="metric-label">RAM</div>
+                            </div>
+                            <div class="metric" data-type="disk">
+                                <div class="circular-progress" style="--progress: 65">
+                                    <div class="progress-circle"></div>
+                                    <div class="progress-value">65%</div>
+                                </div>
+                                <div class="metric-label">Disk</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="machine-subtab-content" id="system-info-4">
+                        <ul class="system-info-list">
+                            <li><span>CPU:</span> Apple M1 Pro</li>
+                            <li><span>RAM:</span> 16GB Unified</li>
+                            <li><span>Storage:</span> 512GB SSD</li>
+                            <li><span>SMA Version:</span> 2.3.0</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

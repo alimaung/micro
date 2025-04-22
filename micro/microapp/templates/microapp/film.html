@@ -1,0 +1,507 @@
+{% extends 'microapp/base.html' %}
+
+{% block title %}Film Controller - Microfilm Processing System{% endblock %}
+
+{% load static %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'microapp/css/film.css' %}">
+    <style>
+        /* Critical dark mode overrides to ensure dark mode works */
+        .dark-mode .stat-item {
+            background-color: rgba(255, 255, 255, 0.05) !important;
+            border: 1px solid var(--color-dark-border) !important;
+        }
+        .dark-mode .stat-value {
+            color: var(--color-primary) !important;
+        }
+        .dark-mode .stat-label {
+            color: var(--color-dark-text-light) !important;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="film-container">
+        <!-- Header Section -->
+        <div class="film-header">
+            <div class="header-content">
+                <h1>Microfilm Controller</h1>
+                <p class="subtitle">Control and monitor the filming process for registered projects</p>
+            </div>
+            <div class="quick-stats">
+                <div class="stat-item">
+                    <span class="stat-value">16</span>
+                    <span class="stat-label">Projects Waiting</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">4</span>
+                    <span class="stat-label">In Progress</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">128</span>
+                    <span class="stat-label">Completed</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Project Selection Section -->
+        <div class="project-selection-card">
+            <div class="card-header">
+                <h2>Select Project to Film</h2>
+                <div class="mode-selector">
+                    <span class="mode-label">Film Type:</span>
+                    <div class="toggle-container">
+                        <input type="radio" id="film-16mm" name="film-type" value="16" checked>
+                        <label for="film-16mm">16mm</label>
+                        <input type="radio" id="film-35mm" name="film-type" value="35">
+                        <label for="film-35mm">35mm</label>
+                    </div>
+                </div>
+            </div>
+            <div class="search-filter">
+                <div class="search-box">
+                    <input type="text" id="project-search" placeholder="Search projects...">
+                    <button id="search-button">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+                <div class="filter-options">
+                    <select id="project-status-filter">
+                        <option value="all">All Statuses</option>
+                        <option value="ready" selected>Ready to Film</option>
+                        <option value="in-progress">In Progress</option>
+                        <option value="completed">Completed</option>
+                    </select>
+                    <select id="project-type-filter">
+                        <option value="all">All Types</option>
+                        <option value="document">Document</option>
+                        <option value="book">Book</option>
+                        <option value="archive">Archive</option>
+                        <option value="newspaper">Newspaper</option>
+                    </select>
+                </div>
+            </div>
+            <div class="projects-list">
+                <div class="list-header">
+                    <span class="project-name">Project Name</span>
+                    <span class="project-id">Project ID</span>
+                    <span class="project-date">Created Date</span>
+                    <span class="project-pages">Pages</span>
+                    <span class="project-type">Type</span>
+                    <span class="project-status">Status</span>
+                    <span class="project-action">Action</span>
+                </div>
+                <div class="list-body">
+                    <div class="project-item selected" data-id="ARC-2023-001">
+                        <span class="project-name">Financial Records 2023</span>
+                        <span class="project-id">ARC-2023-001</span>
+                        <span class="project-date">2023-01-15</span>
+                        <span class="project-pages">423</span>
+                        <span class="project-type">Document</span>
+                        <span class="project-status"><span class="status-badge ready">Ready</span></span>
+                        <span class="project-action"><button class="action-button select-button">Select</button></span>
+                    </div>
+                    <div class="project-item" data-id="ARC-2023-002">
+                        <span class="project-name">Historical Manuscripts</span>
+                        <span class="project-id">ARC-2023-002</span>
+                        <span class="project-date">2023-02-22</span>
+                        <span class="project-pages">856</span>
+                        <span class="project-type">Book</span>
+                        <span class="project-status"><span class="status-badge ready">Ready</span></span>
+                        <span class="project-action"><button class="action-button select-button">Select</button></span>
+                    </div>
+                    <div class="project-item" data-id="ARC-2023-003">
+                        <span class="project-name">Daily Chronicle 1950-1960</span>
+                        <span class="project-id">ARC-2023-003</span>
+                        <span class="project-date">2023-03-10</span>
+                        <span class="project-pages">12450</span>
+                        <span class="project-type">Newspaper</span>
+                        <span class="project-status"><span class="status-badge completed">Completed</span></span>
+                        <span class="project-action"><button class="action-button view-button">View</button></span>
+                    </div>
+                    <div class="project-item" data-id="ARC-2023-004">
+                        <span class="project-name">Corporate Records</span>
+                        <span class="project-id">ARC-2023-004</span>
+                        <span class="project-date">2023-04-05</span>
+                        <span class="project-pages">327</span>
+                        <span class="project-type">Archive</span>
+                        <span class="project-status"><span class="status-badge in-progress">In Progress</span></span>
+                        <span class="project-action"><button class="action-button resume-button">Resume</button></span>
+                    </div>
+                    <div class="project-item" data-id="ARC-2023-005">
+                        <span class="project-name">Legal Documents</span>
+                        <span class="project-id">ARC-2023-005</span>
+                        <span class="project-date">2023-05-18</span>
+                        <span class="project-pages">189</span>
+                        <span class="project-type">Document</span>
+                        <span class="project-status"><span class="status-badge ready">Ready</span></span>
+                        <span class="project-action"><button class="action-button select-button">Select</button></span>
+                    </div>
+                </div>
+            </div>
+            <div class="project-actions">
+                <button id="start-filming" class="primary-button">
+                    <i class="fas fa-film"></i> Start Filming Process
+                </button>
+                <button id="recovery-mode" class="secondary-button">
+                    <i class="fas fa-sync-alt"></i> Recovery Mode
+                </button>
+            </div>
+        </div>
+
+        <!-- Filming Process Section (initially hidden) -->
+        <div id="filming-process-section" class="filming-process-card">
+            <div class="card-header">
+                <h2>Filming Process: <span id="filming-project-name">Financial Records 2023</span></h2>
+                <span class="film-number">Film #: <span id="film-number">F-16-0001</span></span>
+            </div>
+            
+            <!-- Progress Indicators -->
+            <div class="progress-indicators">
+                <div class="progress-step completed" data-step="initialization">
+                    <div class="step-icon">
+                        <i class="fas fa-power-off"></i>
+                    </div>
+                    <div class="step-label">
+                        Initialization
+                    </div>
+                    <div class="step-connector"></div>
+                </div>
+                <div class="progress-step completed" data-step="preparation">
+                    <div class="step-icon">
+                        <i class="fas fa-cog"></i>
+                    </div>
+                    <div class="step-label">
+                        Preparation
+                    </div>
+                    <div class="step-connector"></div>
+                </div>
+                <div class="progress-step in-progress" data-step="filming">
+                    <div class="step-icon">
+                        <i class="fas fa-camera"></i>
+                    </div>
+                    <div class="step-label">
+                        Filming
+                    </div>
+                    <div class="step-connector"></div>
+                </div>
+                <div class="progress-step" data-step="end-symbols">
+                    <div class="step-icon">
+                        <i class="fas fa-bookmark"></i>
+                    </div>
+                    <div class="step-label">
+                        End Symbols
+                    </div>
+                    <div class="step-connector"></div>
+                </div>
+                <div class="progress-step" data-step="transport">
+                    <div class="step-icon">
+                        <i class="fas fa-forward"></i>
+                    </div>
+                    <div class="step-label">
+                        Film Transport
+                    </div>
+                    <div class="step-connector"></div>
+                </div>
+                <div class="progress-step" data-step="completion">
+                    <div class="step-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="step-label">
+                        Completion
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Current Activity Section -->
+            <div class="current-activity">
+                <h3>Current Activity: <span id="current-activity-label">Processing Documents</span></h3>
+                <div class="activity-details">
+                    <div class="activity-info">
+                        <div class="info-item">
+                            <span class="info-label">Processed:</span>
+                            <span class="info-value" id="processed-count">127</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Remaining:</span>
+                            <span class="info-value" id="remaining-count">296</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Total:</span>
+                            <span class="info-value" id="total-count">423</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">ETA:</span>
+                            <span class="info-value" id="eta-time">14:32:45</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Rate:</span>
+                            <span class="info-value" id="processing-rate">3.2 docs/sec</span>
+                        </div>
+                    </div>
+                    <div class="activity-progress">
+                        <div class="progress-bar-container">
+                            <div class="progress-bar" id="filming-progress-bar" style="width: 30%"></div>
+                        </div>
+                        <div class="progress-percentage" id="progress-percentage">30%</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Real-time Log Section -->
+            <div class="log-section">
+                <div class="log-header">
+                    <h3>Process Log</h3>
+                    <button id="expand-log" class="icon-button">
+                        <i class="fas fa-expand-alt"></i>
+                    </button>
+                </div>
+                <div class="log-content" id="log-content">
+                    <div class="log-entry info"><span class="timestamp">14:15:23</span><span class="log-text">Initializing SMA application...</span></div>
+                    <div class="log-entry info"><span class="timestamp">14:15:25</span><span class="log-text">Application started successfully</span></div>
+                    <div class="log-entry info"><span class="timestamp">14:15:27</span><span class="log-text">Selecting template: Portrait - 16mm.TPL</span></div>
+                    <div class="log-entry info"><span class="timestamp">14:15:30</span><span class="log-text">Starting new filming session</span></div>
+                    <div class="log-entry info"><span class="timestamp">14:15:42</span><span class="log-text">Film inserted successfully</span></div>
+                    <div class="log-entry info"><span class="timestamp">14:15:45</span><span class="log-text">Film number set to: F-16-0001</span></div>
+                    <div class="log-entry info"><span class="timestamp">14:16:01</span><span class="log-text">Beginning document processing</span></div>
+                    <div class="log-entry info"><span class="timestamp">14:16:15</span><span class="log-text">Progress: 5.2% (22/423) - ETA: 14:32:45</span></div>
+                    <div class="log-entry info"><span class="timestamp">14:17:05</span><span class="log-text">Progress: 12.8% (54/423) - ETA: 14:31:30</span></div>
+                    <div class="log-entry info"><span class="timestamp">14:18:25</span><span class="log-text">Progress: 21.7% (92/423) - ETA: 14:32:10</span></div>
+                    <div class="log-entry info"><span class="timestamp">14:19:40</span><span class="log-text">Progress: 30.0% (127/423) - ETA: 14:32:45</span></div>
+                </div>
+            </div>
+            
+            <!-- Controls Section -->
+            <div class="filming-controls">
+                <button id="pause-filming" class="control-button warning-button">
+                    <i class="fas fa-pause"></i> Pause Filming
+                </button>
+                <button id="cancel-filming" class="control-button danger-button">
+                    <i class="fas fa-stop"></i> Cancel Filming
+                </button>
+                <button id="mock-next-step" class="control-button success-button">
+                    <i class="fas fa-step-forward"></i> Next Step (Mock)
+                </button>
+            </div>
+        </div>
+        
+        <!-- Machine Status Section -->
+        <div class="machine-status-card">
+            <div class="card-header">
+                <h2>Filming Machine Status</h2>
+                <span class="status-indicator online">
+                    <i class="fas fa-plug"></i> Connected
+                </span>
+            </div>
+            <div class="machine-details">
+                <div class="machine-info-panel">
+                    <div class="machine-info-item">
+                        <span class="info-icon"><i class="fas fa-thermometer-half"></i></span>
+                        <div class="info-content">
+                            <span class="info-label">System Temperature</span>
+                            <span class="info-value">28.4°C <span class="status-normal">Normal</span></span>
+                        </div>
+                    </div>
+                    <div class="machine-info-item">
+                        <span class="info-icon"><i class="fas fa-tachometer-alt"></i></span>
+                        <div class="info-content">
+                            <span class="info-label">Processing Speed</span>
+                            <span class="info-value">3.2 docs/sec <span class="status-normal">Normal</span></span>
+                        </div>
+                    </div>
+                    <div class="machine-info-item">
+                        <span class="info-icon"><i class="fas fa-film"></i></span>
+                        <div class="info-content">
+                            <span class="info-label">Film Remaining</span>
+                            <span class="info-value">65% <span class="status-normal">Normal</span></span>
+                        </div>
+                    </div>
+                    <div class="machine-info-item">
+                        <span class="info-icon"><i class="fas fa-memory"></i></span>
+                        <div class="info-content">
+                            <span class="info-label">Buffer Status</span>
+                            <span class="info-value">32% <span class="status-normal">Normal</span></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="machine-stats">
+                    <div class="machine-stat">
+                        <canvas id="temperature-chart" class="stat-chart"></canvas>
+                        <span class="stat-title">Temperature (Last 30 min)</span>
+                    </div>
+                    <div class="machine-stat">
+                        <canvas id="processing-chart" class="stat-chart"></canvas>
+                        <span class="stat-title">Processing Rate (Last 30 min)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recently Completed Section -->
+        <div class="recent-films-card">
+            <div class="card-header">
+                <h2>Recently Completed Films</h2>
+                <button class="view-all-button">
+                    <i class="fas fa-list"></i> View All
+                </button>
+            </div>
+            <div class="recent-films-grid">
+                <div class="recent-film">
+                    <div class="film-header">
+                        <span class="film-title">Daily Chronicle 1950-1960</span>
+                        <span class="film-date">Mar 10, 2023</span>
+                    </div>
+                    <div class="film-details">
+                        <div class="film-detail-item">
+                            <span class="detail-label">Film #:</span>
+                            <span class="detail-value">F-35-0002, F-35-0003</span>
+                        </div>
+                        <div class="film-detail-item">
+                            <span class="detail-label">Pages:</span>
+                            <span class="detail-value">12,450</span>
+                        </div>
+                        <div class="film-detail-item">
+                            <span class="detail-label">Type:</span>
+                            <span class="detail-value">Newspaper</span>
+                        </div>
+                        <div class="film-detail-item">
+                            <span class="detail-label">Duration:</span>
+                            <span class="detail-value">4h 23m</span>
+                        </div>
+                    </div>
+                    <div class="film-actions">
+                        <button class="film-action-button">
+                            <i class="fas fa-file-alt"></i> View Log
+                        </button>
+                        <button class="film-action-button">
+                            <i class="fas fa-info-circle"></i> Details
+                        </button>
+                    </div>
+                </div>
+                <div class="recent-film">
+                    <div class="film-header">
+                        <span class="film-title">Annual Reports 2015-2020</span>
+                        <span class="film-date">Mar 5, 2023</span>
+                    </div>
+                    <div class="film-details">
+                        <div class="film-detail-item">
+                            <span class="detail-label">Film #:</span>
+                            <span class="detail-value">F-16-0005</span>
+                        </div>
+                        <div class="film-detail-item">
+                            <span class="detail-label">Pages:</span>
+                            <span class="detail-value">548</span>
+                        </div>
+                        <div class="film-detail-item">
+                            <span class="detail-label">Type:</span>
+                            <span class="detail-value">Document</span>
+                        </div>
+                        <div class="film-detail-item">
+                            <span class="detail-label">Duration:</span>
+                            <span class="detail-value">1h 05m</span>
+                        </div>
+                    </div>
+                    <div class="film-actions">
+                        <button class="film-action-button">
+                            <i class="fas fa-file-alt"></i> View Log
+                        </button>
+                        <button class="film-action-button">
+                            <i class="fas fa-info-circle"></i> Details
+                        </button>
+                    </div>
+                </div>
+                <div class="recent-film">
+                    <div class="film-header">
+                        <span class="film-title">City Planning Documents</span>
+                        <span class="film-date">Feb 28, 2023</span>
+                    </div>
+                    <div class="film-details">
+                        <div class="film-detail-item">
+                            <span class="detail-label">Film #:</span>
+                            <span class="detail-value">F-35-0001</span>
+                        </div>
+                        <div class="film-detail-item">
+                            <span class="detail-label">Pages:</span>
+                            <span class="detail-value">783</span>
+                        </div>
+                        <div class="film-detail-item">
+                            <span class="detail-label">Type:</span>
+                            <span class="detail-value">Archive</span>
+                        </div>
+                        <div class="film-detail-item">
+                            <span class="detail-label">Duration:</span>
+                            <span class="detail-value">1h 42m</span>
+                        </div>
+                    </div>
+                    <div class="film-actions">
+                        <button class="film-action-button">
+                            <i class="fas fa-file-alt"></i> View Log
+                        </button>
+                        <button class="film-action-button">
+                            <i class="fas fa-info-circle"></i> Details
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{% static 'microapp/js/film.js' %}"></script>
+<script>
+    // Script to ensure dark mode variables are properly set
+    document.addEventListener('DOMContentLoaded', function() {
+        // Check if dark mode is already enabled on load
+        if (document.body.classList.contains('dark-mode')) {
+            applyDarkModeToStatItems();
+        }
+        
+        // Add dark mode toggle listener
+        const darkModeToggle = document.getElementById('dark-mode-toggle');
+        if (darkModeToggle) {
+            darkModeToggle.addEventListener('click', function() {
+                // Since the main.js will toggle the class, we need a short delay
+                setTimeout(function() {
+                    applyDarkModeToStatItems();
+                }, 300);
+            });
+        }
+        
+        // Direct dark mode application to stat items
+        function applyDarkModeToStatItems() {
+            const isDark = document.body.classList.contains('dark-mode');
+            const statItems = document.querySelectorAll('.stat-item');
+            
+            statItems.forEach(function(item) {
+                if (isDark) {
+                    item.style.setProperty('background-color', 'rgba(255, 255, 255, 0.05)', 'important');
+                    item.style.setProperty('border', '1px solid #3c4043', 'important');
+                } else {
+                    item.style.removeProperty('background-color');
+                    item.style.removeProperty('border');
+                }
+            });
+            
+            const statValues = document.querySelectorAll('.stat-value');
+            statValues.forEach(function(value) {
+                if (isDark) {
+                    value.style.setProperty('color', '#1a73e8', 'important');
+                } else {
+                    value.style.removeProperty('color');
+                }
+            });
+            
+            const statLabels = document.querySelectorAll('.stat-label');
+            statLabels.forEach(function(label) {
+                if (isDark) {
+                    label.style.setProperty('color', '#bdc1c6', 'important');
+                } else {
+                    label.style.removeProperty('color');
+                }
+            });
+        }
+    });
+</script>
+{% endblock %} 

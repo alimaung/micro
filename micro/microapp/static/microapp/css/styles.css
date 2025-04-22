@@ -1,0 +1,351 @@
+/* Main Styles for Microfilm Processing System */
+
+/* Font definition for Sofia Sans Variable Font */
+@font-face {
+    font-family: 'Sofia Sans';
+    src: url('../fonts/SofiaSans-VariableFont_wght.ttf') format('truetype');
+    font-weight: 100 900; /* Variable font weight range */
+    font-style: normal;
+    font-display: swap; /* Ensures text remains visible during font loading */
+}
+
+:root {
+    /* Color variables */
+    --color-primary: #1a73e8;
+    --color-primary-rgb: 26, 115, 232; /* Adding the RGB values for --color-primary */
+    --color-primary-dark: #1557b0;
+    --color-secondary: #546e7a;
+    --color-text: #3c4043;
+    --color-text-light: #5f6368;
+    --color-background: #ffffff;
+    --color-surface: #f8f9fa;
+    --color-border: #e0e0e0;
+    --color-border-rgb: 224, 224, 224; /* Adding the RGB values for --color-border */
+    --color-shadow: rgba(0, 0, 0, 0.1);
+    
+    /* Dark mode colors */
+    --color-dark-background: #202124;
+    --color-dark-surface: #292a2d;
+    --color-dark-text: #e0e0e0;
+    --color-dark-text-light: #bdc1c6;
+    --color-dark-border: #3c4043;
+    --color-dark-shadow: rgba(0, 0, 0, 0.25);
+    
+    /* Font weights using the variable font */
+    --font-weight-light: 300;
+    --font-weight-regular: 400;
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+    --font-weight-bold: 700;
+    
+    /* Animation */
+    --transition-speed: 0.25s;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--color-background);
+    color: var(--color-text);
+    font-family: 'Sofia Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.5;
+    transition: background-color var(--transition-speed) ease,
+                color var(--transition-speed) ease;
+    font-weight: var(--font-weight-regular);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.dark-mode {
+    background-color: var(--color-dark-background);
+    color: var(--color-dark-text);
+}
+
+/* Navbar */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--color-background);
+    padding: 0 2rem;
+    box-shadow: 0 2px 4px var(--color-shadow);
+    height: 64px;
+    position: relative;
+    z-index: 10;
+    transition: background-color var(--transition-speed) ease,
+                box-shadow var(--transition-speed) ease;
+}
+
+.dark-mode .navbar {
+    background-color: var(--color-dark-surface);
+    box-shadow: 0 2px 4px var(--color-dark-shadow);
+}
+
+/* Brand and Logo */
+.navbar-brand {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    height: 100%;
+    position: relative;
+}
+
+.navbar-brand img {
+    height: 40px;
+    width: auto;
+    transition: transform var(--transition-speed) ease;
+}
+
+.navbar-brand img:hover {
+    transform: scale(1.05);
+}
+
+.navbar-brand span {
+    font-size: 1.4rem;
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text);
+    margin-left: 12px;
+    letter-spacing: -0.5px;
+}
+
+.dark-mode .navbar-brand span {
+    color: var(--color-dark-text);
+}
+
+/* Navigation Links */
+.navbar-links {
+    display: flex;
+    gap: 1.5rem;
+    height: 100%;
+    align-items: center;
+}
+
+.navbar-links a {
+    color: var(--color-text-light);
+    text-decoration: none;
+    font-weight: var(--font-weight-medium);
+    height: 100%;
+    display: flex;
+    align-items: center;
+    font-size: 0.95rem;
+    position: relative;
+    padding: 0 8px;
+    transition: color var(--transition-speed) ease;
+}
+
+.navbar-links a::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background-color: var(--color-primary);
+    transform: scaleX(0);
+    transition: transform var(--transition-speed) ease;
+}
+
+.navbar-links a:hover {
+    color: var(--color-primary);
+}
+
+.navbar-links a:hover::after {
+    transform: scaleX(1);
+}
+
+.navbar-links a.active {
+    color: var(--color-primary);
+}
+
+.navbar-links a.active::after {
+    transform: scaleX(1);
+}
+
+.dark-mode .navbar-links a {
+    color: var(--color-dark-text-light);
+}
+
+.dark-mode .navbar-links a:hover,
+.dark-mode .navbar-links a.active {
+    color: var(--color-primary);
+}
+
+/* Navbar Icons */
+.navbar-icons {
+    display: flex;
+    gap: 1.5rem;
+    height: 100%;
+    align-items: center;
+}
+
+.navbar-icons a, 
+#dark-mode-toggle {
+    color: var(--color-text-light);
+    text-decoration: none;
+    font-size: 1.1rem;
+    height: 40px;
+    width: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color var(--transition-speed) ease,
+                color var(--transition-speed) ease,
+                transform 0.2s ease;
+}
+
+.navbar-icons a:hover, 
+#dark-mode-toggle:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+    color: var(--color-primary);
+    transform: scale(1.1);
+}
+
+.dark-mode .navbar-icons a, 
+.dark-mode #dark-mode-toggle {
+    color: var(--color-dark-text-light);
+}
+
+.dark-mode .navbar-icons a:hover, 
+.dark-mode #dark-mode-toggle:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--color-primary);
+}
+
+/* Content area */
+.content {
+    padding: 2rem;
+    min-height: calc(100vh - 64px);
+    transition: background-color var(--transition-speed) ease, 
+                color var(--transition-speed) ease,
+                opacity 0.3s ease;
+    opacity: 1;
+    animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.dark-mode .content {
+    background-color: var(--color-dark-background);
+}
+
+/* Card styles */
+.card {
+    background: var(--color-background);
+    border-radius: 8px;
+    box-shadow: 0 1px 3px var(--color-shadow), 
+                0 2px 8px var(--color-shadow);
+    padding: 24px;
+    transition: transform 0.3s ease, 
+                box-shadow 0.3s ease,
+                background-color var(--transition-speed) ease, 
+                color var(--transition-speed) ease;
+    display: flex;
+    flex-direction: column;
+    min-height: 200px;
+    border: 1px solid var(--color-border);
+    overflow: hidden;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 8px var(--color-shadow), 
+                0 8px 16px var(--color-shadow);
+}
+
+.dark-mode .card {
+    background: var(--color-dark-surface);
+    color: var(--color-dark-text);
+    border-color: var(--color-dark-border);
+    box-shadow: 0 1px 3px var(--color-dark-shadow), 
+                0 2px 8px var(--color-dark-shadow);
+}
+
+.dark-mode .card:hover {
+    box-shadow: 0 4px 8px var(--color-dark-shadow), 
+                0 8px 16px var(--color-dark-shadow);
+}
+
+.card-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    color: white;
+    font-size: 18px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover .card-icon {
+    transform: scale(1.1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Headings with variable font weights */
+h1, h2, h3, h4, h5, h6 {
+    font-weight: var(--font-weight-semibold);
+    line-height: 1.2;
+    margin-bottom: 0.5em;
+    letter-spacing: -0.02em;
+}
+
+h1 { font-size: 2.5rem; }
+h2 { font-size: 2rem; }
+h3 { font-size: 1.75rem; }
+h4 { font-size: 1.5rem; }
+h5 { font-size: 1.25rem; }
+h6 { font-size: 1rem; }
+
+/* Dark mode toggle icon */
+#dark-mode-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+}
+
+#dark-mode-toggle i {
+    transition: transform 0.5s ease, color var(--transition-speed) ease;
+}
+
+#dark-mode-toggle:hover i {
+    transform: rotate(30deg);
+}
+
+/* Notification Styles */
+.notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 12px 20px;
+    border-radius: 8px;
+    color: white;
+    font-weight: var(--font-weight-medium);
+    z-index: 9999;
+    transform: translateY(100px);
+    opacity: 0;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Loading Animation */
+@keyframes pulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
+}
+
+.loading-state {
+    animation: pulse 1.5s infinite ease-in-out;
+} 

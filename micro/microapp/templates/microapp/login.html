@@ -1,0 +1,206 @@
+{% extends 'microapp/base.html' %}
+{% load static %}
+
+{% block title %}Login - Microfilm Processing System{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'microapp/css/login.css' %}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <!-- Left Panel (Branding & Background) -->
+    <div class="login-brand-panel">
+        <div class="brand-content">
+            <div class="logo-container">
+                <img src="{% static 'microapp/img/logo.png' %}" alt="Microfilm Processing System" class="logo">
+            </div>
+            <h1>Microfilm Processing System</h1>
+            <p class="tagline">Document preservation and archival management</p>
+            <div class="brand-features">
+                <div class="feature">
+                    <i class="fas fa-film"></i>
+                    <span>Advanced Scanning</span>
+                </div>
+                <div class="feature">
+                    <i class="fas fa-database"></i>
+                    <span>Secure Storage</span>
+                </div>
+                <div class="feature">
+                    <i class="fas fa-search"></i>
+                    <span>Smart Retrieval</span>
+                </div>
+                <div class="feature">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Data Protection</span>
+                </div>
+            </div>
+        </div>
+        <div class="overlay"></div>
+    </div>
+
+    <!-- Right Panel (Login Form) -->
+    <div class="login-form-panel">
+        <div class="theme-toggle">
+            <button id="theme-toggle-btn" aria-label="Toggle dark mode">
+                <i class="fas fa-moon"></i>
+                <i class="fas fa-sun"></i>
+            </button>
+        </div>
+        
+        <div class="language-selector">
+            <select id="language-select">
+                <option value="en">English</option>
+                <option value="es">Español</option>
+                <option value="fr">Français</option>
+                <option value="de">Deutsch</option>
+            </select>
+        </div>
+        
+        <div class="form-container">
+            <div class="form-header">
+                <h2>Welcome Back</h2>
+                <p>Please sign in to your account</p>
+            </div>
+            
+            <form id="login-form" action="{% url 'login' %}" method="post">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label for="username">Email or Username</label>
+                    <div class="input-with-icon">
+                        <i class="fas fa-user"></i>
+                        <input type="text" id="username" name="username" required autocomplete="username">
+                    </div>
+                    <div class="error-message" id="username-error"></div>
+                </div>
+                
+                <div class="form-group">
+                    <div class="password-header">
+                        <label for="password">Password</label>
+                        <a href="{% url 'home' %}" class="forgot-password">Forgot password?</a>
+                    </div>
+                    <div class="input-with-icon">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="password" name="password" required autocomplete="current-password">
+                        <button type="button" class="toggle-password" aria-label="Toggle password visibility">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    <div class="error-message" id="password-error"></div>
+                </div>
+                
+                <div class="form-group remember-me">
+                    <label class="checkbox-container">
+                        <input type="checkbox" id="remember" name="remember">
+                        <span class="checkmark"></span>
+                        <span>Remember me</span>
+                    </label>
+                </div>
+
+                {% if error %}
+                <div class="form-error">
+                    {{ error }}
+                </div>
+                {% endif %}
+                
+                <div class="form-group">
+                    <button type="submit" id="login-button" class="btn-login">
+                        <span class="btn-text">Sign In</span>
+                        <span class="spinner"><i class="fas fa-circle-notch fa-spin"></i></span>
+                    </button>
+                </div>
+                
+                <div class="separator">
+                    <span>or continue with</span>
+                </div>
+                
+                <div class="social-login">
+                    <button type="button" class="social-btn google">
+                        <i class="fab fa-google"></i>
+                    </button>
+                    <button type="button" class="social-btn microsoft">
+                        <i class="fab fa-microsoft"></i>
+                    </button>
+                    <button type="button" class="social-btn github">
+                        <i class="fab fa-github"></i>
+                    </button>
+                </div>
+            </form>
+            
+            <div class="guest-login">
+                <a href="{% url 'home' %}" class="guest-link">
+                    <i class="fas fa-user-clock"></i>
+                    Continue as guest
+                </a>
+            </div>
+            
+            <div class="signup-prompt">
+                <p>Don't have an account? <a href="{% url 'home' %}">Sign up</a></p>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>&copy; 2023 Microfilm Processing System | <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a></p>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Notification -->
+<div class="toast" id="toast">
+    <div class="toast-content">
+        <i class="toast-icon fas fa-exclamation-circle"></i>
+        <span class="toast-message">Invalid username or password</span>
+    </div>
+    <button class="toast-close">
+        <i class="fas fa-times"></i>
+    </button>
+</div>
+
+<!-- 2FA Modal -->
+<div class="modal" id="twofa-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Two-Factor Authentication</h3>
+            <button class="modal-close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <p>Please enter the verification code sent to your device</p>
+            <div class="otp-container">
+                <input type="text" maxlength="1" class="otp-input" data-index="1">
+                <input type="text" maxlength="1" class="otp-input" data-index="2">
+                <input type="text" maxlength="1" class="otp-input" data-index="3">
+                <input type="text" maxlength="1" class="otp-input" data-index="4">
+                <input type="text" maxlength="1" class="otp-input" data-index="5">
+                <input type="text" maxlength="1" class="otp-input" data-index="6">
+            </div>
+            <div class="resend-code">
+                <p>Didn't receive code? <a href="#">Resend</a></p>
+            </div>
+            <button type="button" class="btn-verify">Verify</button>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Screen -->
+<div class="loading-overlay" id="loading-overlay">
+    <div class="spinner-container">
+        <div class="spinner-large"></div>
+        <p>Logging in...</p>
+    </div>
+</div>
+
+<!-- CSRF Token Protection Message (for demo) -->
+<div class="security-badge">
+    <i class="fas fa-shield-alt"></i>
+    <span>CSRF Protected</span>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'microapp/js/login.js' %}"></script>
+{% endblock %} 

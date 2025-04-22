@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Microfilm Processing System{% endblock %}</title>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Load our main CSS file -->
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'microapp/css/styles.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <!-- Left side - Brand with Logo as a single clickable element -->
+        <a href="{% url 'home' %}" class="navbar-brand">
+            <img id="logo" src="{% static 'logo_light.png' %}" alt="Micro Logo">
+            <span>micro</span>
+        </a>
+        
+        <!-- Middle - Navigation Links -->
+        <div class="navbar-links">
+            <a href="{% url 'register' %}" {% if request.path == '/register/' %}class="active"{% endif %}>Register</a>
+            <a href="{% url 'film' %}" {% if request.path == '/film/' %}class="active"{% endif %}>Film</a>
+            <a href="{% url 'control' %}" {% if request.path == '/control/' %}class="active"{% endif %}>Control</a>
+            <a href="{% url 'handoff' %}" {% if request.path == '/handoff/' %}class="active"{% endif %}>Handoff</a>
+            <a href="{% url 'explore' %}" {% if request.path == '/explore/' %}class="active"{% endif %}>Explore</a>
+            <a href="{% url 'report' %}" {% if request.path == '/report/' %}class="active"{% endif %}>Report</a>
+        </div>
+        
+        <!-- Right side - Icons -->
+        <div class="navbar-icons">
+            <a href="{% url 'settings' %}" title="Settings">
+                <i class="fas fa-cog"></i>
+            </a>
+            <!-- Dark Mode Toggle -->
+            <button id="dark-mode-toggle" title="Toggle Dark Mode" style="background: none; border: none; cursor: pointer;">
+                <i id="dark-mode-icon" class="fas fa-moon"></i>
+            </button>
+            <a href="{% url 'language' %}" title="Language">
+                <i class="fas fa-globe"></i>
+            </a>
+            <a href="{% url 'login' %}" title="Login">
+                <i class="fas fa-user"></i>
+            </a>
+        </div>
+    </nav>
+    
+    <!-- Content area -->
+    <div class="content">
+        {% block content %}{% endblock %}
+    </div>
+    
+    <!-- Main JavaScript file -->
+    <script src="{% static 'microapp/js/main.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html> 

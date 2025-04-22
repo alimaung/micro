@@ -1,0 +1,4 @@
+micro.film {
+    tls internal
+    reverse_proxy localhost:8000
+}
