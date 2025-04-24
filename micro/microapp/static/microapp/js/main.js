@@ -7,13 +7,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const body = document.body;
     const logo = document.getElementById('logo');
     const darkModeIcon = document.getElementById('dark-mode-icon');
+    const restartServerButton = document.getElementById('restart-server');
     
     // Handle prefers-color-scheme media query
     const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)');
     
     // Get the base static URL for the logo images
     const logoLightPath = logo.getAttribute('src');
-    const logoDarkPath = logoLightPath.replace('logo_light.png', 'logo_dark.png');
+    const logoDarkPath = logoLightPath.replace('logo-light.png', 'logo-dark.png');
 
     // Function to set dark mode state
     function setDarkMode(isDark) {
@@ -74,6 +75,115 @@ document.addEventListener('DOMContentLoaded', function() {
             setDarkMode(event.matches);
         }
     });
+    
+    // Function to show notification
+    function showNotification(message, type = 'info') {
+        // Create notification element if it doesn't exist
+        let notification = document.querySelector('.notification');
+        if (!notification) {
+            notification = document.createElement('div');
+            notification.classList.add('notification');
+            document.body.appendChild(notification);
+        }
+        
+        // Set background color based on type
+        if (type === 'success') {
+            notification.style.backgroundColor = '#4caf50';
+        } else if (type === 'error') {
+            notification.style.backgroundColor = '#f44336';
+        } else if (type === 'warning') {
+            notification.style.backgroundColor = '#ff9800';
+        } else {
+            notification.style.backgroundColor = '#2196f3';
+        }
+        
+        // Set message
+        notification.textContent = message;
+        
+        // Show notification
+        notification.style.transform = 'translateY(0)';
+        notification.style.opacity = '1';
+        
+        // Hide notification after 3 seconds
+        setTimeout(() => {
+            notification.style.transform = 'translateY(100px)';
+            notification.style.opacity = '0';
+        }, 3000);
+    }
+    
+    // Add restart server button functionality
+    if (restartServerButton) {
+        restartServerButton.addEventListener('click', () => {
+            // Animate the icon
+            const restartIcon = restartServerButton.querySelector('i');
+            restartIcon.style.transform = 'rotate(360deg)';
+            
+            // Confirm before restarting
+            if (confirm('Are you sure you want to restart the server? This may cause temporary service disruption.')) {
+                // Show loading state
+                restartIcon.classList.add('loading-state');
+                
+                // Send request to restart server
+                fetch('/api/restart-server/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCsrfToken()
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Remove loading state
+                    restartIcon.classList.remove('loading-state');
+                    
+                    // Reset icon animation
+                    setTimeout(() => {
+                        restartIcon.style.transform = '';
+                    }, 200);
+                    
+                    // Show notification based on result
+                    if (data.success) {
+                        showNotification('Server restarting...', 'success');
+                        // Optional: redirect to a maintenance page or home after a delay
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 5000);
+                    } else {
+                        showNotification('Failed to restart server: ' + data.error, 'error');
+                    }
+                })
+                .catch(error => {
+                    // Remove loading state
+                    restartIcon.classList.remove('loading-state');
+                    
+                    // Reset icon animation
+                    setTimeout(() => {
+                        restartIcon.style.transform = '';
+                    }, 200);
+                    
+                    // Show error notification
+                    showNotification('Error: ' + error.message, 'error');
+                });
+            } else {
+                // Reset icon animation if cancelled
+                setTimeout(() => {
+                    restartIcon.style.transform = '';
+                }, 200);
+            }
+        });
+    }
+    
+    // Helper function to get CSRF token
+    function getCsrfToken() {
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+            const [name, value] = cookie.trim().split('=');
+            if (name === 'csrftoken') {
+                return value;
+            }
+        }
+        return '';
+    }
     
     // Add smooth page transitions
     document.querySelectorAll('.navbar-links a').forEach(link => {

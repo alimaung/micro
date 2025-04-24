@@ -32,7 +32,7 @@
                     <h2 class="card-title">Register Project</h2>
                 </div>
                 <p class="card-description">
-                    Create a new microfilm project by uploading documents and providing project details.
+                    Create a new microfilm project by processing documents and providing project details.
                 </p>
                 <div class="card-footer">
                     <a href="{% url 'register' %}" class="card-button">
@@ -59,24 +59,6 @@
                 </div>
             </div>
 
-            <!-- Control Card -->
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-icon bg-orange">
-                        <i class="fas fa-cog"></i>
-                    </div>
-                    <h2 class="card-title">Machine Control</h2>
-                </div>
-                <p class="card-description">
-                    Control microfilm machines and systems and monitor the progress of the project.
-                </p>
-                <div class="card-footer">
-                    <a href="{% url 'handoff' %}" class="card-button">
-                        Start monitoring <i class="fas fa-chevron-right"></i>
-                    </a>
-                </div>
-            </div>
-            
             <!-- Handoff Card -->
             <div class="card">
                 <div class="card-header">
@@ -94,7 +76,7 @@
                     </a>
                 </div>
             </div>
-            
+                     
             <!-- Explore Card -->
             <div class="card">
                 <div class="card-header">
@@ -109,6 +91,24 @@
                 <div class="card-footer">
                     <a href="{% url 'explore' %}" class="card-button">
                         View projects <i class="fas fa-chevron-right"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Control Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon bg-teal">
+                        <i class="fas fa-cog"></i>
+                    </div>
+                    <h2 class="card-title">Machine Control</h2>
+                </div>
+                <p class="card-description">
+                    Control microfilm machines and systems and monitor the progress of the project.
+                </p>
+                <div class="card-footer">
+                    <a href="{% url 'handoff' %}" class="card-button">
+                        Start monitoring <i class="fas fa-chevron-right"></i>
                     </a>
                 </div>
             </div>

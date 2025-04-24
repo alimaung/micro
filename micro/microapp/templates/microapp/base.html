@@ -4,10 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Microfilm Processing System{% endblock %}</title>
+    {% load static %}
+    <!-- Favicon -->
+    <link rel="icon" href="{% static 'microapp/img/app-logo.png' %}" type="image/png">
+    <link rel="shortcut icon" href="{% static 'microapp/img/app-logo.png' %}" type="image/png">
+    <link rel="apple-touch-icon" href="{% static 'microapp/img/app-logo.png' %}">
+    <meta name="msapplication-TileImage" content="{% static 'microapp/img/app-logo.png' %}">
+    <meta name="msapplication-TileColor" content="#1a73e8">
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Load our main CSS file -->
-    {% load static %}
     <link rel="stylesheet" href="{% static 'microapp/css/styles.css' %}">
     {% block extra_css %}{% endblock %}
 </head>
@@ -16,7 +22,7 @@
     <nav class="navbar">
         <!-- Left side - Brand with Logo as a single clickable element -->
         <a href="{% url 'home' %}" class="navbar-brand">
-            <img id="logo" src="{% static 'logo_light.png' %}" alt="Micro Logo">
+            <img id="logo" src="{% static 'microapp/img/logo-light.png' %}" alt="Micro Logo">
             <span>micro</span>
         </a>
         
@@ -35,6 +41,10 @@
             <a href="{% url 'settings' %}" title="Settings">
                 <i class="fas fa-cog"></i>
             </a>
+            <!-- Restart Server Button -->
+            <button id="restart-server" title="Restart Server" style="background: none; border: none; cursor: pointer;">
+                <i class="fas fa-sync-alt"></i>
+            </button>
             <!-- Dark Mode Toggle -->
             <button id="dark-mode-toggle" title="Toggle Dark Mode" style="background: none; border: none; cursor: pointer;">
                 <i id="dark-mode-icon" class="fas fa-moon"></i>
@@ -53,6 +63,8 @@
         {% block content %}{% endblock %}
     </div>
     
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
     <!-- Main JavaScript file -->
     <script src="{% static 'microapp/js/main.js' %}"></script>
     {% block extra_js %}{% endblock %}

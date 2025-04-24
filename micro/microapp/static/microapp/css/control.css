@@ -1,10 +1,26 @@
 /* Control Panel Styles */
 
+/* Standardized indicator sizes:
+ * - Small circular indicators (status-dot, relay-indicator, connection-dot, indicator): 12px × 12px
+ * - Large circular indicators (status-indicator): 40px × 40px
+ * - Rectangular indicators (status-badge, mode-indicator): min-width 120px, min-height 32px, padding 6px 12px
+ * - Connected buttons: green border, light green background (#30d158 with transparency)
+ */
+
 /* Main container */
 .control-container {
     max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
+}
+
+/* Control row for the main cards */
+.control-row {
+    display: flex;
+    gap: 30px;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    width: 100%;
 }
 
 /* Header section */
@@ -53,6 +69,11 @@
 .status-indicator.online {
     background-color: rgba(48, 209, 88, 0.2);
     color: #30d158;
+}
+
+.status-indicator.warning {
+    background-color: rgba(255, 204, 0, 0.2);
+    color: #ffcc00;
 }
 
 .status-indicator.offline {
@@ -106,6 +127,14 @@
     font-weight: 500;
     color: var(--color-text);
     margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.card-header h2 .status-badge {
+    font-size: 14px;
+    font-weight: 500;
 }
 
 .dark-mode .card-header h2 {
@@ -118,17 +147,71 @@
     gap: 12px;
 }
 
+/* Mode indicator in header */
+.mode-indicator {
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    padding: 6px 12px;
+    min-width: 120px;
+    min-height: 32px;
+    white-space: nowrap;
+    line-height: 1.2;
+}
+
+.dark-mode .mode-indicator {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Mode display specific styles */
+#mode-display {
+    font-size: 14px;
+    font-weight: 500;
+    gap: 6px;
+}
+
+/* Icon colors */
+#mode-display i.fa-sun {
+    color: #ffcc00;
+    margin-right: 4px;
+}
+
+#mode-display i.fa-moon {
+    color: #9ca4ab;
+    margin-right: 4px;
+}
+
+/* Mode status text */
+.mode-status-text {
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+    display: inline-block;
+    line-height: 1.2;
+    vertical-align: middle;
+}
+
 /* Status badges */
 .status-badge {
     display: flex;
     align-items: center;
+    justify-content: center;
     padding: 6px 12px;
     border-radius: 20px;
     font-size: 14px;
     font-weight: 500;
+    min-width: 120px;
+    min-height: 32px;
+    white-space: nowrap;
+    line-height: 1.2;
 }
 
 .status-badge i {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     margin-right: 6px;
 }
 
@@ -210,8 +293,8 @@
 }
 
 .indicator {
-    width: 16px;
-    height: 16px;
+    width: 12px;
+    height: 12px;
     border-radius: 50%;
     background-color: #ff453a; /* Red for off */
     display: inline-block;
@@ -467,7 +550,8 @@
     height: 12px;
     border-radius: 50%;
     background-color: #ff453a;
-    transition: all 0.3s ease;
+    transition: background-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+    display: inline-block;
 }
 
 .relay-indicator.on {
@@ -646,9 +730,10 @@
     right: 0;
     top: 50%;
     transform: translateY(-50%);
-    width: 10px;
-    height: 10px;
+    width: 12px;
+    height: 12px;
     border-radius: 50%;
+    transition: background-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .status-dot.online {
@@ -734,7 +819,6 @@
     display: flex;
     flex-wrap: wrap;
     gap: 12px;
-    margin-top: 20px;
 }
 
 .machine-control-button {
@@ -1172,7 +1256,304 @@
     to { opacity: 1; transform: translateY(0); }
 } 
 
-/* Loading animations */
+/* Primary Controls Row with Two Cards */
+.control-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+
+@media (max-width: 1100px) {
+    .control-row {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+}
+
+/* Machine Control Card and Relay Control Card */
+.machine-control-card,
+.relay-control-card {
+    display: flex;
+    flex-direction: column;
+}
+
+.card-content {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 5px 0;
+}
+
+@media (max-width: 768px) {
+    .card-content {
+        flex-direction: column;
+    }
+}
+
+/* Device info styles */
+.device-info {
+    flex: 1;
+    min-width: 220px;
+    background-color: var(--color-surface);
+    padding: 16px;
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+}
+
+.dark-mode .device-info {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: var(--color-dark-border);
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.info-row:last-child {
+    margin-bottom: 0;
+}
+
+.info-label {
+    font-size: 14px;
+    color: var(--color-text-light);
+}
+
+.info-value {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-text);
+}
+
+.dark-mode .info-value {
+    color: var(--color-dark-text);
+}
+
+/* Control buttons styles */
+.machine-controls,
+.relay-main-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;
+}
+
+.control-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+    background-color: var(--color-background);
+    color: var(--color-text);
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    line-height: 1.2;
+    text-align: center;
+}
+
+.control-button i {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+}
+
+/* Add styles for disabled state */
+.control-button.disabled,
+.control-button:disabled,
+.relay-toggle.disabled,
+.relay-toggle:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* Add connection status styling for test buttons */
+.control-button.connected {
+    border-color: #30d158;
+    background-color: rgba(48, 209, 88, 0.1);
+    color: #30d158;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 16px;
+    line-height: 1.2;
+}
+
+.dark-mode .control-button.connected {
+    background-color: rgba(48, 209, 88, 0.2);
+    border-color: #30d158;
+    color: #30d158;
+}
+
+.control-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+}
+
+.control-button.emergency {
+    background-color: rgba(255, 69, 58, 0.1);
+    color: #ff453a;
+    border-color: rgba(255, 69, 58, 0.2);
+}
+
+.control-button.emergency:hover {
+    background-color: rgba(255, 69, 58, 0.2);
+}
+
+/* Add styles for checking state */
+.checking {
+    animation: pulse-faint 1.5s infinite;
+}
+
+@keyframes pulse-faint {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+/* Connection dot indicator */
+.connection-dot {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-left: 8px;
+    position: relative;
+    top: -2px;
+    transition: background-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.connection-dot.online {
+    background-color: #30d158;
+    box-shadow: 0 0 6px rgba(48, 209, 88, 0.5);
+}
+
+.connection-dot.offline {
+    background-color: #ff453a;
+    box-shadow: 0 0 6px rgba(255, 69, 58, 0.5);
+}
+
+/* Light mode display styles */
+.light-mode-display {
+    background-color: rgba(255, 204, 0, 0.15);
+}
+
+.light-mode-display .mode-status-text {
+    color: #996c00;
+}
+
+/* Dark mode display styles */
+.dark-mode-display {
+    background-color: rgba(156, 164, 171, 0.15);
+}
+
+.dark-mode-display .mode-status-text {
+    color: #9ca4ab;
+}
+
+/* Mode status text */
+.mode-status-text {
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+    display: inline-block;
+}
+
+.dark-mode .light-mode-display {
+    background-color: rgba(255, 204, 0, 0.2);
+}
+
+.dark-mode .dark-mode-display {
+    background-color: rgba(156, 164, 171, 0.2);
+}
+
+.dark-mode .light-mode-display .mode-status-text {
+    color: #ffcc00;
+}
+
+.dark-mode .dark-mode-display .mode-status-text {
+    color: #c4c9cd;
+}
+
+/* Expandable relay controls */
+.expandable-relay-controls {
+    margin-top: -15px;
+    margin-bottom: 30px;
+    animation: fadeIn 0.3s ease;
+}
+
+/* Relay details card */
+.relay-details-card {
+    margin-bottom: 30px;
+    animation: fadeIn 0.3s ease;
+}
+
+.relay-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.relay-control {
+    width: 100%;
+}
+
+.relay-toggle {
+    width: 100%;
+    padding: 12px;
+    border-radius: 6px;
+    border: 1px solid var(--color-border);
+    background-color: var(--color-surface);
+    color: var(--color-text);
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.3s ease;
+}
+
+.dark-mode .relay-toggle {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: var(--color-dark-text);
+    border-color: var(--color-dark-border);
+}
+
+.relay-toggle:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+}
+
+.relay-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: #ff453a;
+    transition: background-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+    display: inline-block;
+}
+
+.relay-indicator.on {
+    background-color: #30d158;
+    box-shadow: 0 0 6px rgba(48, 209, 88, 0.5);
+}
+
+/* Small action button */
+.action-button.small {
+    padding: 6px 10px;
+    font-size: 12px;
+    min-width: 30px;
+}
+
+/* Loading animations - Removed as requested */
+/*
 .loading:after {
     content: '';
     position: absolute;
@@ -1186,6 +1567,12 @@
 
 .dark-mode .loading:after {
     background-color: rgba(0, 0, 0, 0.5);
+}
+*/
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
 /* Responsive adjustments */
@@ -1229,4 +1616,509 @@
         flex-direction: row;
         gap: 10px;
     }
+}
+
+.dark-mode .status-indicator.online {
+    background-color: rgba(48, 209, 88, 0.3);
+    color: #30d158;
+}
+
+.dark-mode .status-indicator.warning {
+    background-color: rgba(255, 204, 0, 0.3);
+    color: #ffcc00;
+}
+
+.dark-mode .status-indicator.offline {
+    background-color: rgba(255, 69, 58, 0.3);
+    color: #ff453a;
+}
+
+.dark-mode .control-button {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: var(--color-dark-text);
+    border-color: var(--color-dark-border);
+}
+
+.dark-mode .control-button.connected {
+    background-color: rgba(48, 209, 88, 0.2);
+    border-color: #30d158;
+    color: #30d158;
+}
+
+.dark-mode .status-badge i,
+.dark-mode .mode-indicator i,
+.dark-mode .control-button i {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    vertical-align: middle;
+}
+
+/* Override connected styling for test connection buttons */
+#relay-test-connection.connected,
+#machine-test-connection.connected {
+    border-color: var(--color-border);
+    background-color: var(--color-background);
+    color: var(--color-text);
+}
+
+.dark-mode #relay-test-connection.connected,
+.dark-mode #machine-test-connection.connected {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: var(--color-dark-text);
+    border-color: var(--color-dark-border);
+}
+
+/* Machine Stats Card */
+.stats-card {
+    width: 100%;
+    margin-bottom: 30px;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    max-width: 100%;
+}
+
+/* Improved gauge container for better space usage */
+.gauge-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 30px;
+    justify-content: space-around;
+}
+
+/* Slightly wider gauges */
+.gauge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 120px;
+    margin-bottom: 15px;
+}
+
+/* Wider gauge body */
+.gauge-body {
+    width: 45px;
+    height: 130px;
+}
+
+/* Improved motor stats to use space better */
+.motor-stats {
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.motor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.motor-header h4 {
+    margin: 0;
+    font-size: 1rem;
+    color: #555;
+}
+
+.motor-state {
+    font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 8px;
+    border-radius: 12px;
+    background-color: rgba(150, 150, 150, 0.1);
+}
+
+.motor-state i {
+    margin-right: 5px;
+}
+
+.motor-state.stopped {
+    color: #888;
+}
+
+.motor-state.running-cw {
+    color: #30d158;
+    background-color: rgba(48, 209, 88, 0.1);
+}
+
+.motor-state.running-ccw {
+    color: #5ac8fa;
+    background-color: rgba(90, 200, 250, 0.1);
+}
+
+.motor-state.error {
+    color: #ff453a;
+    background-color: rgba(255, 69, 58, 0.1);
+}
+
+.motor-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.motor-position {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 10px;
+    padding: 5px;
+    background-color: rgba(200, 200, 200, 0.05);
+    border-radius: 5px;
+}
+
+.position-label {
+    font-size: 0.85rem;
+    color: #777;
+    margin-right: 5px;
+}
+
+.position-value {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #444;
+}
+
+/* Responsive adjustments */
+@media (min-width: 768px) {
+    .motor-details {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .motor-position {
+        margin-top: 0;
+        margin-left: 15px;
+    }
+}
+
+/* Animation for loading state */
+.stats-card.loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(1px);
+    border-radius: inherit;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+}
+
+.stats-card.loading::before {
+    content: '';
+    position: absolute;
+    top: calc(50% - 15px);
+    left: calc(50% - 15px);
+    width: 30px;
+    height: 30px;
+    border: 3px solid rgba(90, 200, 250, 0.3);
+    border-top: 3px solid #5ac8fa;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    z-index: 11;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Placeholder states for machine stats */
+.gauge.placeholder .gauge-value {
+    color: #888;
+    font-style: italic;
+}
+
+.gauge.placeholder .gauge-body {
+    opacity: 0.5;
+    background-color: rgba(200, 200, 200, 0.05);
+}
+
+/* Placeholder styling for motor position values */
+.placeholder-text {
+    color: #999;
+    font-style: italic;
+    display: inline-block;
+    min-width: 50px;
+    padding: 3px 8px;
+    background-color: rgba(153, 153, 153, 0.1);
+    border-radius: 4px;
+    text-align: center;
+}
+
+.dark-mode .placeholder-text {
+    color: #777;
+    background-color: rgba(153, 153, 153, 0.15);
+}
+
+.motor-state.disconnected {
+    color: #888;
+    background-color: rgba(150, 150, 150, 0.1);
+}
+
+.refresh-button.disabled {
+    pointer-events: none;
+    opacity: 0.5;
+}
+
+/* Make sure the refresh button only appears if connected */
+#stats-connection-status.critical + .close-button + .refresh-button {
+    display: none;
+}
+
+/* Adaptations for the disconnected state tooltips */
+.stats-card .tooltip {
+    position: relative;
+    display: inline-block;
+    cursor: help;
+}
+
+.stats-card .tooltip .tooltip-text {
+    visibility: hidden;
+    width: 200px;
+    background-color: rgba(50, 50, 50, 0.9);
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 8px;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -100px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    font-size: 0.8rem;
+    pointer-events: none;
+}
+
+.stats-card .tooltip:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}
+
+.stats-card .tooltip .tooltip-text::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: rgba(50, 50, 50, 0.9) transparent transparent transparent;
+}
+
+/* Animation for appearing stats card */
+.stats-card.animate-in {
+    animation: fadeIn 0.3s ease-in-out forwards;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#machine-stats-card {
+    width: 100%;
+    margin-bottom: 30px;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+#relay-controls {
+    width: 100%;
+    margin-bottom: 30px;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Z-index control for overlapping cards (when both are visible) */
+#relay-controls.active {
+    z-index: 2;
+}
+
+#machine-stats-card.active {
+    z-index: 1;
+}
+
+/* Make sure when both cards are visible, they have proper spacing */
+#relay-controls + #machine-stats-card,
+#machine-stats-card + #relay-controls {
+    margin-top: 20px;
+}
+
+/* Close button enhancements */
+.fancy-close-button {
+    background-color: rgba(0, 0, 0, 0.1);
+    color: var(--color-text-light);
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 5;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.fancy-close-button:hover {
+    background-color: rgba(255, 69, 58, 0.2);
+    color: #ff453a;
+    transform: rotate(90deg);
+}
+
+.dark-mode .fancy-close-button {
+    background-color: rgba(255, 255, 255, 0.15);
+    color: var(--color-dark-text);
+}
+
+.dark-mode .fancy-close-button:hover {
+    background-color: rgba(255, 69, 58, 0.3);
+    color: #ff453a;
+}
+
+.fancy-close-button i {
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Card reveal animation */
+@keyframes cardReveal {
+    0% { opacity: 0; transform: translateY(-20px) scale(0.98); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.card-reveal {
+    animation: cardReveal 0.3s ease-out forwards;
+}
+
+/* Machine Stats Card Improvements */
+.machine-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.motors-grid {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+}
+
+.motor-stat-group {
+    background-color: var(--color-surface);
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+    padding: 16px;
+    transition: all 0.3s ease;
+}
+
+.dark-mode .motor-stat-group {
+    background-color: rgba(255, 255, 255, 0.03);
+    border-color: var(--color-dark-border);
+}
+
+.motor-stat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.motor-stat-header h4 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--color-text);
+}
+
+.dark-mode .motor-stat-header h4 {
+    color: var(--color-dark-text);
+}
+
+.motor-stat-items {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+}
+
+.machine-stat-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 8px;
+    background-color: var(--color-background);
+    border: 1px solid var(--color-border);
+    transition: all 0.3s ease;
+}
+
+.dark-mode .machine-stat-item {
+    background-color: rgba(255, 255, 255, 0.03);
+    border-color: var(--color-dark-border);
+}
+
+.machine-stat-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: rgba(var(--color-primary-rgb), 0.1);
+    color: var(--color-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+}
+
+.machine-stat-icon.motor {
+    color: #5ac8fa;
+    background-color: rgba(90, 200, 250, 0.1);
+}
+
+.machine-stat-content {
+    flex: 1;
+}
+
+.machine-stat-value {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--color-text);
+    display: block;
+}
+
+.dark-mode .machine-stat-value {
+    color: var(--color-dark-text);
+}
+
+.machine-stat-label {
+    font-size: 12px;
+    color: var(--color-text-light);
+    display: block;
+    margin-top: 2px;
+}
+
+/* Placeholder styles for the machine stat values */
+.machine-stat-value.placeholder {
+    color: #999;
+    font-style: italic;
+}
+
+.dark-mode .machine-stat-value.placeholder {
+    color: #777;
 } 

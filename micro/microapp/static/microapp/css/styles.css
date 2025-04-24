@@ -97,7 +97,7 @@ body {
 }
 
 .navbar-brand img {
-    height: 40px;
+    height: 30px;
     width: auto;
     transition: transform var(--transition-speed) ease;
 }
@@ -115,13 +115,13 @@ body {
 }
 
 .dark-mode .navbar-brand span {
-    color: var(--color-dark-text);
+    color: white;
 }
 
 /* Navigation Links */
 .navbar-links {
     display: flex;
-    gap: 1.5rem;
+    gap: 3rem;
     height: 100%;
     align-items: center;
 }
@@ -133,7 +133,7 @@ body {
     height: 100%;
     display: flex;
     align-items: center;
-    font-size: 0.95rem;
+    font-size: 1rem;
     position: relative;
     padding: 0 8px;
     transition: color var(--transition-speed) ease;
@@ -185,7 +185,8 @@ body {
 }
 
 .navbar-icons a, 
-#dark-mode-toggle {
+#dark-mode-toggle,
+#restart-server {
     color: var(--color-text-light);
     text-decoration: none;
     font-size: 1.1rem;
@@ -201,19 +202,22 @@ body {
 }
 
 .navbar-icons a:hover, 
-#dark-mode-toggle:hover {
+#dark-mode-toggle:hover,
+#restart-server:hover {
     background-color: rgba(0, 0, 0, 0.05);
     color: var(--color-primary);
     transform: scale(1.1);
 }
 
 .dark-mode .navbar-icons a, 
-.dark-mode #dark-mode-toggle {
+.dark-mode #dark-mode-toggle,
+.dark-mode #restart-server {
     color: var(--color-dark-text-light);
 }
 
 .dark-mode .navbar-icons a:hover, 
-.dark-mode #dark-mode-toggle:hover {
+.dark-mode #dark-mode-toggle:hover,
+.dark-mode #restart-server:hover {
     background-color: rgba(255, 255, 255, 0.1);
     color: var(--color-primary);
 }
@@ -300,7 +304,7 @@ h1, h2, h3, h4, h5, h6 {
     letter-spacing: -0.02em;
 }
 
-h1 { font-size: 2.5rem; }
+h1 { font-size: 3.5rem; }
 h2 { font-size: 2rem; }
 h3 { font-size: 1.75rem; }
 h4 { font-size: 1.5rem; }
@@ -323,6 +327,32 @@ h6 { font-size: 1rem; }
     transform: rotate(30deg);
 }
 
+/* Restart server button */
+#restart-server {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+}
+
+#restart-server i {
+    transition: transform 0.5s ease, color var(--transition-speed) ease;
+}
+
+#restart-server:hover i {
+    transform: rotate(30deg);
+}
+
+#restart-server i.loading-state {
+    animation: spin 1.5s infinite linear;
+    color: var(--color-primary);
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
 /* Notification Styles */
 .notification {
     position: fixed;
@@ -337,6 +367,11 @@ h6 { font-size: 1rem; }
     opacity: 0;
     transition: transform 0.3s ease, opacity 0.3s ease;
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.notification.show {
+    transform: translateY(0);
+    opacity: 1;
 }
 
 /* Loading Animation */

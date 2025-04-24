@@ -173,6 +173,10 @@
     background-color: #ea4335; 
     box-shadow: 0 2px 6px rgba(234, 67, 53, 0.3);
 }
+.bg-teal { 
+    background-color: #009688; 
+    box-shadow: 0 2px 6px rgba(0, 150, 136, 0.3);
+}
 
 /* Welcome section */
 .welcome-section {
@@ -180,7 +184,7 @@
 }
 
 .welcome-title {
-    font-size: 28px;
+    font-size: 40px;
     font-weight: 700;
     margin-bottom: 16px;
     color: var(--color-text);
