@@ -6,7 +6,7 @@ Usage: py light.py m light/dark
 
 import sys
 import time
-from serial_relay_control import get_controller
+from saferoom.relay_control import get_controller
 
 # Default configuration
 DEFAULT_PORT = "COM7"

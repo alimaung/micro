@@ -1,0 +1,9 @@
+# Ignore all __pycache__ directories
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+recovery-codes.txt
+
+
+
