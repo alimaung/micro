@@ -8,7 +8,7 @@ and demonstrates how to use the ProjectService to initialize and manage projects
 import sys, os
 import argparse
 from pathlib import Path
-from logger2 import FilmLogger, LogLevel
+from logger import FilmLogger, LogLevel
 from models import Project
 from project_service import ProjectService
 from document_service import DocumentProcessingService
