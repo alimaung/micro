@@ -33,7 +33,7 @@ class RelayController:
                 "voltage": "0V"
             }
             self.current_mode = "light"  # Default mode
-            logging.info(f"Connected to {port} at {baudrate} baud.")
+            #logging.info(f"Connected to {port} at {baudrate} baud.")
             
             # Get initial states
             self.update_all_states()
@@ -55,7 +55,7 @@ class RelayController:
             if not read_multiple_lines:
                 time.sleep(0.05)  # Short delay for simple commands
                 response = self.ser.readline().decode('utf-8').strip()
-                logging.info(f"Command '{command}' executed. Response: {response}")
+                #logging.info(f"Command '{command}' executed. Response: {response}")
                 
                 # Update relay state if command changed it
                 if response.startswith("RELAY:") and ":" in response:
@@ -96,7 +96,7 @@ class RelayController:
                         elif ":" in line:
                             self._process_system_stat(line)
                 
-                logging.info(f"Command '{command}' executed. Got {len(responses)} responses.")
+                #logging.info(f"Command '{command}' executed. Got {len(responses)} responses.")
                 return responses
                 
         except Exception as e:
@@ -275,7 +275,7 @@ class RelayController:
     def close(self):
         """Close the serial connection"""
         self.ser.close()
-        logging.info("Serial connection closed.")
+        #logging.info("Serial connection closed.")
 
 def main():
     # This part remains unchanged, as it handles command-line arguments

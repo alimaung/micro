@@ -54,9 +54,7 @@ def language(request):
 def control_relay(request):
     if request.method == 'POST':
         action = request.POST.get('action')
-        com_port = request.POST.get('com_port', 'COM18')  # Default to COM18
-
-        print(f"Received request to perform action: {action} on {com_port}")
+        com_port = request.POST.get('com_port', 'COM18')
 
         # Special case for ping action (latency measurement)
         if action == 'ping':

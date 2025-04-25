@@ -81,37 +81,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Function to start periodic polling for connection status
     function startConnectionPolling() {
-        
-        // Set interval for periodic checking - use a reduced frequency after initial setup
-        let checkCount = 0;
-        setInterval(() => {
-            checkCount++;
-            
-            // Perform thorough check only occasionally (every 3rd time) to reduce UI flashing
-            if (checkCount % 3 === 0) {
-                console.log("Performing full connection check...");
-                checkAvailablePorts();
-            } else {
-                // Otherwise just check if current connections are still valid
-                console.log("Performing light connection check...");
-                
-                // If we think we're connected, verify without UI updates
-                if (isMachineConnected) {
-                    verifyMachineConnection();
-                }
-                
-                if (isRelayConnected) {
-                    verifyRelayConnection();
-                }
-                
-                // Still update the system status in case something changed
-                updateSystemStatus();
-            }
-        }, CONNECTION_POLL_INTERVAL);
-        
-        // Start polling for machine power state
+        // Only start power state polling, no more connection polling
         startPowerStatePolling();
-        
+
         // Perform initial machine state check after connection is established 
         // (with slight delay to allow connection check to complete first)
         setTimeout(() => {
@@ -176,13 +148,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Function to start periodic polling for machine power state
     function startPowerStatePolling() {
-        // Only set up the interval once
-        setInterval(() => {
-            // Only poll when machine is connected and not in the middle of a toggle operation
-            if (isMachineConnected && machineIndicator && machineIndicator.style.opacity !== '0.7') {
-                checkMachinePowerState(false); // Regular polling, not after toggle
-            }
-        }, POWER_STATE_POLL_INTERVAL);
+        // Removed interval polling for machine power state
+        // Only check on page load (after connection) and after toggle
     }
 
     // Function to check for available COM ports with redundancy prevention
@@ -523,10 +490,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (machineTestConnection) {
             machineTestConnection.classList.toggle('connected', isConnected);
         }
-        
-        // Update machine stats card if it's visible
-        updateConnectionDependentUI();
-        
+                
         // Update overall system status
         updateSystemStatus();
     }
@@ -634,7 +598,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Show relay controls
     if (settingsToggle) {
-        settingsToggle.addEventListener('click', toggleRelayControlsCard);
+        settingsToggle.addEventListener('click', function() {
+            toggleRelayControlsCard();
+            // Fetch ESP32 stats and relay states when opening relay controls
+            updateESP32Stats();
+        });
     }
 
     // Toggle light/dark mode with animation
@@ -644,9 +612,10 @@ document.addEventListener('DOMContentLoaded', function() {
             showNotification('Relay not connected', 'error');
             return;
         }
-        
         // Call our new toggle function
         toggleRelayMode();
+        // Fetch ESP32 stats and relay states after mode change
+        updateESP32Stats();
     });
 
     // Toggle machine switch with animation
@@ -999,9 +968,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 showNotification('Relay not connected', 'error');
                 return;
             }
-            
             // Call our new toggle function
             toggleRelay(relayNum);
+            // Fetch ESP32 stats and relay states after toggle
+            updateESP32Stats();
         });
     });
     
@@ -1442,7 +1412,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const cpuMHz = parseFloat(stats.cpu);
             if (!isNaN(cpuMHz)) {
                 espCPU.textContent = stats.cpu;
-                const cpuPercentage = (cpuMHz / 240) * 100; // Assuming 240MHz is max
+                const cpuPercentage = (cpuMHz / 320) * 100; // Assuming 240MHz is max
                 espCPUBar.style.width = `${Math.min(cpuPercentage, 100)}%`;
             }
         }
@@ -1456,7 +1426,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const ramKB = parseFloat(stats.ram);
             if (!isNaN(ramKB)) {
                 // Assuming 320KB total RAM for ESP32
-                const ramPercentage = (ramKB / 320) * 100;
+                const ramPercentage = (ramKB / 480) * 100;
                 espMemBar.style.width = `${Math.min(ramPercentage, 100)}%`;
             }
         }
@@ -1828,9 +1798,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }, 10000); // Check every 10 seconds
     
-    // Update ESP32 stats periodically
-    setInterval(updateESP32Stats, 8000);
-    
     // Check relay states periodically
     setInterval(checkRelayStates, 30000); // Every 30 seconds
 
@@ -2117,33 +2084,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Function to start periodic polling for machine stats
-    let machineStatsPollInterval = null;
-    
-    function startMachineStatsPolling() {
-        // If already polling, clear the existing interval
-        if (machineStatsPollInterval) {
-            clearInterval(machineStatsPollInterval);
-        }
-        
-        // Set up new polling interval
-        machineStatsPollInterval = setInterval(() => {
-            // Only fetch if machine is connected and stats card is visible
-            const statsCard = document.getElementById('machine-stats-card');
-            if (isMachineConnected && statsCard && 
-                statsCard.style.display !== 'none' && statsCard.style.opacity !== '0') {
-                fetchMachineStats();
-            }
-        }, 3000); // Update every 3 seconds
-    }
-    
-    function stopMachineStatsPolling() {
-        if (machineStatsPollInterval) {
-            clearInterval(machineStatsPollInterval);
-            machineStatsPollInterval = null;
-        }
-    }
-    
     // Function to fetch machine stats
     function fetchMachineStats() {
         // Get the stats card (no loading state will be added)
@@ -2434,18 +2374,6 @@ document.addEventListener('DOMContentLoaded', function() {
         element.innerHTML = `${icon} ${stateText}`;
     }
 
-    // Function to make sure the machine stats refreshes when the machine gets connected
-    function updateConnectionDependentUI() {
-        const statsCard = document.getElementById('machine-stats-card');
-        
-        if (statsCard) {
-            // If not connected, ensure machine stats polling is stopped
-            if (!isMachineConnected) {
-                stopMachineStatsPolling();
-            }
-        }
-    }
-
     /**
      * Toggles the visibility of the machine stats card.
      * If the machine is connected, it shows the stats card and starts polling for stats.
@@ -2482,13 +2410,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (isMachineConnected) {
                         statsConnectionStatus.innerHTML = '<i class="fas fa-check-circle"></i> Connected';
                         statsConnectionStatus.className = 'status-badge operational';
-                        
-                        // Start polling for machine stats
-                        startMachineStatsPolling();
+                        // Fetch machine stats once when opening
+                        fetchMachineStats();
                     } else {
                         statsConnectionStatus.innerHTML = '<i class="fas fa-times-circle"></i> Disconnected';
                         statsConnectionStatus.className = 'status-badge critical';
-                        
                         // Display placeholders for disconnected state
                         updateMachineStatsUIPlaceholders();
                     }
@@ -2497,9 +2423,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Hide the stats card
                 statsCard.style.display = 'none';
                 statsCard.classList.remove('active');
-                
-                // Stop polling if we're hiding the card
-                stopMachineStatsPolling();
+                statsCard.classList.remove('card-reveal');
             }
         }
     }
@@ -2558,9 +2482,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 statsCard.style.display = 'none';
                 statsCard.classList.remove('active');
                 statsCard.classList.remove('card-reveal');
-                
-                // Stop polling if we're hiding the card
-                stopMachineStatsPolling();
             }
         });
     }
