@@ -126,3 +126,10 @@ The system uses a comprehensive data model including:
 
 This codebase implements the Register phase. The Film and Handoff phases are works in progress.
 
+## I18N
+
+Extract messages to .po files
+django-admin makemessages -l <language_code>
+
+Compile .po files to .mo files
+django-admin compilemessages
