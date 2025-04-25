@@ -1,0 +1,125 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-04-25 18:50+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+
+#: .\microapp\templates\microapp\home.html:19
+msgid "Welcome to the Microfilm Processing System"
+msgstr "Willkommen beim Mikrofilm-Verarbeitungssystem"
+
+#: .\microapp\templates\microapp\home.html:20
+msgid ""
+"Manage your microfilm projects, process documents, and handle film "
+"distribution efficiently."
+msgstr ""
+"Verwalten Sie Ihre Mikrofilmprojekte, verarbeiten Sie Dokumente und "
+"organisieren Sie die Filmverteilung effizient."
+
+#: .\microapp\templates\microapp\home.html:34
+msgid "Register Project"
+msgstr "Projekt registrieren"
+
+#: .\microapp\templates\microapp\home.html:37
+msgid ""
+"Create a new microfilm project by processing documents and providing project "
+"details."
+msgstr ""
+"Erstellen Sie ein neues Mikrofilmprojekt durch Verarbeitung von Dokumenten "
+"und Angabe von Projektdetails."
+
+#: .\microapp\templates\microapp\home.html:41
+msgid "Get started"
+msgstr "Loslegen"
+
+#: .\microapp\templates\microapp\home.html:52
+msgid "Film Processing"
+msgstr "Filmverarbeitung"
+
+#: .\microapp\templates\microapp\home.html:55
+msgid ""
+"Process documents for microfilming, allocate film numbers, and generate "
+"reference sheets."
+msgstr ""
+"Verarbeiten Sie Dokumente für die Mikroverfilmung, weisen Sie Filmnummern zu "
+"und erstellen Sie Referenzblätter."
+
+#: .\microapp\templates\microapp\home.html:59
+msgid "Process films"
+msgstr "Filme verarbeiten"
+
+#: .\microapp\templates\microapp\home.html:70
+msgid "Handoff Project"
+msgstr "Projekt übergeben"
+
+#: .\microapp\templates\microapp\home.html:73
+msgid ""
+"Prepare your project for external processing with complete documentation and "
+"exports."
+msgstr ""
+"Bereiten Sie Ihr Projekt für die externe Verarbeitung mit vollständiger "
+"Dokumentation und Exporten vor."
+
+#: .\microapp\templates\microapp\home.html:77
+msgid "Prepare handoff"
+msgstr "Übergabe vorbereiten"
+
+#: .\microapp\templates\microapp\home.html:88
+msgid "Explore Projects"
+msgstr "Projekte erkunden"
+
+#: .\microapp\templates\microapp\home.html:91
+msgid ""
+"Browse and manage existing projects, view processing status, and access "
+"project details."
+msgstr ""
+"Durchsuchen und verwalten Sie bestehende Projekte, sehen Sie den "
+"Verarbeitungsstatus ein und greifen Sie auf Projektdetails zu."
+
+#: .\microapp\templates\microapp\home.html:95
+msgid "View projects"
+msgstr "Projekte anzeigen"
+
+#: .\microapp\templates\microapp\home.html:106
+msgid "Machine Control"
+msgstr "Maschinensteuerung"
+
+#: .\microapp\templates\microapp\home.html:109
+msgid ""
+"Control microfilm machines and systems and monitor the progress of the "
+"project."
+msgstr ""
+"Steuern Sie Mikrofilmgeräte und -systeme und überwachen Sie den "
+"Projektfortschritt."
+
+#: .\microapp\templates\microapp\home.html:113
+msgid "Start monitoring"
+msgstr "Überwachung starten"
+
+#: .\microapp\templates\microapp\home.html:124
+msgid "Reports & Analytics"
+msgstr "Berichte & Analysen"
+
+#: .\microapp\templates\microapp\home.html:127
+msgid "Generate reports, view processing statistics, and analyze project data."
+msgstr ""
+"Erstellen Sie Berichte, sehen Sie Verarbeitungsstatistiken ein und "
+"analysieren Sie Projektdaten."
+
+#: .\microapp\templates\microapp\home.html:131
+msgid "View reports"
+msgstr "Berichte anzeigen"

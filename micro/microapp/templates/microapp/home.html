@@ -1,6 +1,8 @@
 {% extends 'microapp/base.html' %}
 
-{% block title %}Home - Microfilm Processing System{% endblock %}
+{% load i18n %}
+
+{% block title %}micro{% endblock %}
 
 {% block extra_css %}
 {% load static %}
@@ -14,8 +16,8 @@
     <div class="container-card">
         <!-- Welcome section -->
         <div class="welcome-section">
-            <h1 class="welcome-title">Welcome to the Microfilm Processing System</h1>
-            <p class="welcome-subtitle">Manage your microfilm projects, process documents, and handle film distribution efficiently.</p>
+            <h1 class="welcome-title">{% trans "Welcome to the Microfilm Processing System" %}</h1>
+            <p class="welcome-subtitle">{% trans "Manage your microfilm projects, process documents, and handle film distribution efficiently." %}</p>
         </div>
         
         <!-- Divider line -->
@@ -29,14 +31,14 @@
                     <div class="card-icon bg-blue">
                         <i class="fas fa-folder-plus"></i>
                     </div>
-                    <h2 class="card-title">Register Project</h2>
+                    <h2 class="card-title">{% trans "Register Project" %}</h2>
                 </div>
                 <p class="card-description">
-                    Create a new microfilm project by processing documents and providing project details.
+                    {% trans "Create a new microfilm project by processing documents and providing project details." %}
                 </p>
                 <div class="card-footer">
                     <a href="{% url 'register' %}" class="card-button">
-                        Get started <i class="fas fa-chevron-right"></i>
+                        {% trans "Get started" %} <i class="fas fa-chevron-right"></i>
                     </a>
                 </div>
             </div>
@@ -47,14 +49,14 @@
                     <div class="card-icon bg-green">
                         <i class="fas fa-film"></i>
                     </div>
-                    <h2 class="card-title">Film Processing</h2>
+                    <h2 class="card-title">{% trans "Film Processing" %}</h2>
                 </div>
                 <p class="card-description">
-                    Process documents for microfilming, allocate film numbers, and generate reference sheets.
+                    {% trans "Process documents for microfilming, allocate film numbers, and generate reference sheets." %}
                 </p>
                 <div class="card-footer">
                     <a href="{% url 'film' %}" class="card-button">
-                        Process films <i class="fas fa-chevron-right"></i>
+                        {% trans "Process films" %} <i class="fas fa-chevron-right"></i>
                     </a>
                 </div>
             </div>
@@ -65,14 +67,14 @@
                     <div class="card-icon bg-orange">
                         <i class="fas fa-exchange-alt"></i>
                     </div>
-                    <h2 class="card-title">Handoff Project</h2>
+                    <h2 class="card-title">{% trans "Handoff Project" %}</h2>
                 </div>
                 <p class="card-description">
-                    Prepare your project for external processing with complete documentation and exports.
+                    {% trans "Prepare your project for external processing with complete documentation and exports." %}
                 </p>
                 <div class="card-footer">
                     <a href="{% url 'handoff' %}" class="card-button">
-                        Prepare handoff <i class="fas fa-chevron-right"></i>
+                        {% trans "Prepare handoff" %} <i class="fas fa-chevron-right"></i>
                     </a>
                 </div>
             </div>
@@ -83,14 +85,14 @@
                     <div class="card-icon bg-purple">
                         <i class="fas fa-search"></i>
                     </div>
-                    <h2 class="card-title">Explore Projects</h2>
+                    <h2 class="card-title">{% trans "Explore Projects" %}</h2>
                 </div>
                 <p class="card-description">
-                    Browse and manage existing projects, view processing status, and access project details.
+                    {% trans "Browse and manage existing projects, view processing status, and access project details." %}
                 </p>
                 <div class="card-footer">
                     <a href="{% url 'explore' %}" class="card-button">
-                        View projects <i class="fas fa-chevron-right"></i>
+                        {% trans "View projects" %} <i class="fas fa-chevron-right"></i>
                     </a>
                 </div>
             </div>
@@ -101,14 +103,14 @@
                     <div class="card-icon bg-teal">
                         <i class="fas fa-cog"></i>
                     </div>
-                    <h2 class="card-title">Machine Control</h2>
+                    <h2 class="card-title">{% trans "Machine Control" %}</h2>
                 </div>
                 <p class="card-description">
-                    Control microfilm machines and systems and monitor the progress of the project.
+                    {% trans "Control microfilm machines and systems and monitor the progress of the project." %}
                 </p>
                 <div class="card-footer">
                     <a href="{% url 'handoff' %}" class="card-button">
-                        Start monitoring <i class="fas fa-chevron-right"></i>
+                        {% trans "Start monitoring" %} <i class="fas fa-chevron-right"></i>
                     </a>
                 </div>
             </div>
@@ -119,14 +121,14 @@
                     <div class="card-icon bg-red">
                         <i class="fas fa-chart-bar"></i>
                     </div>
-                    <h2 class="card-title">Reports & Analytics</h2>
+                    <h2 class="card-title">{% trans "Reports & Analytics" %}</h2>
                 </div>
                 <p class="card-description">
-                    Generate reports, view processing statistics, and analyze project data.
+                    {% trans "Generate reports, view processing statistics, and analyze project data." %}
                 </p>
                 <div class="card-footer">
                     <a href="{% url 'report' %}" class="card-button">
-                        View reports <i class="fas fa-chevron-right"></i>
+                        {% trans "View reports" %} <i class="fas fa-chevron-right"></i>
                     </a>
                 </div>
             </div>

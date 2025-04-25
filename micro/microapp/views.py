@@ -1,5 +1,7 @@
 from django.shortcuts import render
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseRedirect
+from django.utils import translation
+from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from .relay_control import RelayController
 from .machine_test import check_machine_power, MachineController
@@ -39,7 +41,7 @@ def explore(request):
 def report(request):
     return render(request, 'microapp/report.html')
 
-def settings(request):
+def settings_view(request):
     return render(request, 'microapp/settings.html')
 
 def login(request):
@@ -370,3 +372,28 @@ def get_machine_stats(request):
         'status': 'error',
         'message': 'Invalid request method'
     })
+
+def toggle_language(request):
+    """
+    Rotate through settings.LANGUAGES, store selection in
+    session + cookie, then redirect back to the same page.
+    """
+    # Where to go after switching:
+    next_url = request.GET.get('next') or request.META.get("HTTP_REFERER", "/")
+
+    current_lang = translation.get_language()
+    lang_codes   = [code for code, _ in settings.LANGUAGES]
+
+    try:
+        new_lang = lang_codes[(lang_codes.index(current_lang) + 1) % len(lang_codes)]
+    except ValueError:          # current language not in list
+        new_lang = lang_codes[0]
+
+    translation.activate(new_lang)
+
+    if hasattr(request, "session"):
+        request.session['django_language'] = new_lang   # literal key
+
+    response = HttpResponseRedirect(next_url)
+    response.set_cookie(settings.LANGUAGE_COOKIE_NAME, new_lang)
+    return response
