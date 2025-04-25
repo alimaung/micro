@@ -547,6 +547,8 @@ document.addEventListener('DOMContentLoaded', function() {
         showStep(5);
     });
     
+    // Continue the existing JavaScript with new functionality for steps 5-9
+
     // Step 5: Film Allocation Stage
     const backToStep4Btn = document.getElementById('back-to-step-4');
     const calculateAllocationBtn = document.getElementById('calculate-allocation');

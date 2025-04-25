@@ -138,13 +138,100 @@
                 
                 <div class="export-section">
                     <h4>Available Exports</h4>
-                    <div class="export-files">
-                        <div class="export-file">
-                            <div class="file-icon">
-                                <i class="fas fa-file-excel"></i>
+                    <button id="generate-exports" class="action-button primary" style="margin-bottom: 24px;">
+                        <i class="fas fa-cogs"></i> Generate Exports
+                    </button>
+                    <div id="export-progress" style="margin: 30px 0 0 0; display: none;">
+                        <div id="export-progress-bar" style="height: 18px; background: #e0e0e0; border-radius: 9px; overflow: hidden;">
+                            <div style="width:0%;height:100%;background:#34a853;transition:width 0.3s;" id="export-progress-bar-inner"></div>
+                        </div>
+                        <div id="export-progress-text" style="margin-top: 6px; font-weight: 500;">0%</div>
+                    </div>
+                    <div id="available-exports" style="display: none;">
+                        <div class="export-files">
+                            <div class="export-file">
+                                <div class="file-icon">
+                                    <i class="fas fa-file-excel"></i>
+                                </div>
+                                <div class="file-details">
+                                    <span class="file-name">Master Index (CSV)</span>
+                                    <span class="file-info">125 entries, 10 KB</span>
+                                </div>
+                                <button class="file-download" aria-label="Download Master Index CSV">
+                                    <i class="fas fa-download"></i> Download
+                                </button>
                             </div>
-                            <div class="file-details">
-                                <span class="file-name">Master Index (CSV)</span>
-                                <span class="file-info">125 entries, 10 KB</span>
+                            <div class="export-file">
+                                <div class="file-icon">
+                                    <i class="fas fa-file-pdf"></i>
+                                </div>
+                                <div class="file-details">
+                                    <span class="file-name">Project Report (PDF)</span>
+                                    <span class="file-info">250 KB</span>
+                                </div>
+                                <button class="file-download" aria-label="Download Project Report PDF">
+                                    <i class="fas fa-download"></i> Download
+                                </button>
                             </div>
-                            <button class="file-download">
+                            <div class="export-file">
+                                <div class="file-icon">
+                                    <i class="fas fa-file-code"></i>
+                                </div>
+                                <div class="file-details">
+                                    <span class="file-name">Project Configuration (JSON)</span>
+                                    <span class="file-info">5 KB</span>
+                                </div>
+                                <button class="file-download" aria-label="Download Project Configuration JSON">
+                                    <i class="fas fa-download"></i> Download
+                                </button>
+                            </div>
+                            <div class="export-file">
+                                <div class="file-icon">
+                                    <i class="fas fa-file-image"></i>
+                                </div>
+                                <div class="file-details">
+                                    <span class="file-name">Reference Sheet Images</span>
+                                    <span class="file-info">5 MB</span>
+                                </div>
+                                <button class="file-download" aria-label="Download Reference Sheet Images">
+                                    <i class="fas fa-download"></i> Download
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer export-footer">
+                <button class="nav-button back" id="back-to-step-8">
+                    <i class="fas fa-arrow-left"></i>
+                    Back to Distribution
+                </button>
+                <button class="action-button green" id="finish-project">
+                    <i class="fas fa-flag-checkered"></i>
+                    Finish Project
+                </button>
+                <button class="action-button secondary" id="download-all">
+                    <i class="fas fa-download"></i>
+                    Download All
+                </button>
+            </div>
+        </div>
+        <!-- Output Data Panel -->
+        <div class="workflow-card data-panel">
+            <div class="card-header with-actions">
+                <h3><i class="fas fa-code"></i> Summary Data</h3>
+                <div class="card-actions">
+                    <button class="panel-action" id="expand-summary-data">
+                        <i class="fas fa-expand-alt"></i>
+                    </button>
+                    <button class="panel-action" id="copy-summary-data">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-content">
+                <pre class="data-output">{}</pre>
+            </div>
+        </div>
+    </div>
+</div>

@@ -14,6 +14,9 @@ def home(request):
 def register(request):
     return render(request, 'microapp/register/register.html')
 
+def oldregister(request):
+    return render(request, 'microapp/register_old.html')
+
 def film(request):
     return render(request, 'microapp/film.html')
 

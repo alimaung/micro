@@ -1,0 +1,564 @@
+/* Status badges */
+.status-badge {
+    display: flex;
+    align-items: center;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.status-badge i {
+    margin-right: 6px;
+}
+
+.status-badge.pending {
+    background-color: rgba(255, 204, 0, 0.2);
+    color: #ffcc00;
+}
+
+.status-badge.in-progress {
+    background-color: rgba(26, 115, 232, 0.2);
+    color: #1a73e8;
+}
+
+.status-badge.completed {
+    background-color: rgba(52, 168, 83, 0.2);
+    color: #34a853;
+}
+
+.status-badge.error {
+    background-color: rgba(234, 67, 53, 0.2);
+    color: #ea4335;
+}
+
+.dark-mode .status-badge.pending {
+    background-color: rgba(255, 204, 0, 0.3);
+    color: #ffcc00;
+}
+
+.dark-mode .status-badge.in-progress {
+    background-color: rgba(26, 115, 232, 0.3);
+    color: #1a73e8;
+}
+
+.dark-mode .status-badge.completed {
+    background-color: rgba(52, 168, 83, 0.3);
+    color: #34a853;
+}
+
+.dark-mode .status-badge.error {
+    background-color: rgba(234, 67, 53, 0.3);
+    color: #ea4335;
+}
+
+/* Card layouts */
+.workflow-cards {
+    display: grid;
+    grid-template-columns: 1fr 350px;
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+@media (max-width: 900px) {
+    .workflow-cards {
+        grid-template-columns: 1fr;
+    }
+}
+
+.workflow-card {
+    background-color: var(--color-background);
+    border-radius: 12px;
+    box-shadow: 0 1px 3px var(--color-shadow), 
+                0 2px 8px var(--color-shadow);
+    border: 1px solid var(--color-border);
+    transition: background-color var(--transition-speed) ease,
+                color var(--transition-speed) ease,
+                box-shadow var(--transition-speed) ease;
+    overflow: hidden;
+}
+
+.dark-mode .workflow-card {
+    background-color: var(--color-dark-surface);
+    color: var(--color-dark-text);
+    border-color: var(--color-dark-border);
+    box-shadow: 0 1px 3px var(--color-dark-shadow), 
+                0 2px 8px var(--color-dark-shadow);
+}
+
+.card-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--color-border);
+    display: flex;
+    align-items: center;
+}
+
+.dark-mode .card-header {
+    border-color: var(--color-dark-border);
+}
+
+.card-header h3 {
+    font-size: 18px;
+    color: var(--color-text);
+    font-weight: var(--font-weight-medium);
+    margin: 0;
+    display: flex;
+    align-items: center;
+}
+
+.dark-mode .card-header h3 {
+    color: var(--color-dark-text);
+}
+
+.card-header h3 i {
+    margin-right: 10px;
+    color: var(--color-primary);
+}
+
+.card-header.with-actions {
+    display: flex;
+    justify-content: space-between;
+}
+
+.card-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.panel-action {
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    background-color: transparent;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-light);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.panel-action:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+    color: var(--color-primary);
+}
+
+.dark-mode .panel-action:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.card-content {
+    padding: 20px;
+}
+
+.card-footer {
+    padding: 16px 20px;
+    border-top: 1px solid var(--color-border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.dark-mode .card-footer {
+    border-color: var(--color-dark-border);
+}
+
+/* Data panel styles */
+.data-panel .card-content {
+    padding: 0;
+    overflow: auto;
+}
+.data-output {
+    margin: 0;
+    padding: 16px;
+    overflow-x: auto;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    color: var(--color-text);
+    background-color: var(--color-surface);
+}
+
+/* Form elements */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text);
+}
+
+.dark-mode .form-group label {
+    color: var(--color-dark-text);
+}
+
+.form-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.form-group.half {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+.form-input {
+    width: 100%;
+    padding: 12px;
+    border-radius: 6px;
+    border: 1px solid var(--color-border);
+    background-color: var(--color-surface);
+    font-size: 14px;
+    color: var(--color-text);
+    transition: all 0.3s ease;
+}
+
+.form-input:focus {
+    border-color: var(--color-primary);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.2);
+}
+
+.dark-mode .form-input {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: var(--color-dark-text);
+    border-color: var(--color-dark-border);
+}
+
+.folder-input-container {
+    display: flex;
+    gap: 12px;
+}
+
+.folder-input-container .form-input {
+    flex: 1;
+}
+
+/* Toggle switches */
+.option-toggles {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 16px;
+    margin-top: 24px;
+}
+
+.toggle-group {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.toggle-label {
+    font-size: 14px;
+    color: var(--color-text);
+}
+
+.dark-mode .toggle-label {
+    color: var(--color-dark-text);
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--color-border);
+    transition: .3s;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .3s;
+}
+
+input:checked + .slider {
+    background-color: var(--color-primary);
+}
+
+input:focus + .slider {
+    box-shadow: 0 0 1px var(--color-primary);
+}
+
+input:checked + .slider:before {
+    transform: translateX(20px);
+}
+
+.slider.round {
+    border-radius: 34px;
+}
+
+.slider.round:before {
+    border-radius: 50%;
+}
+
+/* Buttons */
+.browse-button {
+    padding: 12px 16px;
+    border: none;
+    border-radius: 6px;
+    background-color: var(--color-primary);
+    color: white;
+    font-size: 14px;
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.browse-button:hover {
+    background-color: var(--color-primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(var(--color-primary-rgb), 0.2);
+}
+
+.action-button {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.action-button.primary {
+    background-color: var(--color-primary);
+    color: white;
+}
+
+.action-button.primary:hover {
+    background-color: var(--color-primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(var(--color-primary-rgb), 0.2);
+}
+
+.action-button.secondary {
+    background-color: var(--color-surface);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+}
+
+.action-button.secondary:hover {
+    background-color: var(--color-surface-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px var(--color-shadow);
+}
+
+.dark-mode .action-button.secondary {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: var(--color-dark-text);
+    border-color: var(--color-dark-border);
+}
+
+.dark-mode .action-button.secondary:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 8px var(--color-dark-shadow);
+}
+
+.action-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+
+/* Navigation buttons */
+.workflow-navigation {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 16px;
+}
+
+.nav-button {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.nav-button.back {
+    background-color: var(--color-surface);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+}
+
+.nav-button.back:hover {
+    background-color: var(--color-surface-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px var(--color-shadow);
+}
+
+.dark-mode .nav-button.back {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: var(--color-dark-text);
+    border-color: var(--color-dark-border);
+}
+
+.dark-mode .nav-button.back:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 8px var(--color-dark-shadow);
+}
+
+.nav-button.next {
+    background-color: var(--color-primary);
+    color: white;
+}
+
+.nav-button.next:hover {
+    background-color: var(--color-primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(var(--color-primary-rgb), 0.2);
+}
+
+.nav-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* Utility Classes */
+.no-margin {
+    margin: 0 !important;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.mt-10 {
+    margin-top: 10px;
+}
+
+.mt-20 {
+    margin-top: 20px;
+}
+
+.mb-10 {
+    margin-bottom: 10px;
+}
+
+.mb-20 {
+    margin-bottom: 20px;
+}
+
+/* Animations */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.pulse {
+    animation: pulse 2s infinite;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .form-row {
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    .status-section {
+        flex-direction: column;
+        gap: 24px;
+    }
+}
+
+@media (max-width: 480px) {
+    .workflow-step-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    
+    .card-footer {
+        flex-direction: column;
+    }
+    
+    .action-button, .nav-button {
+        width: 100%;
+    }
+}
+
+/* Make data panel card a flex column container */
+.workflow-card.data-panel {
+    display: flex;
+    flex-direction: column;
+    min-height: 0; /* Important for flex children to shrink properly */
+    height: 100%;  /* Optional: ensures it fills parent if parent has a set height */
+}
+
+/* Make card-content fill available space */
+.workflow-card.data-panel .card-content {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    padding: 0; /* Remove padding if you want the pre to fill edge-to-edge */
+}
+
+/* Make data-output fill card-content */
+.workflow-card.data-panel .data-output {
+    flex: 1 1 auto;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    min-width: 0;
+    margin: 0;
+    padding: 16px;
+    overflow: auto;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    color: var(--color-text);
+    background-color: var(--color-surface);
+    box-sizing: border-box;
+}

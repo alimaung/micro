@@ -4,7 +4,7 @@
 
 {% load static %}
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'microapp/css/register.css' %}">
+    <link rel="stylesheet" href="{% static 'microapp/css/register_old.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -317,7 +317,7 @@
             </div>
             
             <div class="workflow-navigation">
-                <button class="nav-button back" id="back-to-step-1">
+                <button class="nav-button prev" id="back-to-step-1">
                     <i class="fas fa-arrow-left"></i>
                     Back to Project Setup
                 </button>
@@ -445,7 +445,7 @@
             </div>
             
             <div class="workflow-navigation">
-                <button class="nav-button back" id="back-to-step-2">
+                <button class="nav-button prev" id="back-to-step-2">
                     <i class="fas fa-arrow-left"></i>
                     Back to Document Analysis
                 </button>
@@ -557,7 +557,7 @@
             </div>
             
             <div class="workflow-navigation">
-                <button class="nav-button back" id="back-to-step-3">
+                <button class="nav-button prev" id="back-to-step-3">
                     <i class="fas fa-arrow-left"></i>
                     Back to Workflow Determination
                 </button>
@@ -735,7 +735,7 @@
                 </div>
                 
                 <div class="workflow-navigation">
-                    <button class="nav-button back" id="back-to-step-4">
+                    <button class="nav-button prev" id="back-to-step-4">
                         <i class="fas fa-arrow-left"></i>
                         Back to Reference Sheets
                     </button>
@@ -901,7 +901,7 @@
                 </div>
                 
                 <div class="workflow-navigation">
-                    <button class="nav-button back" id="back-to-step-5">
+                    <button class="nav-button prev" id="back-to-step-5">
                         <i class="fas fa-arrow-left"></i>
                         Back to Film Allocation
                     </button>
@@ -1075,7 +1075,7 @@
                 </div>
                 
                 <div class="workflow-navigation">
-                    <button class="nav-button back" id="back-to-step-6">
+                    <button class="nav-button prev" id="back-to-step-6">
                         <i class="fas fa-arrow-left"></i>
                         Back to Index Generation
                     </button>
@@ -1259,7 +1259,7 @@
                 </div>
                 
                 <div class="workflow-navigation">
-                    <button class="nav-button back" id="back-to-step-7">
+                    <button class="nav-button prev" id="back-to-step-7">
                         <i class="fas fa-arrow-left"></i>
                         Back to Film Numbering
                     </button>
@@ -1423,5 +1423,5 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'microapp/js/register.js' %}"></script>
+<script src="{% static 'microapp/js/register_old.js' %}"></script>
 {% endblock %} 
