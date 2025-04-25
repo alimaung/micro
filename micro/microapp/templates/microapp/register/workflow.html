@@ -1,0 +1,127 @@
+<!-- Step 3: Workflow Determination Stage -->
+<div class="workflow-step" id="step-3">
+    <div class="workflow-step-header">
+        <h2>Workflow Determination</h2>
+        <div class="step-status">
+            <span class="status-badge pending">
+                <i class="fas fa-clock"></i>
+                Awaiting Analysis
+            </span>
+        </div>
+    </div>
+    
+    <div class="workflow-cards">
+        <!-- Workflow Selection Card -->
+        <div class="workflow-card primary-card">
+            <div class="card-header">
+                <h3><i class="fas fa-sitemap"></i> Workflow Selection</h3>
+            </div>
+            <div class="card-content">
+                <div class="workflow-diagram">
+                    <div class="document-node">
+                        <div class="node-icon">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                        <div class="node-label">Document Analysis</div>
+                    </div>
+                    
+                    <div class="decision-node">
+                        <div class="node-icon">
+                            <i class="fas fa-question"></i>
+                        </div>
+                        <div class="node-label">Oversized Documents?</div>
+                        <div class="decision-paths">
+                            <div class="path-yes">Yes</div>
+                            <div class="path-no">No</div>
+                        </div>
+                    </div>
+                    
+                    <div class="workflow-branches">
+                        <div class="workflow-branch standard">
+                            <div class="branch-header">
+                                <div class="branch-icon">
+                                    <i class="fas fa-film"></i>
+                                </div>
+                                <h4>Standard Workflow</h4>
+                                <span class="recommendation-badge">Recommended</span>
+                            </div>
+                            <div class="branch-description">
+                                <p>Process all documents on 16mm film only. Ideal for standard document sizes and efficient storage.</p>
+                                <ul class="branch-features">
+                                    <li><i class="fas fa-check"></i> Faster processing time</li>
+                                    <li><i class="fas fa-check"></i> Higher frame count per roll</li>
+                                    <li><i class="fas fa-check"></i> Cost-effective solution</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="workflow-branch oversized inactive">
+                            <div class="branch-header">
+                                <div class="branch-icon">
+                                    <i class="fas fa-film"></i><i class="fas fa-plus"></i><i class="fas fa-expand"></i>
+                                </div>
+                                <h4>Hybrid Workflow</h4>
+                            </div>
+                            <div class="branch-description">
+                                <p>Process standard documents on 16mm film and oversized documents on 35mm film. Includes reference sheet generation.</p>
+                                <ul class="branch-features">
+                                    <li><i class="fas fa-check"></i> Handles all document sizes</li>
+                                    <li><i class="fas fa-check"></i> Maintains document integrity</li>
+                                    <li><i class="fas fa-check"></i> Cross-references between film types</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <button class="action-button primary" id="select-standard-workflow">
+                    <i class="fas fa-check-circle"></i>
+                    Select Standard Workflow
+                </button>
+                <button class="action-button secondary" id="select-hybrid-workflow" disabled>
+                    <i class="fas fa-check-circle"></i>
+                    Select Hybrid Workflow
+                </button>
+            </div>
+        </div>
+        
+        <!-- Output Data Panel -->
+        <div class="workflow-card data-panel">
+            <div class="card-header with-actions">
+                <h3><i class="fas fa-code"></i> Workflow Data</h3>
+                <div class="card-actions">
+                    <button class="panel-action" id="expand-workflow-data">
+                        <i class="fas fa-expand-alt"></i>
+                    </button>
+                    <button class="panel-action" id="copy-workflow-data">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-content">
+                <pre class="data-output">{
+"workflow": {
+"type": "pending",
+"recommendationType": "standard",
+"documentDistribution": {
+"standard": 0,
+"oversized": 0
+}
+}
+}</pre>
+            </div>
+        </div>
+    </div>
+    
+    <div class="workflow-navigation">
+        <button class="nav-button back" id="back-to-step-2">
+            <i class="fas fa-arrow-left"></i>
+            Back to Document Analysis
+        </button>
+        <button class="nav-button next" id="to-step-4" disabled>
+            Continue to Reference Sheets
+            <i class="fas fa-arrow-right"></i>
+        </button>
+    </div>
+</div>

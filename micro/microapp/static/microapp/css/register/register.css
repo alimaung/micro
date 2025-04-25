@@ -1,0 +1,2219 @@
+/* Microfilm Processing Workflow Styles */
+
+/* Main container */
+.register-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Workflow Progress Tracker */
+.workflow-progress {
+    margin-bottom: 30px;
+    background-color: var(--color-background);
+    border-radius: 12px;
+    box-shadow: 0 1px 3px var(--color-shadow), 
+                0 2px 8px var(--color-shadow);
+    padding: 24px;
+    border: 1px solid var(--color-border);
+    transition: background-color var(--transition-speed) ease,
+                color var(--transition-speed) ease,
+                box-shadow var(--transition-speed) ease;
+}
+
+.dark-mode .workflow-progress {
+    background-color: var(--color-dark-surface);
+    color: var(--color-dark-text);
+    border-color: var(--color-dark-border);
+    box-shadow: 0 1px 3px var(--color-dark-shadow), 
+                0 2px 8px var(--color-dark-shadow);
+}
+
+.progress-steps {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    position: relative;
+    overflow-x: auto;
+    padding-bottom: 10px;
+}
+
+.progress-steps::after {
+    content: '';
+    position: absolute;
+    top: 35px;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background-color: var(--color-border);
+    z-index: 1;
+}
+
+.dark-mode .progress-steps::after {
+    background-color: var(--color-dark-border);
+}
+
+.progress-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 0 0 auto;
+    position: relative;
+    z-index: 2;
+    transition: color 0.3s ease;
+    min-width: 100px;
+    color: var(--color-text-light);
+    top: 10px;
+}
+
+.dark-mode .progress-step {
+    color: var(--color-dark-text-light);
+}
+
+.step-indicator {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: var(--color-background);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: var(--font-weight-semibold);
+    font-size: 18px;
+    border: 2px solid var(--color-border);
+    margin-bottom: 8px;
+    transition: all 0.3s ease;
+}
+
+.dark-mode .step-indicator {
+    background-color: var(--color-dark-surface);
+    border-color: var(--color-dark-border);
+}
+
+.step-label {
+    font-size: 14px;
+    text-align: center;
+    transition: color 0.3s ease;
+    font-weight: var(--font-weight-medium);
+}
+
+/* Active step */
+.progress-step.active {
+    color: var(--color-primary);
+}
+
+.progress-step.active .step-indicator {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+    color: white;
+    box-shadow: 0 0 0 5px rgba(var(--color-primary-rgb), 0.2);
+}
+
+/* Completed steps */
+.progress-step.completed .step-indicator {
+    background-color: var(--color-success);
+    border-color: var(--color-success);
+    color: var(--color-success-text);
+}
+
+.progress-step.completed {
+    color: var(--color-success);
+}
+
+/* .progress-step.completed .step-indicator::after {
+    content: '\f00c';
+    font-family: 'Font Awesome 5 Free';
+    font-weight: 900;
+} */
+
+
+/* Global progress bar TODO: Make this static with primary color in the future*/
+.progress-bar-container {
+    width: 100%;
+}
+
+.progress-bar-track {
+    background-color: var(--color-surface);
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+    transition: background-color var(--transition-speed) ease;
+}
+
+.dark-mode .progress-bar-track {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background-color: var(--color-success);
+    border-radius: 4px;
+    transition: width 0.5s ease, background-color 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.progress-bar-fill::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+        transparent, 
+        rgba(255, 255, 255, 0.4), 
+        transparent
+    );
+    animation: throb 2.5s infinite ease-in-out;
+}
+
+@keyframes throb {
+    0% {
+        left: -100%;
+        transform: skewX(-15deg);
+    }
+    50% {
+        transform: skewX(0);
+    }
+    100% {
+        left: 100%;
+        transform: skewX(15deg);
+    }
+}
+
+/* Workflow Steps */
+.workflow-step {
+    display: none;
+    margin-bottom: 30px;
+    animation: fadeInStep 0.5s ease;
+}
+
+.workflow-step.active {
+    display: block;
+}
+
+@keyframes fadeInStep {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.workflow-step-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.workflow-step-header h2 {
+    font-size: 24px;
+    color: var(--color-text);
+    font-weight: var(--font-weight-semibold);
+}
+
+.dark-mode .workflow-step-header h2 {
+    color: var(--color-dark-text);
+}
+
+/* Status badges */
+.status-badge {
+    display: flex;
+    align-items: center;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.status-badge i {
+    margin-right: 6px;
+}
+
+.status-badge.pending {
+    background-color: rgba(255, 204, 0, 0.2);
+    color: #ffcc00;
+}
+
+.status-badge.in-progress {
+    background-color: rgba(26, 115, 232, 0.2);
+    color: #1a73e8;
+}
+
+.status-badge.completed {
+    background-color: rgba(52, 168, 83, 0.2);
+    color: #34a853;
+}
+
+.status-badge.error {
+    background-color: rgba(234, 67, 53, 0.2);
+    color: #ea4335;
+}
+
+.dark-mode .status-badge.pending {
+    background-color: rgba(255, 204, 0, 0.3);
+    color: #ffcc00;
+}
+
+.dark-mode .status-badge.in-progress {
+    background-color: rgba(26, 115, 232, 0.3);
+    color: #1a73e8;
+}
+
+.dark-mode .status-badge.completed {
+    background-color: rgba(52, 168, 83, 0.3);
+    color: #34a853;
+}
+
+.dark-mode .status-badge.error {
+    background-color: rgba(234, 67, 53, 0.3);
+    color: #ea4335;
+}
+
+/* Card layouts */
+.workflow-cards {
+    display: grid;
+    grid-template-columns: 1fr 350px;
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+@media (max-width: 900px) {
+    .workflow-cards {
+        grid-template-columns: 1fr;
+    }
+}
+
+.workflow-card {
+    background-color: var(--color-background);
+    border-radius: 12px;
+    box-shadow: 0 1px 3px var(--color-shadow), 
+                0 2px 8px var(--color-shadow);
+    border: 1px solid var(--color-border);
+    transition: background-color var(--transition-speed) ease,
+                color var(--transition-speed) ease,
+                box-shadow var(--transition-speed) ease;
+    overflow: hidden;
+}
+
+.dark-mode .workflow-card {
+    background-color: var(--color-dark-surface);
+    color: var(--color-dark-text);
+    border-color: var(--color-dark-border);
+    box-shadow: 0 1px 3px var(--color-dark-shadow), 
+                0 2px 8px var(--color-dark-shadow);
+}
+
+.card-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--color-border);
+    display: flex;
+    align-items: center;
+}
+
+.dark-mode .card-header {
+    border-color: var(--color-dark-border);
+}
+
+.card-header h3 {
+    font-size: 18px;
+    color: var(--color-text);
+    font-weight: var(--font-weight-medium);
+    margin: 0;
+    display: flex;
+    align-items: center;
+}
+
+.dark-mode .card-header h3 {
+    color: var(--color-dark-text);
+}
+
+.card-header h3 i {
+    margin-right: 10px;
+    color: var(--color-primary);
+}
+
+.card-header.with-actions {
+    display: flex;
+    justify-content: space-between;
+}
+
+.card-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.panel-action {
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    background-color: transparent;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-light);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.panel-action:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+    color: var(--color-primary);
+}
+
+.dark-mode .panel-action:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.card-content {
+    padding: 20px;
+}
+
+.card-footer {
+    padding: 16px 20px;
+    border-top: 1px solid var(--color-border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.dark-mode .card-footer {
+    border-color: var(--color-dark-border);
+}
+
+/* Form elements */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text);
+}
+
+.dark-mode .form-group label {
+    color: var(--color-dark-text);
+}
+
+.form-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.form-group.half {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+.form-input {
+    width: 100%;
+    padding: 12px;
+    border-radius: 6px;
+    border: 1px solid var(--color-border);
+    background-color: var(--color-surface);
+    font-size: 14px;
+    color: var(--color-text);
+    transition: all 0.3s ease;
+}
+
+.form-input:focus {
+    border-color: var(--color-primary);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.2);
+}
+
+.dark-mode .form-input {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: var(--color-dark-text);
+    border-color: var(--color-dark-border);
+}
+
+.folder-input-container {
+    display: flex;
+    gap: 12px;
+}
+
+.folder-input-container .form-input {
+    flex: 1;
+}
+
+/* Toggle switches */
+.option-toggles {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 16px;
+    margin-top: 24px;
+}
+
+.toggle-group {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.toggle-label {
+    font-size: 14px;
+    color: var(--color-text);
+}
+
+.dark-mode .toggle-label {
+    color: var(--color-dark-text);
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--color-border);
+    transition: .3s;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .3s;
+}
+
+input:checked + .slider {
+    background-color: var(--color-primary);
+}
+
+input:focus + .slider {
+    box-shadow: 0 0 1px var(--color-primary);
+}
+
+input:checked + .slider:before {
+    transform: translateX(20px);
+}
+
+.slider.round {
+    border-radius: 34px;
+}
+
+.slider.round:before {
+    border-radius: 50%;
+}
+
+/* Buttons */
+.browse-button {
+    padding: 12px 16px;
+    border: none;
+    border-radius: 6px;
+    background-color: var(--color-primary);
+    color: white;
+    font-size: 14px;
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.browse-button:hover {
+    background-color: var(--color-primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(var(--color-primary-rgb), 0.2);
+}
+
+.action-button {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.action-button.primary {
+    background-color: var(--color-primary);
+    color: white;
+}
+
+.action-button.primary:hover {
+    background-color: var(--color-primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(var(--color-primary-rgb), 0.2);
+}
+
+.action-button.secondary {
+    background-color: var(--color-surface);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+}
+
+.action-button.secondary:hover {
+    background-color: var(--color-surface-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px var(--color-shadow);
+}
+
+.dark-mode .action-button.secondary {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: var(--color-dark-text);
+    border-color: var(--color-dark-border);
+}
+
+.dark-mode .action-button.secondary:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 8px var(--color-dark-shadow);
+}
+
+.action-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* Data panel styles */
+.data-panel .card-content {
+    padding: 0;
+    max-height: 400px;
+    overflow: auto;
+}
+
+.data-output {
+    margin: 0;
+    padding: 16px;
+    overflow-x: auto;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    color: var(--color-text);
+    background-color: var(--color-surface);
+}
+
+.dark-mode .data-output {
+    color: var(--color-dark-text);
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
+/* Navigation buttons */
+.workflow-navigation {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 16px;
+}
+
+.nav-button {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.nav-button.back {
+    background-color: var(--color-surface);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+}
+
+.nav-button.back:hover {
+    background-color: var(--color-surface-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px var(--color-shadow);
+}
+
+.dark-mode .nav-button.back {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: var(--color-dark-text);
+    border-color: var(--color-dark-border);
+}
+
+.dark-mode .nav-button.back:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 8px var(--color-dark-shadow);
+}
+
+.nav-button.next {
+    background-color: var(--color-primary);
+    color: white;
+}
+
+.nav-button.next:hover {
+    background-color: var(--color-primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(var(--color-primary-rgb), 0.2);
+}
+
+.nav-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* Document Analysis styles */
+.analysis-status {
+    margin-bottom: 24px;
+}
+
+.status-section {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 24px;
+}
+
+.document-counter {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.counter-circle {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background-color: var(--color-primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: var(--font-weight-bold);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.counter-circle::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 50%);
+}
+
+.counter-circle.oversized {
+    background-color: #ff9f0a; /* Orange for oversized */
+}
+
+.counter-label {
+    font-size: 14px;
+    color: var(--color-text);
+    font-weight: var(--font-weight-medium);
+    text-align: center;
+}
+
+.dark-mode .counter-label {
+    color: var(--color-dark-text);
+}
+
+.progress-section {
+    margin-top: 20px;
+}
+
+.progress-label {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 14px;
+    color: var(--color-text);
+}
+
+.dark-mode .progress-label {
+    color: var(--color-dark-text);
+}
+
+.progress-status {
+    margin-top: 8px;
+    font-size: 13px;
+    color: var(--color-text-light);
+}
+
+.dark-mode .progress-status {
+    color: var(--color-dark-text-light);
+}
+
+.document-preview {
+    margin-top: 30px;
+}
+
+.document-preview h4 {
+    font-size: 16px;
+    color: var(--color-text);
+    margin-bottom: 16px;
+}
+
+.dark-mode .document-preview h4 {
+    color: var(--color-dark-text);
+}
+
+.preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 16px;
+}
+
+.preview-placeholder {
+    height: 150px;
+    background-color: var(--color-surface);
+    border-radius: 6px;
+    border: 1px solid var(--color-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+    color: var(--color-text-light);
+    transition: all 0.3s ease;
+}
+
+.dark-mode .preview-placeholder {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: var(--color-dark-border);
+    color: var(--color-dark-text-light);
+}
+
+/* Workflow Determination styles */
+.workflow-diagram {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.document-node, .decision-node {
+    width: 180px;
+    padding: 20px;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 10px;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    transition: all 0.3s ease;
+}
+
+.dark-mode .document-node, 
+.dark-mode .decision-node {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: var(--color-dark-border);
+}
+
+.node-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    color: white;
+    background-color: var(--color-primary);
+}
+
+.document-node .node-icon {
+    background-color: #1a73e8; /* Blue */
+}
+
+.decision-node .node-icon {
+    background-color: #ffcc00; /* Yellow */
+    color: #333;
+}
+
+.node-label {
+    font-size: 14px;
+    color: var(--color-text);
+    font-weight: var(--font-weight-medium);
+}
+
+.dark-mode .node-label {
+    color: var(--color-dark-text);
+}
+
+.decision-paths {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--color-text-light);
+}
+
+.dark-mode .decision-paths {
+    color: var(--color-dark-text-light);
+}
+
+.workflow-branches {
+    display: flex;
+    width: 100%;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+@media (max-width: 768px) {
+    .workflow-branches {
+        flex-direction: column;
+    }
+}
+
+.workflow-branch {
+    flex: 1;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    transition: all 0.3s ease;
+}
+
+.dark-mode .workflow-branch {
+    border-color: var(--color-dark-border);
+}
+
+.workflow-branch.inactive {
+    opacity: 0.6;
+}
+
+.branch-header {
+    padding: 16px;
+    background-color: var(--color-surface);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.dark-mode .branch-header {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: var(--color-dark-border);
+}
+
+.branch-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    color: white;
+    background-color: var(--color-primary);
+}
+
+.branch-header h4 {
+    font-size: 16px;
+    color: var(--color-text);
+    margin: 0;
+    flex-grow: 1;
+}
+
+.dark-mode .branch-header h4 {
+    color: var(--color-dark-text);
+}
+
+.recommendation-badge {
+    padding: 4px 8px;
+    background-color: rgba(52, 168, 83, 0.2);
+    color: #34a853;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: var(--font-weight-medium);
+}
+
+.dark-mode .recommendation-badge {
+    background-color: rgba(52, 168, 83, 0.3);
+}
+
+.branch-description {
+    padding: 16px;
+    background-color: var(--color-background);
+}
+
+.dark-mode .branch-description {
+    background-color: var(--color-dark-surface);
+}
+
+.branch-description p {
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--color-text);
+    margin-top: 0;
+    margin-bottom: 16px;
+}
+
+.dark-mode .branch-description p {
+    color: var(--color-dark-text);
+}
+
+.branch-features {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.branch-features li {
+    font-size: 14px;
+    color: var(--color-text);
+    padding: 6px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.dark-mode .branch-features li {
+    color: var(--color-dark-text);
+}
+
+.branch-features li i {
+    color: #34a853;
+}
+
+/* Reference Sheet Generation styles */
+.reference-generation {
+    padding: 20px;
+    border-radius: 10px;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+}
+
+.dark-mode .reference-generation {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: var(--color-dark-border);
+}
+
+.step-notice {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    background-color: rgba(26, 115, 232, 0.1);
+    color: var(--color-primary);
+    margin-bottom: 20px;
+}
+
+.dark-mode .step-notice {
+    background-color: rgba(26, 115, 232, 0.2);
+}
+
+.reference-status {
+    padding: 20px;
+    text-align: center;
+}
+
+.status-message {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    color: var(--color-text);
+}
+
+.dark-mode .status-message {
+    color: var(--color-dark-text);
+}
+
+.status-message i {
+    font-size: 40px;
+    color: var(--color-text-light);
+}
+
+.dark-mode .status-message i {
+    color: var(--color-dark-text-light);
+}
+
+.status-message.inactive p {
+    color: var(--color-text-light);
+    font-size: 14px;
+    line-height: 1.5;
+    margin: 0;
+}
+
+.dark-mode .status-message.inactive p {
+    color: var(--color-dark-text-light);
+}
+
+.reference-animation {
+    margin-top: 20px;
+}
+
+.document-visual {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 30px;
+    margin-bottom: 30px;
+}
+
+.document-image, .reference-image {
+    width: 100px;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    color: var(--color-text-light);
+    background-color: var(--color-background);
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+    transition: all 0.3s ease;
+}
+
+.dark-mode .document-image, 
+.dark-mode .reference-image {
+    background-color: var(--color-dark-surface);
+    border-color: var(--color-dark-border);
+    color: var(--color-dark-text-light);
+}
+
+.process-arrow {
+    font-size: 30px;
+    color: var(--color-primary);
+}
+
+.hidden {
+    display: none;
+}
+
+/* Film Allocation Styles (Step 5) */
+.film-allocation {
+    margin-bottom: 24px;
+}
+
+.allocation-summary {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 24px;
+    padding: 16px;
+    background-color: var(--color-surface);
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+}
+
+.dark-mode .allocation-summary {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: var(--color-dark-border);
+}
+
+.allocation-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.allocation-label {
+    font-size: 14px;
+    color: var(--color-text-light);
+    margin-bottom: 8px;
+}
+
+.dark-mode .allocation-label {
+    color: var(--color-dark-text-light);
+}
+
+.allocation-value {
+    font-size: 24px;
+    font-weight: var(--font-weight-bold);
+    color: var(--color-primary);
+}
+
+.film-type-controls {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 24px;
+}
+
+.film-toggle {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.film-rolls-container {
+    margin-bottom: 24px;
+}
+
+.film-rolls-container h4 {
+    font-size: 16px;
+    margin-bottom: 16px;
+    color: var(--color-text);
+}
+
+.dark-mode .film-rolls-container h4 {
+    color: var(--color-dark-text);
+}
+
+.film-rolls {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.film-roll {
+    background-color: var(--color-background);
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+    padding: 16px;
+    transition: all 0.3s ease;
+}
+
+.dark-mode .film-roll {
+    background-color: var(--color-dark-surface);
+    border-color: var(--color-dark-border);
+}
+
+.roll-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.roll-id {
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text);
+}
+
+.dark-mode .roll-id {
+    color: var(--color-dark-text);
+}
+
+.roll-capacity {
+    font-size: 14px;
+    color: var(--color-text-light);
+}
+
+.dark-mode .roll-capacity {
+    color: var(--color-dark-text-light);
+}
+
+.capacity-used {
+    color: var(--color-primary);
+    font-weight: var(--font-weight-medium);
+}
+
+.roll-usage-bar {
+    height: 8px;
+    background-color: var(--color-surface);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 12px;
+}
+
+.dark-mode .roll-usage-bar {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.usage-fill {
+    height: 100%;
+    background-color: var(--color-primary);
+    border-radius: 4px;
+    transition: width 0.5s ease;
+}
+
+.roll-documents {
+    font-size: 14px;
+    color: var(--color-text-light);
+}
+
+.dark-mode .roll-documents {
+    color: var(--color-dark-text-light);
+}
+
+.add-roll-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px;
+    background-color: rgba(var(--color-primary-rgb), 0.1);
+    border: 1px dashed var(--color-primary);
+    border-radius: 8px;
+    color: var(--color-primary);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.add-roll-button:hover {
+    background-color: rgba(var(--color-primary-rgb), 0.2);
+}
+
+.allocation-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 24px;
+}
+
+@media (max-width: 600px) {
+    .allocation-options {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Index Generation Styles (Step 6) */
+.index-controls {
+    margin-bottom: 24px;
+}
+
+.indexing-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+@media (max-width: 600px) {
+    .indexing-options {
+        grid-template-columns: 1fr;
+    }
+}
+
+.index-fields h4 {
+    font-size: 16px;
+    margin-bottom: 16px;
+    color: var(--color-text);
+}
+
+.dark-mode .index-fields h4 {
+    color: var(--color-dark-text);
+}
+
+.field-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+    background-color: var(--color-surface);
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+    padding: 16px;
+}
+
+.dark-mode .field-options {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: var(--color-dark-border);
+}
+
+.field-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.field-option label {
+    color: var(--color-text);
+    cursor: pointer;
+}
+
+.dark-mode .field-option label {
+    color: var(--color-dark-text);
+}
+
+.index-preview {
+    margin-top: 30px;
+}
+
+.index-preview h4 {
+    font-size: 16px;
+    margin-bottom: 16px;
+    color: var(--color-text);
+}
+
+.dark-mode .index-preview h4 {
+    color: var(--color-dark-text);
+}
+
+.index-table-container {
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 12px;
+}
+
+.dark-mode .index-table-container {
+    border-color: var(--color-dark-border);
+}
+
+.index-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.index-table th, .index-table td {
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.dark-mode .index-table th, 
+.dark-mode .index-table td {
+    border-color: var(--color-dark-border);
+}
+
+.index-table th {
+    background-color: var(--color-surface);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text);
+}
+
+.dark-mode .index-table th {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: var(--color-dark-text);
+}
+
+.index-table td {
+    color: var(--color-text);
+}
+
+.dark-mode .index-table td {
+    color: var(--color-dark-text);
+}
+
+.index-table .empty-table {
+    padding: 40px 0;
+    text-align: center;
+}
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    color: var(--color-text-light);
+}
+
+.dark-mode .empty-state {
+    color: var(--color-dark-text-light);
+}
+
+.empty-state i {
+    font-size: 32px;
+    opacity: 0.5;
+}
+
+.empty-state p {
+    margin: 0;
+}
+
+.table-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+}
+
+.pagination-button {
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    background-color: var(--color-background);
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.dark-mode .pagination-button {
+    background-color: var(--color-dark-surface);
+    border-color: var(--color-dark-border);
+    color: var(--color-dark-text);
+}
+
+.pagination-button:hover:not(:disabled) {
+    background-color: var(--color-surface);
+}
+
+.dark-mode .pagination-button:hover:not(:disabled) {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.pagination-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.pagination-info {
+    font-size: 14px;
+    color: var(--color-text-light);
+}
+
+.dark-mode .pagination-info {
+    color: var(--color-dark-text-light);
+}
+
+/* Film Numbering Styles (Step 7) */
+.numbering-scheme {
+    margin-bottom: 24px;
+}
+
+.scheme-settings {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+    background-color: var(--color-surface);
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+    padding: 16px;
+}
+
+.dark-mode .scheme-settings {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: var(--color-dark-border);
+}
+
+.toggle-with-value {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.toggle-with-value .form-input {
+    width: 100px;
+}
+
+.film-preview {
+    margin: 24px 0;
+}
+
+.film-preview h4 {
+    font-size: 16px;
+    margin-bottom: 16px;
+    color: var(--color-text);
+    text-align: center;
+}
+
+.dark-mode .film-preview h4 {
+    color: var(--color-dark-text);
+}
+
+.film-id-example {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+}
+
+.film-id-card {
+    padding: 20px 30px;
+    background-color: var(--color-background);
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+    box-shadow: 0 2px 6px var(--color-shadow);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.dark-mode .film-id-card {
+    background-color: var(--color-dark-surface);
+    border-color: var(--color-dark-border);
+    box-shadow: 0 2px 6px var(--color-dark-shadow);
+}
+
+.film-id-display {
+    font-size: 20px;
+    font-weight: var(--font-weight-bold);
+    color: var(--color-primary);
+    font-family: monospace;
+}
+
+.film-id-label {
+    font-size: 12px;
+    color: var(--color-text-light);
+}
+
+.dark-mode .film-id-label {
+    color: var(--color-dark-text-light);
+}
+
+.numbering-diagram {
+    margin-top: 30px;
+}
+
+.numbering-diagram h4 {
+    font-size: 16px;
+    margin-bottom: 16px;
+    color: var(--color-text);
+}
+
+.dark-mode .numbering-diagram h4 {
+    color: var(--color-dark-text);
+}
+
+.diagram-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+}
+
+.diagram-film {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    width: 150px;
+}
+
+.film-label {
+    font-size: 14px;
+    color: var(--color-text);
+    font-weight: var(--font-weight-medium);
+}
+
+.dark-mode .film-label {
+    color: var(--color-dark-text);
+}
+
+.film-strip {
+    position: relative;
+    width: 120px;
+    background-color: var(--color-background);
+    border-radius: 6px;
+    border: 1px solid var(--color-border);
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.dark-mode .film-strip {
+    background-color: var(--color-dark-surface);
+    border-color: var(--color-dark-border);
+}
+
+.film-frame {
+    width: 100%;
+    height: 24px;
+    background-color: rgba(var(--color-primary-rgb), 0.1);
+    border: 1px solid rgba(var(--color-primary-rgb), 0.3);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    color: var(--color-primary);
+}
+
+.film-frame.large {
+    height: 36px;
+}
+
+.film-id {
+    font-size: 12px;
+    color: var(--color-text);
+    font-weight: var(--font-weight-medium);
+    font-family: monospace;
+}
+
+.dark-mode .film-id {
+    color: var(--color-dark-text);
+}
+
+.diagram-film.large-format .film-strip {
+    width: 150px;
+}
+
+/* Document Distribution Styles (Step 8) */
+.distribution-controls {
+    margin-bottom: 24px;
+}
+
+.distribution-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+    background-color: var(--color-surface);
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+    padding: 16px;
+}
+
+.dark-mode .distribution-options {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: var(--color-dark-border);
+}
+
+.folder-preview {
+    margin-top: 24px;
+}
+
+.folder-preview h4 {
+    font-size: 16px;
+    margin-bottom: 16px;
+    color: var(--color-text);
+}
+
+.dark-mode .folder-preview h4 {
+    color: var(--color-dark-text);
+}
+
+.folder-tree {
+    padding: 16px;
+    background-color: var(--color-background);
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+    max-height: 300px;
+    overflow: auto;
+}
+
+.dark-mode .folder-tree {
+    background-color: var(--color-dark-surface);
+    border-color: var(--color-dark-border);
+}
+
+.tree-node {
+    margin-bottom: 8px;
+    font-size: 14px;
+    color: var(--color-text);
+}
+
+.dark-mode .tree-node {
+    color: var(--color-dark-text);
+}
+
+.tree-node i {
+    margin-right: 8px;
+    color: var(--color-text-light);
+}
+
+.dark-mode .tree-node i {
+    color: var(--color-dark-text-light);
+}
+
+.tree-node i.fa-folder, 
+.tree-node i.fa-folder-open {
+    color: #ffcc00;
+}
+
+.tree-node i.fa-file-alt {
+    color: #1a73e8;
+}
+
+.tree-node i.fa-file-excel {
+    color: #34a853;
+}
+
+.tree-children {
+    margin-left: 24px;
+    margin-top: 8px;
+}
+
+.distribution-progress {
+    margin-top: 24px;
+}
+
+.distribution-progress h4 {
+    font-size: 16px;
+    margin-bottom: 16px;
+    color: var(--color-text);
+}
+
+.dark-mode .distribution-progress h4 {
+    color: var(--color-dark-text);
+}
+
+.file-operations {
+    margin-top: 20px;
+    background-color: var(--color-background);
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+    padding: 16px;
+    height: 200px;
+    overflow-y: auto;
+}
+
+.dark-mode .file-operations {
+    background-color: var(--color-dark-surface);
+    border-color: var(--color-dark-border);
+}
+
+.operation-log {
+    font-family: monospace;
+    font-size: 13px;
+}
+
+.log-entry {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    color: var(--color-text);
+}
+
+.dark-mode .log-entry {
+    color: var(--color-dark-text);
+}
+
+.log-status {
+    flex-shrink: 0;
+}
+
+.log-status.success {
+    color: #34a853;
+}
+
+.log-status.error {
+    color: #ea4335;
+}
+
+.log-status.warning {
+    color: #fbbc04;
+}
+
+.log-message {
+    flex-grow: 1;
+    word-break: break-word;
+}
+
+/* Export & Summary Styles (Step 9) */
+.summary-overview {
+    margin-bottom: 30px;
+}
+
+.summary-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+    margin-bottom: 30px;
+}
+
+.stat-card {
+    background-color: var(--color-background);
+    border-radius: 10px;
+    border: 1px solid var(--color-border);
+    box-shadow: 0 2px 4px var(--color-shadow);
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: all 0.3s ease;
+}
+
+.dark-mode .stat-card {
+    background-color: var(--color-dark-surface);
+    border-color: var(--color-dark-border);
+    box-shadow: 0 2px 4px var(--color-dark-shadow);
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px var(--color-shadow);
+}
+
+.dark-mode .stat-card:hover {
+    box-shadow: 0 4px 8px var(--color-dark-shadow);
+}
+
+.stat-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: rgba(var(--color-primary-rgb), 0.1);
+    color: var(--color-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+}
+
+.stat-content {
+    flex: 1;
+}
+
+.stat-value {
+    font-size: 22px;
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text);
+    display: block;
+    margin-bottom: 4px;
+}
+
+.dark-mode .stat-value {
+    color: var(--color-dark-text);
+}
+
+.stat-label {
+    font-size: 14px;
+    color: var(--color-text-light);
+}
+
+.dark-mode .stat-label {
+    color: var(--color-dark-text-light);
+}
+
+.workflow-summary {
+    background-color: var(--color-surface);
+    border-radius: 10px;
+    border: 1px solid var(--color-border);
+    padding: 20px;
+}
+
+.dark-mode .workflow-summary {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: var(--color-dark-border);
+}
+
+.workflow-summary h4 {
+    font-size: 16px;
+    margin-bottom: 20px;
+    color: var(--color-text);
+}
+
+.dark-mode .workflow-summary h4 {
+    color: var(--color-dark-text);
+}
+
+.workflow-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.timeline-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.timeline-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    color: var(--color-text-light);
+    flex-shrink: 0;
+}
+
+.dark-mode .timeline-icon {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: var(--color-dark-border);
+}
+
+.timeline-icon.completed {
+    background-color: #34a853;
+    border-color: #34a853;
+    color: white;
+}
+
+.timeline-content {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+}
+
+.timeline-title {
+    font-size: 14px;
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dark-mode .timeline-title {
+    color: var(--color-dark-text);
+}
+
+.timeline-time {
+    font-size: 12px;
+    color: var(--color-text-light);
+}
+
+.dark-mode .timeline-time {
+    color: var(--color-dark-text-light);
+}
+
+.export-section {
+    margin-top: 30px;
+}
+
+.export-section h4 {
+    font-size: 16px;
+    margin-bottom: 16px;
+    color: var(--color-text);
+}
+
+.dark-mode .export-section h4 {
+    color: var(--color-dark-text);
+}
+
+.export-files {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+}
+
+.export-file {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background-color: var(--color-background);
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+    padding: 16px;
+    transition: all 0.3s ease;
+}
+
+.dark-mode .export-file {
+    background-color: var(--color-dark-surface);
+    border-color: var(--color-dark-border);
+}
+
+.export-file:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px var(--color-shadow);
+}
+
+.dark-mode .export-file:hover {
+    box-shadow: 0 4px 8px var(--color-dark-shadow);
+}
+
+.file-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.file-icon .fa-file-excel {
+    color: #34a853;
+}
+
+.file-icon .fa-file-pdf {
+    color: #ea4335;
+}
+
+.file-icon .fa-file-code {
+    color: #fbbc04;
+}
+
+.file-icon .fa-file-image {
+    color: #1a73e8;
+}
+
+.file-details {
+    flex: 1;
+    min-width: 0;
+}
+
+.file-name {
+    font-size: 14px;
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text);
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dark-mode .file-name {
+    color: var(--color-dark-text);
+}
+
+.file-info {
+    font-size: 12px;
+    color: var(--color-text-light);
+}
+
+.dark-mode .file-info {
+    color: var(--color-dark-text-light);
+}
+
+.file-download {
+    background-color: var(--color-primary);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.3s ease;
+}
+
+.file-download:hover {
+    background-color: var(--color-primary-dark);
+    transform: translateY(-2px);
+}
+
+.completion-status {
+    margin-top: 30px;
+}
+
+.status-message {
+    padding: 24px;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.status-message.success {
+    background-color: rgba(52, 168, 83, 0.1);
+    border: 1px solid rgba(52, 168, 83, 0.2);
+}
+
+.dark-mode .status-message.success {
+    background-color: rgba(52, 168, 83, 0.2);
+    border: 1px solid rgba(52, 168, 83, 0.3);
+}
+
+.status-message.error {
+    background-color: rgba(234, 67, 53, 0.1);
+    border: 1px solid rgba(234, 67, 53, 0.2);
+}
+
+.dark-mode .status-message.error {
+    background-color: rgba(234, 67, 53, 0.2);
+    border: 1px solid rgba(234, 67, 53, 0.3);
+}
+
+.status-message i {
+    font-size: 48px;
+    margin-bottom: 16px;
+    color: #34a853;
+}
+
+.status-message.error i {
+    color: #ea4335;
+}
+
+.status-message h3 {
+    font-size: 20px;
+    margin-bottom: 12px;
+    color: var(--color-text);
+}
+
+.dark-mode .status-message h3 {
+    color: var(--color-dark-text);
+}
+
+.status-message p {
+    color: var(--color-text);
+    max-width: 600px;
+    margin: 0 auto;
+    line-height: 1.5;
+}
+
+.dark-mode .status-message p {
+    color: var(--color-dark-text);
+}
+
+/* Utility Classes */
+.no-margin {
+    margin: 0 !important;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.mt-10 {
+    margin-top: 10px;
+}
+
+.mt-20 {
+    margin-top: 20px;
+}
+
+.mb-10 {
+    margin-bottom: 10px;
+}
+
+.mb-20 {
+    margin-bottom: 20px;
+}
+
+/* Animations */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.pulse {
+    animation: pulse 2s infinite;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .form-row {
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    .status-section {
+        flex-direction: column;
+        gap: 24px;
+    }
+}
+
+@media (max-width: 480px) {
+    .workflow-step-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    
+    .card-footer {
+        flex-direction: column;
+    }
+    
+    .action-button, .nav-button {
+        width: 100%;
+    }
+}

@@ -1,0 +1,108 @@
+<!-- Step 4: Reference Sheet Generation -->
+<div class="workflow-step" id="step-4">
+    <div class="workflow-step-header">
+        <h2>Reference Sheet Generation</h2>
+        <div class="step-status">
+            <span class="status-badge pending">
+                <i class="fas fa-clock"></i>
+                Workflow Dependent
+            </span>
+        </div>
+    </div>
+    
+    <div class="workflow-cards">
+        <!-- Reference Sheet Card -->
+        <div class="workflow-card primary-card">
+            <div class="card-header">
+                <h3><i class="fas fa-file-invoice"></i> Reference Sheet Generation</h3>
+            </div>
+            <div class="card-content">
+                <div class="reference-generation">
+                    <div class="step-notice">
+                        <i class="fas fa-info-circle"></i>
+                        <span>This step is only required for Hybrid Workflow with oversized documents</span>
+                    </div>
+                    
+                    <div class="reference-status">
+                        <div class="status-message inactive">
+                            <i class="fas fa-lock"></i>
+                            <p>Reference sheet generation is currently inactive because Standard Workflow is selected.</p>
+                            <p>To enable this step, go back and select Hybrid Workflow.</p>
+                        </div>
+                        
+                        <div class="reference-animation hidden">
+                            <div class="document-visual">
+                                <div class="document-image">
+                                    <i class="fas fa-file-alt"></i>
+                                </div>
+                                <div class="process-arrow">
+                                    <i class="fas fa-long-arrow-alt-right"></i>
+                                </div>
+                                <div class="reference-image">
+                                    <i class="fas fa-file-invoice"></i>
+                                </div>
+                            </div>
+                            
+                            <div class="progress-section">
+                                <div class="progress-label">
+                                    <span>Generation Progress</span>
+                                    <span class="progress-percentage">0%</span>
+                                </div>
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar-track">
+                                        <div class="progress-bar-fill" style="width: 0%;"></div>
+                                    </div>
+                                </div>
+                                <div class="progress-status">
+                                    <span id="reference-status">Waiting to start...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <button class="action-button primary" id="generate-references" disabled>
+                <i class="fas fa-play"></i>
+                    Generate Reference Sheets
+                </button>
+            </div>
+        </div>
+        
+        <!-- Output Data Panel -->
+        <div class="workflow-card data-panel">
+            <div class="card-header with-actions">
+                <h3><i class="fas fa-code"></i> Reference Sheet Data</h3>
+                <div class="card-actions">
+                    <button class="panel-action" id="expand-reference-data">
+                        <i class="fas fa-expand-alt"></i>
+                    </button>
+                    <button class="panel-action" id="copy-reference-data">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-content">
+                <pre class="data-output">{
+"referenceSheets": {
+"status": "inactive",
+"reason": "Standard workflow selected",
+"sheetCount": 0,
+"referencedDocuments": 0
+}
+}</pre>
+            </div>
+        </div>
+    </div>
+    
+    <div class="workflow-navigation">
+        <button class="nav-button back" id="back-to-step-3">
+            <i class="fas fa-arrow-left"></i>
+            Back to Workflow Determination
+        </button>
+        <button class="nav-button next" id="to-step-5">
+            Continue to Film Allocation
+            <i class="fas fa-arrow-right"></i>
+        </button>
+    </div>
+</div>

@@ -1,0 +1,140 @@
+<!-- Step 1: Project Setup Stage -->
+<div class="workflow-step active" id="step-1">
+    <div class="workflow-step-header">
+        <h2>Project Setup</h2>
+        <div class="step-status">
+            <span class="status-badge pending">
+                <i class="fas fa-clock"></i>
+                Awaiting Configuration
+            </span>
+        </div>
+    </div>
+    
+    <div class="workflow-cards">
+        <!-- Project Setup Card -->
+        <div class="workflow-card primary-card">
+            <div class="card-header">
+                <h3><i class="fas fa-folder-open"></i> Project Configuration</h3>
+            </div>
+            <div class="card-content">
+                <div class="form-group">
+                    <label for="project-name">Project Name</label>
+                    <input type="text" id="project-name" class="form-input" placeholder="Enter a descriptive project name">
+                </div>
+                
+                <div class="form-group">
+                    <label for="project-folder">Source Folder</label>
+                    <div class="folder-input-container">
+                        <input type="text" id="project-folder" class="form-input" placeholder="Select source documents folder" readonly>
+                        <button class="browse-button">
+                            <i class="fas fa-folder-open"></i>
+                            Browse
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="output-folder">Output Destination</label>
+                    <div class="folder-input-container">
+                        <input type="text" id="output-folder" class="form-input" placeholder="Select output destination folder" readonly>
+                        <button class="browse-button">
+                            <i class="fas fa-folder-open"></i>
+                            Browse
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group half">
+                        <label for="film-type">Film Type</label>
+                        <select id="film-type" class="form-input">
+                            <option value="16mm">16mm</option>
+                            <option value="35mm">35mm</option>
+                            <option value="hybrid">Hybrid (16mm + 35mm)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group half">
+                        <label for="film-standard">Film Standard</label>
+                        <select id="film-standard" class="form-input">
+                            <option value="ansi">ANSI Standard</option>
+                            <option value="iso">ISO Standard</option>
+                            <option value="custom">Custom</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="option-toggles">
+                    <div class="toggle-group">
+                        <span class="toggle-label">Enable Debug Mode</span>
+                        <label class="switch">
+                            <input type="checkbox" id="debug-mode">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="toggle-group">
+                        <span class="toggle-label">Retain Source Files</span>
+                        <label class="switch">
+                            <input type="checkbox" id="retain-sources" checked>
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="toggle-group">
+                        <span class="toggle-label">Auto-detect Oversize</span>
+                        <label class="switch">
+                            <input type="checkbox" id="auto-detect" checked>
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <button class="action-button primary" id="validate-project">
+                    <i class="fas fa-check-circle"></i>
+                    Validate Project
+                </button>
+            </div>
+        </div>
+        
+        <!-- Output Data Panel -->
+        <div class="workflow-card data-panel">
+            <div class="card-header with-actions">
+                <h3><i class="fas fa-code"></i> Project Data</h3>
+                <div class="card-actions">
+                    <button class="panel-action" id="expand-data">
+                        <i class="fas fa-expand-alt"></i>
+                    </button>
+                    <button class="panel-action" id="copy-data">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-content">
+                <pre class="data-output">{
+"project": {
+"name": "",
+"sourcePath": "",
+"outputPath": "",
+"filmType": "16mm",
+"filmStandard": "ansi",
+"options": {
+"debugMode": false,
+"retainSources": true,
+"autoDetectOversize": true
+}
+}
+}</pre>
+            </div>
+        </div>
+    </div>
+    
+    <div class="workflow-navigation">
+        <div></div> <!-- Empty space for alignment -->
+        <button class="nav-button next" id="to-step-2" disabled>
+            Continue to Document Analysis
+            <i class="fas fa-arrow-right"></i>
+        </button>
+    </div>
+</div>

@@ -1,0 +1,128 @@
+<!-- Step 2: Document Analysis Stage -->
+<div class="workflow-step" id="step-2">
+    <div class="workflow-step-header">
+        <h2>Document Analysis</h2>
+        <div class="step-status">
+            <span class="status-badge pending">
+                <i class="fas fa-clock"></i>
+                Ready to Analyze
+            </span>
+        </div>
+    </div>
+    
+    <div class="workflow-cards">
+        <!-- Analysis Status Card -->
+        <div class="workflow-card primary-card">
+            <div class="card-header">
+                <h3><i class="fas fa-search"></i> Document Analysis</h3>
+            </div>
+            <div class="card-content">
+                <div class="analysis-status">
+                    <div class="status-section">
+                        <div class="document-counter">
+                            <div class="counter-circle">
+                                <span class="counter-value">0</span>
+                            </div>
+                            <span class="counter-label">Documents Found</span>
+                        </div>
+                        
+                        <div class="document-counter">
+                            <div class="counter-circle">
+                                <span class="counter-value">0</span>
+                            </div>
+                            <span class="counter-label">Pages Total</span>
+                        </div>
+                        
+                        <div class="document-counter">
+                            <div class="counter-circle oversized">
+                                <span class="counter-value">0</span>
+                            </div>
+                            <span class="counter-label">Oversized Detected</span>
+                        </div>
+                    </div>
+                    
+                    <div class="progress-section">
+                        <div class="progress-label">
+                            <span>Analysis Progress</span>
+                            <span class="progress-percentage">0%</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-track">
+                                <div class="progress-bar-fill" style="width: 0%;"></div>
+                            </div>
+                        </div>
+                        <div class="progress-status">
+                            <span id="analysis-status">Waiting to start...</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="document-preview">
+                    <h4>Document Preview</h4>
+                    <div class="preview-grid">
+                        <div class="preview-placeholder">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                        <div class="preview-placeholder">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                        <div class="preview-placeholder">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                        <div class="preview-placeholder">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <button class="action-button primary" id="start-analysis">
+                    <i class="fas fa-play"></i>
+                    Start Analysis
+                </button>
+                <button class="action-button secondary" id="reset-analysis" disabled>
+                    <i class="fas fa-redo"></i>
+                    Reset
+                </button>
+            </div>
+        </div>
+        
+        <!-- Output Data Panel -->
+        <div class="workflow-card data-panel">
+            <div class="card-header with-actions">
+                <h3><i class="fas fa-code"></i> Analysis Data</h3>
+                <div class="card-actions">
+                    <button class="panel-action" id="expand-analysis-data">
+                        <i class="fas fa-expand-alt"></i>
+                    </button>
+                    <button class="panel-action" id="copy-analysis-data">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-content">
+                <pre class="data-output">{
+"analysis": {
+"documentCount": 0,
+"pageCount": 0,
+"oversizedCount": 0,
+"status": "pending",
+"documentTypes": {},
+"sizeDistribution": {}
+}
+}</pre>
+            </div>
+        </div>
+    </div>
+    
+    <div class="workflow-navigation">
+        <button class="nav-button back" id="back-to-step-1">
+            <i class="fas fa-arrow-left"></i>
+            Back to Project Setup
+        </button>
+        <button class="nav-button next" id="to-step-3" disabled>
+            Continue to Workflow Determination
+            <i class="fas fa-arrow-right"></i>
+        </button>
+    </div>
+</div>

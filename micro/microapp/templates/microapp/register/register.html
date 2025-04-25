@@ -1,0 +1,50 @@
+{% extends 'microapp/base.html' %}
+
+{% block title %}Microfilm Processing Workflow{% endblock %}
+
+{% load static %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'microapp/css/register/register.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="register-container">
+
+    {% include 'microapp/register/progress.html' %}
+    <!-- Main Content Area -->
+    <div class="workflow-content">
+        {% include 'microapp/register/project.html' %}
+        
+        {% include 'microapp/register/analysis.html' %}
+        
+        {% include 'microapp/register/workflow.html' %}
+        
+        {% include 'microapp/register/references.html' %}
+
+        {% include 'microapp/register/allocation.html' %}
+
+        {% include 'microapp/register/index.html' %}
+
+        {% include 'microapp/register/filmnumber.html' %}
+
+        {% include 'microapp/register/distribution.html' %}
+
+        {% include 'microapp/register/export.html' %}
+
+{% endblock %}
+
+{% block extra_js %}
+<!-- Load component scripts -->
+<script src="{% static 'microapp/js/register/progress.js' %}"></script>
+<script src="{% static 'microapp/js/register/project.js' %}"></script>
+<script src="{% static 'microapp/js/register/analysis.js' %}"></script>
+<script src="{% static 'microapp/js/register/workflow.js' %}"></script>
+<script src="{% static 'microapp/js/register/references.js' %}"></script>
+<script src="{% static 'microapp/js/register/allocation.js' %}"></script>
+<script src="{% static 'microapp/js/register/index.js' %}"></script>
+<script src="{% static 'microapp/js/register/filmnumber.js' %}"></script>
+<script src="{% static 'microapp/js/register/distribution.js' %}"></script>
+<script src="{% static 'microapp/js/register/export.js' %}"></script>
+<!-- Main register script -->
+<script src="{% static 'microapp/js/register/register.js' %}"></script>
+{% endblock %} 

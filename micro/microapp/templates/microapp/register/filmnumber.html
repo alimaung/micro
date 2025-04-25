@@ -1,0 +1,173 @@
+<!-- Step 7: Film Number Assignment Stage -->
+<div class="workflow-step" id="step-7">
+    <div class="workflow-step-header">
+        <h2>Film Number Assignment</h2>
+        <div class="step-status">
+            <span class="status-badge pending">
+                <i class="fas fa-clock"></i>
+                Awaiting Index Generation
+            </span>
+        </div>
+    </div>
+    
+    <div class="workflow-cards">
+        <!-- Film Numbering Card -->
+        <div class="workflow-card primary-card">
+            <div class="card-header">
+                <h3><i class="fas fa-hashtag"></i> Film Number Assignment</h3>
+            </div>
+            <div class="card-content">
+                <div class="numbering-scheme">
+                    <div class="scheme-settings">
+                        <div class="option-group">
+                            <label for="numbering-prefix">Film ID Prefix:</label>
+                            <input type="text" id="numbering-prefix" class="form-input" placeholder="MF" value="MF">
+                        </div>
+                        
+                        <div class="option-group">
+                            <label for="numbering-year">Include Year:</label>
+                            <div class="toggle-with-value">
+                                <label class="switch">
+                                    <input type="checkbox" id="include-year" checked>
+                                    <span class="slider round"></span>
+                                </label>
+                                <select id="numbering-year" class="form-input">
+                                    <option value="2023">2023</option>
+                                    <option value="2022">2022</option>
+                                    <option value="2021">2021</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="option-group">
+                            <label for="sequence-digits">Sequence Digits:</label>
+                            <select id="sequence-digits" class="form-input">
+                                <option value="3">3 digits (001-999)</option>
+                                <option value="4" selected>4 digits (0001-9999)</option>
+                                <option value="5">5 digits (00001-99999)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="option-group">
+                            <label for="separation-char">Separator Character:</label>
+                            <select id="separation-char" class="form-input">
+                                <option value="dash">Dash (-)</option>
+                                <option value="dot">Dot (.)</option>
+                                <option value="underscore">Underscore (_)</option>
+                                <option value="none">None</option>
+                            </select>
+                        </div>
+                        
+                        <div class="option-group">
+                            <label for="starting-number">Starting Sequence Number:</label>
+                            <input type="number" id="starting-number" class="form-input" value="1" min="1">
+                        </div>
+                    </div>
+                    
+                    <div class="film-preview">
+                        <h4>Film ID Preview</h4>
+                        <div class="film-id-example">
+                            <div class="film-id-card">
+                                <span class="film-id-display">MF-2023-0001</span>
+                                <span class="film-id-label">16mm Standard</span>
+                            </div>
+                            <div class="film-id-card">
+                                <span class="film-id-display">MF-2023-0001L</span>
+                                <span class="film-id-label">35mm Large</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="numbering-diagram">
+                        <h4>Numbering Diagram</h4>
+                        <div class="diagram-container">
+                            <div class="diagram-film">
+                                <span class="film-label">16mm Roll 1</span>
+                                <div class="film-strip">
+                                    <div class="film-frame" data-id="D001">D001</div>
+                                    <div class="film-frame" data-id="D002">D002</div>
+                                    <div class="film-frame" data-id="D003">D003</div>
+                                </div>
+                                <div class="film-id">MF-2023-0001</div>
+                            </div>
+                            
+                            <div class="diagram-film">
+                                <span class="film-label">16mm Roll 2</span>
+                                <div class="film-strip">
+                                    <div class="film-frame" data-id="D004">D004</div>
+                                    <div class="film-frame" data-id="D005">D005</div>
+                                    <div class="film-frame" data-id="D006">D006</div>
+                                </div>
+                                <div class="film-id">MF-2023-0002</div>
+                            </div>
+                            
+                            <div class="diagram-film large-format">
+                                <span class="film-label">35mm Roll</span>
+                                <div class="film-strip">
+                                    <div class="film-frame large" data-id="D007">D007</div>
+                                    <div class="film-frame large" data-id="D008">D008</div>
+                                </div>
+                                <div class="film-id">MF-2023-0001L</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <button class="action-button secondary" id="reset-numbering">
+                    <i class="fas fa-undo"></i>
+                    Reset to Default
+                </button>
+                <button class="action-button primary" id="apply-numbering">
+                    <i class="fas fa-check"></i>
+                    Apply Numbering Scheme
+                </button>
+</div>
+</div>
+        
+        <!-- Output Data Panel -->
+        <div class="workflow-card data-panel">
+            <div class="card-header with-actions">
+                <h3><i class="fas fa-code"></i> Numbering Data</h3>
+                <div class="card-actions">
+                    <button class="panel-action" id="expand-numbering-data">
+                        <i class="fas fa-expand-alt"></i>
+                    </button>
+                    <button class="panel-action" id="copy-numbering-data">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-content">
+                <pre class="data-output">{
+"numbering": {
+"status": "pending",
+"scheme": {
+"prefix": "MF",
+"includeYear": true,
+"year": "2023",
+"sequenceDigits": 4,
+"separator": "dash",
+"startingNumber": 1
+},
+"assignments": {
+"16mm": [],
+"35mm": []
+}
+}
+}</pre>
+            </div>
+        </div>
+    </div>
+    
+    <div class="workflow-navigation">
+        <button class="nav-button back" id="back-to-step-6">
+            <i class="fas fa-arrow-left"></i>
+            Back to Index Generation
+        </button>
+        <button class="nav-button next" id="to-step-8" disabled>
+            Continue to Document Distribution
+            <i class="fas fa-arrow-right"></i>
+        </button>
+    </div>
+</div>

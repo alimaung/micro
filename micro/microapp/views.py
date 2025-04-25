@@ -12,7 +12,7 @@ def home(request):
     return render(request, 'microapp/home.html')
 
 def register(request):
-    return render(request, 'microapp/register.html')
+    return render(request, 'microapp/register/register.html')
 
 def film(request):
     return render(request, 'microapp/film.html')

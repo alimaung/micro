@@ -1,0 +1,165 @@
+<!-- Step 6: Index Generation Stage -->
+<div class="workflow-step" id="step-6">
+    <div class="workflow-step-header">
+        <h2>Index Generation</h2>
+        <div class="step-status">
+            <span class="status-badge pending">
+                <i class="fas fa-clock"></i>
+                Awaiting Allocation
+            </span>
+        </div>
+    </div>
+    
+    <div class="workflow-cards">
+        <!-- Index Generation Card -->
+        <div class="workflow-card primary-card">
+            <div class="card-header">
+                <h3><i class="fas fa-table"></i> Index Generation</h3>
+            </div>
+            <div class="card-content">
+                <div class="index-controls">
+                    <div class="indexing-options">
+                        <div class="option-group">
+                            <label for="index-format">Index Format:</label>
+                            <select id="index-format" class="form-input">
+                                <option value="csv">CSV (Comma Separated)</option>
+                                <option value="excel">Excel Spreadsheet</option>
+                                <option value="pdf">PDF Document</option>
+                            </select>
+                        </div>
+                        
+                        <div class="option-group">
+                            <label for="index-detail">Detail Level:</label>
+                            <select id="index-detail" class="form-input">
+                                <option value="standard">Standard</option>
+                                <option value="detailed">Detailed</option>
+                                <option value="comprehensive">Comprehensive</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="index-fields">
+                        <h4>Index Fields</h4>
+                        <div class="field-options">
+                            <div class="field-option">
+                                <input type="checkbox" id="field-document-id" checked>
+                                <label for="field-document-id">Document ID</label>
+                            </div>
+                            <div class="field-option">
+                                <input type="checkbox" id="field-film-number" checked>
+                                <label for="field-film-number">Film Number</label>
+                            </div>
+                            <div class="field-option">
+                                <input type="checkbox" id="field-frame-start" checked>
+                                <label for="field-frame-start">Frame Start</label>
+                            </div>
+                            <div class="field-option">
+                                <input type="checkbox" id="field-page-count" checked>
+                                <label for="field-page-count">Page Count</label>
+                            </div>
+                            <div class="field-option">
+                                <input type="checkbox" id="field-document-type" checked>
+                                <label for="field-document-type">Document Type</label>
+                            </div>
+                            <div class="field-option">
+                                <input type="checkbox" id="field-created-date">
+                                <label for="field-created-date">Created Date</label>
+                            </div>
+                            <div class="field-option">
+                                <input type="checkbox" id="field-modified-date">
+                                <label for="field-modified-date">Modified Date</label>
+                            </div>
+                            <div class="field-option">
+                                <input type="checkbox" id="field-file-size">
+                                <label for="field-file-size">File Size</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="index-preview">
+                    <h4>Index Preview</h4>
+                    <div class="index-table-container">
+                        <table class="index-table">
+                            <thead>
+                                <tr>
+                                    <th>Document ID</th>
+                                    <th>Film #</th>
+                                    <th>Frame Start</th>
+                                    <th>Page Count</th>
+                                    <th>Document Type</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="5" class="empty-table">
+                                        <div class="empty-state">
+                                            <i class="fas fa-table"></i>
+                                            <p>Generate the index to see a preview</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="table-pagination hidden">
+                        <button class="pagination-button" disabled>
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <span class="pagination-info">Page 1 of 1</span>
+                        <button class="pagination-button" disabled>
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <button class="action-button primary" id="generate-index">
+                    <i class="fas fa-file-alt"></i>
+                    Generate Index
+                </button>
+            </div>
+        </div>
+        
+        <!-- Output Data Panel -->
+        <div class="workflow-card data-panel">
+            <div class="card-header with-actions">
+                <h3><i class="fas fa-code"></i> Index Data</h3>
+                <div class="card-actions">
+                    <button class="panel-action" id="expand-index-data">
+                        <i class="fas fa-expand-alt"></i>
+                    </button>
+                    <button class="panel-action" id="copy-index-data">
+                        <i class="fas fa-copy"></i>
+            </button>
+                </div>
+            </div>
+            <div class="card-content">
+                <pre class="data-output">{
+"indexing": {
+"status": "pending",
+"format": "csv",
+"detailLevel": "standard",
+"fields": ["documentId", "filmNumber", "frameStart", "pageCount", "documentType"],
+"statistics": {
+"totalEntries": 0,
+"totalFilms": 0,
+"totalFrames": 0
+}
+}
+}</pre>
+            </div>
+        </div>
+    </div>
+    
+    <div class="workflow-navigation">
+        <button class="nav-button back" id="back-to-step-5">
+            <i class="fas fa-arrow-left"></i>
+            Back to Film Allocation
+        </button>
+        <button class="nav-button next" id="to-step-7" disabled>
+            Continue to Film Numbering
+            <i class="fas fa-arrow-right"></i>
+        </button>
+    </div>
+</div>

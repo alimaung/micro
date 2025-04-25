@@ -1,0 +1,183 @@
+<!-- Step 8: Document Distribution Stage -->
+<div class="workflow-step" id="step-8">
+    <div class="workflow-step-header">
+        <h2>Document Distribution</h2>
+        <div class="step-status">
+            <span class="status-badge pending">
+                <i class="fas fa-clock"></i>
+                Awaiting Film Numbering
+            </span>
+        </div>
+    </div>
+    
+    <div class="workflow-cards">
+        <!-- Document Distribution Card -->
+        <div class="workflow-card primary-card">
+            <div class="card-header">
+                <h3><i class="fas fa-folder-tree"></i> Document Distribution</h3>
+            </div>
+            <div class="card-content">
+                <div class="distribution-controls">
+                    <div class="distribution-options">
+                        <div class="option-group">
+                            <label for="folder-structure">Folder Structure:</label>
+                            <select id="folder-structure" class="form-input">
+                                <option value="flat">Flat (All in one folder)</option>
+                                <option value="by-film" selected>By Film Roll</option>
+                                <option value="by-type">By Document Type</option>
+                                <option value="hierarchical">Hierarchical (Type/Film)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="option-group">
+                            <label for="naming-pattern">File Naming Pattern:</label>
+                            <select id="naming-pattern" class="form-input">
+                                <option value="filmid_docid">[FilmID]_[DocID]</option>
+                                <option value="docid_filmid">[DocID]_[FilmID]</option>
+                                <option value="original">Original Filenames</option>
+                            </select>
+                        </div>
+                        
+                        <div class="option-group">
+                            <div class="toggle-group">
+                                <span class="toggle-label">Include Original Files</span>
+                                <label class="switch">
+                                    <input type="checkbox" id="include-originals" checked>
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="option-group">
+                            <div class="toggle-group">
+                                <span class="toggle-label">Copy Index to Each Folder</span>
+                                <label class="switch">
+                                    <input type="checkbox" id="copy-index-folders" checked>
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="folder-preview">
+                        <h4>Folder Structure Preview</h4>
+                        <div class="folder-tree">
+                            <div class="tree-node root">
+                                <i class="fas fa-folder-open"></i>
+                                <span class="node-name">Output Folder</span>
+                                <div class="tree-children">
+                                    <div class="tree-node">
+                                        <i class="fas fa-folder"></i>
+                                        <span class="node-name">MF-2023-0001</span>
+                                        <div class="tree-children">
+                                            <div class="tree-node">
+                                                <i class="fas fa-file-alt"></i>
+                                                <span class="node-name">MF-2023-0001_D001.pdf</span>
+                                            </div>
+                                            <div class="tree-node">
+                                                <i class="fas fa-file-alt"></i>
+                                                <span class="node-name">MF-2023-0001_D002.pdf</span>
+                                            </div>
+                                            <div class="tree-node">
+                                                <i class="fas fa-file-excel"></i>
+                                                <span class="node-name">MF-2023-0001_index.csv</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="tree-node">
+                                        <i class="fas fa-folder"></i>
+                                        <span class="node-name">MF-2023-0002</span>
+                                    </div>
+                                    <div class="tree-node">
+                                        <i class="fas fa-folder"></i>
+                                        <span class="node-name">MF-2023-0001L</span>
+                                    </div>
+                                    <div class="tree-node">
+                                        <i class="fas fa-file-excel"></i>
+                                        <span class="node-name">master_index.csv</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="distribution-progress hidden">
+                    <h4>Distribution Progress</h4>
+                    <div class="progress-section">
+                        <div class="progress-label">
+                            <span>Overall Progress</span>
+                            <span class="progress-percentage">0%</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-track">
+                                <div class="progress-bar-fill" style="width: 0%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="file-operations">
+                        <div class="operation-log">
+                            <div class="log-entry">
+                                <span class="log-status success">
+                                    <i class="fas fa-check-circle"></i>
+                                </span>
+                                <span class="log-message">Created directory structure</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <button class="action-button primary" id="start-distribution">
+                    <i class="fas fa-play"></i>
+                    Start Distribution
+                </button>
+            </div>
+        </div>
+        
+        <!-- Output Data Panel -->
+        <div class="workflow-card data-panel">
+            <div class="card-header with-actions">
+                <h3><i class="fas fa-code"></i> Distribution Data</h3>
+                <div class="card-actions">
+                    <button class="panel-action" id="expand-distribution-data">
+                        <i class="fas fa-expand-alt"></i>
+                    </button>
+                    <button class="panel-action" id="copy-distribution-data">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-content">
+                <pre class="data-output">{
+"distribution": {
+"status": "pending",
+"folderStructure": "by-film",
+"namingPattern": "filmid_docid",
+"options": {
+"includeOriginals": true,
+"copyIndexToFolders": true
+},
+"statistics": {
+"totalFolders": 0,
+"totalFiles": 0,
+"totalSize": "0 MB"
+}
+}
+}</pre>
+            </div>
+        </div>
+    </div>
+    
+    <div class="workflow-navigation">
+        <button class="nav-button back" id="back-to-step-7">
+            <i class="fas fa-arrow-left"></i>
+            Back to Film Numbering
+        </button>
+        <button class="nav-button next" id="to-step-9" disabled>
+            Continue to Export & Summary
+            <i class="fas fa-arrow-right"></i>
+        </button>
+    </div>
+</div>

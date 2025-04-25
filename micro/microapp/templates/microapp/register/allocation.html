@@ -1,0 +1,177 @@
+<!-- Step 5: Film Allocation Stage -->
+<div class="workflow-step" id="step-5">
+    <div class="workflow-step-header">
+        <h2>Film Allocation</h2>
+        <div class="step-status">
+            <span class="status-badge pending">
+                <i class="fas fa-clock"></i>
+                Awaiting Reference Sheets
+            </span>
+        </div>
+    </div>
+    
+    <div class="workflow-cards">
+        <!-- Film Allocation Card -->
+        <div class="workflow-card primary-card">
+            <div class="card-header">
+                <h3><i class="fas fa-film"></i> Film Roll Allocation</h3>
+            </div>
+            <div class="card-content">
+                <div class="film-allocation">
+                    <div class="allocation-summary">
+                        <div class="allocation-item">
+                            <span class="allocation-label">Estimated Total Films:</span>
+                            <span class="allocation-value" id="total-films">0</span>
+                        </div>
+                        <div class="allocation-item">
+                            <span class="allocation-label">Pages per Film Average:</span>
+                            <span class="allocation-value" id="pages-per-film">0</span>
+                        </div>
+                    </div>
+                    
+                    <div class="film-type-controls">
+                        <div class="film-toggle">
+                            <span>16mm Film</span>
+                            <label class="switch">
+                                <input type="checkbox" id="show-16mm" checked>
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
+                        <div class="film-toggle">
+                            <span>35mm Film</span>
+                            <label class="switch">
+                                <input type="checkbox" id="show-35mm">
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="film-rolls-container">
+                        <h4>16mm Film Rolls</h4>
+                        <div class="film-rolls" id="16mm-rolls">
+                            <div class="film-roll">
+                                <div class="roll-header">
+                                    <span class="roll-id">Roll 16-001</span>
+                                    <span class="roll-capacity">
+                                        <span class="capacity-used">0</span>/<span class="capacity-total">2500</span> frames
+                                    </span>
+                                </div>
+                                <div class="roll-usage-bar">
+                                    <div class="usage-fill" style="width: 0%"></div>
+                                </div>
+                                <div class="roll-documents">
+                                    <span class="document-count">0</span> documents
+                                </div>
+                            </div>
+                            
+                            <div class="add-roll-button">
+                                <i class="fas fa-plus-circle"></i>
+                                <span>Add Film Roll</span>
+                            </div>
+                        </div>
+                        
+                        <div class="film-rolls hidden" id="35mm-rolls">
+                            <h4>35mm Film Rolls</h4>
+                            <div class="film-roll">
+                                <div class="roll-header">
+                                    <span class="roll-id">Roll 35-001</span>
+                                    <span class="roll-capacity">
+                                        <span class="capacity-used">0</span>/<span class="capacity-total">1200</span> frames
+                                    </span>
+                                </div>
+                                <div class="roll-usage-bar">
+                                    <div class="usage-fill" style="width: 0%"></div>
+                                </div>
+                                <div class="roll-documents">
+                                    <span class="document-count">0</span> documents
+                                </div>
+                            </div>
+                            
+                            <div class="add-roll-button">
+                                <i class="fas fa-plus-circle"></i>
+                                <span>Add Film Roll</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="allocation-options">
+                        <div class="option-group">
+                            <label for="allocation-method">Allocation Method:</label>
+                            <select id="allocation-method" class="form-input">
+                                <option value="balanced">Balanced (Default)</option>
+                                <option value="minimize-rolls">Minimize Film Rolls</option>
+                                <option value="even-distribution">Even Distribution</option>
+                            </select>
+                        </div>
+                        
+                        <div class="option-group">
+                            <label for="max-capacity">Max Capacity Utilization:</label>
+                            <select id="max-capacity" class="form-input">
+                                <option value="90">90% (Recommended)</option>
+                                <option value="95">95%</option>
+                                <option value="99">99% (Maximum)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <button class="action-button secondary" id="reset-allocation">
+                    <i class="fas fa-redo"></i>
+                    Reset Allocation
+                </button>
+                <button class="action-button primary" id="calculate-allocation">
+                    <i class="fas fa-calculator"></i>
+                    Calculate Allocation
+                </button>
+            </div>
+        </div>
+        
+        <!-- Output Data Panel -->
+        <div class="workflow-card data-panel">
+            <div class="card-header with-actions">
+                <h3><i class="fas fa-code"></i> Allocation Data</h3>
+                <div class="card-actions">
+                    <button class="panel-action" id="expand-allocation-data">
+                        <i class="fas fa-expand-alt"></i>
+                    </button>
+                    <button class="panel-action" id="copy-allocation-data">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-content">
+                <pre class="data-output">{
+"allocation": {
+"status": "pending",
+"method": "balanced",
+"maxCapacity": 90,
+"films": {
+"16mm": [],
+"35mm": []
+},
+"statistics": {
+"totalFilms": 0,
+"averageUtilization": 0,
+"documentDistribution": {
+"16mm": 0,
+"35mm": 0
+}
+}
+}
+}</pre>
+            </div>
+        </div>
+    </div>
+    
+    <div class="workflow-navigation">
+        <button class="nav-button back" id="back-to-step-4">
+            <i class="fas fa-arrow-left"></i>
+            Back to Reference Sheets
+        </button>
+        <button class="nav-button next" id="to-step-6" disabled>
+            Continue to Index Generation
+            <i class="fas fa-arrow-right"></i>
+        </button>
+    </div>
+</div>

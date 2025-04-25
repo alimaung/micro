@@ -547,8 +547,6 @@ document.addEventListener('DOMContentLoaded', function() {
         showStep(5);
     });
     
-    // Continue the existing JavaScript with new functionality for steps 5-9
-
     // Step 5: Film Allocation Stage
     const backToStep4Btn = document.getElementById('back-to-step-4');
     const calculateAllocationBtn = document.getElementById('calculate-allocation');
@@ -997,9 +995,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Continue adding event listeners and functions for other steps...
-    // For brevity and focus, we'll add just key functionality for remaining steps
-    
     // Generate index functionality
     const generateIndexBtn = document.getElementById('generate-index');
     if (generateIndexBtn) {
@@ -1103,9 +1098,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 1500);
         });
     }
-    
-    // Add other step-specific code for Film Numbering, Document Distribution, and Export & Summary
-    // For brevity, we'll just enable navigation between steps
     
     // Navigation between steps
     const backToStep5Btn = document.getElementById('back-to-step-5');

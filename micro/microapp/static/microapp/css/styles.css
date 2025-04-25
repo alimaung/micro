@@ -40,11 +40,13 @@
     
     /* Animation */
     --transition-speed: 0.25s;
+
+    --color-success: #4CAF50;
+    --color-success-text: #fff;
 }
 
 * {
     box-sizing: border-box;
-    margin: 0;
     padding: 0;
 }
 
@@ -300,7 +302,7 @@ body {
 h1, h2, h3, h4, h5, h6 {
     font-weight: var(--font-weight-semibold);
     line-height: 1.2;
-    margin-bottom: 0.5em;
+    /* margin-bottom: 0.5em; */
     letter-spacing: -0.02em;
 }
 
