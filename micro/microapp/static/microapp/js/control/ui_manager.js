@@ -347,11 +347,6 @@ const UIManager = {
                 if (settingsToggle) {
                     settingsToggle.textContent = 'Hide Relay Controls';
                 }
-                
-                // If relay is connected, update ESP32 stats
-                if (ConnectionManager.isRelayConnected) {
-                    Utils.updateESP32Stats();
-                }
             }
         }
     }

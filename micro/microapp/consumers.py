@@ -1,6 +1,7 @@
 from channels.generic.websocket import AsyncWebsocketConsumer
 import json
 import websockets
+import asyncio
 
 class RelayConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -35,22 +36,32 @@ class RelayConsumer(AsyncWebsocketConsumer):
                 ]
                 if requested_mode == 'dark':
                     relay_commands += [
-                        {"action": "on", "relay": 2},
-                        {"action": "on", "relay": 3},
-                        {"action": "on", "relay": 4},
+                        {"action": "set", "relay": 2, "state": True},
+                        {"action": "set", "relay": 3, "state": True},
+                        {"action": "set", "relay": 4, "state": True},
                     ]
                 else:  # light
                     relay_commands += [
-                        {"action": "off", "relay": 2},
-                        {"action": "off", "relay": 3},
-                        {"action": "off", "relay": 4},
+                        {"action": "set", "relay": 2, "state": False},
+                        {"action": "set", "relay": 3, "state": False},
+                        {"action": "set", "relay": 4, "state": False},
                     ]
 
                 # Send commands to ESP32
                 if hasattr(self, 'esp32_ws') and self.esp32_connected:
                     for cmd in relay_commands:
                         await self.esp32_ws.send(json.dumps(cmd))
-                        await self.esp32_ws.recv()  # Optionally handle/aggregate responses
+                        
+                        # Consume all pending messages until we get a timeout or specific response
+                        while True:
+                            try:
+                                # Set a short timeout for additional messages
+                                response = await asyncio.wait_for(self.esp32_ws.recv(), timeout=0.2)
+                                # Optionally process or log the response
+                                print(f"Received: {response}")
+                            except asyncio.TimeoutError:
+                                # No more immediate messages, continue to next command
+                                break
 
                     await self.send(json.dumps({'status': 'success', 'mode': requested_mode}))
                 else:

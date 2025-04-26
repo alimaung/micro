@@ -474,11 +474,6 @@
     z-index: 11;
 }
 
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
 /* Fancy refresh button */
 .refresh-button {
     background-color: rgba(0, 0, 0, 0.1);
@@ -502,7 +497,6 @@
 .refresh-button:hover {
     background-color: rgba(52, 199, 89, 0.2);
     color: #30d158;
-    transform: rotate(180deg);
 }
 
 .dark-mode .refresh-button {
@@ -522,12 +516,12 @@
     justify-content: center;
 }
 
-/* Animation for refreshing state */
-.refresh-button.refreshing i {
+.refresh-button i.spinning,
+.refresh-button-relay i.spinning {
     animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
     0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    100% { transform: rotate(960deg); }
 }

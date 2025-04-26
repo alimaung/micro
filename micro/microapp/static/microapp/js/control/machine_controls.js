@@ -529,12 +529,6 @@ const MachineControls = {
      * @param {boolean} showLoading - Whether to show loading animation during refresh
      */
     refreshMachineStats: function(showLoading = true) {
-        // Show loading animation on the refresh button if requested
-        const refreshButton = document.querySelector('.refresh-button');
-        if (refreshButton && showLoading) {
-            refreshButton.classList.add('refreshing');
-        }
-        
         // Fetch the latest machine stats
         fetch('/get_machine_stats/', {
             method: 'POST',
@@ -567,12 +561,6 @@ const MachineControls = {
         .catch(error => {
             console.error('Error fetching machine stats:', error);
             NotificationManager.showNotification('Error updating machine stats', 'error');
-        })
-        .finally(() => {
-            // Remove loading animation
-            if (refreshButton) {
-                refreshButton.classList.remove('refreshing');
-            }
         });
     }
 }; 

@@ -211,7 +211,11 @@ const ConnectionManager = {
                         MachineControls.updateMachineState(false);
                     }
                 }
+                else if (!this.isMachineConnected) {
+                    NotificationManager.showNotification("Machine not available", "error");
+                }
                 
+
                 console.log("SMA51 Machine not connected");
             }
             
@@ -253,65 +257,7 @@ const ConnectionManager = {
             modeToggle.classList.add('checking');
         }
         
-        // First try COM18
-        fetch('/check_port/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-            },
-            body: new URLSearchParams({
-                'port': 'COM18'
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                // COM18 is available
-                this.isRelayConnected = true;
-                
-                // Update relay port info with the returned device info
-                if (data.device_info) {
-                    // Only update UI if device info has changed
-                    if (!Utils.isEqualDeviceInfo(this.lastRelayDeviceData, data.device_info)) {
-                        RelayControls.updateRelayInfoFromData(data.device_info);
-                        // Store current data for future comparison
-                        this.lastRelayDeviceData = { ...data.device_info };
-                    }
-                } else {
-                    // Fallback to default values only if we don't already have data
-                    if (this.lastRelayDeviceData.port === 'N/A') {
-                        RelayControls.updateRelayInfo('COM18');
-                        this.lastRelayDeviceData.port = 'COM18';
-                    }
-                }
-                
-                // Update relay connection UI
-                UIManager.updateRelayConnectionUI(true);
-                
-                // Show notification if state changed from disconnected to connected
-                if (!wasConnected) {
-                    NotificationManager.showNotification("Relay connected on COM18", "success");
-                }
-                
-                console.log("Saferoom Relay connected on COM18");
-            } else {
-                // Try COM7 instead
-                console.log("COM18 not available, checking COM7...");
-                this.tryBackupRelayPort();
-            }
-        })
-        .catch(error => {
-            console.error('Error checking relay port COM18:', error);
-            // Try COM7 as backup
-            this.tryBackupRelayPort();
-        });
-    },
-
-    /**
-     * Try connecting to backup relay port (COM7)
-     */
-    tryBackupRelayPort: function() {
+        // First try COM7
         fetch('/check_port/', {
             method: 'POST',
             headers: {
@@ -324,8 +270,6 @@ const ConnectionManager = {
         })
         .then(response => response.json())
         .then(data => {
-            const wasConnected = this.isRelayConnected;
-            
             if (data.status === 'success') {
                 // COM7 is available
                 this.isRelayConnected = true;
@@ -352,54 +296,111 @@ const ConnectionManager = {
                 // Show notification if state changed from disconnected to connected
                 if (!wasConnected) {
                     NotificationManager.showNotification("Relay connected on COM7", "success");
+                } else {
+                    // Show notification even if it was already connected
+                    NotificationManager.showNotification("Relay connection confirmed on COM7", "success");
                 }
                 
                 console.log("Saferoom Relay connected on COM7");
-            } else {
-                // Neither COM18 nor COM7 are available
-                this.isRelayConnected = false;
                 
-                // Update relay connection UI
-                UIManager.updateRelayConnectionUI(false);
-                
-                // Show notification if state changed from connected to disconnected
-                if (wasConnected) {
-                    NotificationManager.showNotification("Relay disconnected", "error");
-                    
-                    // Clear device info only if we're newly disconnected
-                    RelayControls.clearRelayInfo();
-                    this.lastRelayDeviceData = {
-                        port: 'N/A',
-                        vendor_id: 'N/A',
-                        product_id: 'N/A',
-                        product: 'N/A',
-                        manufacturer: 'N/A'
-                    };
+                // Enable the mode toggle
+                if (modeToggle) {
+                    modeToggle.disabled = false;
+                    modeToggle.classList.remove('checking');
                 }
                 
-                console.log("Saferoom Relay not connected");
-            }
-            
-            // Re-enable mode toggle after check
-            const modeToggle = document.getElementById('mode-toggle');
-            if (modeToggle) {
-                modeToggle.disabled = false;
-                modeToggle.classList.remove('checking');
+                // Fetch initial relay states and ESP32 status now that we're connected
+                Utils.updateESP32Stats();
+            } else {
+                // Try COM18 instead
+                console.log("COM7 not available, checking COM18...");
+                this.tryBackupRelayPort();
             }
         })
         .catch(error => {
             console.error('Error checking relay port COM7:', error);
-            this.isRelayConnected = false;
-            
-            // Update relay connection UI
-            UIManager.updateRelayConnectionUI(false);
-            
-            // Re-enable mode toggle after check
+            // Try COM18 as backup
+            this.tryBackupRelayPort();
+        });
+    },
+
+    /**
+     * Try connecting to backup relay port (COM18)
+     */
+    tryBackupRelayPort: function() {
+        fetch('/check_port/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: new URLSearchParams({
+                'port': 'COM18'
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Enable the mode toggle button
             const modeToggle = document.getElementById('mode-toggle');
             if (modeToggle) {
                 modeToggle.disabled = false;
                 modeToggle.classList.remove('checking');
             }
+            
+            if (data.status === 'success') {
+                // COM18 is available
+                this.isRelayConnected = true;
+                
+                // Update relay port info
+                if (data.device_info) {
+                    RelayControls.updateRelayInfoFromData(data.device_info);
+                    this.lastRelayDeviceData = { ...data.device_info };
+                } else {
+                    RelayControls.updateRelayInfo('COM18');
+                    this.lastRelayDeviceData.port = 'COM18';
+                }
+                
+                // Update relay connection UI
+                UIManager.updateRelayConnectionUI(true);
+                
+                // Show success notification
+                NotificationManager.showNotification("Relay connected on COM18", "success");
+                
+                console.log("Saferoom Relay connected on COM18");
+                
+                // Fetch initial relay states and ESP32 status
+                Utils.updateESP32Stats();
+            } else {
+                // Neither COM7 nor COM18 is available
+                this.isRelayConnected = false;
+                
+                // Update UI to show disconnected state
+                UIManager.updateRelayConnectionUI(false);
+                
+                // Show error notification
+                NotificationManager.showNotification("Relay not found. Please check connection.", "error");
+                
+                console.log("Saferoom Relay not found on any port");
+            }
+        })
+        .catch(error => {
+            console.error('Error checking relay port COM18:', error);
+            
+            // Enable the mode toggle button
+            const modeToggle = document.getElementById('mode-toggle');
+            if (modeToggle) {
+                modeToggle.disabled = false;
+                modeToggle.classList.remove('checking');
+            }
+            
+            // Update connection state
+            this.isRelayConnected = false;
+            
+            // Update UI
+            UIManager.updateRelayConnectionUI(false);
+            
+            // Show error notification
+            NotificationManager.showNotification("Error checking relay connection", "error");
         });
     },
 
@@ -412,7 +413,7 @@ const ConnectionManager = {
         if (relayPort && this.isRelayConnected && relayPort.textContent !== 'N/A') {
             return relayPort.textContent;
         }
-        return 'COM18'; // Default fallback to COM18
+        return 'COM7'; // Default fallback to COM18
     },
 
     /**

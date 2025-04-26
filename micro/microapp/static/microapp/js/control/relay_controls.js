@@ -13,6 +13,7 @@ const RelayControls = {
     /**
      * Toggle relay operation mode (light/dark)
      */
+    // Replace toggleRelayMode function
     toggleRelayMode: function() {
         if (!ConnectionManager.isRelayConnected) {
             NotificationManager.showNotification('Relay not connected', 'error');
@@ -31,35 +32,57 @@ const RelayControls = {
             modeIndicator.style.opacity = '0.7';
         }
         
-        // Send AJAX request to toggle mode - using correct endpoint and parameters
-        fetch('/control_relay/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-            },
-            body: new URLSearchParams({
+        Utils.sendRelayAction(
+            { action: targetMode },
+            '/control_relay/',
+            {
                 'action': targetMode,
                 'com_port': ConnectionManager.getActiveRelayPort()
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
+            }
+        )
+        .then((data) => {
+            console.log("Relay data:", data)
             if (data.status === 'success') {
-                // Update UI
                 UIManager.updateModeDisplay(data.mode || targetMode);
                 NotificationManager.showNotification(`${targetMode.charAt(0).toUpperCase() + targetMode.slice(1)} mode activated`, 'success');
-                
-                // If server returned relay states, update those too
-                if (data.relay_states) {
-                    this.updateRelayStatesUI(data.relay_states);
-                }
-                
+
                 // Reset indicator
                 if (modeIndicator) {
                     modeIndicator.style.transform = 'scale(1)';
                     modeIndicator.style.opacity = '1';
+                }                    
+                // Toggle UI States manually
+                if (targetMode === 'dark') {
+                    // For dark mode: turn on relays 2, 3, 4
+                    this.setRelayIndicatorState(2, true);
+                    this.setRelayIndicatorState(3, true);
+                    this.setRelayIndicatorState(4, true);
+                    
+                    // Flash relay 1 briefly
+                    this.setRelayIndicatorState(1, true);
+                    setTimeout(() => {
+                        this.setRelayIndicatorState(1, false);
+                    }, 500); // Flash for 500ms
+                } else if (targetMode === 'light') {
+                    // For light mode: turn off relays 2, 3, 4
+                    this.setRelayIndicatorState(2, false);
+                    this.setRelayIndicatorState(3, false);
+                    this.setRelayIndicatorState(4, false);
+                    
+                    // Flash relay 1 briefly
+                    this.setRelayIndicatorState(1, true);
+                    setTimeout(() => {
+                        this.setRelayIndicatorState(1, false);
+                    }, 500); // Flash for 500ms
                 }
+
+                // Toggle UI States with actual state checks
+                /* setTimeout(() => {
+                    this.checkRelayStates();
+                }, 50);
+                setTimeout(() => {
+                    this.checkRelayStates();
+                }, 700); */
             } else {
                 console.error(`Error: ${data.message}`);
                 NotificationManager.showNotification('Error toggling mode', 'error');
@@ -71,10 +94,10 @@ const RelayControls = {
                 if (modeIndicator) {
                     modeIndicator.style.transform = 'scale(1)';
                     modeIndicator.style.opacity = '1';
-                }
+                }                
             }
         })
-        .catch(error => {
+        .catch((error) => {
             console.error('Error:', error);
             NotificationManager.showNotification('Network error', 'error');
             
@@ -117,22 +140,21 @@ const RelayControls = {
             relayButton.classList.add('loading');
         }
         
-        // Send the relay control request
-        fetch('/control_relay/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        Utils.sendRelayAction(
+            { 
+                action: "set",
+                relay: parseInt(relayNum),
+                state: !isCurrentlyOn
             },
-            body: new URLSearchParams({
-                'action': action,
-                'relay': relayNum,
-                'com_port': ConnectionManager.getActiveRelayPort()
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
+            '/control_relay/',
+            { 
+                action: action,
+                relay: relayNum, 
+                com_port: ConnectionManager.getActiveRelayPort() 
+            }
+        )
+        .then((data) => {
+            if (data.status === 'success' || data.type === 'relay') {
                 // If server returned relay states, update UI
                 console.log('Relay states:', data);
                 
@@ -164,7 +186,7 @@ const RelayControls = {
                 console.error(`Error controlling relay: ${data.message}`);
             }
         })
-        .catch(error => {
+        .catch((error) => {
             NotificationManager.showNotification('Error controlling relay', 'error');
             console.error('Error controlling relay:', error);
         })
@@ -185,25 +207,28 @@ const RelayControls = {
         
         console.log("Checking relay states...");
         
-        fetch('/get_all_states/', {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success' && data.data) {
+        Utils.sendRelayAction(
+            { action: 'status' },
+            '/get_all_states/',
+            {}
+        )
+        .then((data) => {
+            // Handle light/dark mode toggle
+            if (data.status === 'success' && data.states) {
                 // Update relay states if available
                 if (data.data.relay_states) {
                     // Compare with current states before updating
                     const hasChanges = Object.entries(data.data.relay_states).some(([key, value]) => {
-                        // Check if the relay state has changed
-                        return this.relayStates[key] !== value;
+                        console.log(`Comparing relay ${key}: current=${this.relayStates[key]}, new=${value}`);
+                        const changed = this.relayStates[key] !== value;
+                        if (changed) {
+                            console.log(`Relay ${key} state changed: ${this.relayStates[key]} -> ${value}`);
+                        }
+                        return changed;
                     });
                     
                     if (hasChanges) {
+                        console.log("Changes detected in relay states, updating UI");
                         // Only update UI if there are actual changes
                         Object.assign(this.relayStates, data.data.relay_states);
                         this.updateRelayStatesUI(data.data.relay_states);
@@ -211,17 +236,32 @@ const RelayControls = {
                     } else {
                         console.log("No changes in relay states, skipping UI update");
                     }
+                } else {
+                    console.log("No relay_states found in response data");
                 }
                 
                 // Update system stats if available
                 if (data.data.system_stats) {
                     Utils.updateESP32StatsUI(data.data.system_stats);
                 }
+            
+            // Handle relay states
+            } else if (data.type === 'relays') {
+                console.log("Received relay data with type 'relays':", data);
+                console.log("Relay states from WebSocket:", JSON.stringify(data.states));
+                this.updateRelayStatesUI(data.states);
+                
+                if (data.current_mode) {
+                    console.log("Current mode detected in response:", data.current_mode);
+                    UIManager.updateModeDisplay(data.current_mode);
+                } else {
+                    console.log("No current_mode found in relay response");
+                }
             } else {
                 console.error(`Error or missing data: ${data.message || 'Unknown error'}`);
             }
         })
-        .catch(error => {
+        .catch((error) => {
             console.error('Error checking states:', error);
         });
     },
@@ -343,10 +383,6 @@ const RelayControls = {
         // Make sure relayNum is correctly handled as a number
         const relayId = parseInt(relayNum, 10);
         const relayIndicator = document.getElementById(`relay-indicator-${relayId}`);
-        if (!relayIndicator) {
-            console.warn(`Relay indicator element not found for relay ${relayId}`);
-            return;
-        }
         
         console.log(`Setting relay ${relayId} indicator to ${isOn ? 'ON' : 'OFF'}${pending ? ' (pending)' : ''}`);
         

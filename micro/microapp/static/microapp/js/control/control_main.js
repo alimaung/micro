@@ -6,34 +6,38 @@
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Initializing microfilm control system...');
     
+    
     // Verify that all required modules are loaded
     if (!Utils || !NotificationManager || !ConnectionManager || !MachineControls || 
         !RelayControls || !UIManager || !ChartManager) {
-        console.error('ERROR: One or more required modules are not loaded!');
-        
-        // Check each module and log which ones are missing
-        if (!Utils) console.error('Utils module not loaded');
-        if (!NotificationManager) console.error('NotificationManager module not loaded');
-        if (!ConnectionManager) console.error('ConnectionManager module not loaded');
-        if (!MachineControls) console.error('MachineControls module not loaded');
-        if (!RelayControls) console.error('RelayControls module not loaded');
-        if (!UIManager) console.error('UIManager module not loaded');
-        if (!ChartManager) console.error('ChartManager module not loaded');
-        
-        // Display error to user
-        const controlContainer = document.querySelector('.control-container');
-        if (controlContainer) {
-            controlContainer.innerHTML = `
+            console.error('ERROR: One or more required modules are not loaded!');
+            
+            // Check each module and log which ones are missing
+            if (!Utils) console.error('Utils module not loaded');
+            if (!NotificationManager) console.error('NotificationManager module not loaded');
+            if (!ConnectionManager) console.error('ConnectionManager module not loaded');
+            if (!MachineControls) console.error('MachineControls module not loaded');
+            if (!RelayControls) console.error('RelayControls module not loaded');
+            if (!UIManager) console.error('UIManager module not loaded');
+            if (!ChartManager) console.error('ChartManager module not loaded');
+            
+            // Display error to user
+            const controlContainer = document.querySelector('.control-container');
+            if (controlContainer) {
+                controlContainer.innerHTML = `
                 <div style="padding: 20px; color: #ff453a; text-align: center;">
-                    <h2>Error Loading Control System</h2>
-                    <p>One or more required modules failed to load. Please check the browser console for details.</p>
-                    <p>Try refreshing the page or contact support if the issue persists.</p>
+                <h2>Error Loading Control System</h2>
+                <p>One or more required modules failed to load. Please check the browser console for details.</p>
+                <p>Try refreshing the page or contact support if the issue persists.</p>
                 </div>
-            `;
-        }
-        
-        return; // Stop initialization
+                `;
+            }
+            
+            return; // Stop initialization
     }
+    
+    // Initialize WebSocket connection
+    Utils.setupWebSocket();
     
     // DOM element references
     const elements = {
@@ -95,13 +99,6 @@ document.addEventListener('DOMContentLoaded', function() {
     if (elements.modeToggle) {
         elements.modeToggle.addEventListener('click', function() {
             RelayControls.toggleRelayMode();
-            // Fetch ESP32 stats after mode change
-            setTimeout(() => {
-                Utils.updateESP32Stats();
-            }, 150);
-            setTimeout(() => {
-                Utils.updateESP32Stats();
-            }, 700);
         });
     }
 
@@ -272,10 +269,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             RelayControls.toggleRelay(relayNum);
-            // Fetch ESP32 stats after toggle
-            setTimeout(() => {
-                Utils.updateESP32Stats();
-            }, 150);
         });
     });
 
@@ -378,12 +371,12 @@ document.addEventListener('DOMContentLoaded', function() {
             elements.pingValue.textContent = 'N/A';
             elements.pingValue.style.color = '#ff453a';
         }
-    }, 10000); // Check every 10 seconds
+    }, 1000000); // Check every 10 seconds
     
     // Check relay states periodically
     setInterval(() => {
         RelayControls.checkRelayStates();
-    }, 30000); // Every 30 seconds
+    }, 1000000); // Every 10 seconds
 
     // Add close button event listeners
     const statsCloseBtn = document.getElementById('stats-close-btn');
@@ -408,10 +401,74 @@ document.addEventListener('DOMContentLoaded', function() {
     // Get reference to the refresh button
     const statsRefreshButton = document.querySelector('.refresh-button');
     
-    // Add event listener to the refresh button
+    // Helper function to ensure minimum animation duration
+    function animateWithMinDuration(element, operation, minDuration = 1000) {
+        const startTime = performance.now();
+        const icon = element.querySelector('i');
+        
+        // Add spinning class to the icon
+        if (icon) icon.classList.add('spinning');
+        
+        // Return a promise that resolves after minimum duration
+        return new Promise((resolve) => {
+            // Start the operation (without waiting for it)
+            operation();
+            
+            // Set minimum duration timer
+            setTimeout(() => {
+                if (icon) icon.classList.remove('spinning');
+                resolve();
+            }, minDuration);
+        });
+    }
+
+    // Add event listener to the stats refresh button
     if (statsRefreshButton) {
         statsRefreshButton.addEventListener('click', function() {
-            MachineControls.refreshMachineStats();
+            // Use our animation function but don't wait for operation to complete
+            // since it handles its own completion
+            animateWithMinDuration(this, () => {
+                // Call the existing function - note it already handles its own animation state
+                MachineControls.refreshMachineStats(false); // Pass false to avoid duplicate animation
+            });
+        });
+    }
+
+    // Add event listener to the relay refresh button
+    const relayRefreshButton = document.querySelector('.refresh-button-relay');
+    if (relayRefreshButton) {
+        relayRefreshButton.addEventListener('click', function() {
+            const button = this;
+            const icon = button.querySelector('i');
+            
+            // Add spinning animation to icon
+            if (icon) icon.classList.add('spinning');
+            
+            // Record start time
+            const startTime = performance.now();
+            
+            // Execute operations
+            Promise.all([
+                RelayControls.checkRelayStates(),
+                Utils.updateESP32Stats()
+            ])
+            .then(() => {
+                NotificationManager.showNotification('Relay information updated', 'success');
+            })
+            .catch(error => {
+                console.error('Error refreshing relay information:', error);
+                NotificationManager.showNotification('Failed to update relay information', 'error');
+            })
+            .finally(() => {
+                // Calculate elapsed time
+                const elapsedTime = performance.now() - startTime;
+                const remainingTime = Math.max(0, 1000 - elapsedTime);
+                
+                // Ensure minimum animation duration
+                setTimeout(() => {
+                    if (icon) icon.classList.remove('spinning');
+                }, remainingTime);
+            });
         });
     }
 }); 
