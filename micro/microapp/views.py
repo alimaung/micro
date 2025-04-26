@@ -3,13 +3,15 @@ from django.http import JsonResponse, HttpResponseRedirect
 from django.utils import translation
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
+
 from .relay_control import RelayController
 from .machine_test import check_machine_power, MachineController
-import serial.tools.list_ports
-import json
-import time
 
-# Create your views here.
+import serial.tools.list_ports
+import websocket
+import json
+
+# Template views
 def home(request):
     return render(request, 'microapp/home.html')
 
@@ -22,15 +24,11 @@ def oldregister(request):
 def film(request):
     return render(request, 'microapp/film.html')
 
-def list_com_ports():
-    """List available COM ports."""
-    ports = serial.tools.list_ports.comports()
-    return [port.device for port in ports]
-
 def control(request):
-    relays = range(1, 9)  # Create a range of relay numbers
-    com_ports = list_com_ports()  # Get available COM ports
-    return render(request, 'microapp/control.html', {'relays': relays, 'com_ports': com_ports})
+    return render(request, 'microapp/control/control.html')
+
+def oldcontrol(request):
+    return render(request, 'microapp/control_old.html')
 
 def handoff(request):
     return render(request, 'microapp/handoff.html')
@@ -50,181 +48,13 @@ def login(request):
 def language(request):
     return render(request, 'microapp/language.html')
 
-@csrf_exempt
-def control_relay(request):
-    if request.method == 'POST':
-        action = request.POST.get('action')
-        com_port = request.POST.get('com_port', 'COM18')
 
-        # Special case for ping action (latency measurement)
-        if action == 'ping':
-            # This is just a latency test, no need to actually do anything
-            # The round-trip time is calculated on the client side
-            return JsonResponse({'status': 'success', 'message': 'pong'})
+# Utility functions
+def list_com_ports():
+    """List available COM ports."""
+    ports = serial.tools.list_ports.comports()
+    return [port.device for port in ports]
 
-        try:
-            controller = RelayController(com_port)
-            result = None
-            
-            if action == 'light':
-                result = controller.set_light_mode()
-                response = {
-                    'status': 'success',
-                    'message': 'Light mode activated',
-                    'mode': 'light',
-                    'relay_states': controller.relay_states
-                }
-            elif action == 'dark':
-                result = controller.set_dark_mode()
-                response = {
-                    'status': 'success', 
-                    'message': 'Dark mode activated',
-                    'mode': 'dark',
-                    'relay_states': controller.relay_states
-                }
-            elif action == 'machine_on':
-                result = controller.machine_on()
-                response = {
-                    'status': 'success',
-                    'message': 'Machine turned on',
-                    'machine_state': True,
-                    'relay_states': controller.relay_states
-                }
-            elif action == 'machine_off':
-                result = controller.machine_off()
-                response = {
-                    'status': 'success',
-                    'message': 'Machine turned off',
-                    'machine_state': False,
-                    'relay_states': controller.relay_states
-                }
-            elif action in ['on', 'off']:
-                relay_number = request.POST.get('relay')
-                if action == 'on':
-                    result = controller.relay_on(relay_number)
-                    state = True
-                else:
-                    result = controller.relay_off(relay_number)
-                    state = False
-                    
-                response = {
-                    'status': 'success',
-                    'message': f"Relay {relay_number} turned {action.upper()}",
-                    'relay': relay_number,
-                    'state': state,
-                    'relay_states': controller.relay_states
-                }
-            else:
-                controller.close()
-                return JsonResponse({'status': 'error', 'message': 'Invalid action'})
-
-            controller.close()
-            return JsonResponse(response)
-
-        except Exception as e:
-            print(f"Error: {e}")
-            return JsonResponse({'status': 'error', 'message': str(e)})
-
-    return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
-
-@csrf_exempt
-def get_relay_status(request):
-    """Get the current status of all relays"""
-    if request.method == 'POST':
-        com_port = request.POST.get('com_port', 'COM7')  # Default to COM18
-        
-        try:
-            controller = RelayController(com_port)
-            
-            # Get all relay states
-            controller.get_relay_status()  # This updates internal state
-            
-            # Get current mode
-            current_mode = controller.get_current_mode()
-            
-            response = {
-                'status': 'success',
-                'relay_states': controller.relay_states,
-                'current_mode': current_mode
-            }
-            
-            controller.close()
-            return JsonResponse(response)
-            
-        except Exception as e:
-            return JsonResponse({
-                'status': 'error',
-                'message': f'Error getting relay status: {str(e)}'
-            })
-    
-    return JsonResponse({
-        'status': 'error',
-        'message': 'Invalid request method'
-    })
-    
-@csrf_exempt
-def get_system_stats(request):
-    """Get the ESP32 system statistics"""
-    if request.method == 'POST':
-        com_port = request.POST.get('com_port', 'COM18')  # Default to COM18
-        
-        try:
-            controller = RelayController(com_port)
-            
-            # Get all system stats
-            stats = controller.get_system_stats()
-            
-            response = {
-                'status': 'success',
-                'system_stats': stats
-            }
-            
-            controller.close()
-            return JsonResponse(response)
-            
-        except Exception as e:
-            return JsonResponse({
-                'status': 'error',
-                'message': f'Error getting system stats: {str(e)}'
-            })
-    
-    return JsonResponse({
-        'status': 'error',
-        'message': 'Invalid request method'
-    })
-    
-@csrf_exempt
-def get_all_states(request):
-    """Get all relay states and system stats in one call"""
-    if request.method == 'POST':
-        com_port = request.POST.get('com_port', 'COM7')  # Default to COM18
-        
-        try:
-            controller = RelayController(com_port)
-            
-            # Update all states
-            all_states = controller.update_all_states()
-            
-            response = {
-                'status': 'success',
-                'data': all_states
-            }
-            
-            controller.close()
-            return JsonResponse(response)
-            
-        except Exception as e:
-            return JsonResponse({
-                'status': 'error',
-                'message': f'Error getting all states: {str(e)}'
-            })
-    
-    return JsonResponse({
-        'status': 'error',
-        'message': 'Invalid request method'
-    })
-
-# Function to check if a COM port is available
 @csrf_exempt
 def check_port(request):
     if request.method == 'POST':
@@ -265,6 +95,15 @@ def check_port(request):
         'message': 'Invalid request method'
     })
 
+def send_esp32_ws_command(command, esp32_host='192.168.1.101', port=81, timeout=3):
+    ws = websocket.create_connection(f"ws://{esp32_host}:{port}", timeout=timeout)
+    ws.send(json.dumps(command))
+    result = ws.recv()
+    ws.close()
+    return json.loads(result)
+
+
+# Machine check views (TMCL)
 @csrf_exempt
 def check_machine_state(request):
     """Check if the machine is actually powered on"""
@@ -371,6 +210,8 @@ def get_machine_stats(request):
         'message': 'Invalid request method'
     })
 
+
+# Internationalization (I18N)
 def toggle_language(request):
     """
     Rotate through settings.LANGUAGES, store selection in
@@ -395,3 +236,135 @@ def toggle_language(request):
     response = HttpResponseRedirect(next_url)
     response.set_cookie(settings.LANGUAGE_COOKIE_NAME, new_lang)
     return response
+
+
+# WebSocket Relay control views (ESP32)
+@csrf_exempt
+def control_relay(request):
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        relay_number = request.POST.get('relay')
+        try:
+            if action in ['on', 'off']:
+                if not relay_number:
+                    return JsonResponse({'status': 'error', 'message': 'Missing relay number'})
+                state = True if action == 'on' else False
+                cmd = {"action": "set", "relay": int(relay_number), "state": state}
+                resp = send_esp32_ws_command(cmd)
+                return JsonResponse({'status': 'success', 'response': resp})
+            elif action == 'pulse':
+                if not relay_number:
+                    return JsonResponse({'status': 'error', 'message': 'Missing relay number'})
+                cmd = {"action": "pulse", "relay": int(relay_number)}
+                resp = send_esp32_ws_command(cmd)
+                return JsonResponse({'status': 'success', 'response': resp})
+            elif action == 'ping':
+                resp = send_esp32_ws_command({"action": "ping"})
+                return JsonResponse({'status': 'success', 'response': resp})
+            elif action in ['dark', 'light']:
+                # --- NEW LOGIC: handle dark/light as relay sequences ---
+                responses = []
+                # Always pulse relay 1
+                responses.append(send_esp32_ws_command({"action": "pulse", "relay": 1}))
+                relay_states = {}
+                if action == 'dark':
+                    # Relays 2,3,4 ON
+                    for r in [2, 3, 4]:
+                        resp = send_esp32_ws_command({"action": "set", "relay": r, "state": True})
+                        responses.append(resp)
+                        relay_states[r] = True
+                else:  # light
+                    # Relays 2,3,4 OFF
+                    for r in [2, 3, 4]:
+                        resp = send_esp32_ws_command({"action": "set", "relay": r, "state": False})
+                        responses.append(resp)
+                        relay_states[r] = False
+                # Return the new mode and relay states
+                return JsonResponse({'status': 'success', 'mode': action, 'relay_states': relay_states, 'responses': responses})
+            else:
+                return JsonResponse({'status': 'error', 'message': 'Invalid action'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
+
+@csrf_exempt
+def get_relay_status(request):
+    if request.method == 'GET':
+        try:
+            resp = send_esp32_ws_command({"action": "status"})
+            return JsonResponse({'status': 'success', 'relay_states': resp.get('states', [])})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
+
+@csrf_exempt
+def get_system_stats(request):
+    if request.method == 'GET':
+        try:
+            resp = send_esp32_ws_command({"action": "system"})
+            return JsonResponse({'status': 'success', 'system_stats': resp})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
+
+@csrf_exempt
+def get_all_states(request):
+    if request.method == 'GET':
+        try:
+            relay_resp = send_esp32_ws_command({"action": "status"})
+            system_resp = send_esp32_ws_command({"action": "system"})
+            return JsonResponse({
+                'status': 'success',
+                'data': {
+                    'relay_states': relay_resp.get('states', []),
+                    'system_stats': system_resp
+                }
+            })
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
+
+@csrf_exempt
+def esp32_config(request):
+    if request.method == 'POST':
+        params = {}
+        # Acceptable config keys
+        allowed_keys = ['wifi_mode', 'ssid', 'password', 'pulse_duration', 'relay_pins', 'ota_url']
+        for key in allowed_keys:
+            value = request.POST.get(key)
+            if value is not None:
+                if key == 'pulse_duration':
+                    try:
+                        params[key] = int(value)
+                    except ValueError:
+                        return JsonResponse({'status': 'error', 'message': 'Invalid pulse_duration'})
+                elif key == 'relay_pins':
+                    # Expect a comma-separated list of ints
+                    try:
+                        pins = [int(x) for x in value.split(',')]
+                        if len(pins) != 8:
+                            return JsonResponse({'status': 'error', 'message': 'relay_pins must have 8 values'})
+                        params[key] = pins
+                    except Exception:
+                        return JsonResponse({'status': 'error', 'message': 'Invalid relay_pins'})
+                else:
+                    params[key] = value
+        if not params:
+            return JsonResponse({'status': 'error', 'message': 'No valid config parameters provided'})
+        try:
+            resp = send_esp32_ws_command({"action": "config", "params": params})
+            return JsonResponse({'status': 'success', 'response': resp})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,403 @@
+<!-- Primary Controls Row with Two Cards Side by Side -->
+<div class="control-row">
+    <!-- SMA51 Machine Control Card -->
+    <div class="control-card machine-control-card">
+        <div class="card-header">
+            <h2>
+                SMA51 Machine Control
+                <span class="status-badge critical" id="machine-connection-status">
+                    <i class="fas fa-times-circle"></i>
+                    Disconnected
+                </span>
+            </h2>
+            <div class="header-actions">
+                <span class="status-badge critical" id="machine-power-status">
+                    <i class="fas fa-bolt"></i>
+                    Offline
+                </span>
+            </div>
+        </div>
+        
+        <div class="card-content">
+            <div class="device-info">
+                <div class="info-row">
+                    <span class="info-label">Port:</span>
+                    <span class="info-value" id="machine-port">N/A</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Vendor ID:</span>
+                    <span class="info-value" id="machine-vendor">N/A</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Product ID:</span>
+                    <span class="info-value" id="machine-product-id">N/A</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Serial:</span>
+                    <span class="info-value" id="machine-serial">N/A</span>
+                </div>
+            </div>
+            
+            <div class="machine-controls">
+                <button id="machine-switch" class="control-button">
+                    <span id="machine-indicator" class="indicator"></span>
+                    <span>Machine Power</span>
+                </button>
+                <button id="machine-test-connection" class="control-button">
+                    <i class="fas fa-link"></i>
+                    <span>Test Connection</span>
+                </button>
+                <button id="machine-stats-button" class="control-button">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Machine Stats</span>
+                </button>
+                <button id="emergency-stop" class="control-button emergency">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>Emergency Stop</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Saferoom Relay Control Card -->
+    <div class="control-card relay-control-card">
+        <div class="card-header">
+            <h2>
+                Saferoom Relay Control
+                <span class="status-badge critical" id="relay-connection-status">
+                    <i class="fas fa-times-circle"></i>
+                    Disconnected
+                </span>
+            </h2>
+            <div class="header-actions">
+                <span class="mode-indicator light-mode-display" id="mode-display">
+                    <i class="fas fa-sun"></i>
+                    <span class="mode-status-text">Light</span>
+                </span>
+            </div>
+        </div>
+        
+        <div class="card-content">
+            <div class="device-info">
+                <div class="info-row">
+                    <span class="info-label">Port:</span>
+                    <span class="info-value" id="relay-port">N/A</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Vendor ID:</span>
+                    <span class="info-value" id="relay-vendor">N/A</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Product ID:</span>
+                    <span class="info-value" id="relay-product-id">N/A</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Product:</span>
+                    <span class="info-value" id="relay-product">N/A</span>
+                </div>
+            </div>
+            
+            <div class="relay-main-controls">
+                <button id="mode-toggle" class="control-button">
+                    <i id="mode-indicator" class="fas fa-sun"></i>
+                    <span>Toggle Mode</span>
+                </button>
+                <button id="relay-test-connection" class="control-button">
+                    <i class="fas fa-link"></i>
+                    <span>Test Connection</span>
+                </button>
+                <button id="settings-toggle" class="control-button">
+                    <i class="fas fa-sliders-h"></i>
+                    <span>Relay Controls</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Relay Controls Card (Initially Hidden) -->
+<div class="control-card relay-details-card" id="relay-controls" style="display: none;">
+    <div class="card-header">
+        <h2>Saferoom Relay Control Details</h2>
+        <div class="header-actions">
+            <button class="fancy-close-button" id="relay-close-btn">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+    
+    <div class="relay-grid">
+        {% for i in '12345678' %}
+            <div class="relay-control">
+                <button class="relay-toggle" data-relay="{{ i }}">
+                    <span class="relay-indicator" id="relay-indicator-{{ i }}"></span>
+                    <span>Relay {{ i }}</span>
+                </button>
+            </div>
+        {% endfor %}
+    </div>
+    
+    <div class="esp32-status">
+        <div class="card-header">
+            <h2>ESP32 Controller Status</h2>
+            <div class="header-actions">
+                <!-- No close button as per request -->
+            </div>
+        </div>
+        <div class="esp32-stats">
+            <div class="esp-stat-item">
+                <span class="esp-stat-icon">
+                    <i class="fas fa-microchip"></i>
+                </span>
+                <div class="esp-stat-content">
+                    <span class="esp-stat-value">N/A %</span>
+                    <span class="esp-stat-label">CPU Load</span>
+                    <div class="mini-progress-bar">
+                        <div class="mini-progress-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="esp-stat-item">
+                <span class="esp-stat-icon">
+                    <i class="fas fa-thermometer-half"></i>
+                </span>
+                <div class="esp-stat-content">
+                    <span class="esp-stat-value">N/A °C</span>
+                    <span class="esp-stat-label">Temperature</span>
+                    <div class="mini-progress-bar">
+                        <div class="mini-progress-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="esp-stat-item">
+                <span class="esp-stat-icon">
+                    <i class="fas fa-memory"></i>
+                </span>
+                <div class="esp-stat-content">
+                    <span class="esp-stat-value">N/A KB</span>
+                    <span class="esp-stat-label">Free Memory</span>
+                    <div class="mini-progress-bar">
+                        <div class="mini-progress-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="esp-stat-item">
+                <span class="esp-stat-icon">
+                    <i class="fas fa-clock"></i>
+                </span>
+                <div class="esp-stat-content">
+                    <span class="esp-stat-value">N/A</span>
+                    <span class="esp-stat-label">Uptime</span>
+                </div>
+            </div>
+            <div class="esp-stat-item">
+                <span class="esp-stat-icon">
+                    <i class="fas fa-plug"></i>
+                </span>
+                <div class="esp-stat-content">
+                    <span class="esp-stat-value">N/A V</span>
+                    <span class="esp-stat-label">Main Voltage</span>
+                    <div class="mini-progress-bar">
+                        <div class="mini-progress-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Machine Stats Card (initially hidden) -->
+<div id="machine-stats-card" class="control-card stats-card" style="display: none;">
+    <div class="card-header">
+        <h2>
+            SMA51 Machine Statistics
+            <span class="refresh-button">
+                <i class="fas fa-sync-alt"></i>
+            </span>
+        </h2>
+        <div class="header-actions">
+            <span class="status-badge critical" id="stats-connection-status">
+                <i class="fas fa-times-circle"></i> Disconnected
+            </span>
+            <button class="fancy-close-button" id="stats-close-btn">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+    
+    <div class="card-content">
+        <!-- System Information Section -->
+        <div class="stats-section">
+            <h3>System Status</h3>
+            <div class="machine-stats-grid">
+                <div class="machine-stat-item">
+                    <span class="machine-stat-icon">
+                        <i class="fas fa-bolt"></i>
+                    </span>
+                    <div class="machine-stat-content">
+                        <span class="machine-stat-value" id="voltage-value">N/A V</span>
+                        <span class="machine-stat-label">Voltage</span>
+                        <div class="mini-progress-bar">
+                            <div class="mini-progress-fill" id="voltage-fill" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="machine-stat-item">
+                    <span class="machine-stat-icon">
+                        <i class="fas fa-thermometer-half"></i>
+                    </span>
+                    <div class="machine-stat-content">
+                        <span class="machine-stat-value" id="temp-value">N/A °C</span>
+                        <span class="machine-stat-label">Temperature</span>
+                        <div class="mini-progress-bar">
+                            <div class="mini-progress-fill" id="temp-fill" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Motors Information Section -->
+        <div class="stats-section">
+            <h3>Motor Status</h3>
+            
+            <!-- Motors Grid -->
+            <div class="motors-grid">
+                <!-- Motor 0 (Shutter) -->
+                <div class="motor-stat-group">
+                    <div class="motor-stat-header">
+                        <h4>Motor 0 (Shutter)</h4>
+                        <div class="motor-state disconnected" id="motor0-state">
+                            <i class="fas fa-unlink"></i> Disconnected
+                        </div>
+                    </div>
+                    <div class="motor-stat-items">
+                        <div class="machine-stat-item">
+                            <span class="machine-stat-icon motor">
+                                <i class="fas fa-tachometer-alt"></i>
+                            </span>
+                            <div class="machine-stat-content">
+                                <span class="machine-stat-value" id="motor0-speed-value">N/A RPM</span>
+                                <span class="machine-stat-label">Speed</span>
+                                <div class="mini-progress-bar">
+                                    <div class="mini-progress-fill" id="motor0-speed-fill" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="machine-stat-item">
+                            <span class="machine-stat-icon motor">
+                                <i class="fas fa-bolt"></i>
+                            </span>
+                            <div class="machine-stat-content">
+                                <span class="machine-stat-value" id="motor0-current-value">N/A mA</span>
+                                <span class="machine-stat-label">Current</span>
+                                <div class="mini-progress-bar">
+                                    <div class="mini-progress-fill" id="motor0-current-fill" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="machine-stat-item">
+                            <span class="machine-stat-icon motor">
+                                <i class="fas fa-map-marker-alt"></i>
+                            </span>
+                            <div class="machine-stat-content">
+                                <span class="machine-stat-value" id="motor0-position">N/A</span>
+                                <span class="machine-stat-label">Position</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Motor 1 (Feed) -->
+                <div class="motor-stat-group">
+                    <div class="motor-stat-header">
+                        <h4>Motor 1 (Feed)</h4>
+                        <div class="motor-state disconnected" id="motor1-state">
+                            <i class="fas fa-unlink"></i> Disconnected
+                        </div>
+                    </div>
+                    <div class="motor-stat-items">
+                        <div class="machine-stat-item">
+                            <span class="machine-stat-icon motor">
+                                <i class="fas fa-tachometer-alt"></i>
+                            </span>
+                            <div class="machine-stat-content">
+                                <span class="machine-stat-value" id="motor1-speed-value">N/A RPM</span>
+                                <span class="machine-stat-label">Speed</span>
+                                <div class="mini-progress-bar">
+                                    <div class="mini-progress-fill" id="motor1-speed-fill" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="machine-stat-item">
+                            <span class="machine-stat-icon motor">
+                                <i class="fas fa-bolt"></i>
+                            </span>
+                            <div class="machine-stat-content">
+                                <span class="machine-stat-value" id="motor1-current-value">N/A mA</span>
+                                <span class="machine-stat-label">Current</span>
+                                <div class="mini-progress-bar">
+                                    <div class="mini-progress-fill" id="motor1-current-fill" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="machine-stat-item">
+                            <span class="machine-stat-icon motor">
+                                <i class="fas fa-map-marker-alt"></i>
+                            </span>
+                            <div class="machine-stat-content">
+                                <span class="machine-stat-value" id="motor1-position">N/A</span>
+                                <span class="machine-stat-label">Position</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Motor 2 (Takeup) -->
+                <div class="motor-stat-group">
+                    <div class="motor-stat-header">
+                        <h4>Motor 2 (Takeup)</h4>
+                        <div class="motor-state disconnected" id="motor2-state">
+                            <i class="fas fa-unlink"></i> Disconnected
+                        </div>
+                    </div>
+                    <div class="motor-stat-items">
+                        <div class="machine-stat-item">
+                            <span class="machine-stat-icon motor">
+                                <i class="fas fa-tachometer-alt"></i>
+                            </span>
+                            <div class="machine-stat-content">
+                                <span class="machine-stat-value" id="motor2-speed-value">N/A RPM</span>
+                                <span class="machine-stat-label">Speed</span>
+                                <div class="mini-progress-bar">
+                                    <div class="mini-progress-fill" id="motor2-speed-fill" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="machine-stat-item">
+                            <span class="machine-stat-icon motor">
+                                <i class="fas fa-bolt"></i>
+                            </span>
+                            <div class="machine-stat-content">
+                                <span class="machine-stat-value" id="motor2-current-value">N/A mA</span>
+                                <span class="machine-stat-label">Current</span>
+                                <div class="mini-progress-bar">
+                                    <div class="mini-progress-fill" id="motor2-current-fill" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="machine-stat-item">
+                            <span class="machine-stat-icon motor">
+                                <i class="fas fa-map-marker-alt"></i>
+                            </span>
+                            <div class="machine-stat-content">
+                                <span class="machine-stat-value" id="motor2-position">N/A</span>
+                                <span class="machine-stat-label">Position</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

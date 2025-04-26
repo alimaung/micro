@@ -1,0 +1,533 @@
+/* Machine Control Card and Relay Control Card */
+.machine-control-card,
+.relay-control-card {
+    display: flex;
+    flex-direction: column;
+}
+
+.card-content {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 5px 0;
+}
+
+@media (max-width: 768px) {
+    .card-content {
+        flex-direction: column;
+    }
+}
+
+
+
+/* Placeholder states for machine stats */
+.gauge.placeholder .gauge-value {
+    color: #888;
+    font-style: italic;
+}
+
+.gauge.placeholder .gauge-body {
+    opacity: 0.5;
+    background-color: rgba(200, 200, 200, 0.05);
+}
+
+/* Placeholder styling for motor position values */
+.placeholder-text {
+    color: #999;
+    font-style: italic;
+    display: inline-block;
+    min-width: 50px;
+    padding: 3px 8px;
+    background-color: rgba(153, 153, 153, 0.1);
+    border-radius: 4px;
+    text-align: center;
+}
+
+.dark-mode .placeholder-text {
+    color: #777;
+    background-color: rgba(153, 153, 153, 0.15);
+}
+
+.motor-state.disconnected {
+    color: #888;
+    background-color: rgba(150, 150, 150, 0.1);
+}
+
+.refresh-button.disabled {
+    pointer-events: none;
+    opacity: 0.5;
+}
+
+/* Make sure the refresh button only appears if connected */
+#stats-connection-status.critical + .close-button + .refresh-button {
+    display: none;
+}
+
+/* Adaptations for the disconnected state tooltips */
+.stats-card .tooltip {
+    position: relative;
+    display: inline-block;
+    cursor: help;
+}
+
+.stats-card .tooltip .tooltip-text {
+    visibility: hidden;
+    width: 200px;
+    background-color: rgba(50, 50, 50, 0.9);
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 8px;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -100px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    font-size: 0.8rem;
+    pointer-events: none;
+}
+
+.stats-card .tooltip:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}
+
+.stats-card .tooltip .tooltip-text::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: rgba(50, 50, 50, 0.9) transparent transparent transparent;
+}
+
+/* Animation for appearing stats card */
+.stats-card.animate-in {
+    animation: fadeIn 0.3s ease-in-out forwards;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#machine-stats-card {
+    width: 100%;
+    margin-bottom: 30px;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+#relay-controls {
+    width: 100%;
+    margin-bottom: 30px;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Z-index control for overlapping cards (when both are visible) */
+#relay-controls.active {
+    z-index: 2;
+}
+
+#machine-stats-card.active {
+    z-index: 1;
+}
+
+/* Make sure when both cards are visible, they have proper spacing */
+#relay-controls + #machine-stats-card,
+#machine-stats-card + #relay-controls {
+    margin-top: 20px;
+}
+
+/* Close button enhancements */
+.fancy-close-button {
+    background-color: rgba(0, 0, 0, 0.1);
+    color: var(--color-text-light);
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 5;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.fancy-close-button:hover {
+    background-color: rgba(255, 69, 58, 0.2);
+    color: #ff453a;
+    transform: rotate(90deg);
+}
+
+.dark-mode .fancy-close-button {
+    background-color: rgba(255, 255, 255, 0.15);
+    color: var(--color-dark-text);
+}
+
+.dark-mode .fancy-close-button:hover {
+    background-color: rgba(255, 69, 58, 0.3);
+    color: #ff453a;
+}
+
+.fancy-close-button i {
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Card reveal animation */
+@keyframes cardReveal {
+    0% { opacity: 0; transform: translateY(-20px) scale(0.98); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.card-reveal {
+    animation: cardReveal 0.3s ease-out forwards;
+}
+
+/* Machine Stats Card Improvements */
+.machine-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.motors-grid {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+}
+
+.motor-stat-group {
+    background-color: var(--color-surface);
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+    padding: 16px;
+    transition: all 0.3s ease;
+}
+
+.dark-mode .motor-stat-group {
+    background-color: rgba(255, 255, 255, 0.03);
+    border-color: var(--color-dark-border);
+}
+
+.motor-stat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.motor-stat-header h4 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--color-text);
+}
+
+.dark-mode .motor-stat-header h4 {
+    color: var(--color-dark-text);
+}
+
+.motor-stat-items {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+}
+
+.machine-stat-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 8px;
+    background-color: var(--color-background);
+    border: 1px solid var(--color-border);
+    transition: all 0.3s ease;
+}
+
+.dark-mode .machine-stat-item {
+    background-color: rgba(255, 255, 255, 0.03);
+    border-color: var(--color-dark-border);
+}
+
+.machine-stat-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: rgba(var(--color-primary-rgb), 0.1);
+    color: var(--color-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+}
+
+.machine-stat-icon.motor {
+    color: #5ac8fa;
+    background-color: rgba(90, 200, 250, 0.1);
+}
+
+.machine-stat-content {
+    flex: 1;
+}
+
+.machine-stat-value {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--color-text);
+    display: block;
+}
+
+.dark-mode .machine-stat-value {
+    color: var(--color-dark-text);
+}
+
+.machine-stat-label {
+    font-size: 12px;
+    color: var(--color-text-light);
+    display: block;
+    margin-top: 2px;
+}
+
+/* Placeholder styles for the machine stat values */
+.machine-stat-value.placeholder {
+    color: #999;
+    font-style: italic;
+}
+
+.dark-mode .machine-stat-value.placeholder {
+    color: #777;
+} 
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+} 
+
+/* Machine Stats Card */
+.stats-card {
+    width: 100%;
+    margin-bottom: 30px;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    max-width: 100%;
+}
+
+/* Improved gauge container for better space usage */
+.gauge-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 30px;
+    justify-content: space-around;
+}
+
+/* Slightly wider gauges */
+.gauge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 120px;
+    margin-bottom: 15px;
+}
+
+/* Wider gauge body */
+.gauge-body {
+    width: 45px;
+    height: 130px;
+}
+
+/* Improved motor stats to use space better */
+.motor-stats {
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.motor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.motor-header h4 {
+    margin: 0;
+    font-size: 1rem;
+    color: #555;
+}
+
+.motor-state {
+    font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 8px;
+    border-radius: 12px;
+    background-color: rgba(150, 150, 150, 0.1);
+}
+
+.motor-state i {
+    margin-right: 5px;
+}
+
+.motor-state.stopped {
+    color: #888;
+}
+
+.motor-state.running-cw {
+    color: #30d158;
+    background-color: rgba(48, 209, 88, 0.1);
+}
+
+.motor-state.running-ccw {
+    color: #5ac8fa;
+    background-color: rgba(90, 200, 250, 0.1);
+}
+
+.motor-state.error {
+    color: #ff453a;
+    background-color: rgba(255, 69, 58, 0.1);
+}
+
+.motor-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.motor-position {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 10px;
+    padding: 5px;
+    background-color: rgba(200, 200, 200, 0.05);
+    border-radius: 5px;
+}
+
+.position-label {
+    font-size: 0.85rem;
+    color: #777;
+    margin-right: 5px;
+}
+
+.position-value {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #444;
+}
+
+/* Responsive adjustments */
+@media (min-width: 768px) {
+    .motor-details {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .motor-position {
+        margin-top: 0;
+        margin-left: 15px;
+    }
+}
+
+/* Animation for loading state */
+.stats-card.loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(1px);
+    border-radius: inherit;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+}
+
+.stats-card.loading::before {
+    content: '';
+    position: absolute;
+    top: calc(50% - 15px);
+    left: calc(50% - 15px);
+    width: 30px;
+    height: 30px;
+    border: 3px solid rgba(90, 200, 250, 0.3);
+    border-top: 3px solid #5ac8fa;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    z-index: 11;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Fancy refresh button */
+.refresh-button {
+    background-color: rgba(0, 0, 0, 0.1);
+    color: var(--color-text-light);
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 5;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-left: 10px;
+    vertical-align: middle;
+}
+
+.refresh-button:hover {
+    background-color: rgba(52, 199, 89, 0.2);
+    color: #30d158;
+    transform: rotate(180deg);
+}
+
+.dark-mode .refresh-button {
+    background-color: rgba(255, 255, 255, 0.15);
+    color: var(--color-dark-text);
+}
+
+.dark-mode .refresh-button:hover {
+    background-color: rgba(52, 199, 89, 0.3);
+    color: #30d158;
+}
+
+.refresh-button i {
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Animation for refreshing state */
+.refresh-button.refreshing i {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}

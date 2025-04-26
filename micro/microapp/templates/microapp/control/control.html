@@ -1,0 +1,39 @@
+{% extends 'microapp/base.html' %}
+
+{% block title %}Control Panel - Microfilm Processing System{% endblock %}
+
+{% load static %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'microapp/css/control/header.css' %}">
+    <link rel="stylesheet" href="{% static 'microapp/css/control/control.css' %}">
+    <link rel="stylesheet" href="{% static 'microapp/css/control/control_panel.css' %}">
+    <link rel="stylesheet" href="{% static 'microapp/css/control/control_panel_sma.css' %}">
+    <link rel="stylesheet" href="{% static 'microapp/css/control/control_panel_esp.css' %}">
+    <link rel="stylesheet" href="{% static 'microapp/css/control/filming_machine.css' %}">
+    <link rel="stylesheet" href="{% static 'microapp/css/control/developer_machine.css' %}">
+    <link rel="stylesheet" href="{% static 'microapp/css/control/system_panel.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="control-container">
+        {% include 'microapp/control/header.html' %}
+        {% include 'microapp/control/control_panel.html' %}
+        {% include 'microapp/control/filming_machine.html' %}
+        {% include 'microapp/control/developer_machine.html' %}
+        {% include 'microapp/control/system_panel.html' %}       
+        {% csrf_token %}
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    {% comment %} <script src="{% static 'microapp/js/control/control.js' %}"></script> {% endcomment %}
+    <script src="{% static 'microapp/js/control_refactor/utils.js' %}"></script>
+    <script src="{% static 'microapp/js/control_refactor/notification_manager.js' %}"></script>
+    <script src="{% static 'microapp/js/control_refactor/connection_manager.js' %}"></script>
+    <script src="{% static 'microapp/js/control_refactor/machine_controls.js' %}"></script>
+    <script src="{% static 'microapp/js/control_refactor/relay_controls.js' %}"></script>
+    <script src="{% static 'microapp/js/control_refactor/ui_manager.js' %}"></script>
+    <script src="{% static 'microapp/js/control_refactor/chart_manager.js' %}"></script>
+    <script src="{% static 'microapp/js/control_refactor/control_main.js' %}"></script>
+{% endblock %}

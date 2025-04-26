@@ -4,7 +4,7 @@
 
 {% load static %}
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'microapp/css/control.css' %}">
+<link rel="stylesheet" href="{% static 'microapp/css/control_old.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -158,7 +158,7 @@
             </div>
             
             <div class="relay-grid">
-                {% for i in relays %}
+                {% for i in '12345678' %}
                     <div class="relay-control">
                         <button class="relay-toggle" data-relay="{{ i }}">
                             <span class="relay-indicator" id="relay-indicator-{{ i }}"></span>
@@ -748,5 +748,5 @@
 
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="{% static 'microapp/js/control.js' %}"></script>
+<script src="{% static 'microapp/js/control_old.js' %}"></script>
 {% endblock %}

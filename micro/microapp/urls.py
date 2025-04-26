@@ -4,9 +4,9 @@ from django.views.i18n import JavaScriptCatalog
 
 
 urlpatterns = [
+    # Active TemplateURLs
     path('', views.home, name='home'),
     path('register/', views.register, name='register'),
-    path('oldregister/', views.oldregister, name='oldregister'),
     path('film/', views.film, name='film'),
     path('control/', views.control, name='control'),
     path('handoff/', views.handoff, name='handoff'),
@@ -15,6 +15,11 @@ urlpatterns = [
     path('settings/', views.settings_view, name='settings'),
     path('login/', views.login, name='login'),
     
+    # Inactive TemplateURLs
+    path('oldregister/', views.oldregister, name='oldregister'),
+    path('oldcontrol/', views.oldcontrol, name='oldcontrol'),
+    
+    # API Endpoints
     path('control_relay/', views.control_relay, name='control_relay'),
     path('check_port/', views.check_port, name='check_port'),
     path('check_machine_state/', views.check_machine_state, name='check_machine_state'),

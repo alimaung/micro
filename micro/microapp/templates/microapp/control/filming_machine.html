@@ -1,0 +1,78 @@
+<!-- Filming Machine Status Card -->
+<div class="control-card filming-machine-card">
+    <div class="card-header">
+        <h2>Filming Machine Status</h2>
+        <div class="header-actions">
+            <span class="status-badge operational">
+                <i class="fas fa-check-circle"></i>
+                Operational
+            </span>
+        </div>
+    </div>
+    
+    <div class="machine-visual">
+        <div class="machine-components">
+            <div class="component-item">
+                <div class="component-icon">
+                    <i class="fas fa-camera"></i>
+                </div>
+                <div class="component-info">
+                    <span class="component-name">Camera</span>
+                    <span class="component-status">16mm / 8K</span>
+                    <span class="status-dot online"></span>
+                </div>
+            </div>
+            <div class="component-item">
+                <div class="component-icon motor">
+                    <i class="fas fa-cog fa-spin"></i>
+                </div>
+                <div class="component-info">
+                    <span class="component-name">Shutter Motor</span>
+                    <span class="component-status">Active / 180 RPM</span>
+                    <span class="status-dot online"></span>
+                </div>
+            </div>
+            <div class="component-item">
+                <div class="component-icon motor">
+                    <i class="fas fa-sync fa-spin"></i>
+                </div>
+                <div class="component-info">
+                    <span class="component-name">Spool Motor</span>
+                    <span class="component-status">Active / 60 RPM</span>
+                    <span class="status-dot online"></span>
+                </div>
+            </div>
+            <div class="component-item">
+                <div class="component-icon vacuum">
+                    <i class="fas fa-wind"></i>
+                </div>
+                <div class="component-info">
+                    <span class="component-name">Vacuum Pump</span>
+                    <span class="component-status">Active / 85%</span>
+                    <span class="status-dot online"></span>
+                </div>
+            </div>
+            <div class="component-item">
+                <div class="component-icon">
+                    <i class="fas fa-lightbulb"></i>
+                </div>
+                <div class="component-info">
+                    <span class="component-name">Exposure Monitor</span>
+                    <span class="component-status">Calibrated</span>
+                    <span class="status-dot online"></span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="machine-charts">
+            <div class="chart-container chart-height-constrained">
+                <h3>Motor Performance</h3>
+                <canvas id="motors-chart" class="system-chart"></canvas>
+            </div>
+            <div class="chart-container chart-height-constrained">
+                <h3>System Temperature</h3>
+                <canvas id="temperature-chart" class="system-chart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>

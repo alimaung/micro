@@ -1,0 +1,96 @@
+<!-- Developer Machine Status Card -->
+<div class="control-card developer-machine-card">
+    <div class="card-header">
+        <h2>Developer Machine Status</h2>
+        <div class="header-actions">
+            <span class="status-badge operational">
+                <i class="fas fa-check-circle"></i>
+                Operational
+            </span>
+        </div>
+    </div>
+    
+    <div class="developer-stats">
+        <div class="dev-stat-panel">
+            <div class="dev-stat-item">
+                <span class="dev-stat-icon">
+                    <i class="fas fa-thermometer-half"></i>
+                </span>
+                <div class="dev-stat-content">
+                    <span class="dev-stat-value">37.8°C</span>
+                    <span class="dev-stat-label">Temperature</span>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 75%"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="dev-stat-item">
+                <span class="dev-stat-icon">
+                    <i class="fas fa-tachometer-alt"></i>
+                </span>
+                <div class="dev-stat-content">
+                    <span class="dev-stat-value">180 RPM</span>
+                    <span class="dev-stat-label">Motor Speed</span>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 60%"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="dev-stat-item">
+                <span class="dev-stat-icon">
+                    <i class="fas fa-flask"></i>
+                </span>
+                <div class="dev-stat-content">
+                    <span class="dev-stat-value">6.8 pH</span>
+                    <span class="dev-stat-label">Developer pH</span>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 68%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="chemicals-level">
+            <h3>Chemical Levels</h3>
+            <div class="chemicals-grid">
+                <div class="chemical-container">
+                    <div class="chemical-label">Developer</div>
+                    <div class="level-indicator">
+                        <div class="level-fill" style="height: 65%; opacity: 0.65"></div>
+                    </div>
+                    <div class="chemical-percentage">65%</div>
+                    <div class="chemical-date">Changed: 3 days ago</div>
+                </div>
+                <div class="chemical-container">
+                    <div class="chemical-label">Fixer</div>
+                    <div class="level-indicator">
+                        <div class="level-fill" style="height: 72%; opacity: 0.72"></div>
+                    </div>
+                    <div class="chemical-percentage">72%</div>
+                    <div class="chemical-date">Changed: 3 days ago</div>
+                </div>
+                <div class="chemical-container">
+                    <div class="chemical-label">Cleaner 1</div>
+                    <div class="level-indicator">
+                        <div class="level-fill" style="height: 83%; opacity: 0.83"></div>
+                    </div>
+                    <div class="chemical-percentage">83%</div>
+                    <div class="chemical-date">Changed: 3 days ago</div>
+                </div>
+                <div class="chemical-container">
+                    <div class="chemical-label">Cleaner 2</div>
+                    <div class="level-indicator">
+                        <div class="level-fill" style="height: 89%; opacity: 0.89"></div>
+                    </div>
+                    <div class="chemical-percentage">89%</div>
+                    <div class="chemical-date">Changed: 3 days ago</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="temperature-chart-container chart-height-constrained">
+            <h3>Temperature History (24h)</h3>
+            <canvas id="developer-temp-chart" class="system-chart"></canvas>
+        </div>
+    </div>
+</div>

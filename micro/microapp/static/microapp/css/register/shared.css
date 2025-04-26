@@ -163,22 +163,6 @@
 .dark-mode .card-footer {
     border-color: var(--color-dark-border);
 }
-
-/* Data panel styles */
-.data-panel .card-content {
-    padding: 0;
-    overflow: auto;
-}
-.data-output {
-    margin: 0;
-    padding: 16px;
-    overflow-x: auto;
-    font-family: 'Courier New', monospace;
-    font-size: 12px;
-    color: var(--color-text);
-    background-color: var(--color-surface);
-}
-
 /* Form elements */
 .form-group {
     margin-bottom: 20px;
@@ -561,4 +545,9 @@ input:checked + .slider:before {
     color: var(--color-text);
     background-color: var(--color-surface);
     box-sizing: border-box;
+}
+
+.dark-mode .workflow-card.data-panel .data-output {
+    color: var(--color-dark-text);
+    background-color: rgba(255, 255, 255, 0.03);
 }

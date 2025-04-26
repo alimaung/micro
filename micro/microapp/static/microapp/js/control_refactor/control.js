@@ -1,5 +1,3 @@
-// Control Panel JavaScript
-
 document.addEventListener('DOMContentLoaded', function() {
     // Get DOM elements
     const relayControls = document.getElementById('relay-controls');
@@ -55,6 +53,8 @@ document.addEventListener('DOMContentLoaded', function() {
         serial_number: 'N/A',
         manufacturer: 'N/A'
     };
+
+    let pendingRelayStates = {};
 
     // Initialize mode display with correct classes (text is already in the HTML)
     if (modeDisplay) {
@@ -615,7 +615,12 @@ document.addEventListener('DOMContentLoaded', function() {
         // Call our new toggle function
         toggleRelayMode();
         // Fetch ESP32 stats and relay states after mode change
-        updateESP32Stats();
+        setTimeout(() => {
+            updateESP32Stats();
+        }, 150);
+        setTimeout(() => {
+            updateESP32Stats();
+        }, 700);
     });
 
     // Toggle machine switch with animation
@@ -971,7 +976,10 @@ document.addEventListener('DOMContentLoaded', function() {
             // Call our new toggle function
             toggleRelay(relayNum);
             // Fetch ESP32 stats and relay states after toggle
-            updateESP32Stats();
+            // In toggleRelay, after sending the toggle request:
+            setTimeout(() => {
+                updateESP32Stats();
+            }, 150); // 700ms delay (tune as needed)
         });
     });
     
@@ -1343,14 +1351,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (isRelayConnected) {
             // Fetch real ESP32 stats
             fetch('/get_all_states/', {
-                method: 'POST',
+                method: 'GET',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
                     'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                },
-                body: new URLSearchParams({
-                    'com_port': getActiveRelayPort()
-                })
+                }
             })
             .then(response => response.json())
             .then(data => {
@@ -1468,22 +1473,61 @@ document.addEventListener('DOMContentLoaded', function() {
     // Update relay states in the UI
     function updateRelayStatesUI(newRelayStates) {
         if (!newRelayStates) return;
-        
-        // Update individual relay indicators
-        Object.entries(newRelayStates).forEach(([relayNum, isOn]) => {
-            const relayIndicator = document.getElementById(`relay-indicator-${relayNum}`);
-            if (relayIndicator) {
-                const currentState = relayIndicator.classList.contains('on');
-                // Only update if changed
-                if (currentState !== isOn) {
-                    if (isOn) {
-                        relayIndicator.classList.add('on');
+    
+        if (Array.isArray(newRelayStates)) {
+            newRelayStates.forEach((isOn, idx) => {
+                const relayNum = idx + 1;
+                const relayIndicator = document.getElementById(`relay-indicator-${relayNum}`);
+                if (relayIndicator) {
+                    const currentState = relayIndicator.classList.contains('on');
+                    // Check for pending state and discrepancy
+                    if (pendingRelayStates[relayNum] !== undefined) {
+                        if (pendingRelayStates[relayNum] !== isOn) {
+                            console.log(`[updateRelayStatesUI] Relay ${relayNum}: Hardware mismatch (pending=${pendingRelayStates[relayNum]}, actual=${isOn}) - reverting UI`);
+                            console.log(`[updateRelayStatesUI] Before update: relayNum=${relayNum}, classList=${relayIndicator.className}`);
+                            setRelayIndicatorState(relayNum, isOn, false);
+                            console.log(`[updateRelayStatesUI] After update: relayNum=${relayNum}, classList=${relayIndicator.className}`);
+                            showNotification(`Relay ${relayNum} state reverted (hardware mismatch)`, 'warning');
+                        } else {
+                            console.log(`[updateRelayStatesUI] Relay ${relayNum}: Pending state confirmed (state=${isOn}) - updating UI`);
+                            setRelayIndicatorState(relayNum, isOn, false);
+                        }
+                        // Remove pending state after confirmation
+                        delete pendingRelayStates[relayNum];
+                    } else if (currentState !== isOn) {
+                        console.log(`[updateRelayStatesUI] Relay ${relayNum}: UI out of sync (current=${currentState}, actual=${isOn}) - updating UI`);
+                        setRelayIndicatorState(relayNum, isOn, false);
                     } else {
-                        relayIndicator.classList.remove('on');
+                        console.log(`[updateRelayStatesUI] Relay ${relayNum}: No update needed (current=${currentState}, actual=${isOn})`);
                     }
                 }
-            }
-        });
+            });
+        } else {
+            Object.entries(newRelayStates).forEach(([relayNum, isOn]) => {
+                const relayIndicator = document.getElementById(`relay-indicator-${relayNum}`);
+                if (relayIndicator) {
+                    const currentState = relayIndicator.classList.contains('on');
+                    if (pendingRelayStates[relayNum] !== undefined) {
+                        if (pendingRelayStates[relayNum] !== isOn) {
+                            console.log(`[updateRelayStatesUI] Relay ${relayNum}: Hardware mismatch (pending=${pendingRelayStates[relayNum]}, actual=${isOn}) - reverting UI`);
+                            console.log(`[updateRelayStatesUI] Before update: relayNum=${relayNum}, classList=${relayIndicator.className}`);
+                            setRelayIndicatorState(relayNum, isOn, false);
+                            console.log(`[updateRelayStatesUI] After update: relayNum=${relayNum}, classList=${relayIndicator.className}`);
+                            showNotification(`Relay ${relayNum} state reverted (hardware mismatch)`, 'warning');
+                        } else {
+                            console.log(`[updateRelayStatesUI] Relay ${relayNum}: Pending state confirmed (state=${isOn}) - updating UI`);
+                            setRelayIndicatorState(relayNum, isOn, false);
+                        }
+                        delete pendingRelayStates[relayNum];
+                    } else if (currentState !== isOn) {
+                        console.log(`[updateRelayStatesUI] Relay ${relayNum}: UI out of sync (current=${currentState}, actual=${isOn}) - updating UI`);
+                        setRelayIndicatorState(relayNum, isOn, false);
+                    } else {
+                        console.log(`[updateRelayStatesUI] Relay ${relayNum}: No update needed (current=${currentState}, actual=${isOn})`);
+                    }
+                }
+            });
+        }
         
         // Log relay 8 state changes but don't update machine power UI
         if (newRelayStates[8] !== undefined) {
@@ -1591,12 +1635,12 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.status === 'success') {
                 // Update UI to match the new mode
                 updateModeDisplay(data.mode);
-                
+
                 // If server returned relay states, update those too
                 if (data.relay_states) {
                     updateRelayStatesUI(data.relay_states);
                 }
-                
+
                 showNotification(`${targetMode.charAt(0).toUpperCase() + targetMode.slice(1)} activated`, 'success');
                 console.log(`${targetMode} mode activated successfully`);
             } else {
@@ -1694,45 +1738,44 @@ document.addEventListener('DOMContentLoaded', function() {
         
         console.log("Checking relay states...");
         
-        // Use the working get_all_states endpoint instead of the missing check_relay_states
         fetch('/get_all_states/', {
-            method: 'POST',
+            method: 'GET',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
                 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-            },
-            body: new URLSearchParams({
-                'com_port': getActiveRelayPort()
-            })
+            }
         })
         .then(response => response.json())
         .then(data => {
-            if (data.status === 'success' && data.data && data.data.relay_states) {
-                // Compare with current states before updating
-                const hasChanges = Object.entries(data.data.relay_states).some(([key, value]) => {
-                    // Check if the relay state has changed
-                    return relayStates[key] !== value;
-                });
-                
-                if (hasChanges) {
-                    // Only update UI if there are actual changes
-                    Object.assign(relayStates, data.data.relay_states);
-                    updateRelayStatesUI(data.data.relay_states);
-                    console.log("Relay states updated due to changes detected");
-                } else {
-                    console.log("No changes in relay states, skipping UI update");
+            if (data.status === 'success' && data.data) {
+                // Update relay states if available
+                if (data.data.relay_states) {
+                    // Compare with current states before updating
+                    const hasChanges = Object.entries(data.data.relay_states).some(([key, value]) => {
+                        // Check if the relay state has changed
+                        return relayStates[key] !== value;
+                    });
+                    
+                    if (hasChanges) {
+                        // Only update UI if there are actual changes
+                        Object.assign(relayStates, data.data.relay_states);
+                        updateRelayStatesUI(data.data.relay_states);
+                        console.log("Relay states updated due to changes detected");
+                    } else {
+                        console.log("No changes in relay states, skipping UI update");
+                    }
                 }
                 
-                // If mode data is available, update mode display too
-                if (data.data.current_mode) {
-                    updateModeDisplay(data.data.current_mode);
+                // Update system stats if available
+                if (data.data.system_stats) {
+                    updateESP32StatsUI(data.data.system_stats);
                 }
             } else {
-                console.error(`Error or missing relay states: ${data.message || 'Unknown error'}`);
+                console.error(`Error or missing data: ${data.message || 'Unknown error'}`);
             }
         })
         .catch(error => {
-            console.error('Error checking relay states:', error);
+            console.error('Error checking states:', error);
         });
     }
 
@@ -2506,4 +2549,34 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+
+    /**
+     * Sets the visual state of a relay indicator.
+     * @param {number|string} relayNum - The relay number (1-based).
+     * @param {boolean} isOn - True if the relay should be shown as ON.
+     * @param {boolean} pending - If true, show a "pending" state (e.g., yellow).
+     */
+    function setRelayIndicatorState(relayNum, isOn, pending = false) {
+        const relayIndicator = document.getElementById(`relay-indicator-${relayNum}`);
+        if (!relayIndicator) {
+            console.warn(`[setRelayIndicatorState] Relay indicator not found for relayNum=${relayNum}`);
+            return;
+        }
+
+        // Remove all possible state classes
+        relayIndicator.classList.remove('on', 'pending');
+
+        if (pending) {
+            console.log(`[setRelayIndicatorState] Relay ${relayNum}: PENDING (yellow)`);
+            relayIndicator.classList.add('pending');
+            relayIndicator.style.backgroundColor = '#ffcc00'; // yellow for pending
+        } else if (isOn) {
+            console.log(`[setRelayIndicatorState] Relay ${relayNum}: ON (green)`);
+            relayIndicator.classList.add('on');
+            relayIndicator.style.backgroundColor = ''; // reset to default
+        } else {
+            relayIndicator.classList.remove('on');
+            relayIndicator.style.backgroundColor = ''; // reset to default
+        }
+    }
 });
