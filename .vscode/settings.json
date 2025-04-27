@@ -1,0 +1,7 @@
+{
+    "idf.flashType": "UART",
+    "idf.portWin": "COM18",
+    "idf.customExtraVars": {
+        "IDF_TARGET": "esp32"
+    }
+}

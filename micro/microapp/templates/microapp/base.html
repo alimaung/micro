@@ -39,27 +39,26 @@
         
         <!-- Right side - Icons -->
         <div class="navbar-icons">
+            <!-- Language Toggle -->
+            <a id="lang-toggle"
+                href="{% url 'toggle_language' %}?next={{ request.get_full_path }}"
+                title="{% trans 'Toggle language' %}">
+                <img
+                src="https://flagcdn.com/20x15/{% if LANGUAGE_CODE == 'en' %}us{% elif LANGUAGE_CODE == 'de' %}de{% else %}{{ LANGUAGE_CODE }}{% endif %}.png"
+                srcset="https://flagcdn.com/40x30/{% if LANGUAGE_CODE == 'en' %}us{% elif LANGUAGE_CODE == 'de' %}de{% else %}{{ LANGUAGE_CODE }}{% endif %}.png 2x, https://flagcdn.com/60x45/{% if LANGUAGE_CODE == 'en' %}us{% elif LANGUAGE_CODE == 'de' %}de{% else %}{{ LANGUAGE_CODE }}{% endif %}.png 3x"
+                width="20"
+                height="15"
+                alt="{{ LANGUAGE_CODE|upper }}">
+            </a>
+            <!-- Dark Mode Toggle -->
+            <button id="dark-mode-toggle" title="Toggle Dark Mode">
+                <i id="dark-mode-icon" class="fas fa-moon"></i>
+            </button>
+            <!-- Settings Button -->
             <a href="{% url 'settings' %}" title="Settings">
                 <i class="fas fa-cog"></i>
             </a>
-            <!-- Restart Server Button -->
-            <button id="restart-server" title="Restart Server" style="background: none; border: none; cursor: pointer;">
-                <i class="fas fa-sync-alt"></i>
-            </button>
-            <!-- Dark Mode Toggle -->
-            <button id="dark-mode-toggle" title="Toggle Dark Mode" style="background: none; border: none; cursor: pointer;">
-                <i id="dark-mode-icon" class="fas fa-moon"></i>
-            </button>
-            <a id="lang-toggle"
-               href="{% url 'toggle_language' %}?next={{ request.get_full_path }}"
-               title="{% trans 'Toggle language' %}">
-                <img
-                  src="https://flagcdn.com/20x15/{% if LANGUAGE_CODE == 'en' %}us{% elif LANGUAGE_CODE == 'de' %}de{% else %}{{ LANGUAGE_CODE }}{% endif %}.png"
-                  srcset="https://flagcdn.com/40x30/{% if LANGUAGE_CODE == 'en' %}us{% elif LANGUAGE_CODE == 'de' %}de{% else %}{{ LANGUAGE_CODE }}{% endif %}.png 2x, https://flagcdn.com/60x45/{% if LANGUAGE_CODE == 'en' %}us{% elif LANGUAGE_CODE == 'de' %}de{% else %}{{ LANGUAGE_CODE }}{% endif %}.png 3x"
-                  width="20"
-                  height="15"
-                  alt="{{ LANGUAGE_CODE|upper }}">
-            </a>
+            <!-- Login Button -->
             <a href="{% url 'login' %}" title="Login">
                 <i class="fas fa-user"></i>
             </a>

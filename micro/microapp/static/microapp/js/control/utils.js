@@ -302,18 +302,6 @@ const Utils = {
             if (temperature !== undefined) {
                 tempElement.textContent = `${Math.round(temperature * 10) / 10}°C`;
                 
-                // Set color based on temperature range
-                if (temperature < 50) {
-                    tempElement.classList.add('good');
-                    tempElement.classList.remove('medium', 'poor');
-                } else if (temperature < 70) {
-                    tempElement.classList.add('medium');
-                    tempElement.classList.remove('good', 'poor');
-                } else {
-                    tempElement.classList.add('poor');
-                    tempElement.classList.remove('good', 'medium');
-                }
-                
                 // Update progress bar if present
                 const progressBar = tempElement.parentElement.querySelector('.mini-progress-fill');
                 if (progressBar) {
@@ -330,19 +318,7 @@ const Utils = {
             if (memory !== undefined) {
                 const memoryKB = Math.round(memory);
                 memoryElement.textContent = `${memoryKB} KB`;
-                
-                // Set color based on memory range
-                if (memoryKB > 150) {
-                    memoryElement.classList.add('good');
-                    memoryElement.classList.remove('medium', 'poor');
-                } else if (memoryKB > 50) {
-                    memoryElement.classList.add('medium');
-                    memoryElement.classList.remove('good', 'poor');
-                } else {
-                    memoryElement.classList.add('poor');
-                    memoryElement.classList.remove('good', 'medium');
-                }
-                
+                                
                 // Update progress bar if present
                 const progressBar = memoryElement.parentElement.querySelector('.mini-progress-fill');
                 if (progressBar) {
@@ -355,24 +331,14 @@ const Utils = {
         
         // Update CPU
         if (cpuElement) {
-            // For CPU, we use cpu_mhz as a percentage of max (which is 240)
-            const cpuUsage = stats.cpu_usage !== undefined ? stats.cpu_usage : 
-                             (stats.cpu_mhz ? 100 : undefined); // Assuming cpu_mhz = 240 is 100% usage
+            // For CPU, we use cpu_mhz as a percentage of max (which is 300)
+            const cpuMhz = stats.cpu_mhz !== undefined ? stats.cpu_mhz : 
+                          (stats.cpu_usage ? 300 * (stats.cpu_usage / 100) : undefined);
             
-            if (cpuUsage !== undefined) {
-                cpuElement.textContent = `${Math.round(cpuUsage)}%`;
-                
-                // Set color based on CPU usage
-                if (cpuUsage < 50) {
-                    cpuElement.classList.add('good');
-                    cpuElement.classList.remove('medium', 'poor');
-                } else if (cpuUsage < 80) {
-                    cpuElement.classList.add('medium');
-                    cpuElement.classList.remove('good', 'poor');
-                } else {
-                    cpuElement.classList.add('poor');
-                    cpuElement.classList.remove('good', 'medium');
-                }
+            if (cpuMhz !== undefined) {
+                // Calculate percentage based on 300MHz max
+                const cpuUsage = (cpuMhz / 300) * 100;
+                cpuElement.textContent = `${Math.round(cpuMhz)} MHz`;
                 
                 // Update progress bar if present
                 const progressBar = cpuElement.parentElement.querySelector('.mini-progress-fill');

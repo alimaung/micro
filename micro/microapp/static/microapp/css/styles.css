@@ -123,7 +123,7 @@ body {
 /* Navigation Links */
 .navbar-links {
     display: flex;
-    gap: 3rem;
+    gap: 2rem;
     height: 100%;
     align-items: center;
 }
@@ -187,8 +187,7 @@ body {
 }
 
 .navbar-icons a, 
-#dark-mode-toggle,
-#restart-server {
+#dark-mode-toggle {
     color: var(--color-text-light);
     text-decoration: none;
     font-size: 1.1rem;
@@ -204,16 +203,14 @@ body {
 }
 
 .navbar-icons a:hover, 
-#dark-mode-toggle:hover,
-#restart-server:hover {
+#dark-mode-toggle:hover {
     background-color: rgba(0, 0, 0, 0.05);
     color: var(--color-primary);
-    transform: scale(1.1);
+    transform: scale(1.15);
 }
 
 .dark-mode .navbar-icons a, 
-.dark-mode #dark-mode-toggle,
-.dark-mode #restart-server {
+.dark-mode #dark-mode-toggle {
     color: var(--color-dark-text-light);
 }
 
@@ -313,6 +310,27 @@ h4 { font-size: 1.5rem; }
 h5 { font-size: 1.25rem; }
 h6 { font-size: 1rem; }
 
+/* Add dark mode specific heading styles */
+.dark-mode h1, 
+.dark-mode h2, 
+.dark-mode h3, 
+.dark-mode h4, 
+.dark-mode h5, 
+.dark-mode h6 {
+    color: white;  /* Brighter white for headings in dark mode for better contrast */
+}
+
+/* Add a subtitle class if you don't already have one */
+.subtitle {
+    color: var(--color-text-light);
+    font-weight: var(--font-weight-regular);
+    margin-top: 0.5em;
+}
+
+.dark-mode .subtitle {
+    color: var(--color-dark-text-light);
+}
+
 /* Dark mode toggle icon */
 #dark-mode-toggle {
     background: none;
@@ -323,31 +341,6 @@ h6 { font-size: 1rem; }
 
 #dark-mode-toggle i {
     transition: transform 0.5s ease, color var(--transition-speed) ease;
-}
-
-#dark-mode-toggle:hover i {
-    transform: rotate(30deg);
-}
-
-/* Restart server button */
-#restart-server {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 0;
-}
-
-#restart-server i {
-    transition: transform 0.5s ease, color var(--transition-speed) ease;
-}
-
-#restart-server:hover i {
-    transform: rotate(30deg);
-}
-
-#restart-server i.loading-state {
-    animation: spin 1.5s infinite linear;
-    color: var(--color-primary);
 }
 
 @keyframes spin {

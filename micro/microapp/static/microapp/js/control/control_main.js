@@ -471,4 +471,13 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
+
+    // Emergency stop button for relay
+    const relayEmergencyStop = document.getElementById('relay-emergency-stop');
+    if (relayEmergencyStop) {
+        relayEmergencyStop.addEventListener('click', function() {
+            NotificationManager.showNotification('Relay emergency stop button pressed', 'warning');
+            // Add actual emergency stop functionality here
+        });
+    }
 }); 

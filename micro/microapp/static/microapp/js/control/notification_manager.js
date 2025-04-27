@@ -7,7 +7,7 @@
 const NotificationManager = {
     // State tracking for notification throttling
     lastNotificationTimes: {},
-    NOTIFICATION_THROTTLE_MS: 30000, // 30 seconds minimum between similar notifications
+    NOTIFICATION_THROTTLE_MS: 3000, // 2 seconds minimum between similar notifications
     activeNotifications: [], // Array to track active notifications
     maxVisibleNotifications: 5, // Maximum number of visible notifications at once
     notificationContainer: null, // Container for all notifications

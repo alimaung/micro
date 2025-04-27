@@ -1,0 +1,262 @@
+[1/11] Performing build step for 'bootloader'
+[1/1] C:\WINDOWS\system32\cmd.exe /C "cd /D C:\Users\Ali\Desktop\micro\saferoom\microesp\build\bootloader\esp-idf\esptool_py && C:\Users\Ali\.espressif\python_env\idf5.4_py3.11_env\Scripts\python.exe C:/Users/Ali/esp/v5.4/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 bootloader 0x1000 C:/Users/Ali/Desktop/micro/saferoom/microesp/build/bootloader/bootloader.bin"
+Bootloader binary size 0x6560 bytes. 0xaa0 bytes (9%) free.
+[2/11] No install step for 'bootloader'
+[3/11] Completed 'bootloader'
+[4/11] Building C object esp-idf/main/CMakeFiles/__idf_main.dir/hardware_hal.c.obj
+FAILED: esp-idf/main/CMakeFiles/__idf_main.dir/hardware_hal.c.obj 
+ccache C:\Users\Ali\.espressif\tools\xtensa-esp-elf\esp-14.2.0_20241119\xtensa-esp-elf\bin\xtensa-esp32-elf-gcc.exe -DESP_PLATFORM -DIDF_VER=\"v5.4\" -DMBEDTLS_CONFIG_FILE=\"mbedtls/esp_config.h\" -DSOC_MMU_PAGE_SIZE=CONFIG_MMU_PAGE_SIZE -DSOC_XTAL_FREQ_MHZ=CONFIG_XTAL_FREQ -D_GLIBCXX_HAVE_POSIX_SEMAPHORE -D_GLIBCXX_USE_POSIX_SEMAPHORE -D_GNU_SOURCE -D_POSIX_READER_WRITER_LOCKS -IC:/Users/Ali/Desktop/micro/saferoom/microesp/build/config -IC:/Users/Ali/Desktop/micro/saferoom/microesp/main -IC:/Users/Ali/esp/v5.4/esp-idf/components/newlib/platform_include -IC:/Users/Ali/esp/v5.4/esp-idf/components/freertos/config/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/freertos/config/include/freertos -IC:/Users/Ali/esp/v5.4/esp-idf/components/freertos/config/xtensa/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/freertos/FreeRTOS-Kernel/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/freertos/FreeRTOS-Kernel/portable/xtensa/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/freertos/FreeRTOS-Kernel/portable/xtensa/include/freertos -IC:/Users/Ali/esp/v5.4/esp-idf/components/freertos/esp_additions/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_hw_support/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_hw_support/include/soc -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_hw_support/include/soc/esp32 -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_hw_support/dma/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_hw_support/ldo/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_hw_support/debug_probe/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_hw_support/port/esp32/. -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_hw_support/port/esp32/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/heap/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/heap/tlsf -IC:/Users/Ali/esp/v5.4/esp-idf/components/log/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/soc/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/soc/esp32 -IC:/Users/Ali/esp/v5.4/esp-idf/components/soc/esp32/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/soc/esp32/register -IC:/Users/Ali/esp/v5.4/esp-idf/components/hal/platform_port/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/hal/esp32/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/hal/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_rom/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_rom/esp32/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_rom/esp32/include/esp32 -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_rom/esp32 -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_common/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_system/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_system/port/soc -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_system/port/include/private -IC:/Users/Ali/esp/v5.4/esp-idf/components/xtensa/esp32/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/xtensa/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/xtensa/deprecated_include -IC:/Users/Ali/esp/v5.4/esp-idf/components/lwip/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/lwip/include/apps -IC:/Users/Ali/esp/v5.4/esp-idf/components/lwip/include/apps/sntp -IC:/Users/Ali/esp/v5.4/esp-idf/components/lwip/lwip/src/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/lwip/port/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/lwip/port/freertos/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/lwip/port/esp32xx/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/lwip/port/esp32xx/include/arch -IC:/Users/Ali/esp/v5.4/esp-idf/components/lwip/port/esp32xx/include/sys -IC:/Users/Ali/esp/v5.4/esp-idf/components/nvs_flash/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_partition/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_http_client/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_event/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_https_ota/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/bootloader_support/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/bootloader_support/bootloader_flash/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_app_format/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/json/cJSON -IC:/Users/Ali/esp/v5.4/esp-idf/components/driver/deprecated -IC:/Users/Ali/esp/v5.4/esp-idf/components/driver/i2c/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/driver/touch_sensor/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/driver/twai/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/driver/touch_sensor/esp32/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_pm/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_ringbuf/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_gpio/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_pcnt/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_gptimer/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_spi/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_mcpwm/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_ana_cmpr/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_i2s/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_sdmmc/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/sdmmc/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_sdspi/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_sdio/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_dac/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_rmt/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_tsens/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_sdm/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_i2c/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_uart/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/vfs/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_ledc/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_parlio/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_usb_serial_jtag/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_adc/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_adc/interface -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_adc/esp32/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_adc/deprecated/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_wifi/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_wifi/include/local -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_wifi/wifi_apps/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_wifi/wifi_apps/nan_app/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_phy/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_phy/esp32/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_netif/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_http_server/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/http_parser -IC:/Users/Ali/Desktop/micro/saferoom/microesp/managed_components/espressif__esp_websocket_client/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp-tls -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp-tls/esp-tls-crypto -IC:/Users/Ali/esp/v5.4/esp-idf/components/mbedtls/port/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/mbedtls/mbedtls/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/mbedtls/mbedtls/library -IC:/Users/Ali/esp/v5.4/esp-idf/components/mbedtls/esp_crt_bundle/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/mbedtls/mbedtls/3rdparty/everest/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/mbedtls/mbedtls/3rdparty/p256-m -IC:/Users/Ali/esp/v5.4/esp-idf/components/mbedtls/mbedtls/3rdparty/p256-m/p256-m -IC:/Users/Ali/esp/v5.4/esp-idf/components/tcp_transport/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_timer/include -mlongcalls -Wno-frame-address  -fno-builtin-memcpy -fno-builtin-memset -fno-builtin-bzero -fno-builtin-stpcpy -fno-builtin-strncpy -fdiagnostics-color=always -ffunction-sections -fdata-sections -Wall -Werror=all -Wno-error=unused-function -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error=deprecated-declarations -Wextra -Wno-error=extra -Wno-unused-parameter -Wno-sign-compare -Wno-enum-conversion -gdwarf-4 -ggdb -Og -fno-shrink-wrap -fmacro-prefix-map=C:/Users/Ali/Desktop/micro/saferoom/microesp=. -fmacro-prefix-map=C:/Users/Ali/esp/v5.4/esp-idf=/IDF -fstrict-volatile-bitfields -fno-jump-tables -fno-tree-switch-conversion -std=gnu17 -Wno-old-style-declaration -MD -MT esp-idf/main/CMakeFiles/__idf_main.dir/hardware_hal.c.obj -MF esp-idf\main\CMakeFiles\__idf_main.dir\hardware_hal.c.obj.d -o esp-idf/main/CMakeFiles/__idf_main.dir/hardware_hal.c.obj -c C:/Users/Ali/Desktop/micro/saferoom/microesp/main/hardware_hal.c
+In file included from C:/Users/Ali/Desktop/micro/saferoom/microesp/main/hardware_hal.c:3:
+C:/Users/Ali/esp/v5.4/esp-idf/components/driver/deprecated/driver/adc.h:19:2: warning: #warning "legacy adc driver is deprecated, please migrate to use esp_adc/adc_oneshot.h and esp_adc/adc_continuous.h for oneshot mode and continuous mode drivers respectively" [-Wcpp]
+   19 | #warning "legacy adc driver is deprecated, please migrate to use esp_adc/adc_oneshot.h and esp_adc/adc_continuous.h for oneshot mode and continuous mode drivers respectively"
+      |  ^~~~~~~
+In file included from C:/Users/Ali/Desktop/micro/saferoom/microesp/main/hardware_hal.c:4:
+C:/Users/Ali/esp/v5.4/esp-idf/components/esp_adc/deprecated/include/esp_adc_cal.h:17:2: warning: #warning "legacy adc calibration driver is deprecated, please migrate to use esp_adc/adc_cali.h and esp_adc/adc_cali_scheme.h" [-Wcpp]
+   17 | #warning "legacy adc calibration driver is deprecated, please migrate to use esp_adc/adc_cali.h and esp_adc/adc_cali_scheme.h"
+      |  ^~~~~~~
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/hardware_hal.c: In function 'hal_init':
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/hardware_hal.c:13:5: warning: 'ADC_ATTEN_DB_11' is deprecated [-Wdeprecated-declarations]
+   13 |     esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_12, 1100, &adc_chars);
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~
+In file included from C:/Users/Ali/esp/v5.4/esp-idf/components/driver/deprecated/driver/adc_types_legacy.h:8,
+                 from C:/Users/Ali/esp/v5.4/esp-idf/components/driver/deprecated/driver/adc.h:15:
+C:/Users/Ali/esp/v5.4/esp-idf/components/hal/include/hal/adc_types.h:51:5: note: declared here
+   51 |     ADC_ATTEN_DB_11 __attribute__((deprecated)) = ADC_ATTEN_DB_12,  ///<This is deprecated, it behaves the same as `ADC_ATTEN_DB_12`
+      |     ^~~~~~~~~~~~~~~
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/hardware_hal.c: In function 'hal_get_millis':
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/hardware_hal.c:40:23: error: implicit declaration of function 'esp_timer_get_time' [-Wimplicit-function-declaration]
+   40 |     return (uint32_t)(esp_timer_get_time() / 1000);
+      |                       ^~~~~~~~~~~~~~~~~~
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/hardware_hal.c: In function 'hal_adc_init':
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/hardware_hal.c:61:5: warning: 'ADC_ATTEN_DB_11' is deprecated [-Wdeprecated-declarations]
+   61 |     adc1_config_channel_atten(esp_channel, ADC_ATTEN_DB_11);
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~
+C:/Users/Ali/esp/v5.4/esp-idf/components/hal/include/hal/adc_types.h:51:5: note: declared here
+   51 |     ADC_ATTEN_DB_11 __attribute__((deprecated)) = ADC_ATTEN_DB_12,  ///<This is deprecated, it behaves the same as `ADC_ATTEN_DB_12`
+      |     ^~~~~~~~~~~~~~~
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/hardware_hal.c: In function 'hal_get_temperature':
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/hardware_hal.c:87:12: error: implicit declaration of function 'temperatureRead' [-Wimplicit-function-declaration]
+   87 |     return temperatureRead();
+      |            ^~~~~~~~~~~~~~~
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/hardware_hal.c: In function 'hal_get_cpu_frequency':
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/hardware_hal.c:91:19: error: implicit declaration of function 'esp_clk_cpu_freq' [-Wimplicit-function-declaration]
+   91 |     return (float)esp_clk_cpu_freq() / 1000000.0f;
+      |                   ^~~~~~~~~~~~~~~~
+[5/11] Building C object esp-idf/main/CMakeFiles/__idf_main.dir/websocket_server.c.obj
+FAILED: esp-idf/main/CMakeFiles/__idf_main.dir/websocket_server.c.obj 
+ccache C:\Users\Ali\.espressif\tools\xtensa-esp-elf\esp-14.2.0_20241119\xtensa-esp-elf\bin\xtensa-esp32-elf-gcc.exe -DESP_PLATFORM -DIDF_VER=\"v5.4\" -DMBEDTLS_CONFIG_FILE=\"mbedtls/esp_config.h\" -DSOC_MMU_PAGE_SIZE=CONFIG_MMU_PAGE_SIZE -DSOC_XTAL_FREQ_MHZ=CONFIG_XTAL_FREQ -D_GLIBCXX_HAVE_POSIX_SEMAPHORE -D_GLIBCXX_USE_POSIX_SEMAPHORE -D_GNU_SOURCE -D_POSIX_READER_WRITER_LOCKS -IC:/Users/Ali/Desktop/micro/saferoom/microesp/build/config -IC:/Users/Ali/Desktop/micro/saferoom/microesp/main -IC:/Users/Ali/esp/v5.4/esp-idf/components/newlib/platform_include -IC:/Users/Ali/esp/v5.4/esp-idf/components/freertos/config/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/freertos/config/include/freertos -IC:/Users/Ali/esp/v5.4/esp-idf/components/freertos/config/xtensa/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/freertos/FreeRTOS-Kernel/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/freertos/FreeRTOS-Kernel/portable/xtensa/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/freertos/FreeRTOS-Kernel/portable/xtensa/include/freertos -IC:/Users/Ali/esp/v5.4/esp-idf/components/freertos/esp_additions/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_hw_support/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_hw_support/include/soc -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_hw_support/include/soc/esp32 -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_hw_support/dma/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_hw_support/ldo/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_hw_support/debug_probe/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_hw_support/port/esp32/. -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_hw_support/port/esp32/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/heap/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/heap/tlsf -IC:/Users/Ali/esp/v5.4/esp-idf/components/log/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/soc/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/soc/esp32 -IC:/Users/Ali/esp/v5.4/esp-idf/components/soc/esp32/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/soc/esp32/register -IC:/Users/Ali/esp/v5.4/esp-idf/components/hal/platform_port/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/hal/esp32/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/hal/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_rom/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_rom/esp32/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_rom/esp32/include/esp32 -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_rom/esp32 -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_common/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_system/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_system/port/soc -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_system/port/include/private -IC:/Users/Ali/esp/v5.4/esp-idf/components/xtensa/esp32/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/xtensa/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/xtensa/deprecated_include -IC:/Users/Ali/esp/v5.4/esp-idf/components/lwip/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/lwip/include/apps -IC:/Users/Ali/esp/v5.4/esp-idf/components/lwip/include/apps/sntp -IC:/Users/Ali/esp/v5.4/esp-idf/components/lwip/lwip/src/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/lwip/port/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/lwip/port/freertos/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/lwip/port/esp32xx/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/lwip/port/esp32xx/include/arch -IC:/Users/Ali/esp/v5.4/esp-idf/components/lwip/port/esp32xx/include/sys -IC:/Users/Ali/esp/v5.4/esp-idf/components/nvs_flash/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_partition/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_http_client/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_event/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_https_ota/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/bootloader_support/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/bootloader_support/bootloader_flash/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_app_format/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/json/cJSON -IC:/Users/Ali/esp/v5.4/esp-idf/components/driver/deprecated -IC:/Users/Ali/esp/v5.4/esp-idf/components/driver/i2c/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/driver/touch_sensor/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/driver/twai/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/driver/touch_sensor/esp32/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_pm/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_ringbuf/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_gpio/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_pcnt/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_gptimer/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_spi/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_mcpwm/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_ana_cmpr/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_i2s/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_sdmmc/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/sdmmc/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_sdspi/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_sdio/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_dac/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_rmt/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_tsens/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_sdm/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_i2c/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_uart/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/vfs/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_ledc/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_parlio/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_usb_serial_jtag/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_adc/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_adc/interface -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_adc/esp32/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_adc/deprecated/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_wifi/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_wifi/include/local -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_wifi/wifi_apps/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_wifi/wifi_apps/nan_app/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_phy/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_phy/esp32/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_netif/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_http_server/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/http_parser -IC:/Users/Ali/Desktop/micro/saferoom/microesp/managed_components/espressif__esp_websocket_client/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp-tls -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp-tls/esp-tls-crypto -IC:/Users/Ali/esp/v5.4/esp-idf/components/mbedtls/port/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/mbedtls/mbedtls/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/mbedtls/mbedtls/library -IC:/Users/Ali/esp/v5.4/esp-idf/components/mbedtls/esp_crt_bundle/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/mbedtls/mbedtls/3rdparty/everest/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/mbedtls/mbedtls/3rdparty/p256-m -IC:/Users/Ali/esp/v5.4/esp-idf/components/mbedtls/mbedtls/3rdparty/p256-m/p256-m -IC:/Users/Ali/esp/v5.4/esp-idf/components/tcp_transport/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_timer/include -mlongcalls -Wno-frame-address  -fno-builtin-memcpy -fno-builtin-memset -fno-builtin-bzero -fno-builtin-stpcpy -fno-builtin-strncpy -fdiagnostics-color=always -ffunction-sections -fdata-sections -Wall -Werror=all -Wno-error=unused-function -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error=deprecated-declarations -Wextra -Wno-error=extra -Wno-unused-parameter -Wno-sign-compare -Wno-enum-conversion -gdwarf-4 -ggdb -Og -fno-shrink-wrap -fmacro-prefix-map=C:/Users/Ali/Desktop/micro/saferoom/microesp=. -fmacro-prefix-map=C:/Users/Ali/esp/v5.4/esp-idf=/IDF -fstrict-volatile-bitfields -fno-jump-tables -fno-tree-switch-conversion -std=gnu17 -Wno-old-style-declaration -MD -MT esp-idf/main/CMakeFiles/__idf_main.dir/websocket_server.c.obj -MF esp-idf\main\CMakeFiles\__idf_main.dir\websocket_server.c.obj.d -o esp-idf/main/CMakeFiles/__idf_main.dir/websocket_server.c.obj -c C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c: In function 'ws_handler':
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:73:5: error: unknown type name 'httpd_ws_frame_t'
+   73 |     httpd_ws_frame_t ws_pkt;
+      |     ^~~~~~~~~~~~~~~~
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:74:31: error: 'httpd_ws_frame_t' undeclared (first use in this function)
+   74 |     memset(&ws_pkt, 0, sizeof(httpd_ws_frame_t));
+      |                               ^~~~~~~~~~~~~~~~
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:74:31: note: each undeclared identifier is reported only once for each function it appears in
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:75:11: error: request for member 'type' in something not a structure or union
+   75 |     ws_pkt.type = HTTPD_WS_TYPE_TEXT;
+      |           ^
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:75:19: error: 'HTTPD_WS_TYPE_TEXT' undeclared (first use in this function); did you mean 'HTTPD_TYPE_TEXT'?
+   75 |     ws_pkt.type = HTTPD_WS_TYPE_TEXT;
+      |                   ^~~~~~~~~~~~~~~~~~
+      |                   HTTPD_TYPE_TEXT
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:78:21: error: implicit declaration of function 'httpd_ws_recv_frame' [-Wimplicit-function-declaration]
+   78 |     esp_err_t ret = httpd_ws_recv_frame(req, &ws_pkt, 0);
+      |                     ^~~~~~~~~~~~~~~~~~~
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:85:11: error: request for member 'payload' in something not a structure or union
+   85 |     ws_pkt.payload = malloc(ws_pkt.len + 1);
+      |           ^
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:85:35: error: request for member 'len' in something not a structure or union
+   85 |     ws_pkt.payload = malloc(ws_pkt.len + 1);
+      |                                   ^
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:86:16: error: request for member 'payload' in something not a structure or union
+   86 |     if (!ws_pkt.payload) {
+      |                ^
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:92:51: error: request for member 'len' in something not a structure or union
+   92 |     ret = httpd_ws_recv_frame(req, &ws_pkt, ws_pkt.len);
+      |                                                   ^
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:94:20: error: request for member 'payload' in something not a structure or union
+   94 |         free(ws_pkt.payload);
+      |                    ^
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:100:15: error: request for member 'type' in something not a structure or union
+  100 |     if (ws_pkt.type == HTTPD_WS_TYPE_TEXT) {
+      |               ^
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:101:26: error: request for member 'payload' in something not a structure or union
+  101 |         ((uint8_t*)ws_pkt.payload)[ws_pkt.len] = 0;
+      |                          ^
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:101:42: error: request for member 'len' in something not a structure or union
+  101 |         ((uint8_t*)ws_pkt.payload)[ws_pkt.len] = 0;
+      |                                          ^
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:113:23: error: request for member 'type' in something not a structure or union
+  113 |         switch (ws_pkt.type) {
+      |                       ^
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:115:78: error: request for member 'payload' in something not a structure or union
+  115 |                 server->callback(server, client, WEBSOCKET_EVENT_DATA, ws_pkt.payload, ws_pkt.len);
+      |                                                                              ^
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:115:94: error: request for member 'len' in something not a structure or union
+  115 |                 server->callback(server, client, WEBSOCKET_EVENT_DATA, ws_pkt.payload, ws_pkt.len);
+      |                                                                                              ^
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:117:18: error: 'HTTPD_WS_TYPE_CLOSE' undeclared (first use in this function); did you mean 'HTTPD_TYPE_JSON'?
+  117 |             case HTTPD_WS_TYPE_CLOSE:
+      |                  ^~~~~~~~~~~~~~~~~~~
+      |                  HTTPD_TYPE_JSON
+In file included from C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:2:
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:122:74: error: request for member 'type' in something not a structure or union
+  122 |                 ESP_LOGW(TAG, "Unhandled WebSocket frame type %d", ws_pkt.type);
+      |                                                                          ^
+C:/Users/Ali/esp/v5.4/esp-idf/components/log/include/esp_log.h:182:137: note: in definition of macro 'ESP_LOG_LEVEL'
+  182 |         if (level==ESP_LOG_ERROR )          { esp_log_write(ESP_LOG_ERROR,      tag, LOG_FORMAT(E, format), esp_log_timestamp(), tag, ##__VA_ARGS__); } \
+      |                                                                                                                                         ^~~~~~~~~~~
+C:/Users/Ali/esp/v5.4/esp-idf/components/log/include/esp_log.h:113:38: note: in expansion of macro 'ESP_LOG_LEVEL_LOCAL'
+  113 | #define ESP_LOGW( tag, format, ... ) ESP_LOG_LEVEL_LOCAL(ESP_LOG_WARN,    tag, format, ##__VA_ARGS__)
+      |                                      ^~~~~~~~~~~~~~~~~~~
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:122:17: note: in expansion of macro 'ESP_LOGW'
+  122 |                 ESP_LOGW(TAG, "Unhandled WebSocket frame type %d", ws_pkt.type);
+      |                 ^~~~~~~~
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:122:74: error: request for member 'type' in something not a structure or union
+  122 |                 ESP_LOGW(TAG, "Unhandled WebSocket frame type %d", ws_pkt.type);
+      |                                                                          ^
+C:/Users/Ali/esp/v5.4/esp-idf/components/log/include/esp_log.h:183:137: note: in definition of macro 'ESP_LOG_LEVEL'
+  183 |         else if (level==ESP_LOG_WARN )      { esp_log_write(ESP_LOG_WARN,       tag, LOG_FORMAT(W, format), esp_log_timestamp(), tag, ##__VA_ARGS__); } \
+      |                                                                                                                                         ^~~~~~~~~~~
+C:/Users/Ali/esp/v5.4/esp-idf/components/log/include/esp_log.h:113:38: note: in expansion of macro 'ESP_LOG_LEVEL_LOCAL'
+  113 | #define ESP_LOGW( tag, format, ... ) ESP_LOG_LEVEL_LOCAL(ESP_LOG_WARN,    tag, format, ##__VA_ARGS__)
+      |                                      ^~~~~~~~~~~~~~~~~~~
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:122:17: note: in expansion of macro 'ESP_LOGW'
+  122 |                 ESP_LOGW(TAG, "Unhandled WebSocket frame type %d", ws_pkt.type);
+      |                 ^~~~~~~~
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:122:74: error: request for member 'type' in something not a structure or union
+  122 |                 ESP_LOGW(TAG, "Unhandled WebSocket frame type %d", ws_pkt.type);
+      |                                                                          ^
+C:/Users/Ali/esp/v5.4/esp-idf/components/log/include/esp_log.h:184:137: note: in definition of macro 'ESP_LOG_LEVEL'
+  184 |         else if (level==ESP_LOG_DEBUG )     { esp_log_write(ESP_LOG_DEBUG,      tag, LOG_FORMAT(D, format), esp_log_timestamp(), tag, ##__VA_ARGS__); } \
+      |                                                                                                                                         ^~~~~~~~~~~
+C:/Users/Ali/esp/v5.4/esp-idf/components/log/include/esp_log.h:113:38: note: in expansion of macro 'ESP_LOG_LEVEL_LOCAL'
+  113 | #define ESP_LOGW( tag, format, ... ) ESP_LOG_LEVEL_LOCAL(ESP_LOG_WARN,    tag, format, ##__VA_ARGS__)
+      |                                      ^~~~~~~~~~~~~~~~~~~
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:122:17: note: in expansion of macro 'ESP_LOGW'
+  122 |                 ESP_LOGW(TAG, "Unhandled WebSocket frame type %d", ws_pkt.type);
+      |                 ^~~~~~~~
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:122:74: error: request for member 'type' in something not a structure or union
+  122 |                 ESP_LOGW(TAG, "Unhandled WebSocket frame type %d", ws_pkt.type);
+      |                                                                          ^
+C:/Users/Ali/esp/v5.4/esp-idf/components/log/include/esp_log.h:185:137: note: in definition of macro 'ESP_LOG_LEVEL'
+  185 |         else if (level==ESP_LOG_VERBOSE )   { esp_log_write(ESP_LOG_VERBOSE,    tag, LOG_FORMAT(V, format), esp_log_timestamp(), tag, ##__VA_ARGS__); } \
+      |                                                                                                                                         ^~~~~~~~~~~
+C:/Users/Ali/esp/v5.4/esp-idf/components/log/include/esp_log.h:113:38: note: in expansion of macro 'ESP_LOG_LEVEL_LOCAL'
+  113 | #define ESP_LOGW( tag, format, ... ) ESP_LOG_LEVEL_LOCAL(ESP_LOG_WARN,    tag, format, ##__VA_ARGS__)
+      |                                      ^~~~~~~~~~~~~~~~~~~
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:122:17: note: in expansion of macro 'ESP_LOGW'
+  122 |                 ESP_LOGW(TAG, "Unhandled WebSocket frame type %d", ws_pkt.type);
+      |                 ^~~~~~~~
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:122:74: error: request for member 'type' in something not a structure or union
+  122 |                 ESP_LOGW(TAG, "Unhandled WebSocket frame type %d", ws_pkt.type);
+      |                                                                          ^
+C:/Users/Ali/esp/v5.4/esp-idf/components/log/include/esp_log.h:186:137: note: in definition of macro 'ESP_LOG_LEVEL'
+  186 |         else                                { esp_log_write(ESP_LOG_INFO,       tag, LOG_FORMAT(I, format), esp_log_timestamp(), tag, ##__VA_ARGS__); } \
+      |                                                                                                                                         ^~~~~~~~~~~
+C:/Users/Ali/esp/v5.4/esp-idf/components/log/include/esp_log.h:113:38: note: in expansion of macro 'ESP_LOG_LEVEL_LOCAL'
+  113 | #define ESP_LOGW( tag, format, ... ) ESP_LOG_LEVEL_LOCAL(ESP_LOG_WARN,    tag, format, ##__VA_ARGS__)
+      |                                      ^~~~~~~~~~~~~~~~~~~
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:122:17: note: in expansion of macro 'ESP_LOGW'
+  122 |                 ESP_LOGW(TAG, "Unhandled WebSocket frame type %d", ws_pkt.type);
+      |                 ^~~~~~~~
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:127:16: error: request for member 'payload' in something not a structure or union
+  127 |     free(ws_pkt.payload);
+      |                ^
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c: In function 'websocket_server_start':
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:165:10: error: 'httpd_uri_t' {aka 'struct httpd_uri'} has no member named 'is_websocket'
+  165 |         .is_websocket = true
+      |          ^~~~~~~~~~~~
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:165:25: warning: excess elements in struct initializer
+  165 |         .is_websocket = true
+      |                         ^~~~
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:165:25: note: (near initialization for 'ws_uri')
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c: In function 'websocket_server_send_text':
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:209:5: error: unknown type name 'httpd_ws_frame_t'
+  209 |     httpd_ws_frame_t ws_pkt = {
+      |     ^~~~~~~~~~~~~~~~
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:210:9: error: field name not in record or union initializer
+  210 |         .final = true,
+      |         ^
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:210:9: note: (near initialization for 'ws_pkt')
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:211:9: error: field name not in record or union initializer
+  211 |         .fragmented = false,
+      |         ^
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:211:9: note: (near initialization for 'ws_pkt')
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:211:23: warning: excess elements in scalar initializer
+  211 |         .fragmented = false,
+      |                       ^~~~~
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:211:23: note: (near initialization for 'ws_pkt')
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:212:9: error: field name not in record or union initializer
+  212 |         .type = HTTPD_WS_TYPE_TEXT,
+      |         ^
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:212:9: note: (near initialization for 'ws_pkt')
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:212:17: error: 'HTTPD_WS_TYPE_TEXT' undeclared (first use in this function); did you mean 'HTTPD_TYPE_TEXT'?
+  212 |         .type = HTTPD_WS_TYPE_TEXT,
+      |                 ^~~~~~~~~~~~~~~~~~
+      |                 HTTPD_TYPE_TEXT
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:212:17: warning: excess elements in scalar initializer
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:212:17: note: (near initialization for 'ws_pkt')
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:213:9: error: field name not in record or union initializer
+  213 |         .payload = (uint8_t*)data,
+      |         ^
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:213:9: note: (near initialization for 'ws_pkt')
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:213:20: warning: excess elements in scalar initializer
+  213 |         .payload = (uint8_t*)data,
+      |                    ^
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:213:20: note: (near initialization for 'ws_pkt')
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:214:9: error: field name not in record or union initializer
+  214 |         .len = len
+      |         ^
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:214:9: note: (near initialization for 'ws_pkt')
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:214:16: warning: excess elements in scalar initializer
+  214 |         .len = len
+      |                ^~~
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:214:16: note: (near initialization for 'ws_pkt')
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:217:21: error: implicit declaration of function 'httpd_ws_send_frame_async' [-Wimplicit-function-declaration]
+  217 |     esp_err_t ret = httpd_ws_send_frame_async(server->server, client->sockfd, &ws_pkt);
+      |                     ^~~~~~~~~~~~~~~~~~~~~~~~~
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c: In function 'websocket_server_send_text_all':
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:234:13: error: unknown type name 'httpd_ws_frame_t'
+  234 |             httpd_ws_frame_t ws_pkt = {
+      |             ^~~~~~~~~~~~~~~~
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:235:17: error: field name not in record or union initializer
+  235 |                 .final = true,
+      |                 ^
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:235:17: note: (near initialization for 'ws_pkt')
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:236:17: error: field name not in record or union initializer
+  236 |                 .fragmented = false,
+      |                 ^
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:236:17: note: (near initialization for 'ws_pkt')
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:236:31: warning: excess elements in scalar initializer
+  236 |                 .fragmented = false,
+      |                               ^~~~~
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:236:31: note: (near initialization for 'ws_pkt')
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:237:17: error: field name not in record or union initializer
+  237 |                 .type = HTTPD_WS_TYPE_TEXT,
+      |                 ^
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:237:17: note: (near initialization for 'ws_pkt')
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:237:25: error: 'HTTPD_WS_TYPE_TEXT' undeclared (first use in this function); did you mean 'HTTPD_TYPE_TEXT'?
+  237 |                 .type = HTTPD_WS_TYPE_TEXT,
+      |                         ^~~~~~~~~~~~~~~~~~
+      |                         HTTPD_TYPE_TEXT
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:237:25: warning: excess elements in scalar initializer
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:237:25: note: (near initialization for 'ws_pkt')
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:238:17: error: field name not in record or union initializer
+  238 |                 .payload = (uint8_t*)data,
+      |                 ^
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:238:17: note: (near initialization for 'ws_pkt')
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:238:28: warning: excess elements in scalar initializer
+  238 |                 .payload = (uint8_t*)data,
+      |                            ^
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:238:28: note: (near initialization for 'ws_pkt')
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:239:17: error: field name not in record or union initializer
+  239 |                 .len = len
+      |                 ^
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:239:17: note: (near initialization for 'ws_pkt')
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:239:24: warning: excess elements in scalar initializer
+  239 |                 .len = len
+      |                        ^~~
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/websocket_server.c:239:24: note: (near initialization for 'ws_pkt')
+ninja: build stopped: subcommand failed.

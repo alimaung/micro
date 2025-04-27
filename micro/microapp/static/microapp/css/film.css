@@ -23,6 +23,10 @@
     color: var(--color-text);
 }
 
+.dark-mode .header-content h1 {
+    color: var(--color-dark-text);
+}
+
 .subtitle {
     color: var(--color-text-light);
     font-size: 16px;

@@ -1,0 +1,268 @@
+[0/1] Re-running CMake...
+-- ccache will be used for faster recompilation
+-- Building ESP-IDF components for target esp32
+NOTICE: Processing 2 dependencies:
+NOTICE: [1/2] espressif/esp_websocket_client (1.4.0)
+NOTICE: [2/2] idf (5.4.0)
+-- Project sdkconfig file C:/Users/Ali/Desktop/micro/saferoom/microesp/sdkconfig
+-- Compiler supported targets: xtensa-esp-elf
+-- App "microesp" version: 74ec3d3-dirty
+-- Adding linker script C:/Users/Ali/Desktop/micro/saferoom/microesp/build/esp-idf/esp_system/ld/memory.ld
+-- Adding linker script C:/Users/Ali/Desktop/micro/saferoom/microesp/build/esp-idf/esp_system/ld/sections.ld.in
+-- Adding linker script C:/Users/Ali/esp/v5.4/esp-idf/components/esp_rom/esp32/ld/esp32.rom.ld
+-- Adding linker script C:/Users/Ali/esp/v5.4/esp-idf/components/esp_rom/esp32/ld/esp32.rom.api.ld
+-- Adding linker script C:/Users/Ali/esp/v5.4/esp-idf/components/esp_rom/esp32/ld/esp32.rom.libgcc.ld
+-- Adding linker script C:/Users/Ali/esp/v5.4/esp-idf/components/esp_rom/esp32/ld/esp32.rom.newlib-data.ld
+-- Adding linker script C:/Users/Ali/esp/v5.4/esp-idf/components/esp_rom/esp32/ld/esp32.rom.syscalls.ld
+-- Adding linker script C:/Users/Ali/esp/v5.4/esp-idf/components/esp_rom/esp32/ld/esp32.rom.newlib-funcs.ld
+-- Adding linker script C:/Users/Ali/esp/v5.4/esp-idf/components/soc/esp32/ld/esp32.peripherals.ld
+-- Components: app_trace app_update bootloader bootloader_support bt cjson cmock console cxx driver efuse esp-tls esp_adc esp_app_format esp_bootloader_format esp_coex esp_common esp_driver_ana_cmpr esp_driver_cam esp_driver_dac esp_driver_gpio esp_driver_gptimer esp_driver_i2c esp_driver_i2s esp_driver_isp esp_driver_jpeg esp_driver_ledc esp_driver_mcpwm esp_driver_parlio esp_driver_pcnt esp_driver_ppa esp_driver_rmt esp_driver_sdio esp_driver_sdm esp_driver_sdmmc esp_driver_sdspi esp_driver_spi esp_driver_touch_sens esp_driver_tsens esp_driver_uart esp_driver_usb_serial_jtag esp_eth esp_event esp_gdbstub esp_hid esp_http_client esp_http_server esp_https_ota esp_https_server esp_hw_support esp_lcd esp_local_ctrl esp_mm esp_netif esp_netif_stack esp_partition esp_phy esp_pm esp_psram esp_ringbuf esp_rom esp_security esp_system esp_timer esp_vfs_console esp_wifi espcoredump espressif__esp_websocket_client esptool_py fatfs freertos hal heap http_parser idf_test ieee802154 json log lwip main mbedtls mqtt newlib nvs_flash nvs_sec_provider openthread partition_table perfmon protobuf-c protocomm pthread rt sdmmc soc spi_flash spiffs tcp_transport ulp unity usb vfs wear_levelling wifi_provisioning wpa_supplicant xtensa
+-- Component paths: C:/Users/Ali/esp/v5.4/esp-idf/components/app_trace C:/Users/Ali/esp/v5.4/esp-idf/components/app_update C:/Users/Ali/esp/v5.4/esp-idf/components/bootloader C:/Users/Ali/esp/v5.4/esp-idf/components/bootloader_support C:/Users/Ali/esp/v5.4/esp-idf/components/bt C:/Users/Ali/Desktop/micro/saferoom/microesp/components/cjson C:/Users/Ali/esp/v5.4/esp-idf/components/cmock C:/Users/Ali/esp/v5.4/esp-idf/components/console C:/Users/Ali/esp/v5.4/esp-idf/components/cxx C:/Users/Ali/esp/v5.4/esp-idf/components/driver C:/Users/Ali/esp/v5.4/esp-idf/components/efuse C:/Users/Ali/esp/v5.4/esp-idf/components/esp-tls C:/Users/Ali/esp/v5.4/esp-idf/components/esp_adc C:/Users/Ali/esp/v5.4/esp-idf/components/esp_app_format C:/Users/Ali/esp/v5.4/esp-idf/components/esp_bootloader_format C:/Users/Ali/esp/v5.4/esp-idf/components/esp_coex C:/Users/Ali/esp/v5.4/esp-idf/components/esp_common C:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_ana_cmpr C:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_cam C:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_dac C:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_gpio C:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_gptimer C:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_i2c C:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_i2s C:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_isp C:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_jpeg C:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_ledc C:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_mcpwm C:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_parlio C:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_pcnt C:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_ppa C:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_rmt C:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_sdio C:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_sdm C:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_sdmmc C:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_sdspi C:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_spi C:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_touch_sens C:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_tsens C:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_uart C:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_usb_serial_jtag C:/Users/Ali/esp/v5.4/esp-idf/components/esp_eth C:/Users/Ali/esp/v5.4/esp-idf/components/esp_event C:/Users/Ali/esp/v5.4/esp-idf/components/esp_gdbstub C:/Users/Ali/esp/v5.4/esp-idf/components/esp_hid C:/Users/Ali/esp/v5.4/esp-idf/components/esp_http_client C:/Users/Ali/esp/v5.4/esp-idf/components/esp_http_server C:/Users/Ali/esp/v5.4/esp-idf/components/esp_https_ota C:/Users/Ali/esp/v5.4/esp-idf/components/esp_https_server C:/Users/Ali/esp/v5.4/esp-idf/components/esp_hw_support C:/Users/Ali/esp/v5.4/esp-idf/components/esp_lcd C:/Users/Ali/esp/v5.4/esp-idf/components/esp_local_ctrl C:/Users/Ali/esp/v5.4/esp-idf/components/esp_mm C:/Users/Ali/esp/v5.4/esp-idf/components/esp_netif C:/Users/Ali/esp/v5.4/esp-idf/components/esp_netif_stack C:/Users/Ali/esp/v5.4/esp-idf/components/esp_partition C:/Users/Ali/esp/v5.4/esp-idf/components/esp_phy C:/Users/Ali/esp/v5.4/esp-idf/components/esp_pm C:/Users/Ali/esp/v5.4/esp-idf/components/esp_psram C:/Users/Ali/esp/v5.4/esp-idf/components/esp_ringbuf C:/Users/Ali/esp/v5.4/esp-idf/components/esp_rom C:/Users/Ali/esp/v5.4/esp-idf/components/esp_security C:/Users/Ali/esp/v5.4/esp-idf/components/esp_system C:/Users/Ali/esp/v5.4/esp-idf/components/esp_timer C:/Users/Ali/esp/v5.4/esp-idf/components/esp_vfs_console C:/Users/Ali/esp/v5.4/esp-idf/components/esp_wifi C:/Users/Ali/esp/v5.4/esp-idf/components/espcoredump C:/Users/Ali/Desktop/micro/saferoom/microesp/managed_components/espressif__esp_websocket_client C:/Users/Ali/esp/v5.4/esp-idf/components/esptool_py C:/Users/Ali/esp/v5.4/esp-idf/components/fatfs C:/Users/Ali/esp/v5.4/esp-idf/components/freertos C:/Users/Ali/esp/v5.4/esp-idf/components/hal C:/Users/Ali/esp/v5.4/esp-idf/components/heap C:/Users/Ali/esp/v5.4/esp-idf/components/http_parser C:/Users/Ali/esp/v5.4/esp-idf/components/idf_test C:/Users/Ali/esp/v5.4/esp-idf/components/ieee802154 C:/Users/Ali/esp/v5.4/esp-idf/components/json C:/Users/Ali/esp/v5.4/esp-idf/components/log C:/Users/Ali/esp/v5.4/esp-idf/components/lwip C:/Users/Ali/Desktop/micro/saferoom/microesp/main C:/Users/Ali/esp/v5.4/esp-idf/components/mbedtls C:/Users/Ali/esp/v5.4/esp-idf/components/mqtt C:/Users/Ali/esp/v5.4/esp-idf/components/newlib C:/Users/Ali/esp/v5.4/esp-idf/components/nvs_flash C:/Users/Ali/esp/v5.4/esp-idf/components/nvs_sec_provider C:/Users/Ali/esp/v5.4/esp-idf/components/openthread C:/Users/Ali/esp/v5.4/esp-idf/components/partition_table C:/Users/Ali/esp/v5.4/esp-idf/components/perfmon C:/Users/Ali/esp/v5.4/esp-idf/components/protobuf-c C:/Users/Ali/esp/v5.4/esp-idf/components/protocomm C:/Users/Ali/esp/v5.4/esp-idf/components/pthread C:/Users/Ali/esp/v5.4/esp-idf/components/rt C:/Users/Ali/esp/v5.4/esp-idf/components/sdmmc C:/Users/Ali/esp/v5.4/esp-idf/components/soc C:/Users/Ali/esp/v5.4/esp-idf/components/spi_flash C:/Users/Ali/esp/v5.4/esp-idf/components/spiffs C:/Users/Ali/esp/v5.4/esp-idf/components/tcp_transport C:/Users/Ali/esp/v5.4/esp-idf/components/ulp C:/Users/Ali/esp/v5.4/esp-idf/components/unity C:/Users/Ali/esp/v5.4/esp-idf/components/usb C:/Users/Ali/esp/v5.4/esp-idf/components/vfs C:/Users/Ali/esp/v5.4/esp-idf/components/wear_levelling C:/Users/Ali/esp/v5.4/esp-idf/components/wifi_provisioning C:/Users/Ali/esp/v5.4/esp-idf/components/wpa_supplicant C:/Users/Ali/esp/v5.4/esp-idf/components/xtensa
+-- Configuring done (7.1s)
+-- Generating done (1.6s)
+-- Build files have been written to: C:/Users/Ali/Desktop/micro/saferoom/microesp/build
+[1/16] Building C object esp-idf/main/CMakeFiles/__idf_main.dir/relay_controller.c.obj
+[2/16] Performing build step for 'bootloader'
+[1/1] C:\WINDOWS\system32\cmd.exe /C "cd /D C:\Users\Ali\Desktop\micro\saferoom\microesp\build\bootloader\esp-idf\esptool_py && C:\Users\Ali\.espressif\python_env\idf5.4_py3.11_env\Scripts\python.exe C:/Users/Ali/esp/v5.4/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 bootloader 0x1000 C:/Users/Ali/Desktop/micro/saferoom/microesp/build/bootloader/bootloader.bin"
+Bootloader binary size 0x6560 bytes. 0xaa0 bytes (9%) free.
+[3/16] Building C object esp-idf/main/CMakeFiles/__idf_main.dir/config_storage.c.obj
+[4/16] No install step for 'bootloader'
+[5/16] Completed 'bootloader'
+[6/16] Building C object esp-idf/main/CMakeFiles/__idf_main.dir/main.c.obj
+[7/16] Building C object esp-idf/main/CMakeFiles/__idf_main.dir/json_helper.c.obj
+[8/16] Building C object esp-idf/main/CMakeFiles/__idf_main.dir/hardware_hal.c.obj
+FAILED: esp-idf/main/CMakeFiles/__idf_main.dir/hardware_hal.c.obj 
+ccache C:\Users\Ali\.espressif\tools\xtensa-esp-elf\esp-14.2.0_20241119\xtensa-esp-elf\bin\xtensa-esp32-elf-gcc.exe -DESP_PLATFORM -DIDF_VER=\"v5.4\" -DMBEDTLS_CONFIG_FILE=\"mbedtls/esp_config.h\" -DSOC_MMU_PAGE_SIZE=CONFIG_MMU_PAGE_SIZE -DSOC_XTAL_FREQ_MHZ=CONFIG_XTAL_FREQ -D_GLIBCXX_HAVE_POSIX_SEMAPHORE -D_GLIBCXX_USE_POSIX_SEMAPHORE -D_GNU_SOURCE -D_POSIX_READER_WRITER_LOCKS -IC:/Users/Ali/Desktop/micro/saferoom/microesp/build/config -IC:/Users/Ali/Desktop/micro/saferoom/microesp/main -IC:/Users/Ali/esp/v5.4/esp-idf/components/newlib/platform_include -IC:/Users/Ali/esp/v5.4/esp-idf/components/freertos/config/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/freertos/config/include/freertos -IC:/Users/Ali/esp/v5.4/esp-idf/components/freertos/config/xtensa/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/freertos/FreeRTOS-Kernel/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/freertos/FreeRTOS-Kernel/portable/xtensa/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/freertos/FreeRTOS-Kernel/portable/xtensa/include/freertos -IC:/Users/Ali/esp/v5.4/esp-idf/components/freertos/esp_additions/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_hw_support/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_hw_support/include/soc -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_hw_support/include/soc/esp32 -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_hw_support/dma/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_hw_support/ldo/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_hw_support/debug_probe/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_hw_support/port/esp32/. -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_hw_support/port/esp32/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/heap/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/heap/tlsf -IC:/Users/Ali/esp/v5.4/esp-idf/components/log/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/soc/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/soc/esp32 -IC:/Users/Ali/esp/v5.4/esp-idf/components/soc/esp32/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/soc/esp32/register -IC:/Users/Ali/esp/v5.4/esp-idf/components/hal/platform_port/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/hal/esp32/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/hal/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_rom/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_rom/esp32/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_rom/esp32/include/esp32 -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_rom/esp32 -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_common/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_system/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_system/port/soc -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_system/port/include/private -IC:/Users/Ali/esp/v5.4/esp-idf/components/xtensa/esp32/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/xtensa/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/xtensa/deprecated_include -IC:/Users/Ali/esp/v5.4/esp-idf/components/lwip/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/lwip/include/apps -IC:/Users/Ali/esp/v5.4/esp-idf/components/lwip/include/apps/sntp -IC:/Users/Ali/esp/v5.4/esp-idf/components/lwip/lwip/src/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/lwip/port/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/lwip/port/freertos/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/lwip/port/esp32xx/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/lwip/port/esp32xx/include/arch -IC:/Users/Ali/esp/v5.4/esp-idf/components/lwip/port/esp32xx/include/sys -IC:/Users/Ali/esp/v5.4/esp-idf/components/nvs_flash/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_partition/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_http_client/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_event/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_https_ota/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/bootloader_support/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/bootloader_support/bootloader_flash/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_app_format/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/json/cJSON -IC:/Users/Ali/esp/v5.4/esp-idf/components/driver/deprecated -IC:/Users/Ali/esp/v5.4/esp-idf/components/driver/i2c/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/driver/touch_sensor/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/driver/twai/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/driver/touch_sensor/esp32/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_pm/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_ringbuf/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_gpio/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_pcnt/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_gptimer/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_spi/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_mcpwm/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_ana_cmpr/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_i2s/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_sdmmc/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/sdmmc/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_sdspi/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_sdio/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_dac/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_rmt/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_tsens/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_sdm/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_i2c/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_uart/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/vfs/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_ledc/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_parlio/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_usb_serial_jtag/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_adc/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_adc/interface -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_adc/esp32/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_adc/deprecated/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_wifi/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_wifi/include/local -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_wifi/wifi_apps/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_wifi/wifi_apps/nan_app/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_phy/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_phy/esp32/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_netif/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_http_server/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/http_parser -IC:/Users/Ali/Desktop/micro/saferoom/microesp/managed_components/espressif__esp_websocket_client/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp-tls -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp-tls/esp-tls-crypto -IC:/Users/Ali/esp/v5.4/esp-idf/components/mbedtls/port/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/mbedtls/mbedtls/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/mbedtls/mbedtls/library -IC:/Users/Ali/esp/v5.4/esp-idf/components/mbedtls/esp_crt_bundle/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/mbedtls/mbedtls/3rdparty/everest/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/mbedtls/mbedtls/3rdparty/p256-m -IC:/Users/Ali/esp/v5.4/esp-idf/components/mbedtls/mbedtls/3rdparty/p256-m/p256-m -IC:/Users/Ali/esp/v5.4/esp-idf/components/tcp_transport/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_timer/include -mlongcalls -Wno-frame-address  -fno-builtin-memcpy -fno-builtin-memset -fno-builtin-bzero -fno-builtin-stpcpy -fno-builtin-strncpy -fdiagnostics-color=always -ffunction-sections -fdata-sections -Wall -Werror=all -Wno-error=unused-function -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error=deprecated-declarations -Wextra -Wno-error=extra -Wno-unused-parameter -Wno-sign-compare -Wno-enum-conversion -gdwarf-4 -ggdb -Og -fno-shrink-wrap -fmacro-prefix-map=C:/Users/Ali/Desktop/micro/saferoom/microesp=. -fmacro-prefix-map=C:/Users/Ali/esp/v5.4/esp-idf=/IDF -fstrict-volatile-bitfields -fno-jump-tables -fno-tree-switch-conversion -std=gnu17 -Wno-old-style-declaration -MD -MT esp-idf/main/CMakeFiles/__idf_main.dir/hardware_hal.c.obj -MF esp-idf\main\CMakeFiles\__idf_main.dir\hardware_hal.c.obj.d -o esp-idf/main/CMakeFiles/__idf_main.dir/hardware_hal.c.obj -c C:/Users/Ali/Desktop/micro/saferoom/microesp/main/hardware_hal.c
+In file included from C:/Users/Ali/Desktop/micro/saferoom/microesp/main/hardware_hal.c:3:
+C:/Users/Ali/esp/v5.4/esp-idf/components/driver/deprecated/driver/adc.h:19:2: warning: #warning "legacy adc driver is deprecated, please migrate to use esp_adc/adc_oneshot.h and esp_adc/adc_continuous.h for oneshot mode and continuous mode drivers respectively" [-Wcpp]
+   19 | #warning "legacy adc driver is deprecated, please migrate to use esp_adc/adc_oneshot.h and esp_adc/adc_continuous.h for oneshot mode and continuous mode drivers respectively"
+      |  ^~~~~~~
+In file included from C:/Users/Ali/Desktop/micro/saferoom/microesp/main/hardware_hal.c:4:
+C:/Users/Ali/esp/v5.4/esp-idf/components/esp_adc/deprecated/include/esp_adc_cal.h:17:2: warning: #warning "legacy adc calibration driver is deprecated, please migrate to use esp_adc/adc_cali.h and esp_adc/adc_cali_scheme.h" [-Wcpp]
+   17 | #warning "legacy adc calibration driver is deprecated, please migrate to use esp_adc/adc_cali.h and esp_adc/adc_cali_scheme.h"
+      |  ^~~~~~~
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/hardware_hal.c: In function 'hal_init':
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/hardware_hal.c:13:5: warning: 'ADC_ATTEN_DB_11' is deprecated [-Wdeprecated-declarations]
+   13 |     esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_12, 1100, &adc_chars);
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~
+In file included from C:/Users/Ali/esp/v5.4/esp-idf/components/driver/deprecated/driver/adc_types_legacy.h:8,
+                 from C:/Users/Ali/esp/v5.4/esp-idf/components/driver/deprecated/driver/adc.h:15:
+C:/Users/Ali/esp/v5.4/esp-idf/components/hal/include/hal/adc_types.h:51:5: note: declared here
+   51 |     ADC_ATTEN_DB_11 __attribute__((deprecated)) = ADC_ATTEN_DB_12,  ///<This is deprecated, it behaves the same as `ADC_ATTEN_DB_12`
+      |     ^~~~~~~~~~~~~~~
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/hardware_hal.c: In function 'hal_get_millis':
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/hardware_hal.c:40:23: error: implicit declaration of function 'esp_timer_get_time' [-Wimplicit-function-declaration]
+   40 |     return (uint32_t)(esp_timer_get_time() / 1000);
+      |                       ^~~~~~~~~~~~~~~~~~
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/hardware_hal.c: In function 'hal_adc_init':
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/hardware_hal.c:61:5: warning: 'ADC_ATTEN_DB_11' is deprecated [-Wdeprecated-declarations]
+   61 |     adc1_config_channel_atten(esp_channel, ADC_ATTEN_DB_11);
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~
+C:/Users/Ali/esp/v5.4/esp-idf/components/hal/include/hal/adc_types.h:51:5: note: declared here
+   51 |     ADC_ATTEN_DB_11 __attribute__((deprecated)) = ADC_ATTEN_DB_12,  ///<This is deprecated, it behaves the same as `ADC_ATTEN_DB_12`
+      |     ^~~~~~~~~~~~~~~
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/hardware_hal.c: In function 'hal_get_temperature':
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/hardware_hal.c:87:12: error: implicit declaration of function 'temperatureRead' [-Wimplicit-function-declaration]
+   87 |     return temperatureRead();
+      |            ^~~~~~~~~~~~~~~
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/hardware_hal.c: In function 'hal_get_cpu_frequency':
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/hardware_hal.c:91:19: error: implicit declaration of function 'esp_clk_cpu_freq' [-Wimplicit-function-declaration]
+   91 |     return (float)esp_clk_cpu_freq() / 1000000.0f;
+      |                   ^~~~~~~~~~~~~~~~
+[9/16] Building C object esp-idf/main/CMakeFiles/__idf_main.dir/network_manager.c.obj
+FAILED: esp-idf/main/CMakeFiles/__idf_main.dir/network_manager.c.obj 
+ccache C:\Users\Ali\.espressif\tools\xtensa-esp-elf\esp-14.2.0_20241119\xtensa-esp-elf\bin\xtensa-esp32-elf-gcc.exe -DESP_PLATFORM -DIDF_VER=\"v5.4\" -DMBEDTLS_CONFIG_FILE=\"mbedtls/esp_config.h\" -DSOC_MMU_PAGE_SIZE=CONFIG_MMU_PAGE_SIZE -DSOC_XTAL_FREQ_MHZ=CONFIG_XTAL_FREQ -D_GLIBCXX_HAVE_POSIX_SEMAPHORE -D_GLIBCXX_USE_POSIX_SEMAPHORE -D_GNU_SOURCE -D_POSIX_READER_WRITER_LOCKS -IC:/Users/Ali/Desktop/micro/saferoom/microesp/build/config -IC:/Users/Ali/Desktop/micro/saferoom/microesp/main -IC:/Users/Ali/esp/v5.4/esp-idf/components/newlib/platform_include -IC:/Users/Ali/esp/v5.4/esp-idf/components/freertos/config/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/freertos/config/include/freertos -IC:/Users/Ali/esp/v5.4/esp-idf/components/freertos/config/xtensa/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/freertos/FreeRTOS-Kernel/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/freertos/FreeRTOS-Kernel/portable/xtensa/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/freertos/FreeRTOS-Kernel/portable/xtensa/include/freertos -IC:/Users/Ali/esp/v5.4/esp-idf/components/freertos/esp_additions/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_hw_support/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_hw_support/include/soc -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_hw_support/include/soc/esp32 -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_hw_support/dma/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_hw_support/ldo/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_hw_support/debug_probe/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_hw_support/port/esp32/. -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_hw_support/port/esp32/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/heap/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/heap/tlsf -IC:/Users/Ali/esp/v5.4/esp-idf/components/log/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/soc/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/soc/esp32 -IC:/Users/Ali/esp/v5.4/esp-idf/components/soc/esp32/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/soc/esp32/register -IC:/Users/Ali/esp/v5.4/esp-idf/components/hal/platform_port/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/hal/esp32/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/hal/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_rom/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_rom/esp32/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_rom/esp32/include/esp32 -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_rom/esp32 -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_common/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_system/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_system/port/soc -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_system/port/include/private -IC:/Users/Ali/esp/v5.4/esp-idf/components/xtensa/esp32/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/xtensa/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/xtensa/deprecated_include -IC:/Users/Ali/esp/v5.4/esp-idf/components/lwip/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/lwip/include/apps -IC:/Users/Ali/esp/v5.4/esp-idf/components/lwip/include/apps/sntp -IC:/Users/Ali/esp/v5.4/esp-idf/components/lwip/lwip/src/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/lwip/port/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/lwip/port/freertos/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/lwip/port/esp32xx/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/lwip/port/esp32xx/include/arch -IC:/Users/Ali/esp/v5.4/esp-idf/components/lwip/port/esp32xx/include/sys -IC:/Users/Ali/esp/v5.4/esp-idf/components/nvs_flash/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_partition/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_http_client/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_event/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_https_ota/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/bootloader_support/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/bootloader_support/bootloader_flash/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_app_format/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/json/cJSON -IC:/Users/Ali/esp/v5.4/esp-idf/components/driver/deprecated -IC:/Users/Ali/esp/v5.4/esp-idf/components/driver/i2c/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/driver/touch_sensor/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/driver/twai/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/driver/touch_sensor/esp32/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_pm/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_ringbuf/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_gpio/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_pcnt/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_gptimer/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_spi/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_mcpwm/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_ana_cmpr/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_i2s/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_sdmmc/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/sdmmc/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_sdspi/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_sdio/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_dac/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_rmt/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_tsens/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_sdm/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_i2c/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_uart/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/vfs/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_ledc/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_parlio/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_driver_usb_serial_jtag/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_adc/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_adc/interface -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_adc/esp32/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_adc/deprecated/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_wifi/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_wifi/include/local -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_wifi/wifi_apps/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_wifi/wifi_apps/nan_app/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_phy/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_phy/esp32/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_netif/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_http_server/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/http_parser -IC:/Users/Ali/Desktop/micro/saferoom/microesp/managed_components/espressif__esp_websocket_client/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp-tls -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp-tls/esp-tls-crypto -IC:/Users/Ali/esp/v5.4/esp-idf/components/mbedtls/port/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/mbedtls/mbedtls/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/mbedtls/mbedtls/library -IC:/Users/Ali/esp/v5.4/esp-idf/components/mbedtls/esp_crt_bundle/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/mbedtls/mbedtls/3rdparty/everest/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/mbedtls/mbedtls/3rdparty/p256-m -IC:/Users/Ali/esp/v5.4/esp-idf/components/mbedtls/mbedtls/3rdparty/p256-m/p256-m -IC:/Users/Ali/esp/v5.4/esp-idf/components/tcp_transport/include -IC:/Users/Ali/esp/v5.4/esp-idf/components/esp_timer/include -mlongcalls -Wno-frame-address  -fno-builtin-memcpy -fno-builtin-memset -fno-builtin-bzero -fno-builtin-stpcpy -fno-builtin-strncpy -fdiagnostics-color=always -ffunction-sections -fdata-sections -Wall -Werror=all -Wno-error=unused-function -Wno-error=unused-variable -Wno-error=unused-but-set-variable -Wno-error=deprecated-declarations -Wextra -Wno-error=extra -Wno-unused-parameter -Wno-sign-compare -Wno-enum-conversion -gdwarf-4 -ggdb -Og -fno-shrink-wrap -fmacro-prefix-map=C:/Users/Ali/Desktop/micro/saferoom/microesp=. -fmacro-prefix-map=C:/Users/Ali/esp/v5.4/esp-idf=/IDF -fstrict-volatile-bitfields -fno-jump-tables -fno-tree-switch-conversion -std=gnu17 -Wno-old-style-declaration -MD -MT esp-idf/main/CMakeFiles/__idf_main.dir/network_manager.c.obj -MF esp-idf\main\CMakeFiles\__idf_main.dir\network_manager.c.obj.d -o esp-idf/main/CMakeFiles/__idf_main.dir/network_manager.c.obj -c C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c
+In file included from C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c:10:
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c: In function 'wifi_event_handler':
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c:25:50: error: passing argument 1 of 'ip4addr_ntoa' from incompatible pointer type [-Wincompatible-pointer-types]
+   25 |         ESP_LOGI(TAG, "Got IP: %s", ip4addr_ntoa(&event->ip_info.ip));
+      |                                                  ^~~~~~~~~~~~~~~~~~
+      |                                                  |
+      |                                                  esp_ip4_addr_t * {aka struct esp_ip4_addr *}
+C:/Users/Ali/esp/v5.4/esp-idf/components/log/include/esp_log.h:182:137: note: in definition of macro 'ESP_LOG_LEVEL'
+  182 |         if (level==ESP_LOG_ERROR )          { esp_log_write(ESP_LOG_ERROR,      tag, LOG_FORMAT(E, format), esp_log_timestamp(), tag, ##__VA_ARGS__); } \
+      |                                                                                                                                         ^~~~~~~~~~~
+C:/Users/Ali/esp/v5.4/esp-idf/components/log/include/esp_log.h:114:38: note: in expansion of macro 'ESP_LOG_LEVEL_LOCAL'
+  114 | #define ESP_LOGI( tag, format, ... ) ESP_LOG_LEVEL_LOCAL(ESP_LOG_INFO,    tag, format, ##__VA_ARGS__)
+      |                                      ^~~~~~~~~~~~~~~~~~~
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c:25:9: note: in expansion of macro 'ESP_LOGI'
+   25 |         ESP_LOGI(TAG, "Got IP: %s", ip4addr_ntoa(&event->ip_info.ip));
+      |         ^~~~~~~~
+In file included from C:/Users/Ali/esp/v5.4/esp-idf/components/lwip/lwip/src/include/lwip/ip_addr.h:43,
+                 from C:/Users/Ali/esp/v5.4/esp-idf/components/lwip/lwip/src/include/lwip/sockets.h:50,
+                 from C:/Users/Ali/esp/v5.4/esp-idf/components/lwip/include/lwip/sockets.h:8,
+                 from C:/Users/Ali/esp/v5.4/esp-idf/components/lwip/port/esp32xx/include/sys/socket.h:15,
+                 from C:/Users/Ali/esp/v5.4/esp-idf/components/esp_http_client/include/esp_http_client.h:13,
+                 from C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c:5:
+C:/Users/Ali/esp/v5.4/esp-idf/components/lwip/lwip/src/include/lwip/ip4_addr.h:216:38: note: expected 'const ip4_addr_t *' {aka 'const struct ip4_addr *'} but argument is of type 'esp_ip4_addr_t *' {aka 'struct esp_ip4_addr *'}
+  216 | char *ip4addr_ntoa(const ip4_addr_t *addr);
+      |                    ~~~~~~~~~~~~~~~~~~^~~~
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c:25:50: error: passing argument 1 of 'ip4addr_ntoa' from incompatible pointer type [-Wincompatible-pointer-types]
+   25 |         ESP_LOGI(TAG, "Got IP: %s", ip4addr_ntoa(&event->ip_info.ip));
+      |                                                  ^~~~~~~~~~~~~~~~~~
+      |                                                  |
+      |                                                  esp_ip4_addr_t * {aka struct esp_ip4_addr *}
+C:/Users/Ali/esp/v5.4/esp-idf/components/log/include/esp_log.h:183:137: note: in definition of macro 'ESP_LOG_LEVEL'
+  183 |         else if (level==ESP_LOG_WARN )      { esp_log_write(ESP_LOG_WARN,       tag, LOG_FORMAT(W, format), esp_log_timestamp(), tag, ##__VA_ARGS__); } \
+      |                                                                                                                                         ^~~~~~~~~~~
+C:/Users/Ali/esp/v5.4/esp-idf/components/log/include/esp_log.h:114:38: note: in expansion of macro 'ESP_LOG_LEVEL_LOCAL'
+  114 | #define ESP_LOGI( tag, format, ... ) ESP_LOG_LEVEL_LOCAL(ESP_LOG_INFO,    tag, format, ##__VA_ARGS__)
+      |                                      ^~~~~~~~~~~~~~~~~~~
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c:25:9: note: in expansion of macro 'ESP_LOGI'
+   25 |         ESP_LOGI(TAG, "Got IP: %s", ip4addr_ntoa(&event->ip_info.ip));
+      |         ^~~~~~~~
+C:/Users/Ali/esp/v5.4/esp-idf/components/lwip/lwip/src/include/lwip/ip4_addr.h:216:38: note: expected 'const ip4_addr_t *' {aka 'const struct ip4_addr *'} but argument is of type 'esp_ip4_addr_t *' {aka 'struct esp_ip4_addr *'}
+  216 | char *ip4addr_ntoa(const ip4_addr_t *addr);
+      |                    ~~~~~~~~~~~~~~~~~~^~~~
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c:25:50: error: passing argument 1 of 'ip4addr_ntoa' from incompatible pointer type [-Wincompatible-pointer-types]
+   25 |         ESP_LOGI(TAG, "Got IP: %s", ip4addr_ntoa(&event->ip_info.ip));
+      |                                                  ^~~~~~~~~~~~~~~~~~
+      |                                                  |
+      |                                                  esp_ip4_addr_t * {aka struct esp_ip4_addr *}
+C:/Users/Ali/esp/v5.4/esp-idf/components/log/include/esp_log.h:184:137: note: in definition of macro 'ESP_LOG_LEVEL'
+  184 |         else if (level==ESP_LOG_DEBUG )     { esp_log_write(ESP_LOG_DEBUG,      tag, LOG_FORMAT(D, format), esp_log_timestamp(), tag, ##__VA_ARGS__); } \
+      |                                                                                                                                         ^~~~~~~~~~~
+C:/Users/Ali/esp/v5.4/esp-idf/components/log/include/esp_log.h:114:38: note: in expansion of macro 'ESP_LOG_LEVEL_LOCAL'
+  114 | #define ESP_LOGI( tag, format, ... ) ESP_LOG_LEVEL_LOCAL(ESP_LOG_INFO,    tag, format, ##__VA_ARGS__)
+      |                                      ^~~~~~~~~~~~~~~~~~~
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c:25:9: note: in expansion of macro 'ESP_LOGI'
+   25 |         ESP_LOGI(TAG, "Got IP: %s", ip4addr_ntoa(&event->ip_info.ip));
+      |         ^~~~~~~~
+C:/Users/Ali/esp/v5.4/esp-idf/components/lwip/lwip/src/include/lwip/ip4_addr.h:216:38: note: expected 'const ip4_addr_t *' {aka 'const struct ip4_addr *'} but argument is of type 'esp_ip4_addr_t *' {aka 'struct esp_ip4_addr *'}
+  216 | char *ip4addr_ntoa(const ip4_addr_t *addr);
+      |                    ~~~~~~~~~~~~~~~~~~^~~~
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c:25:50: error: passing argument 1 of 'ip4addr_ntoa' from incompatible pointer type [-Wincompatible-pointer-types]
+   25 |         ESP_LOGI(TAG, "Got IP: %s", ip4addr_ntoa(&event->ip_info.ip));
+      |                                                  ^~~~~~~~~~~~~~~~~~
+      |                                                  |
+      |                                                  esp_ip4_addr_t * {aka struct esp_ip4_addr *}
+C:/Users/Ali/esp/v5.4/esp-idf/components/log/include/esp_log.h:185:137: note: in definition of macro 'ESP_LOG_LEVEL'
+  185 |         else if (level==ESP_LOG_VERBOSE )   { esp_log_write(ESP_LOG_VERBOSE,    tag, LOG_FORMAT(V, format), esp_log_timestamp(), tag, ##__VA_ARGS__); } \
+      |                                                                                                                                         ^~~~~~~~~~~
+C:/Users/Ali/esp/v5.4/esp-idf/components/log/include/esp_log.h:114:38: note: in expansion of macro 'ESP_LOG_LEVEL_LOCAL'
+  114 | #define ESP_LOGI( tag, format, ... ) ESP_LOG_LEVEL_LOCAL(ESP_LOG_INFO,    tag, format, ##__VA_ARGS__)
+      |                                      ^~~~~~~~~~~~~~~~~~~
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c:25:9: note: in expansion of macro 'ESP_LOGI'
+   25 |         ESP_LOGI(TAG, "Got IP: %s", ip4addr_ntoa(&event->ip_info.ip));
+      |         ^~~~~~~~
+C:/Users/Ali/esp/v5.4/esp-idf/components/lwip/lwip/src/include/lwip/ip4_addr.h:216:38: note: expected 'const ip4_addr_t *' {aka 'const struct ip4_addr *'} but argument is of type 'esp_ip4_addr_t *' {aka 'struct esp_ip4_addr *'}
+  216 | char *ip4addr_ntoa(const ip4_addr_t *addr);
+      |                    ~~~~~~~~~~~~~~~~~~^~~~
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c:25:50: error: passing argument 1 of 'ip4addr_ntoa' from incompatible pointer type [-Wincompatible-pointer-types]
+   25 |         ESP_LOGI(TAG, "Got IP: %s", ip4addr_ntoa(&event->ip_info.ip));
+      |                                                  ^~~~~~~~~~~~~~~~~~
+      |                                                  |
+      |                                                  esp_ip4_addr_t * {aka struct esp_ip4_addr *}
+C:/Users/Ali/esp/v5.4/esp-idf/components/log/include/esp_log.h:186:137: note: in definition of macro 'ESP_LOG_LEVEL'
+  186 |         else                                { esp_log_write(ESP_LOG_INFO,       tag, LOG_FORMAT(I, format), esp_log_timestamp(), tag, ##__VA_ARGS__); } \
+      |                                                                                                                                         ^~~~~~~~~~~
+C:/Users/Ali/esp/v5.4/esp-idf/components/log/include/esp_log.h:114:38: note: in expansion of macro 'ESP_LOG_LEVEL_LOCAL'
+  114 | #define ESP_LOGI( tag, format, ... ) ESP_LOG_LEVEL_LOCAL(ESP_LOG_INFO,    tag, format, ##__VA_ARGS__)
+      |                                      ^~~~~~~~~~~~~~~~~~~
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c:25:9: note: in expansion of macro 'ESP_LOGI'
+   25 |         ESP_LOGI(TAG, "Got IP: %s", ip4addr_ntoa(&event->ip_info.ip));
+      |         ^~~~~~~~
+C:/Users/Ali/esp/v5.4/esp-idf/components/lwip/lwip/src/include/lwip/ip4_addr.h:216:38: note: expected 'const ip4_addr_t *' {aka 'const struct ip4_addr *'} but argument is of type 'esp_ip4_addr_t *' {aka 'struct esp_ip4_addr *'}
+  216 | char *ip4addr_ntoa(const ip4_addr_t *addr);
+      |                    ~~~~~~~~~~~~~~~~~~^~~~
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c: In function 'ws_handler':
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c:35:5: error: unknown type name 'httpd_ws_frame_t'
+   35 |     httpd_ws_frame_t ws_pkt;
+      |     ^~~~~~~~~~~~~~~~
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c:36:31: error: 'httpd_ws_frame_t' undeclared (first use in this function)
+   36 |     memset(&ws_pkt, 0, sizeof(httpd_ws_frame_t));
+      |                               ^~~~~~~~~~~~~~~~
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c:36:31: note: each undeclared identifier is reported only once for each function it appears in
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c:37:11: error: request for member 'type' in something not a structure or union
+   37 |     ws_pkt.type = HTTPD_WS_TYPE_TEXT;
+      |           ^
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c:37:19: error: 'HTTPD_WS_TYPE_TEXT' undeclared (first use in this function); did you mean 'HTTPD_TYPE_TEXT'?
+   37 |     ws_pkt.type = HTTPD_WS_TYPE_TEXT;
+      |                   ^~~~~~~~~~~~~~~~~~
+      |                   HTTPD_TYPE_TEXT
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c:40:21: error: implicit declaration of function 'httpd_ws_recv_frame' [-Wimplicit-function-declaration]
+   40 |     esp_err_t ret = httpd_ws_recv_frame(req, &ws_pkt, 0);
+      |                     ^~~~~~~~~~~~~~~~~~~
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c:47:33: error: request for member 'len' in something not a structure or union
+   47 |     uint8_t *buf = malloc(ws_pkt.len + 1);
+      |                                 ^
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c:54:11: error: request for member 'payload' in something not a structure or union
+   54 |     ws_pkt.payload = buf;
+      |           ^
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c:55:51: error: request for member 'len' in something not a structure or union
+   55 |     ret = httpd_ws_recv_frame(req, &ws_pkt, ws_pkt.len);
+      |                                                   ^
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c:61:15: error: request for member 'len' in something not a structure or union
+   61 |     buf[ws_pkt.len] = 0;  // Null terminate string
+      |               ^
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c:65:45: error: request for member 'len' in something not a structure or union
+   65 |         ws_callback((const char*)buf, ws_pkt.len);
+      |                                             ^
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c: In function 'network_init':
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c:80:18: warning: unused variable 'ap_netif' [-Wunused-variable]
+   80 |     esp_netif_t* ap_netif = esp_netif_create_default_wifi_ap();
+      |                  ^~~~~~~~
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c: In function 'network_start_websocket':
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c:157:10: error: 'httpd_uri_t' {aka 'struct httpd_uri'} has no member named 'is_websocket'
+  157 |         .is_websocket = true
+      |          ^~~~~~~~~~~~
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c:157:25: warning: excess elements in struct initializer
+  157 |         .is_websocket = true
+      |                         ^~~~
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c:157:25: note: (near initialization for 'ws')
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c: In function 'network_websocket_broadcast':
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c:179:5: error: unknown type name 'httpd_ws_frame_t'
+  179 |     httpd_ws_frame_t ws_pkt = {
+      |     ^~~~~~~~~~~~~~~~
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c:180:9: error: field name not in record or union initializer
+  180 |         .final = true,
+      |         ^
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c:180:9: note: (near initialization for 'ws_pkt')
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c:181:9: error: field name not in record or union initializer
+  181 |         .fragmented = false,
+      |         ^
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c:181:9: note: (near initialization for 'ws_pkt')
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c:181:23: warning: excess elements in scalar initializer
+  181 |         .fragmented = false,
+      |                       ^~~~~
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c:181:23: note: (near initialization for 'ws_pkt')
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c:182:9: error: field name not in record or union initializer
+  182 |         .type = HTTPD_WS_TYPE_TEXT,
+      |         ^
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c:182:9: note: (near initialization for 'ws_pkt')
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c:182:17: error: 'HTTPD_WS_TYPE_TEXT' undeclared (first use in this function); did you mean 'HTTPD_TYPE_TEXT'?
+  182 |         .type = HTTPD_WS_TYPE_TEXT,
+      |                 ^~~~~~~~~~~~~~~~~~
+      |                 HTTPD_TYPE_TEXT
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c:182:17: warning: excess elements in scalar initializer
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c:182:17: note: (near initialization for 'ws_pkt')
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c:183:9: error: field name not in record or union initializer
+  183 |         .payload = (uint8_t*)data,
+      |         ^
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c:183:9: note: (near initialization for 'ws_pkt')
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c:183:20: warning: excess elements in scalar initializer
+  183 |         .payload = (uint8_t*)data,
+      |                    ^
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c:183:20: note: (near initialization for 'ws_pkt')
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c:184:9: error: field name not in record or union initializer
+  184 |         .len = len
+      |         ^
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c:184:9: note: (near initialization for 'ws_pkt')
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c:184:16: warning: excess elements in scalar initializer
+  184 |         .len = len
+      |                ^~~
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c:184:16: note: (near initialization for 'ws_pkt')
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c:179:22: warning: unused variable 'ws_pkt' [-Wunused-variable]
+  179 |     httpd_ws_frame_t ws_pkt = {
+      |                      ^~~~~~
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c: In function 'network_start_ota_update':
+C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c:202:35: error: passing argument 1 of 'esp_https_ota' from incompatible pointer type [-Wincompatible-pointer-types]
+  202 |     esp_err_t ret = esp_https_ota(&config);
+      |                                   ^~~~~~~
+      |                                   |
+      |                                   esp_http_client_config_t *
+In file included from C:/Users/Ali/Desktop/micro/saferoom/microesp/main/network_manager.c:6:
+C:/Users/Ali/esp/v5.4/esp-idf/components/esp_https_ota/include/esp_https_ota.h:102:55: note: expected 'const esp_https_ota_config_t *' but argument is of type 'esp_http_client_config_t *'
+  102 | esp_err_t esp_https_ota(const esp_https_ota_config_t *ota_config);
+      |                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+ninja: build stopped: subcommand failed.
