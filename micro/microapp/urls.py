@@ -19,6 +19,9 @@ urlpatterns = [
     # Inactive TemplateURLs
     path('oldregister/', views.oldregister, name='oldregister'),
     path('oldcontrol/', views.oldcontrol, name='oldcontrol'),
+    path('oldtransfer/', views.oldtransfer, name='oldtransfer'),
+    
+    # Testing URLs
     
     # API Endpoints
     path('control_relay/', views.control_relay, name='control_relay'),
@@ -33,14 +36,19 @@ urlpatterns = [
     # New URL pattern for machine stats
     path('get_machine_stats/', views.get_machine_stats, name='get_machine_stats'),
     
+    # File Transfer Endpoints
+    path('transfer-files/', views.transfer_files, name='transfer_files'),
+    path('transfer-progress/', views.transfer_progress, name='transfer_progress'),
+    
     # I18N and language toggle
     path('i18n/', include('django.conf.urls.i18n')),
     path('language/toggle/', views.toggle_language, name='toggle_language'),
     path('jsi18n/', JavaScriptCatalog.as_view(), name='javascript-catalog'),
         
     # Drive folders
-    path('list-drive-folders/', views.list_drive_folders, name='list_drive_folders'),
     path('browse-local-folders/', views.browse_local_folders, name='browse_local_folders'),
     path('create-folder/', views.create_folder, name='create_folder'),
     path('list-drives/', views.list_drives, name='list_drives'),
+    path('list-drive-contents/', views.list_drive_contents, name='list_drive_contents'),
+    path('get-file-statistics/', views.get_file_statistics, name='get_file_statistics'),
 ]

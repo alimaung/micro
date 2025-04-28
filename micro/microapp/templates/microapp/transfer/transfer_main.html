@@ -1,0 +1,44 @@
+{% extends 'microapp/base.html' %}
+
+{% block title %}Transfer - Microfilm Processing System{% endblock %}
+
+{% load static %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'microapp/css/transfer/transfer.css' %}">
+    <link rel="stylesheet" href="{% static 'microapp/css/register/project/folderPicker.css' %}">
+{% endblock %}
+
+
+{% block content %}
+    <div class="transfer-container">
+        {% include 'microapp/transfer/transfer_header.html' %}
+
+        <div class="transfer-grid main-section">
+            <!-- Location Selection Card -->
+            {% include 'microapp/transfer/transfer_locations.html' %}
+
+            <!-- Project Information Card -->
+            {% include 'microapp/transfer/transfer_project_info.html' %}
+        </div>
+
+        <!-- Transfer Status Card (Full width, below) -->
+        {% include 'microapp/transfer/transfer_status.html' %}
+    </div> 
+    <!-- Include the folder picker component -->
+    {% include 'microapp/register/project/folderPicker.html' %}
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'microapp/js/register/project/folderPicker.js' %}"></script>
+    <!-- Load refactored transfer modules in order of dependency -->
+    <script src="{% static 'microapp/js/transfer/utilities.js' %}"></script>
+    <script src="{% static 'microapp/js/transfer/event-manager.js' %}"></script>
+    <script src="{% static 'microapp/js/transfer/validation.js' %}"></script>
+    <script src="{% static 'microapp/js/transfer/api-service.js' %}"></script>
+    <script src="{% static 'microapp/js/transfer/file-finders.js' %}"></script>
+    <script src="{% static 'microapp/js/transfer/transfer-ui.js' %}"></script>
+    <script src="{% static 'microapp/js/transfer/transfer-core.js' %}"></script>
+    <script src="{% static 'microapp/js/transfer/index.js' %}"></script>
+    <!-- Original file - to be removed after refactoring is complete -->
+    <!-- <script src="{% static 'microapp/js/transfer/transfer.js' %}"></script> -->
+{% endblock %}

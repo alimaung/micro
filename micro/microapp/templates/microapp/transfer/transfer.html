@@ -1,0 +1,287 @@
+<div class="transfer-container">
+    <div class="transfer-header">
+        <div class="header-content">
+            <h1>Transfer</h1>
+            <p class="subtitle">Import projects from external drives to the system</p>
+        </div>
+        <div class="transfer-actions">
+            <div class="step-status">
+                <span class="status-badge initial" id="main-status-badge">
+                    <i class="fas fa-clock"></i>
+                    Pending 
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="transfer-grid main-section">
+        <!-- Location Selection Card (Combined Source and Destination) -->
+        <div class="transfer-card locations-card">
+            <div class="card-header">
+                <h3><i class="fas fa-exchange-alt"></i> Transfer Locations</h3>
+            </div>
+            <div class="card-content">
+                <div class="form-group source1">
+                    <label for="source-folder">Source Folder</label>
+                    <div class="folder-input-container">
+                        <input type="text" id="source-folder" class="form-input" placeholder="Select source folder with project files" readonly disabled>
+                        <button class="browse-button" id="source-browse-btn">
+                            <i class="fas fa-folder-open"></i>
+                            Browse
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="option-toggles">
+                    <div class="toggle-group">
+                        <span class="toggle-label">Auto-parse project information</span>
+                        <label class="switch">
+                            <input type="checkbox" id="auto-parse" checked>
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-group">
+                        <span class="toggle-label">Auto-select final path</span>
+                        <label class="switch">
+                            <input type="checkbox" id="auto-select-path" checked>
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-group">
+                        <span class="toggle-label">Auto-find PDF folder</span>
+                        <label class="switch">
+                            <input type="checkbox" id="auto-find-pdf" checked>
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-group">
+                        <span class="toggle-label">Auto-find COMList file</span>
+                        <label class="switch">
+                            <input type="checkbox" id="auto-find-comlist" checked>
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="section-divider">
+                </div>
+
+                <div class="form-group">
+                    <label for="pdf-folder">PDF Folder (Optional)</label>
+                    <div class="folder-input-container">
+                        <input type="text" id="pdf-folder" class="form-input" placeholder="Select folder containing .pdf files" value="" readonly disabled>
+                        <button class="browse-button secondary" id="pdf-browse-btn">
+                            <i class="fas fa-folder-open"></i>
+                            Browse
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="comlist-file">COMList File (Optional)</label>
+                    <div class="folder-input-container">
+                        <input type="text" id="comlist-file" class="form-input" placeholder="Select comlist excel file" value="" readonly disabled>
+                        <button class="browse-button secondary" id="comlist-browse-btn">
+                            <i class="fas fa-file-excel"></i>
+                            Browse
+                        </button>
+
+                    </div>
+                    
+                </div>
+                
+                <div class="form-group">
+                    <label for="destination-folder">Destination Folder (Optional)</label>
+                    <div class="folder-input-container">
+                        <input type="text" id="destination-folder" class="form-input" placeholder="Select destination folder (Default: Y:)" value="" readonly disabled>
+                        <button class="browse-button secondary" id="destination-browse-btn">
+                            <i class="fas fa-folder-open"></i>
+                            Browse
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Hidden input for create subfolder, moved from UI but kept for functionality -->
+                <input type="checkbox" id="create-subfolder" checked style="display: none;">
+                
+                <!-- Start Transfer Button -->
+                <div class="card-actions">
+                    <button class="action-button primary" id="start-transfer-btn">
+                        <i class="fas fa-play"></i>
+                        Start Transfer
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Project Information Card (Smaller width) -->
+        <div class="transfer-card project-info-card">
+            <div class="card-header">
+                <h3><i class="fas fa-info-circle"></i> Project Information</h3>
+                <div class="header-badge">
+                    <span class="status-badge initial" id="project-info-status">
+                        <i class="fas fa-clock"></i>
+                        Pending
+                    </span>
+                </div>
+            </div>
+            <div class="card-content">
+                <!-- Project Information Card - Reordered fields -->
+                <div class="project-field-container">
+                    <div class="project-field">
+                        <div class="field-label">Source Folder</div>
+                        <div class="field-value-container">
+                            <span class="field-value" id="source-folder-display">Not set</span>
+                        </div>
+                    </div>
+                    
+                    <div class="project-field">
+                        <div class="field-label">Archive ID</div>
+                        <div class="field-value-container">
+                            <span class="field-value" id="archive-id-display">Not set</span>
+                            <input type="text" id="archive-id" class="form-input field-edit" placeholder="e.g., RRD001-2024" disabled>
+                            <button class="icon-button edit-field" data-field="archive-id" data-display="archive-id-display">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="project-field">
+                        <div class="field-label">Location</div>
+                        <div class="field-value-container">
+                            <span class="field-value" id="location-display">Not set</span>
+                            <input type="text" id="location" class="form-input field-edit" placeholder="e.g., OU, DW" disabled>
+                            <button class="icon-button edit-field" data-field="location" data-display="location-display">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="project-field">
+                        <div class="field-label">Document Type</div>
+                        <div class="field-value-container">
+                            <span class="field-value" id="document-type-display">Not set</span>
+                            <input type="text" id="document-type" class="form-input field-edit" placeholder="e.g., Correspondence" disabled>
+                            <button class="icon-button edit-field" data-field="document-type" data-display="document-type-display">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Reordered: First PDF folder -->
+                    <div class="project-field">
+                        <div class="field-label">PDF Folder</div>
+                        <div class="field-value-container">
+                            <span class="field-value" id="pdf-folder-display">Not set</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Then COMList file -->
+                    <div class="project-field">
+                        <div class="field-label">COMList File</div>
+                        <div class="field-value-container">
+                            <span class="field-value" id="comlist-file-display">Not set</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Finally Final Path -->
+                    <div class="project-field">
+                        <div class="field-label">Final Path</div>
+                        <div class="field-value-container">
+                            <span class="field-value" id="destination-path-display">Not set</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Source Stats moved here -->
+                <div class="source-stats" id="source-stats">
+                    <div class="stat-item">
+                        <i class="fas fa-file"></i>
+                        <span class="stat-label">Files:</span>
+                        <span class="stat-value" id="source-file-count">-</span>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-database"></i>
+                        <span class="stat-label">Size:</span>
+                        <span class="stat-value" id="source-size">-</span>
+                    </div>
+                </div>
+
+                <!-- Auto-find warnings section -->
+                <div class="auto-find-warnings">
+                    <div class="warning-container">
+                        <div id="pdf-warning-display" class="warning-message"></div>
+                    </div>
+                    <div class="warning-container">
+                        <div id="comlist-warning-display" class="warning-message"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transfer Status Card (Full width, below) -->
+    <div class="transfer-card progress-card full-width">
+        <div class="card-header">
+            <h3><i class="fas fa-tasks"></i> Transfer Status</h3>
+            <div class="header-badge">
+                <span class="status-badge initial" id="transfer-status">
+                    <i class="fas fa-clock"></i>
+                    Not Started
+                </span>
+            </div>
+        </div>
+        <div class="card-content">
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress" id="transfer-progress" style="width: 0%;"></div>
+                </div>
+                <div class="progress-info">
+                    <span id="progress-percentage">0%</span>
+                </div>
+            </div>
+            
+            <div class="transfer-details-grid">
+                <div class="transfer-details">
+                    <div class="detail-item">
+                        <span class="detail-label">Files:</span>
+                        <span class="detail-value" id="files-transferred">0/0</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Speed:</span>
+                        <span class="detail-value" id="transfer-speed">- KB/s</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Time remaining:</span>
+                        <span class="detail-value" id="time-remaining">-</span>
+                    </div>
+                </div>
+                
+                <div class="current-file">
+                    <span class="current-file-label">Current file:</span>
+                    <span class="current-file-value" id="current-file">-</span>
+                </div>
+                
+                <div class="cancel-action">
+                    <button class="action-button danger" id="cancel-transfer-btn" disabled>
+                        <i class="fas fa-times"></i>
+                        Cancel
+                    </button>
+                </div>
+            </div>
+            
+            <div class="transfer-log-section">
+                <div class="log-header" id="toggle-log">
+                    <i class="fas fa-chevron-right"></i>
+                    <span>Transfer Log</span>
+                </div>
+                <div class="log-content" id="transfer-log">
+                    <div class="log-entry">
+                        <span class="log-time">00:00:00</span>
+                        <span class="log-message">Waiting to start transfer...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

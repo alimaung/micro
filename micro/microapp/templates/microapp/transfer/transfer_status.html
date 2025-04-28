@@ -1,0 +1,63 @@
+<div class="transfer-card progress-card full-width">
+    <div class="card-header">
+        <h3><i class="fas fa-tasks"></i> Transfer Status</h3>
+        <div class="header-badge">
+            <span class="status-badge initial" id="transfer-status">
+                <i class="fas fa-clock"></i>
+                Not Started
+            </span>
+        </div>
+    </div>
+    <div class="card-content">
+        <div class="progress-container">
+            <div class="progress-bar">
+                <div class="progress" id="transfer-progress" style="width: 0%;"></div>
+            </div>
+            <div class="progress-info">
+                <span id="progress-percentage">0%</span>
+            </div>
+        </div>
+        
+        <div class="transfer-details-grid">
+            <div class="transfer-details">
+                <div class="detail-item">
+                    <span class="detail-label">Files:</span>
+                    <span class="detail-value" id="files-transferred">0/0</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Speed:</span>
+                    <span class="detail-value" id="transfer-speed">- KB/s</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Time remaining:</span>
+                    <span class="detail-value" id="time-remaining">-</span>
+                </div>
+            </div>
+            
+            <div class="current-file">
+                <span class="current-file-label">Current file:</span>
+                <span class="current-file-value" id="current-file">-</span>
+            </div>
+            
+            <div class="cancel-action">
+                <button class="action-button danger" id="cancel-transfer-btn" disabled>
+                    <i class="fas fa-times"></i>
+                    Cancel
+                </button>
+            </div>
+        </div>
+        
+        <div class="transfer-log-section">
+            <div class="log-header" id="toggle-log">
+                <i class="fas fa-chevron-right"></i>
+                <span>Transfer Log</span>
+            </div>
+            <div class="log-content" id="transfer-log">
+                <div class="log-entry">
+                    <span class="log-time">00:00:00</span>
+                    <span class="log-message">Waiting to start transfer...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

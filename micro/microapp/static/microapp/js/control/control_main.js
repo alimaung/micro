@@ -3,7 +3,7 @@
  * Initializes components and coordinates interactions between modules
  */
 
-// TODOx: Check current saferoom mode and set UI
+// TODOx2: Check current saferoom mode and set UI
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Initializing microfilm control system...');

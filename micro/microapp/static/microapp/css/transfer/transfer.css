@@ -91,7 +91,7 @@
 /* Grid layout modifications */
 .transfer-grid.main-section {
     display: grid;
-    grid-template-columns: 2fr 1fr;
+    grid-template-columns: 2fr 1.3fr;
     gap: 24px;
     margin-bottom: 24px;
 }
@@ -243,7 +243,11 @@
 
 /* Form elements */
 .form-group {
-    margin-bottom: 20px;
+    margin-bottom: 12px;
+}
+
+.form-group.source1 {
+    margin-bottom: 24px;
 }
 
 .form-group label {
@@ -278,7 +282,6 @@
 
 .form-input:disabled {
     background-color: #f5f5f5;
-    cursor: not-allowed;
 }
 
 .folder-input-container {
@@ -292,10 +295,11 @@
 
 /* Toggle switches */
 .option-toggles {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    margin-bottom: 24px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    column-gap: 32px;
+    row-gap: 16px;
+    margin-bottom: 28px;
 }
 
 .toggle-group {
@@ -369,6 +373,7 @@ input:checked + .slider:before {
     padding: 12px 16px;
     border: none;
     border-radius: 6px;
+    min-width: 110px;
     background-color: var(--color-primary);
     color: white;
     font-size: 14px;
@@ -451,10 +456,12 @@ input:checked + .slider:before {
 .source-stats {
     display: flex;
     gap: 16px;
-    margin-top: 20px;
-    padding: 12px;
+    padding: 10px;
     background-color: #f5f5f5;
     border-radius: 6px;
+    justify-content: space-evenly;
+    align-items: center;
+    margin-bottom: 10px;
 }
 
 .stat-item {
@@ -810,17 +817,19 @@ input:checked + .slider:before {
 .project-field-container {
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    margin-top: 20px;
-    margin-bottom: 24px;
+    gap: 8px;
+    margin-bottom: 12px;
+    overflow-wrap: anywhere;
 }
 
 .project-field {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     padding-bottom: 8px;
     border-bottom: 1px solid var(--color-border);
+    margin-bottom: 8px;
+    position: relative;
 }
 
 .field-label {
@@ -837,6 +846,8 @@ input:checked + .slider:before {
     flex: 1;
     gap: 8px;
     position: relative;
+    flex-wrap: wrap;
+    min-height: 24px;
 }
 
 .field-value {
@@ -845,7 +856,7 @@ input:checked + .slider:before {
     color: var(--color-text);
     flex: 1;
     text-align: right;
-    padding-right: 8px;
+    padding-right: 0;
 }
 
 .field-edit {
@@ -853,6 +864,7 @@ input:checked + .slider:before {
     max-width: 200px;
     padding: 8px;
     font-size: 14px;
+    text-align: right;
 }
 
 .field-value-container.editing .field-value {
@@ -865,6 +877,44 @@ input:checked + .slider:before {
 
 .icon-button {
     flex-shrink: 0;
+    margin-left: 4px;
+}
+
+/* Field validation error styles - ensure it's below the border */
+.field-error {
+    width: 100%;
+    font-size: 12px;
+    color: #ea4335;
+    text-align: right;
+    font-weight: 500;
+    /* Position below the border */
+    position: relative;
+    top: 8px;
+    /* Other styling */
+    margin-top: 0;
+    margin-bottom: 8px;
+}
+
+.field-value-container .form-input.error {
+    border-color: #ea4335;
+    background-color: rgba(234, 67, 53, 0.05);
+}
+
+/* Error state for project fields */
+.project-field.has-error {
+    border-bottom-color: #ea4335;
+    margin-bottom: 16px;
+}
+
+.project-field.has-error .field-label {
+    color: #ea4335;
+    font-weight: 500;
+}
+
+/* Field container with error - add margin */
+.field-value-container .field-error {
+    display: block;
+    margin-bottom: 4px;
 }
 
 /* Verification Section */
@@ -901,4 +951,14 @@ input:checked + .slider:before {
     .field-value {
         text-align: left;
     }
+}
+
+/* Project info header badge - smaller size */
+.project-info-card .card-header .status-badge {
+    font-size: 12px;
+    padding: 4px 10px;
+}
+
+.project-info-card .card-header .status-badge i {
+    font-size: 10px;
 }

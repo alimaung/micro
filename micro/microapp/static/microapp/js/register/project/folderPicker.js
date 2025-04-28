@@ -9,6 +9,7 @@ const FolderPicker = {
     folderList: null,
     selectButton: null,
     folders: [],
+    files: [],
     _resolve: null,
     _reject: null,
     currentPath: 'Y:\\',
@@ -18,6 +19,12 @@ const FolderPicker = {
     pathDisplay: null,
     driveList: null,
     drives: [],
+    mode: 'folders', // 'folders', 'files', or 'both'
+    fileTypes: null,
+    showAllFiles: false,
+    customTitle: null, // Add custom title property
+    scanSubdirectories: false,
+    fullStructure: null,
 
     /**
      * Initialize the folder picker
@@ -101,28 +108,75 @@ const FolderPicker = {
     },
 
     /**
-     * Show the folder picker dialog and fetch either drives or Y: folders
+     * Show the folder picker dialog
      * @param {boolean} openYDirectly - Whether to open Y: drive directly
-     * @returns {Promise<string>} Selected folder path or rejection if dialog is closed
+     * @param {string} mode - 'folders', 'files', or 'both' 
+     * @param {string|string[]} fileTypes - Optional file extension(s) to filter by (e.g., 'pdf' or ['pdf', 'csv'])
+     * @param {string} dialogTitle - Optional custom title for the dialog
+     * @param {boolean} scanSubdirectories - Whether to scan all subdirectories for auto-detection
+     * @returns {Promise<object>} Object containing selected path and folder/file structure
      */
-    show: function(openYDirectly = false) {
+    show: function(openYDirectly = false, mode = 'folders', fileTypes = null, dialogTitle = null, scanSubdirectories = false) {
         return new Promise((resolve, reject) => {
             this._resolve = resolve;
             this._reject = reject;
             
             // Reset state
             this.selectedFolder = null;
+            this.selectedFile = null;
+            this.mode = mode;
+            this.fileTypes = fileTypes;
+            this.showAllFiles = false; // Default to filtered view when filter is provided
             this.hideNewFolderForm();
+            this.customTitle = dialogTitle; // Store the custom title
+            this.scanSubdirectories = scanSubdirectories; // Store the scan option
+            this.fullStructure = null; // Reset full structure
+            
+            // Normalize fileTypes to array if provided
+            if (this.fileTypes && !Array.isArray(this.fileTypes)) {
+                this.fileTypes = [this.fileTypes];
+            }
+            
+            // Convert file extensions to lowercase and ensure they don't include the dot
+            if (this.fileTypes) {
+                this.fileTypes = this.fileTypes.map(type => 
+                    type.toLowerCase().replace(/^\./, '')
+                );
+            }
+            
+            // Define title and mode indicator
+            let title = this.customTitle || 'Select Folder';
+            let modeClass = 'folders-mode';
+            let modeIndicator = 'Folders Only';
+            
+            if (mode === 'files') {
+                title = this.customTitle || 'Select File';
+                modeClass = 'files-mode';
+                modeIndicator = 'Files Only';
+                
+                if (this.fileTypes && this.fileTypes.length > 0) {
+                    const typeList = this.fileTypes.map(t => t.toUpperCase()).join(', ');
+                    modeIndicator = `${typeList} Files Only`;
+                }
+            } else if (mode === 'both') {
+                title = this.customTitle || 'Select File or Folder';
+                modeClass = 'both-mode';
+                modeIndicator = 'Files & Folders';
+            }
+            
+            const modeIndicatorHTML = `<span class="mode-indicator ${modeClass}">${modeIndicator}</span>`;
             
             if (openYDirectly) {
                 // Open Y: drive directly
                 this.currentPath = 'Y:\\';
                 this.showFolderSelectionView();
-                this.fetchFolders(this.currentPath);
-                this.modal.querySelector('.modal-title').textContent = 'Select Folder (Y: Drive)';
+                this.fetchContents(this.currentPath, this.scanSubdirectories);
+                this.modal.querySelector('.modal-title').innerHTML = 
+                    `${title} (Y: Drive) ${modeIndicatorHTML}`;
             } else {
                 // Show drive selection view (which will also fetch drives)
                 this.showDriveSelectionView();
+                this.modal.querySelector('.modal-title').textContent = this.customTitle || 'Select Drive';
             }
             
             this.modal.style.display = 'block';
@@ -137,7 +191,7 @@ const FolderPicker = {
         this.folderSelectionView.classList.remove('active');
         this.driveViewButtons.style.display = 'flex';
         this.folderViewButtons.classList.remove('active');
-        this.modal.querySelector('.modal-title').textContent = 'Select Drive';
+        this.modal.querySelector('.modal-title').textContent = this.customTitle || 'Select Drive';
         
         // Always fetch and refresh drive data when showing the drive selection view
         this.fetchDrives();
@@ -151,7 +205,29 @@ const FolderPicker = {
         this.folderSelectionView.classList.add('active');
         this.driveViewButtons.style.display = 'none';
         this.folderViewButtons.classList.add('active');
-        this.modal.querySelector('.modal-title').textContent = 'Select Folder';
+        
+        // Update the title with mode indicator
+        let title = this.customTitle || 'Select Folder';
+        let modeClass = 'folders-mode';
+        let modeIndicator = 'Folders Only';
+        
+        if (this.mode === 'files') {
+            title = this.customTitle || 'Select File';
+            modeClass = 'files-mode';
+            modeIndicator = 'Files Only';
+            
+            if (this.fileTypes && this.fileTypes.length > 0) {
+                const typeList = this.fileTypes.map(t => t.toUpperCase()).join(', ');
+                modeIndicator = `${typeList} Files Only`;
+            }
+        } else if (this.mode === 'both') {
+            title = this.customTitle || 'Select File or Folder';
+            modeClass = 'both-mode';
+            modeIndicator = 'Files & Folders';
+        }
+        
+        const modeIndicatorHTML = `<span class="mode-indicator ${modeClass}">${modeIndicator}</span>`;
+        this.modal.querySelector('.modal-title').innerHTML = `${title} ${modeIndicatorHTML}`;
     },
 
     /**
@@ -219,7 +295,7 @@ const FolderPicker = {
                 item.addEventListener('click', () => {
                     this.currentPath = drive;
                     this.showFolderSelectionView();
-                    this.fetchFolders(drive);
+                    this.fetchContents(drive, this.scanSubdirectories);
                 });
                 
                 this.driveList.appendChild(item);
@@ -228,11 +304,20 @@ const FolderPicker = {
     },
 
     /**
-     * Fetch folders for the specified path
-     * @param {string} path - The path to fetch folders for
+     * Fetch folders and files for the specified path
+     * @param {string} path - The path to fetch contents for
+     * @param {boolean} scanSubdirectories - Whether to scan all subdirectories (for auto-detection)
      */
-    fetchFolders: function(path) {
-        fetch('/list-drive-folders/?path=' + encodeURIComponent(path), {
+    fetchContents: function(path, scanSubdirectories = false) {
+        // Always fetch both folders and files, regardless of mode
+        let apiEndpoint = '/list-drive-contents/?path=' + encodeURIComponent(path);
+        
+        // If scanning subdirectories, add a parameter
+        if (scanSubdirectories) {
+            apiEndpoint += '&scan_subdirectories=true';
+        }
+        
+        fetch(apiEndpoint, {
             method: 'GET',
             headers: {
                 'Accept': 'application/json',
@@ -244,17 +329,24 @@ const FolderPicker = {
                 throw new Error(data.error);
             }
 
-            if (!Array.isArray(data.folders)) {
-                throw new Error('Invalid folder data received from server');
+            if (!Array.isArray(data.folders) || !Array.isArray(data.files)) {
+                throw new Error('Invalid data received from server');
             }
 
             this.folders = data.folders;
+            this.files = data.files;
+            
+            // If subdirectories were scanned, store the full structure
+            if (scanSubdirectories && data.fullStructure) {
+                this.fullStructure = data.fullStructure;
+            }
+            
             this.currentPath = data.currentPath || path;
-            this.renderFolders();
+            this.renderContents();
             this.renderBreadcrumbs();
         })
         .catch(error => {
-            console.error('Error fetching folders:', error);
+            console.error('Error fetching contents:', error);
             if (this._reject) {
                 this._reject(error);
             }
@@ -319,9 +411,10 @@ const FolderPicker = {
      */
     navigateTo: function(path) {
         this.currentPath = path;
-        this.fetchFolders(path);
+        this.fetchContents(path, this.scanSubdirectories);
         this.selectButton.disabled = true;
         this.selectedFolder = null;
+        this.selectedFile = null;
         this.hideNewFolderForm();
     },
 
@@ -338,34 +431,182 @@ const FolderPicker = {
     },
 
     /**
-     * Render the folder list in the dialog
+     * Render the folder and file list in the dialog
      */
-    renderFolders: function() {
+    renderContents: function() {
         this.folderList.innerHTML = '';
         
-        if (this.folders.length === 0) {
-            const message = document.createElement('div');
-            message.className = 'folder-list-message';
-            message.textContent = 'No folders found in this directory';
-            this.folderList.appendChild(message);
-        } else {
-            this.folders.forEach(folder => {
-                const item = document.createElement('div');
-                item.className = 'folder-item';
-                item.innerHTML = '<i class="fas fa-folder"></i><span>' + folder + '</span>';
-                
-                item.addEventListener('click', (event) => {
-                    if (event.detail === 1) {
-                        // Single click selects the folder
+        // Always add folders for navigation
+        let hasContent = this.folders.length > 0;
+        let hasFiles = false;
+        
+        // File type filter status message
+        if (this.mode !== 'folders' && this.fileTypes && this.fileTypes.length > 0) {
+            const filterBanner = document.createElement('div');
+            filterBanner.className = 'file-filter-banner';
+            
+            const filterTypes = this.fileTypes.map(t => t.toUpperCase()).join(', ');
+            filterBanner.innerHTML = `
+                <div class="filter-status">
+                    <i class="fas fa-filter"></i>
+                    <span>Looking for ${filterTypes} files</span>
+                </div>
+                <div class="filter-toggle">
+                    <label class="filter-toggle-label">
+                        <input type="checkbox" class="filter-toggle-input" ${this.showAllFiles ? 'checked' : ''}>
+                        <span class="filter-toggle-text">Show all files</span>
+                    </label>
+                </div>
+            `;
+            
+            // Add event listener to toggle filter
+            const toggleInput = filterBanner.querySelector('.filter-toggle-input');
+            toggleInput.addEventListener('change', () => {
+                this.showAllFiles = toggleInput.checked;
+                this.renderContents();
+            });
+            
+            this.folderList.appendChild(filterBanner);
+        }
+        
+        // First render folders for navigation
+        this.folders.forEach(folder => {
+            const item = document.createElement('div');
+            item.className = 'folder-item';
+            item.innerHTML = '<i class="fas fa-folder"></i><span>' + folder + '</span>';
+            
+            item.addEventListener('click', (event) => {
+                if (event.detail === 1) {
+                    // Single click selects the folder only if we're in folders or both mode
+                    if (this.mode !== 'files') {
                         this.handleFolderClick(item, folder);
-                    } else if (event.detail === 2) {
-                        // Double click navigates into the folder
-                        this.navigateTo(this.currentPath + folder + '\\');
+                    }
+                } else if (event.detail === 2) {
+                    // Double click always navigates into the folder
+                    this.navigateTo(this.currentPath + folder + '\\');
+                }
+            });
+            
+            this.folderList.appendChild(item);
+        });
+        
+        // Render files if not in folders-only mode
+        if (this.mode !== 'folders') {
+            this.files.forEach(file => {
+                // Skip non-matching files unless showAllFiles is true
+                const extension = file.split('.').pop().toLowerCase();
+                const matchesFilter = !this.fileTypes || 
+                                     this.fileTypes.length === 0 || 
+                                     this.fileTypes.includes(extension);
+                                     
+                if (!matchesFilter && !this.showAllFiles) {
+                    return;
+                }
+                
+                hasFiles = true;
+                
+                const item = document.createElement('div');
+                item.className = 'file-item';
+                
+                // Add classes based on matching status
+                if (this.fileTypes && this.fileTypes.length > 0) {
+                    if (matchesFilter) {
+                        item.classList.add('file-matches-filter');
+                    } else {
+                        item.classList.add('file-not-matching');
+                    }
+                }
+                
+                // Determine file icon based on extension
+                let iconClass = 'fas fa-file';
+                
+                // Basic file type detection
+                if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'svg'].includes(extension)) {
+                    iconClass = 'fas fa-file-image';
+                } else if (['doc', 'docx', 'odt', 'rtf', 'txt'].includes(extension)) {
+                    iconClass = 'fas fa-file-alt';
+                } else if (['xls', 'xlsx', 'csv'].includes(extension)) {
+                    iconClass = 'fas fa-file-excel';
+                } else if (['pdf'].includes(extension)) {
+                    iconClass = 'fas fa-file-pdf';
+                } else if (['zip', 'rar', '7z', 'tar', 'gz'].includes(extension)) {
+                    iconClass = 'fas fa-file-archive';
+                }
+                
+                // Add file icon and name
+                item.innerHTML = `<i class="${iconClass}"></i><span>${file}</span>`;
+                
+                // Add badge for matching or non-matching files
+                if (this.fileTypes && this.fileTypes.length > 0) {
+                    if (matchesFilter) {
+                        item.innerHTML += '<span class="file-badge match">Valid Format</span>';
+                    } else {
+                        item.innerHTML += '<span class="file-badge no-match">Invalid Format</span>';
+                    }
+                }
+                
+                item.addEventListener('click', () => {
+                    // If file doesn't match filter, show warning but don't select
+                    if (!matchesFilter && this.fileTypes && this.fileTypes.length > 0) {
+                        // Apply shake animation
+                        item.classList.add('invalid-shake');
+                        setTimeout(() => {
+                            item.classList.remove('invalid-shake');
+                        }, 500);
+                        
+                        this.showInvalidFileTypeWarning(file, this.fileTypes);
+                    } else {
+                        this.handleFileClick(item, file);
                     }
                 });
                 
                 this.folderList.appendChild(item);
             });
+        }
+        
+        // If no content to display
+        if (this.folders.length === 0 && (!hasFiles || this.mode === 'folders')) {
+            const message = document.createElement('div');
+            message.className = 'folder-list-message';
+            
+            if (this.mode === 'folders') {
+                message.textContent = 'No folders found in this directory';
+            } else if (this.mode === 'files') {
+                if (this.fileTypes && this.fileTypes.length > 0 && !this.showAllFiles) {
+                    const typeList = this.fileTypes.map(t => t.toUpperCase()).join(', ');
+                    message.innerHTML = `<i class="fas fa-search"></i> No ${typeList} files found in this directory`;
+                    message.innerHTML += '<div class="no-files-action"><button class="show-all-files-btn">Show all files</button></div>';
+                    
+                    const showAllBtn = message.querySelector('.show-all-files-btn');
+                    showAllBtn.addEventListener('click', () => {
+                        this.showAllFiles = true;
+                        this.renderContents();
+                    });
+                } else {
+                    message.textContent = 'No files found in this directory';
+                }
+            } else {
+                message.textContent = 'No files or folders found in this directory';
+            }
+            
+            this.folderList.appendChild(message);
+        }
+        
+        // Update the folder list hint based on mode
+        const hintElement = this.modal.querySelector('.folder-list-hint');
+        if (hintElement) {
+            if (this.mode === 'folders') {
+                hintElement.innerHTML = '<i class="fas fa-info-circle"></i> Double-click to open a folder. Single-click to select a folder.';
+            } else if (this.mode === 'files') {
+                let hintText = 'Double-click to open a folder. Single-click to select a file.';
+                if (this.fileTypes && this.fileTypes.length > 0) {
+                    const typeList = this.fileTypes.map(t => t.toUpperCase()).join(', ');
+                    hintText = `Looking for ${typeList} files. Files with other extensions cannot be selected.`;
+                }
+                hintElement.innerHTML = `<i class="fas fa-info-circle"></i> ${hintText}`;
+            } else {
+                hintElement.innerHTML = '<i class="fas fa-info-circle"></i> Double-click to open a folder. Single-click to select an item.';
+            }
         }
     },
 
@@ -375,13 +616,31 @@ const FolderPicker = {
      * @param {string} folder - The folder name
      */
     handleFolderClick: function(item, folder) {
-        // Deselect all other folders
-        this.folderList.querySelectorAll('.folder-item').forEach(el => {
+        // Deselect all other items
+        this.folderList.querySelectorAll('.folder-item, .file-item').forEach(el => {
             el.classList.remove('selected');
         });
         // Select this folder
         item.classList.add('selected');
         this.selectedFolder = folder;
+        this.selectedFile = null;
+        this.selectButton.disabled = false;
+    },
+
+    /**
+     * Handle file item click
+     * @param {HTMLElement} item - The clicked file item element
+     * @param {string} file - The file name
+     */
+    handleFileClick: function(item, file) {
+        // Deselect all other items
+        this.folderList.querySelectorAll('.folder-item, .file-item').forEach(el => {
+            el.classList.remove('selected');
+        });
+        // Select this file
+        item.classList.add('selected');
+        this.selectedFile = file;
+        this.selectedFolder = null;
         this.selectButton.disabled = false;
     },
 
@@ -391,11 +650,30 @@ const FolderPicker = {
     handleSelect: function() {
         if (this.selectedFolder && this._resolve) {
             // Return full path including selected folder
-            this._resolve(this.currentPath + this.selectedFolder);
+            // Also return current folders and files lists for auto-detection features
+            this._resolve({
+                path: this.currentPath + this.selectedFolder,
+                folders: this.folders,
+                files: this.files,
+                currentPath: this.currentPath
+            });
+            this.hide();
+        } else if (this.selectedFile && this._resolve) {
+            // Return full path including selected file
+            this._resolve({
+                path: this.currentPath + this.selectedFile,
+                isFile: true
+            });
             this.hide();
         } else if (this._resolve) {
-            // Return current directory path if no specific folder is selected
-            this._resolve(this.currentPath);
+            // Return current directory path if no specific folder or file is selected
+            // Also return current folders and files lists for auto-detection features
+            this._resolve({
+                path: this.currentPath,
+                folders: this.folders,
+                files: this.files,
+                currentPath: this.currentPath
+            });
             this.hide();
         }
     },
@@ -478,7 +756,7 @@ const FolderPicker = {
             }
             
             // Refresh the folder list
-            this.fetchFolders(this.currentPath);
+            this.fetchContents(this.currentPath);
             
             // Show success message using a custom notification
             this.showNotification(`Folder "${folderName}" created successfully`, 'success');
@@ -488,7 +766,7 @@ const FolderPicker = {
             this.showNotification(`Failed to create folder: ${error.message}`, 'error');
             
             // Refresh the folder list anyway
-            this.fetchFolders(this.currentPath);
+            this.fetchContents(this.currentPath);
         });
     },
     
@@ -592,6 +870,52 @@ const FolderPicker = {
         .catch(error => {
             console.error('Error browsing local folders:', error);
         });
+    },
+
+    /**
+     * Show a warning when user tries to select an invalid file type
+     * @param {string} fileName - The file that was clicked
+     * @param {string[]} validTypes - Array of valid file extensions
+     */
+    showInvalidFileTypeWarning: function(fileName, validTypes) {
+        // Get the file extension
+        const extension = fileName.split('.').pop().toLowerCase();
+        
+        // Prepare valid extensions list
+        const validExtList = validTypes.map(t => t.toUpperCase()).join(', ');
+        
+        // Create a toast notification instead of a popup
+        const toast = document.createElement('div');
+        toast.className = 'file-toast-notification';
+        toast.innerHTML = `
+            <div class="toast-icon"><i class="fas fa-exclamation-triangle"></i></div>
+            <div class="toast-message">
+                Invalid file type (.${extension.toUpperCase()}). Please select a ${validExtList} file.
+            </div>
+        `;
+        
+        // Add to the modal
+        this.modal.appendChild(toast);
+        
+        // Animate in
+        setTimeout(() => {
+            toast.classList.add('show');
+        }, 10);
+        
+        // Auto-hide after 3 seconds
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+        
+        // Highlight the file-filter banner to draw attention to the filter
+        const filterBanner = this.folderList.querySelector('.file-filter-banner');
+        if (filterBanner) {
+            filterBanner.classList.add('highlight-filter');
+            setTimeout(() => {
+                filterBanner.classList.remove('highlight-filter');
+            }, 1500);
+        }
     }
 };
 

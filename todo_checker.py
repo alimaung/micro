@@ -337,13 +337,37 @@ def scan_for_todos():
         except Exception as e:
             logging.error(f"Error processing file {file_path}: {e}")
     
+    # Check for TODOs that were in previous scan but not in this scan (deleted TODOs)
+    deleted_todos_info = []
+    current_timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+    
+    for todo_id, todo_info in previous_todos.items():
+        if todo_id not in tracked_todos:
+            # This TODO was in the previous scan but not in the current scan, likely deleted
+            logging.info(f"Detected deleted TODO {todo_id} from {todo_info['file']} line {todo_info['line']}")
+            
+            # Add to the list of deleted TODOs to be added to DONE.md
+            deleted_todos_info.append((
+                todo_id,
+                todo_info['file'],
+                todo_info['line'],
+                todo_info['content'],
+                current_timestamp
+            ))
+    
+    # Update the DONE file with deleted TODOs
+    if deleted_todos_info:
+        update_done_file(deleted_todos_info)
+        logging.info(f"Marked {len(deleted_todos_info)} deleted TODOs as completed")
+    
     # NOW check for completed TODOs AFTER the tracking dictionary has been built
     processed, failed = check_completed_todos()
     
     # Update the TODO file AFTER completed TODOs have been processed
     update_todo_file()
     
-    return processed, failed
+    # Return combined results of manual completions and auto-detected deletions
+    return processed + len(deleted_todos_info), failed
 
 def test_remove_todo():
     """Test function to manually remove a completed TODO."""

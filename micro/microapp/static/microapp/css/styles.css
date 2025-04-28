@@ -228,7 +228,7 @@ body {
 
 /* Content area */
 .content {
-    padding: 2rem;
+    padding: 0 2rem 2rem 2rem;
     min-height: calc(100vh - 64px);
     transition: background-color var(--transition-speed) ease, 
                 color var(--transition-speed) ease,

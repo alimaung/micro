@@ -4,7 +4,7 @@
 
 {% load static %}
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'microapp/css/transfer.css' %}">
+    <link rel="stylesheet" href="{% static 'microapp/css/transfer_old.css' %}">
     <link rel="stylesheet" href="{% static 'microapp/css/register/project/folderPicker.css' %}">
 {% endblock %}
 
@@ -36,7 +36,7 @@
                     <div class="form-group">
                         <label for="source-folder">Source Folder</label>
                         <div class="folder-input-container">
-                            <input type="text" id="source-folder" class="form-input" placeholder="Select source folder" readonly disabled>
+                            <input type="text" id="source-folder" class="form-input" placeholder="Select source folder with project files" readonly disabled>
                             <button class="browse-button" id="source-browse-btn">
                                 <i class="fas fa-folder-open"></i>
                                 Browse
@@ -52,12 +52,55 @@
                                 <span class="slider round"></span>
                             </label>
                         </div>
+                        <div class="toggle-group">
+                            <span class="toggle-label">Auto-select final path</span>
+                            <label class="switch">
+                                <input type="checkbox" id="auto-select-path" checked>
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
+                        <div class="toggle-group">
+                            <span class="toggle-label">Auto-find PDF folder</span>
+                            <label class="switch">
+                                <input type="checkbox" id="auto-find-pdf" checked>
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
+                        <div class="toggle-group">
+                            <span class="toggle-label">Auto-find COMList file</span>
+                            <label class="switch">
+                                <input type="checkbox" id="auto-find-comlist" checked>
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
                     </div>
 
                     <div class="form-group">
-                        <label for="destination-folder">Destination Folder</label>
+                        <label for="pdf-folder">PDF Folder (Optional)</label>
                         <div class="folder-input-container">
-                            <input type="text" id="destination-folder" class="form-input" placeholder="Y:\" value="Y:\" readonly disabled>
+                            <input type="text" id="pdf-folder" class="form-input" placeholder="Select folder containing .pdf files" value="" readonly disabled>
+                            <button class="browse-button secondary" id="pdf-browse-btn">
+                                <i class="fas fa-folder-open"></i>
+                                Browse
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="comlist-file">COMList File (Optional)</label>
+                        <div class="folder-input-container">
+                            <input type="text" id="comlist-file" class="form-input" placeholder="Select comlist excel file" value="" readonly disabled>
+                            <button class="browse-button secondary" id="comlist-browse-btn">
+                                <i class="fas fa-file-excel"></i>
+                                Browse
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="destination-folder">Destination Folder (Optional)</label>
+                        <div class="folder-input-container">
+                            <input type="text" id="destination-folder" class="form-input" placeholder="Select destination folder (Default: Y:)" value="" readonly disabled>
                             <button class="browse-button secondary" id="destination-browse-btn">
                                 <i class="fas fa-folder-open"></i>
                                 Browse
@@ -84,22 +127,19 @@
                     <h3><i class="fas fa-info-circle"></i> Project Information</h3>
                 </div>
                 <div class="card-content">
-                    <!-- Source Stats moved here -->
-                    <div class="source-stats" id="source-stats">
-                        <div class="stat-item">
-                            <i class="fas fa-file"></i>
-                            <span class="stat-label">Files:</span>
-                            <span class="stat-value" id="source-file-count">-</span>
-                        </div>
-                        <div class="stat-item">
-                            <i class="fas fa-database"></i>
-                            <span class="stat-label">Size:</span>
-                            <span class="stat-value" id="source-size">-</span>
-                        </div>
-                    </div>
-                    
-                    <!-- Info fields in compact mode -->
+                    <!-- Project Information Card - Reordered fields -->
                     <div class="project-field-container">
+                        <div class="project-field">
+                            <div class="field-label">Source Folder</div>
+                            <div class="field-value-container">
+                                <span class="field-value" id="source-folder-display">Not set</span>
+                                <input type="text" id="source-folder-edit" class="form-input field-edit" placeholder="Source folder path" disabled>
+                                <button class="icon-button edit-field" data-field="source-folder-edit" data-display="source-folder-display">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
                         <div class="project-field">
                             <div class="field-label">Archive ID</div>
                             <div class="field-value-container">
@@ -133,12 +173,54 @@
                             </div>
                         </div>
                         
+                        <!-- Reordered: First PDF folder -->
+                        <div class="project-field">
+                            <div class="field-label">PDF Folder</div>
+                            <div class="field-value-container">
+                                <span class="field-value" id="pdf-folder-display">Not set</span>
+                                <input type="text" id="pdf-folder-edit" class="form-input field-edit" placeholder="PDF folder path" disabled>
+                                <button class="icon-button edit-field" data-field="pdf-folder-edit" data-display="pdf-folder-display">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Then COMList file -->
+                        <div class="project-field">
+                            <div class="field-label">COMList File</div>
+                            <div class="field-value-container">
+                                <span class="field-value" id="comlist-file-display">Not set</span>
+                                <input type="text" id="comlist-file-edit" class="form-input field-edit" placeholder="COMList file path" disabled>
+                                <button class="icon-button edit-field" data-field="comlist-file-edit" data-display="comlist-file-display">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Finally Final Path -->
                         <div class="project-field">
                             <div class="field-label">Final Path</div>
                             <div class="field-value-container">
-                                <span class="field-value" id="destination-path-display">Y:\</span>
-                                <div id="destination-path-preview" style="display: none;">Y:\</div>
+                                <span class="field-value" id="destination-path-display">Not set</span>
+                                <input type="text" id="destination-path-edit" class="form-input field-edit" placeholder="Destination path" disabled>
+                                <button class="icon-button edit-field" data-field="destination-path-edit" data-display="destination-path-display">
+                                    <i class="fas fa-edit"></i>
+                                </button>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Source Stats moved here -->
+                    <div class="source-stats" id="source-stats">
+                        <div class="stat-item">
+                            <i class="fas fa-file"></i>
+                            <span class="stat-label">Files:</span>
+                            <span class="stat-value" id="source-file-count">-</span>
+                        </div>
+                        <div class="stat-item">
+                            <i class="fas fa-database"></i>
+                            <span class="stat-label">Size:</span>
+                            <span class="stat-value" id="source-size">-</span>
                         </div>
                     </div>
                     
@@ -228,5 +310,5 @@
 
 {% block extra_js %}
     <script src="{% static 'microapp/js/register/project/folderPicker.js' %}"></script>
-    <script src="{% static 'microapp/js/transfer.js' %}"></script>
+    <script src="{% static 'microapp/js/transfer_old.js' %}"></script>
 {% endblock %}

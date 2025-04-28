@@ -1,0 +1,95 @@
+<div class="transfer-card locations-card">
+    <div class="card-header">
+        <h3><i class="fas fa-exchange-alt"></i> Transfer Locations</h3>
+    </div>
+    <div class="card-content">
+        <div class="form-group source1">
+            <label for="source-folder">Source Folder</label>
+            <div class="folder-input-container">
+                <input type="text" id="source-folder" class="form-input" placeholder="Select source folder with project files" readonly disabled>
+                <button class="browse-button" id="source-browse-btn">
+                    <i class="fas fa-folder-open"></i>
+                    Browse
+                </button>
+            </div>
+        </div>
+        
+        <div class="option-toggles">
+            <div class="toggle-group">
+                <span class="toggle-label">Auto-parse project information</span>
+                <label class="switch">
+                    <input type="checkbox" id="auto-parse" checked>
+                    <span class="slider round"></span>
+                </label>
+            </div>
+            <div class="toggle-group">
+                <span class="toggle-label">Auto-select final path</span>
+                <label class="switch">
+                    <input type="checkbox" id="auto-select-path" checked>
+                    <span class="slider round"></span>
+                </label>
+            </div>
+            <div class="toggle-group">
+                <span class="toggle-label">Auto-find PDF folder</span>
+                <label class="switch">
+                    <input type="checkbox" id="auto-find-pdf" checked>
+                    <span class="slider round"></span>
+                </label>
+            </div>
+            <div class="toggle-group">
+                <span class="toggle-label">Auto-find COMList file</span>
+                <label class="switch">
+                    <input type="checkbox" id="auto-find-comlist" checked>
+                    <span class="slider round"></span>
+                </label>
+            </div>
+        </div>
+
+        <div class="section-divider">
+        </div>
+
+        <div class="form-group">
+            <label for="pdf-folder">PDF Folder (Optional)</label>
+            <div class="folder-input-container">
+                <input type="text" id="pdf-folder" class="form-input" placeholder="Select folder containing .pdf files" value="" readonly disabled>
+                <button class="browse-button secondary" id="pdf-browse-btn">
+                    <i class="fas fa-folder-open"></i>
+                    Browse
+                </button>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="comlist-file">COMList File (Optional)</label>
+            <div class="folder-input-container">
+                <input type="text" id="comlist-file" class="form-input" placeholder="Select comlist excel file" value="" readonly disabled>
+                <button class="browse-button secondary" id="comlist-browse-btn">
+                    <i class="fas fa-file-excel"></i>
+                    Browse
+                </button>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="destination-folder">Destination Folder (Optional)</label>
+            <div class="folder-input-container">
+                <input type="text" id="destination-folder" class="form-input" placeholder="Select destination folder (Default: Y:)" value="" readonly disabled>
+                <button class="browse-button secondary" id="destination-browse-btn">
+                    <i class="fas fa-folder-open"></i>
+                    Browse
+                </button>
+            </div>
+        </div>
+        
+        <!-- Hidden input for create subfolder, moved from UI but kept for functionality -->
+        <input type="checkbox" id="create-subfolder" checked style="display: none;">
+        
+        <!-- Start Transfer Button -->
+        <div class="card-actions">
+            <button class="action-button primary" id="start-transfer-btn">
+                <i class="fas fa-play"></i>
+                Start Transfer
+            </button>
+        </div>
+    </div>
+</div> 
