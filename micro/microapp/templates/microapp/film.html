@@ -5,19 +5,6 @@
 {% load static %}
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'microapp/css/film.css' %}">
-    <style>
-        /* Critical dark mode overrides to ensure dark mode works */
-        .dark-mode .stat-item {
-            background-color: rgba(255, 255, 255, 0.05) !important;
-            border: 1px solid var(--color-dark-border) !important;
-        }
-        .dark-mode .stat-value {
-            color: var(--color-primary) !important;
-        }
-        .dark-mode .stat-label {
-            color: var(--color-dark-text-light) !important;
-        }
-    </style>
 {% endblock %}
 
 {% block content %}
@@ -450,58 +437,4 @@
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="{% static 'microapp/js/film.js' %}"></script>
-<script>
-    // Script to ensure dark mode variables are properly set
-    document.addEventListener('DOMContentLoaded', function() {
-        // Check if dark mode is already enabled on load
-        if (document.body.classList.contains('dark-mode')) {
-            applyDarkModeToStatItems();
-        }
-        
-        // Add dark mode toggle listener
-        const darkModeToggle = document.getElementById('dark-mode-toggle');
-        if (darkModeToggle) {
-            darkModeToggle.addEventListener('click', function() {
-                // Since the main.js will toggle the class, we need a short delay
-                setTimeout(function() {
-                    applyDarkModeToStatItems();
-                }, 300);
-            });
-        }
-        
-        // Direct dark mode application to stat items
-        function applyDarkModeToStatItems() {
-            const isDark = document.body.classList.contains('dark-mode');
-            const statItems = document.querySelectorAll('.stat-item');
-            
-            statItems.forEach(function(item) {
-                if (isDark) {
-                    item.style.setProperty('background-color', 'rgba(255, 255, 255, 0.05)', 'important');
-                    item.style.setProperty('border', '1px solid #3c4043', 'important');
-                } else {
-                    item.style.removeProperty('background-color');
-                    item.style.removeProperty('border');
-                }
-            });
-            
-            const statValues = document.querySelectorAll('.stat-value');
-            statValues.forEach(function(value) {
-                if (isDark) {
-                    value.style.setProperty('color', '#1a73e8', 'important');
-                } else {
-                    value.style.removeProperty('color');
-                }
-            });
-            
-            const statLabels = document.querySelectorAll('.stat-label');
-            statLabels.forEach(function(label) {
-                if (isDark) {
-                    label.style.setProperty('color', '#bdc1c6', 'important');
-                } else {
-                    label.style.removeProperty('color');
-                }
-            });
-        }
-    });
-</script>
 {% endblock %} 

@@ -10,25 +10,26 @@ from .machine_test import check_machine_power, MachineController
 import serial.tools.list_ports
 import websocket
 import json
+import os
+import win32api, win32con
+import subprocess
+import sys
 
 # Template views
 def home(request):
     return render(request, 'microapp/home.html')
 
+def transfer(request):
+    return render(request, 'microapp/transfer.html')
+
 def register(request):
     return render(request, 'microapp/register/register.html')
-
-def oldregister(request):
-    return render(request, 'microapp/register_old.html')
 
 def film(request):
     return render(request, 'microapp/film.html')
 
 def control(request):
     return render(request, 'microapp/control/control.html')
-
-def oldcontrol(request):
-    return render(request, 'microapp/control_old.html')
 
 def handoff(request):
     return render(request, 'microapp/handoff.html')
@@ -47,6 +48,13 @@ def login(request):
 
 def language(request):
     return render(request, 'microapp/language.html')
+
+# Inactive views
+def oldcontrol(request):
+    return render(request, 'microapp/control_old.html')
+
+def oldregister(request):
+    return render(request, 'microapp/register_old.html')
 
 
 # Utility functions
@@ -101,6 +109,151 @@ def send_esp32_ws_command(command, esp32_host='192.168.1.101', port=81, timeout=
     result = ws.recv()
     ws.close()
     return json.loads(result)
+
+def _folder_is_hidden(p):
+    """Check if a folder is hidden or system in Windows."""
+    try:
+        attribute = win32api.GetFileAttributes(p)
+        return attribute & (win32con.FILE_ATTRIBUTE_HIDDEN | win32con.FILE_ATTRIBUTE_SYSTEM)
+    except:
+        return False
+
+def list_drive_folders(request):
+    if request.method == 'GET':
+        try:
+            # Get the requested path or default to Y: drive
+            path = request.GET.get('path', 'Y:\\')
+            
+            # Ensure the path exists and is a directory
+            if not os.path.exists(path) or not os.path.isdir(path):
+                return JsonResponse({
+                    'error': f'Path does not exist or is not a directory: {path}'
+                }, status=404)
+                
+            # Get only directories, exclude files
+            folders = [f for f in os.listdir(path) 
+                      if os.path.isdir(os.path.join(path, f)) 
+                      and not _folder_is_hidden(os.path.join(path, f))
+                      and not f.startswith('.')]
+                    
+            # Sort folders alphabetically
+            folders.sort()
+            
+            return JsonResponse({
+                'folders': folders,
+                'currentPath': path
+            })
+            
+        except PermissionError:
+            return JsonResponse({
+                'error': 'Permission denied accessing path'
+            }, status=403)
+        except FileNotFoundError:
+            return JsonResponse({
+                'error': 'Path not found'
+            }, status=404)
+        except Exception as e:
+            return JsonResponse({
+                'error': str(e)
+            }, status=500)
+            
+    return JsonResponse({
+        'error': 'Invalid request method'
+    }, status=400)
+
+@csrf_exempt
+def create_folder(request):
+    if request.method == 'POST':
+        try:
+            # Parse the JSON body
+            data = json.loads(request.body)
+            path = data.get('path')
+            folder_name = data.get('folderName')
+            
+            # Validate inputs
+            if not path or not folder_name:
+                return JsonResponse({
+                    'error': 'Path and folder name are required'
+                }, status=400)
+                
+            # Create the full path
+            new_folder_path = os.path.join(path, folder_name)
+            
+            # Check if folder already exists
+            if os.path.exists(new_folder_path):
+                return JsonResponse({
+                    'error': f'Folder "{folder_name}" already exists'
+                }, status=400)
+                
+            # Create the folder
+            os.makedirs(new_folder_path, exist_ok=True)
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'Folder "{folder_name}" created successfully'
+            })
+            
+        except PermissionError:
+            return JsonResponse({
+                'error': 'Permission denied when creating folder'
+            }, status=403)
+        except Exception as e:
+            return JsonResponse({
+                'error': str(e)
+            }, status=500)
+            
+    return JsonResponse({
+        'error': 'Invalid request method'
+    }, status=400)
+
+def browse_local_folders(request):
+    if request.method == 'GET':
+        try:
+            powershell_command = '''
+            Add-Type -AssemblyName System.Windows.Forms
+            $dialog = New-Object System.Windows.Forms.FolderBrowserDialog
+            $dialog.Description = "Select Folder"
+            $dialog.UseDescriptionForTitle = $true
+            $dialog.ShowNewFolderButton = $true
+            $dialog.SelectedPath = "Y:"
+            if ($dialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
+                $dialog.SelectedPath
+            }
+            '''
+            result = subprocess.run(['powershell', '-Command', powershell_command], 
+                                    capture_output=True, text=True)
+            folder_path = result.stdout.strip()
+            return JsonResponse({'path': folder_path if folder_path else ''})
+            
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+
+    return JsonResponse({'error': 'Invalid request method'}, status=400)
+
+def list_drives(request):
+    """List all available drives in the system"""
+    if request.method == 'GET':
+        try:
+            # Get available drives by checking from A to Z
+            drives = []
+            for drive_letter in range(65, 91):  # A to Z
+                drive = f"{chr(drive_letter)}:\\"
+                if os.path.exists(drive):
+                    drives.append(drive)
+            
+            return JsonResponse({
+                'drives': drives
+            })
+            
+        except Exception as e:
+            return JsonResponse({
+                'error': str(e)
+            }, status=500)
+            
+    return JsonResponse({
+        'error': 'Invalid request method'
+    }, status=400)
+
 
 
 # Machine check views (TMCL)
@@ -357,8 +510,6 @@ def esp32_config(request):
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)})
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
-
-
 
 
 

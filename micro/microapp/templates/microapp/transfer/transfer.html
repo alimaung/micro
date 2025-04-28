@@ -1,0 +1,20 @@
+{% extends 'microapp/base.html' %}
+
+{% block title %}Transfer - Microfilm Processing System{% endblock %}
+
+{% load static %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'microapp/css/transfer.css' %}">
+    <link rel="stylesheet" href="{% static 'microapp/css/register/project/folderPicker.css' %}">
+{% endblock %}
+
+
+{% block content %}
+{% include 'microapp/transfer/template.html' %}
+{% include 'microapp/register/project/folderPicker.html' %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'microapp/js/transfer.js' %}"></script>
+<script src="{% static 'microapp/js/register/project/folderPicker.js' %}"></script>
+{% endblock %}

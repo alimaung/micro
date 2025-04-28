@@ -5,5 +5,7 @@ __pycache__/
 *.pyd
 recovery-codes.txt
 
+# .env
+.env
 
 

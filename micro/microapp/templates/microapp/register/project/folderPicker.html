@@ -1,0 +1,58 @@
+<!-- Folder Picker Modal Template -->
+<div class="folder-picker-modal">
+    <div class="folder-picker-content">
+        <div class="folder-picker-header">
+            <h3><span class="modal-title">Select Folder</span></h3>
+            <button class="close-button">&times;</button>
+        </div>
+        
+        <!-- Drive Selection View -->
+        <div class="drive-selection-view">
+            <div class="drive-list"></div>
+        </div>
+        
+        <!-- Folder Selection View -->
+        <div class="folder-selection-view">
+            <div class="folder-selection-header">
+                <button class="back-to-drives" title="Back to Drive Selection">
+                    <i class="fas fa-arrow-left"></i> Back to Drives
+                </button>
+            </div>
+            <div class="breadcrumbs-container"></div>
+            
+            <!-- New Folder Form -->
+            <div class="new-folder-form">
+                <h4>Create New Folder</h4>
+                <div class="path-display"></div>
+                <div class="input-group">
+                    <input type="text" class="folder-name-input" placeholder="Enter folder name">
+                </div>
+                <div class="form-buttons">
+                    <button class="cancel-new-folder">Cancel</button>
+                    <button class="create-folder-btn">Create Folder</button>
+                </div>
+            </div>
+            
+            <div class="folder-picker-body">
+                <div class="folder-list"></div>
+            </div>
+            <div class="folder-list-hint">
+                <i class="fas fa-info-circle"></i> Double-click to open a folder
+            </div>
+        </div>
+        
+        <div class="folder-picker-footer">
+            <div class="drive-view-buttons">
+                <!-- Y: Drive button removed -->
+            </div>
+            <div class="folder-view-buttons">
+                <button class="new-folder-button">
+                    <i class="fas fa-folder-plus"></i> New Folder
+                </button>
+                <button class="browse-local-button">Browse Local Folders</button>
+                <button class="cancel-button">Cancel</button>
+                <button class="select-button" disabled>Select</button>
+            </div>
+        </div>
+    </div>
+</div>

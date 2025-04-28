@@ -6,6 +6,7 @@ from django.views.i18n import JavaScriptCatalog
 urlpatterns = [
     # Active TemplateURLs
     path('', views.home, name='home'),
+    path('transfer/', views.transfer, name='transfer'),
     path('register/', views.register, name='register'),
     path('film/', views.film, name='film'),
     path('control/', views.control, name='control'),
@@ -36,4 +37,10 @@ urlpatterns = [
     path('i18n/', include('django.conf.urls.i18n')),
     path('language/toggle/', views.toggle_language, name='toggle_language'),
     path('jsi18n/', JavaScriptCatalog.as_view(), name='javascript-catalog'),
+        
+    # Drive folders
+    path('list-drive-folders/', views.list_drive_folders, name='list_drive_folders'),
+    path('browse-local-folders/', views.browse_local_folders, name='browse_local_folders'),
+    path('create-folder/', views.create_folder, name='create_folder'),
+    path('list-drives/', views.list_drives, name='list_drives'),
 ]

@@ -1,0 +1,150 @@
+<!-- Step 1: Project Setup Stage -->
+<div class="workflow-step active" id="step-1">
+    <div class="workflow-step-header">
+        <div class="project-content">
+            <h2>Project Setup</h2>
+            <p class="subtitle">Configure the project details and source documents</p>
+        </div>
+            <div class="project-actions">
+                <div class="step-status">
+                    <span class="status-badge initial">
+                        <i class="fas fa-clock"></i>
+                        Awaiting Configuration
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="workflow-cards">
+        <!-- Project Setup Card -->
+        <div class="workflow-card primary-card">
+            <div class="card-header">
+                <h3><i class="fas fa-folder-open"></i> Project Configuration</h3>
+            </div>
+            <div class="card-content">
+                <div class="form-group">
+                    <label for="project-name">Project Name</label>
+                    <input type="text" id="project-name" class="form-input" placeholder="Enter a descriptive project name">
+                </div>
+                
+                <div class="form-group">
+                    <label for="project-folder">Source Folder</label>
+                    <div class="folder-input-container">
+                        <input type="text" id="project-folder" class="form-input" placeholder="Select source documents folder" readonly disabled>
+                        <button class="browse-button">
+                            <i class="fas fa-folder-open"></i>
+                            Browse
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="output-folder">Output Destination (Optional)</label>
+                    <div class="folder-input-container">
+                        <input type="text" id="output-folder" class="form-input" placeholder="Select output destination folder" readonly disabled>
+                        <button class="browse-button">
+                            <i class="fas fa-folder-open"></i>
+                            Browse
+                        </button>
+                    </div>
+                </div>
+
+                <div class="option-toggles">
+                    <div class="toggle-group">
+                        <span class="toggle-label">Enable Debug Mode</span>
+                        <label class="switch">
+                            <input type="checkbox" id="debug-mode">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="toggle-group">
+                        <span class="toggle-label">Retain Source Files</span>
+                        <label class="switch">
+                            <input type="checkbox" id="retain-sources" checked>
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="toggle-group">
+                        <span class="toggle-label">Auto-detect Oversize</span>
+                        <label class="switch">
+                            <input type="checkbox" id="auto-detect" checked>
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <button class="action-button primary" id="validate-project">
+                    <i class="fas fa-check-circle"></i>
+                    Validate Project
+                </button>
+            </div>
+        </div>
+        
+        <!-- Project Details Panel (Previously Output Data Panel) -->
+        <div class="workflow-card details-panel">
+            <div class="card-header with-actions">
+                <h3><i class="fas fa-info-circle"></i> Project Details</h3>
+                <div class="card-actions">
+                    <button class="panel-action" id="toggle-details" title="Toggle details panel">
+                        <i class="fas fa-chevron-up"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-content details-content">
+                <div class="details-grid">
+                    <div class="details-section">
+                        <h4><i class="fas fa-tag"></i> Basic Information</h4>
+                        <div class="detail-item">
+                            <span class="detail-label">Project Name:</span>
+                            <span class="detail-value" id="details-project-name">Not set</span>
+                        </div>
+                    </div>
+                    <div class="details-section">
+                        <h4><i class="fas fa-folder"></i> File Locations</h4>
+                        <div class="detail-item">
+                            <span class="detail-label">Source Folder:</span>
+                            <span class="detail-value" id="details-source-path">Not set</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Output Folder:</span>
+                            <span class="detail-value" id="details-output-path">Not set</span>
+                        </div>
+                    </div>
+                    
+                    <div class="details-section full-width">
+                        <h4><i class="fas fa-cog"></i> Settings</h4>
+                        <div class="settings-grid">
+                            <div class="setting-item">
+                                <i class="fas fa-bug"></i>
+                                <span class="setting-name">Debug Mode</span>
+                                <span class="setting-value" id="details-debug-mode">Off</span>
+                            </div>
+                            <div class="setting-item">
+                                <i class="fas fa-copy"></i>
+                                <span class="setting-name">Retain Sources</span>
+                                <span class="setting-value" id="details-retain-sources">On</span>
+                            </div>
+                            <div class="setting-item">
+                                <i class="fas fa-expand"></i>
+                                <span class="setting-name">Auto-detect Oversize</span>
+                                <span class="setting-value" id="details-auto-detect">On</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="workflow-navigation">
+        <div></div> <!-- Empty space for alignment -->
+        <button class="nav-button next" id="to-step-2" disabled>
+            Continue to Document Analysis
+            <i class="fas fa-arrow-right"></i>
+        </button>
+    </div>
+</div>
