@@ -3,6 +3,8 @@
  * Initializes components and coordinates interactions between modules
  */
 
+// TODOx: Check current saferoom mode and set UI
+
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Initializing microfilm control system...');
     
@@ -92,6 +94,7 @@ document.addEventListener('DOMContentLoaded', function() {
             UIManager.toggleRelayControlsCard();
             // Fetch ESP32 stats and relay states when opening relay controls
             Utils.updateESP32Stats();
+            RelayControls.checkRelayStates();
         });
     }
 

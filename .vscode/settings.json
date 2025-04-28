@@ -3,5 +3,13 @@
     "idf.portWin": "COM18",
     "idf.customExtraVars": {
         "IDF_TARGET": "esp32"
+    },
+    "terminal.integrated.profiles.windows": {
+    "powershell": {
+      "path": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+      "icon": "terminal-powershell", // 🖥️ server icon for Django
+      "color": "terminal.ansiCyan"
     }
+  },
+  "terminal.integrated.defaultProfile.windows": "powershell"
 }

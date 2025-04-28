@@ -56,9 +56,7 @@ class RelayConsumer(AsyncWebsocketConsumer):
                         while True:
                             try:
                                 # Set a short timeout for additional messages
-                                response = await asyncio.wait_for(self.esp32_ws.recv(), timeout=0.2)
-                                # Optionally process or log the response
-                                print(f"Received: {response}")
+                                response = await asyncio.wait_for(self.esp32_ws.recv(), timeout=0.1)
                             except asyncio.TimeoutError:
                                 # No more immediate messages, continue to next command
                                 break
