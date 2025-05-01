@@ -1,0 +1,319 @@
+{% extends "base.html" %}
+
+{% block title %}Folder Transfer Tool{% endblock %}
+
+{% block transfer_active %}active{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Transfer Header -->
+    <div class="transfer-header">
+        <div class="header-content">
+            <h1 data-i18n="transfer_header">Folder Transfer</h1>
+            <p class="subtitle" data-i18n="transfer_subtitle">Import folders from external drives to the target location</p>
+        </div>
+        <div class="transfer-actions">
+            <div class="step-status">
+                <span class="status-badge initial" id="main-status-badge">
+                    <i class="fas fa-clock"></i>
+                    <span data-i18n="status_pending">Pending</span>
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Transfer Card -->
+    <div class="transfer-card">
+        <div class="card-header">
+            <h3>
+                <i class="fas fa-exchange-alt"></i> 
+                <span data-i18n="transfer_wizard">Transfer Wizard</span>
+            </h3>
+            <div class="header-badge">
+                <span class="status-badge initial" id="step-status-badge">
+                    <i class="fas fa-clock"></i>
+                    <span data-i18n="step_indicator">Step</span>&nbsp;<span id="current-step-number">1</span>&nbsp;<span data-i18n="step_of">of</span>&nbsp;4
+                </span>
+            </div>
+        </div>
+        
+        <div class="card-content">
+            <!-- Fixed Width Progress Bar -->
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress" id="progress-bar" style="width: 25%;"></div>
+                </div>
+            </div>
+            
+            <div class="steps-container">
+                <div class="step active" id="step1">
+                    <h2 data-i18n="select_location">Select Location</h2>
+                    <div class="options">
+                        <div class="option-card" data-value="OU">
+                            <div class="icon"><i class="fas fa-building"></i></div>
+                            <div>Oberursel (OU)</div>
+                        </div>
+                        <div class="option-card" data-value="DW">
+                            <div class="icon"><i class="fas fa-industry"></i></div>
+                            <div>Dahlewitz (DW)</div>
+                        </div>
+                    </div>
+                    <div class="buttons">
+                        <div></div>
+                        <button id="nextBtn1" class="primary-btn" disabled>
+                            <i class="fas fa-arrow-right"></i>
+                            <span data-i18n="next">Next</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="step" id="step2">
+                    <h2 data-i18n="select_folder">Select Folders</h2>
+                    <!-- Folder selection controls -->
+                    <div class="folder-controls">
+                        <div class="selection-info">
+                            <span id="selectedCount">0</span> <span data-i18n="folders_selected">folders selected</span>
+                        </div>
+                        <div class="selection-actions">
+                            <button id="selectAllBtn" class="action-btn">
+                                <i class="fas fa-check-square"></i>
+                                <span data-i18n="select_all">Select All</span>
+                            </button>
+                            <button id="clearSelectionBtn" class="action-btn" disabled>
+                                <i class="fas fa-times"></i>
+                                <span data-i18n="clear_selection">Clear Selection</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="folder-grid" id="folderGrid">
+                        <!-- Folder cards will be populated here by JavaScript -->
+                    </div>
+                    <div class="buttons">
+                        <button class="back-btn" id="backBtn2">
+                            <i class="fas fa-arrow-left"></i>
+                            <span data-i18n="back">Back</span>
+                        </button>
+                        <button id="nextBtn2" class="primary-btn" disabled>
+                            <i class="fas fa-arrow-right"></i>
+                            <span data-i18n="next">Next</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="step" id="step3">
+                    <h2 data-i18n="select_target">Select Target Location</h2>
+                    <div class="form-group">
+                        <label for="targetPath" data-i18n="target_path">Target Path</label>
+                        <div class="folder-picker">
+                            <input type="text" class="path-input" id="targetPath" data-i18n-attr="placeholder" data-i18n="target_path_placeholder" placeholder="Enter target path" value="{{ default_target }}">
+                            <button class="browse-btn" id="browseBtn">
+                                <i class="fas fa-folder-open"></i>
+                                <span data-i18n="browse">Browse</span>
+                            </button>
+                        </div>
+                        <div class="warning" id="pathWarning" data-i18n="invalid_path">Invalid path! Please enter an existing directory path.</div>
+                    </div>
+                    <div class="buttons">
+                        <button class="back-btn" id="backBtn3">
+                            <i class="fas fa-arrow-left"></i>
+                            <span data-i18n="back">Back</span>
+                        </button>
+                        <button id="nextBtn3" class="primary-btn" disabled>
+                            <i class="fas fa-arrow-right"></i>
+                            <span data-i18n="next">Next</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="step" id="step4">
+                    <h2 data-i18n="confirm_transfer">Confirm Transfer</h2>
+                    <div id="summary">
+                        <div class="project-field">
+                            <div class="field-label" data-i18n="source_type">Source Type</div>
+                            <div class="field-value" id="summaryType"></div>
+                        </div>
+                        <div class="project-field">
+                            <div class="field-label" data-i18n="source_folders">Source Folders</div>
+                            <div class="field-value" id="summaryFolders">
+                                <!-- Selected folders will be listed here -->
+                                <ul id="selectedFoldersList"></ul>
+                                <div class="folders-count"><span id="summaryFoldersCount">0</span> <span data-i18n="folders_selected_summary">folders selected</span></div>
+                            </div>
+                        </div>
+                        <div class="project-field">
+                            <div class="field-label" data-i18n="target_path_summary">Target Path</div>
+                            <div class="field-value" id="summaryTarget"></div>
+                        </div>
+                    </div>
+                    <div class="buttons">
+                        <button class="back-btn" id="backBtn4">
+                            <i class="fas fa-arrow-left"></i>
+                            <span data-i18n="back">Back</span>
+                        </button>
+                        <button id="transferBtn" class="primary-btn">
+                            <i class="fas fa-exchange-alt"></i>
+                            <span data-i18n="transfer_now">Transfer Now</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Transfer Details Modal -->
+<div id="transferDetailsModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2><i class="fas fa-info-circle"></i> <span data-i18n="transfer_details">Transfer Details</span></h2>
+            <span class="close">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div id="transferResultsSummary"></div>
+            <div id="transferSuccessList"></div>
+            <div id="transferFailedList"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="primary-btn" id="closeDetailsBtn">
+                <i class="fas fa-check"></i>
+                <span data-i18n="close">Close</span>
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    /* Additional styles for multi-selection */
+    .folder-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        padding: 0 10px;
+    }
+    
+    .selection-info {
+        font-size: 14px;
+        color: #666;
+    }
+    
+    .action-btn {
+        background: none;
+        border: 1px solid #ddd;
+        padding: 5px 10px;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-left: 10px;
+        font-size: 13px;
+    }
+    
+    .action-btn:hover {
+        background-color: #f5f5f5;
+    }
+    
+    .folder-card {
+        position: relative;
+    }
+    
+    .folder-checkbox {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+    }
+    
+    .folders-count {
+        margin-top: 10px;
+        font-size: 12px;
+        color: #666;
+    }
+    
+    #selectedFoldersList {
+        margin: 0;
+        padding-left: 20px;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+    
+    #selectedFoldersList li {
+        margin-bottom: 5px;
+    }
+    
+    /* Modal styles */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0,0,0,0.5);
+    }
+    
+    .modal-content {
+        background-color: #fefefe;
+        margin: 10% auto;
+        padding: 0;
+        border-radius: 8px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        width: 80%;
+        max-width: 600px;
+    }
+    
+    .modal-header {
+        padding: 15px 20px;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .modal-header h2 {
+        margin: 0;
+        font-size: 1.4rem;
+    }
+    
+    .modal-body {
+        padding: 20px;
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    
+    .modal-footer {
+        padding: 15px 20px;
+        border-top: 1px solid #eee;
+        text-align: right;
+    }
+    
+    .close {
+        color: #aaa;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    
+    .close:hover {
+        color: #333;
+    }
+    
+    .success-item {
+        color: #28a745;
+        margin-bottom: 8px;
+    }
+    
+    .failed-item {
+        color: #dc3545;
+        margin-bottom: 8px;
+    }
+</style>
+{% endblock %}

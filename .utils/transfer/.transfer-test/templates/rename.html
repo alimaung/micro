@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}File Rename Tool{% endblock %}
+
+{% block rename_active %}active{% endblock %}
+
+
+
+{% block content %}
+<!-- Rename page content begins here -->
+        <div class="container">
+    <!-- Header Section -->
+            <div class="transfer-header">
+                <div class="header-content">
+                    <h1>File Rename Tool</h1>
+            <p class="subtitle">Batch rename files with advanced pattern matching</p>
+                </div>
+            </div>
+
+            <!-- Main Rename Card -->
+            <div class="transfer-card">
+                <div class="card-header">
+                    <h3>
+                        <i class="fas fa-file-signature"></i> 
+                File Renamer
+                    </h3>
+                </div>
+                
+                <div class="card-content">
+                    <!-- Directory Selection -->
+                    <div class="form-group">
+                        <label for="directoryPath">Select Directory with Files to Rename</label>
+                        <div class="folder-picker">
+                            <input type="text" class="path-input" id="directoryPath" placeholder="Enter directory path containing files">
+                            <button class="browse-btn" id="browseDirBtn">
+                                <i class="fas fa-folder-open"></i>
+                                <span>Browse & Load</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Pattern Form -->
+                    <div class="pattern-form" id="patternForm">
+                        <h4>Numbering Scheme</h4>
+                        <div class="rename-example">Enter a starting number to rename files numerically in alphabetical order.</div>
+                        
+                        <div class="form-group">
+                            <div class="input-with-button">
+                                <input type="number" id="startNumber" class="path-input" min="0" placeholder="Enter number to start from...">
+                                <button class="secondary-btn" id="applyNumberBtn">
+                                    <i class="fas fa-check"></i>
+                                    <span>Apply</span>
+                                </button>
+                            </div>
+                            <div class="rename-example">
+                                Leave empty to keep original filenames. Enter a number to rename as 1.ext, 2.ext, 3.ext, etc.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Target Directory -->
+                    <div class="form-group" style="margin-top: 20px;">
+                        <label for="targetPath">Target Directory (where renamed files will be saved)</label>
+                        <div class="rename-example">
+                            All renamed files will be copied to preserve the originals. If left empty, files will be copied to a "renamed" subfolder.
+                        </div>
+                        <div class="folder-picker">
+                            <input type="text" class="path-input" id="targetPath" placeholder="Choose target directory or leave empty for default">
+                            <button class="browse-btn" id="browseTargetBtn">
+                                <i class="fas fa-folder-open"></i>
+                                <span>Browse</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Button Row -->
+                    <div class="buttons-row" style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px;">
+                        <button id="resetBtn" class="danger-btn">
+                            <i class="fas fa-undo"></i>
+                            <span>Reset</span>
+                        </button>
+                        <button id="openFilesBtn" class="warning-btn" style="display: none;">
+                            <i class="fas fa-folder-open"></i>
+                            <span>Open Files</span>
+                        </button>
+                        <button id="renameBtn" class="primary-btn" disabled>
+                            <i class="fas fa-check"></i>
+                            <span>Rename Files</span>
+                        </button>
+                    </div>
+                    
+                    <!-- File List Container -->
+                    <div style="margin-top: 20px;">
+                        <!-- Table Selection Header (hidden initially) -->
+                        <div class="table-header-selection" id="tableSelectionHeader" style="display: none;">
+                            <div class="selection-info">
+                                <span id="selectionDisplayCount" class="selection-count">0</span> of&nbsp;<span id="totalFilesCount">0&nbsp;</span>&nbsp;files selected
+                            </div>
+                            <div class="selection-actions">
+                                <button class="select-all-btn" id="selectAllBtn">Select All</button>
+                                <button class="deselect-all-btn" id="deselectAllBtn">Deselect All</button>
+                            </div>
+                        </div>
+                        
+                        <!-- File List -->
+                        <div class="file-list" id="fileList" style="display: block;">
+                            <!-- File items will be generated here -->
+                            <div class="no-files">
+                                <i class="fas fa-folder-open" style="font-size: 2rem; color: var(--secondary-text-color); margin-bottom: 10px;"></i>
+                                <p>Please select a directory to load files</p>
+                                <p class="small-text">Use the "Browse & Load" button above to select files for renaming</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Loading Indicator -->
+                    <div class="loading-container" id="loadingContainer" style="display: none;">
+                        <div class="spinner"></div>
+                        <p class="loading-text">Processing files, please wait...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+{% endblock %}

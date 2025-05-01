@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}PDF Analysis Tool{% endblock %}
+
+{% block analysis_active %}active{% endblock %}
+
+{% block extra_styles %}
+<!-- Additional Analysis styles if needed -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/analysis.css') }}">
+{% endblock %}
+
+{% block content %}
+<!-- Analysis page content begins here -->
+<div class="container">
+    <!-- Header Section -->
+    <div class="transfer-header">
+        <div class="header-content">
+            <h1>PDF Analysis Tool</h1>
+            <p class="subtitle">Analyze PDF documents for size, DPI, and other properties</p>
+        </div>
+    </div>
+    
+    <!-- Main Analysis Card -->
+    <div class="analysis-card">
+        <div class="card-header">
+            <h3>
+                <i class="fas fa-file-pdf"></i> 
+                PDF Analyzer
+            </h3>
+        </div>
+        
+        <div class="card-content">
+            <!-- Directory Selection with Single Button -->
+            <div class="form-group">
+                <label for="directoryPath">Select Directory with PDFs</label>
+                <div class="folder-picker">
+                    <input type="text" class="path-input" id="directoryPath" placeholder="Enter directory path containing PDFs">
+                    <button class="browse-btn" id="browseDirBtn" type="button" style="background-color: #4285f4; color: white;">
+                        <i class="fas fa-folder-open"></i>
+                        <span>Browse & Analyze</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Loading Indicator -->
+            <div class="loading-container" id="loadingContainer" style="display: none;">
+                <div class="spinner"></div>
+                <p class="loading-text">Analyzing PDFs, please wait...</p>
+            </div>
+            
+            <!-- Results Section -->
+            <div class="analysis-results" id="resultsContainer">
+                <!-- Result Status Card (New) -->
+                <div class="result-status-card" id="resultStatusCard">
+                    <div class="status-icon" id="statusIcon">
+                        <!-- Icon will be dynamically inserted by JavaScript -->
+                    </div>
+                    <div class="status-message" id="statusMessage">
+                        <!-- Message will be dynamically inserted by JavaScript -->
+                    </div>
+                </div>
+                
+                <!-- Stats Cards - Reordered as requested -->
+                <div class="analysis-stats">
+                    <div class="stat-card" title="Total number of PDF files in the directory">
+                        <div class="stat-icon">
+                            <i class="fas fa-file-pdf"></i>
+                        </div>
+                        <div class="stat-value" id="totalFiles">0</div>
+                        <div class="stat-label">Total PDFs</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-copy"></i>
+                        </div>
+                        <div class="stat-value" id="totalPages">0</div>
+                        <div class="stat-label">Total Pages</div>
+                    </div>
+                    
+                    <div class="stat-card" title="Number of PDF files containing oversized pages">
+                        <div class="stat-icon">
+                            <i class="fas fa-file-export"></i>
+                        </div>
+                        <div class="stat-value" id="oversizedFiles" style="color: var(--accent-color);">0</div>
+                        <div class="stat-label">PDFs with Oversized</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="stat-value" id="oversizedPages">0</div>
+                        <div class="stat-label">Oversized Pages</div>
+                    </div>
+                </div>
+                
+                <!-- Chart - Only shown when oversized pages exist -->
+                <div class="analysis-card" id="chartContainer">
+                    <div class="card-header">
+                        <h3>
+                            <i class="fas fa-chart-pie"></i> 
+                            <span>Paper Size Distribution</span>
+                        </h3>
+                    </div>
+                    <div class="card-content">
+                        <div class="chart-container" style="position: relative; height: 300px; width: 100%;">
+                            <canvas id="paperSizeChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Oversized Files Table - Only shown when oversized pages exist -->
+                <div class="analysis-card" id="tableContainer">
+                    <div class="card-header">
+                        <h3>
+                            <i class="fas fa-table"></i> 
+                            <span>Oversized Documents</span>
+                            <small id="oversizedSummary" style="font-weight: normal; margin-left: 10px; font-size: 0.8em;"></small>
+                        </h3>
+                    </div>
+                    <div class="card-content">
+                        <div id="oversizedTableContainer">
+                            <table class="oversized-table" id="oversizedTable">
+                                <thead>
+                                    <tr>
+                                        <th>Filename</th>
+                                        <th>Page Number</th>
+                                        <th>Dimensions</th>
+                                        <th>Paper Size</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="oversizedTableBody">
+                                    <!-- Table rows will be added dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

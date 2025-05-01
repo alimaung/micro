@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Micro Tools{% endblock %}</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" href="{{ url_for('static', filename='img/app-logo.png') }}" type="image/png">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='img/app-logo.png') }}" type="image/png">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/app-logo.png') }}">
+    <meta name="msapplication-TileImage" content="{{ url_for('static', filename='img/app-logo.png') }}">
+    <meta name="msapplication-TileColor" content="#1a73e8">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/transfer.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/analysis.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/rename.css') }}">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    {% block extra_styles %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <!-- Left side - Brand with Logo -->
+        <a href="#" class="navbar-brand">
+            <img id="logo" src="{{ url_for('static', filename='img/logo-light.png') }}" alt="Micro Logo">
+            <span data-i18n="app_name">micro</span>
+        </a>
+        
+        <!-- Middle - Links Section -->
+        <div class="navbar-links">
+            <!-- Transfer Link -->
+            <a href="/transfer" class="{% block transfer_active %}{% endblock %}" title="Transfer Files">
+                <span data-i18n="transfer_link">Transfer</span>
+            </a>
+            <!-- Analysis Link -->
+            <a href="/analysis" class="{% block analysis_active %}{% endblock %}" title="PDF Analysis">
+                <span>Analysis</span>
+            </a>
+            <!-- Rename Link -->
+            <a href="/rename" class="{% block rename_active %}{% endblock %}" title="Rename Files">
+                <span>Rename</span>
+            </a>
+        </div>
+        
+        <!-- Right side - Icons -->
+        <div class="navbar-icons">
+            <!-- Language Toggle -->
+            <a id="lang-toggle" href="#" title="Toggle language">
+                <img id="lang-flag"
+                    src="https://flagcdn.com/20x15/us.png"
+                    srcset="https://flagcdn.com/40x30/us.png 2x, https://flagcdn.com/60x45/us.png 3x"
+                    width="20"
+                    height="15"
+                    alt="EN">
+            </a>
+            
+            <!-- Dark Mode Toggle -->
+            <button id="dark-mode-toggle" title="Toggle Dark Mode">
+                <i id="dark-mode-icon" class="fas fa-moon"></i>
+            </button>
+            
+            <!-- Settings Button -->
+            <a href="#" title="Settings">
+                <i class="fas fa-cog"></i>
+            </a>
+            
+            <!-- Login Button -->
+            <a href="#" title="Login">
+                <i class="fas fa-user"></i>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Content area -->
+    <div class="content">
+        {% block content %}{% endblock %}
+    </div>
+    
+    <div class="notifications-container">
+        <div class="notification" id="notification"></div>
+    </div>
+    
+    <!-- Common Scripts -->
+    {% block scripts %}
+
+    <!-- Internationalization Scripts -->
+    <script src="{{ url_for('static', filename='js/i18n/en.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/i18n/de.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/i18n/i18n.js') }}"></script>
+    
+    <!-- Core functionality -->
+    <script src="{{ url_for('static', filename='js/core.js') }}"></script>
+    
+    <!-- Component Scripts -->
+    <script src="{{ url_for('static', filename='js/transfer.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/analysis.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/rename.js') }}"></script>
+    
+    <!-- Main Application Script -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% endblock %}
+    
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html> 

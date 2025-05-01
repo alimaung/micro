@@ -1,0 +1,1730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Barcode File Manager</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <style>
+        :root {
+            --primary-color: #10069F;
+            --primary-light: #4A3AD0;
+            --primary-dark: #08036B;
+            --secondary-color: #03dac6;
+            --text-on-primary: #ffffff;
+            --text-primary: rgba(0, 0, 0, 0.87);
+            --text-secondary: rgba(0, 0, 0, 0.6);
+            --background: #f5f5f5;
+            --surface: #ffffff;
+            --error: #b00020;
+        }
+
+        .dark-mode {
+            --primary-color: #bb86fc;
+            --primary-light: #efc8ff;
+            --primary-dark: #8858c8;
+            --secondary-color: #03dac6;
+            --text-on-primary: #000000;
+            --text-primary: rgba(255, 255, 255, 0.87);
+            --text-secondary: rgba(255, 255, 255, 0.6);
+            --background: #121212;
+            --surface: #1e1e1e;
+            --error: #cf6679;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--background);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 0;
+            transition: background-color 0.3s ease;
+            display: flex;
+            min-height: 100vh;
+            flex-direction: column;
+        }
+
+        .container {
+            max-width: 1200px;
+            padding: 20px;
+            margin-top: 85px; /* Increased top margin to accommodate floating nav */
+            flex: 1;
+        }
+
+        /* Navigation bar with similar styling to the progress bar */
+        nav {
+            background-color: var(--primary-color);
+            color: var(--text-on-primary);
+            position: fixed;
+            top: 15px;
+            left: 0;
+            right: 0;
+            height: 75px;
+            width: 80%; /* Match progress bar width */
+            margin: 0 auto;
+            z-index: 1000;
+            transition: transform 0.3s ease, top 0.3s ease;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            padding: 0 20px; /* Horizontal padding to match progress bar */
+        }
+
+        .nav-wrapper {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+        }
+
+        .brand-logo {
+            font-size: 2rem !important;
+            position: relative !important;
+            left: 0 !important;
+            transform: none !important;
+            display: flex;
+            align-items: center;
+            padding-left: 10px;
+        }
+
+        .brand-logo i {
+            margin-right: 8px;
+        }
+
+        .nav-hidden {
+            transform: translateY(-100%);
+            top: 0;
+        }
+
+        /* Progress bar hide/show animation */
+        .progress-hidden {
+            transform: translateY(100%);
+            bottom: 0;
+        }
+
+        .card {
+            background-color: var(--surface);
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            transition: box-shadow 0.3s ease, transform 0.3s ease;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .card-content {
+            padding: 20px;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+        }
+
+        /* Section title styling */
+        .section-title {
+            display: flex;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: 500;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+        }
+        
+        .section-title i.material-icons {
+            margin-right: 8px;
+            font-size: 1.6rem;
+        }
+        
+        @media only screen and (max-width: 600px) {
+            .section-title {
+                font-size: 1.3rem;
+            }
+            
+            .section-title i.material-icons {
+                font-size: 1.4rem;
+            }
+        }
+
+        .theme-switch {
+            display: flex;
+            align-items: center;
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: var(--text-on-primary);
+            border-radius: 4px;
+            box-shadow: 0 3px 5px rgba(0, 0, 0, 0.2);
+            padding: 0 16px;
+            height: 36px;
+            line-height: 36px;
+            text-transform: uppercase;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-light);
+        }
+
+        .btn:focus {
+            background-color: var(--primary-dark);
+        }
+
+        .file-path-wrapper {
+            width: 100%;
+        }
+
+        .file-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .file-item {
+            background-color: var(--surface);
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            border-left: 4px solid var(--primary-color);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .file-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.15);
+        }
+
+        .file-original, .file-barcode {
+            word-break: break-all;
+            margin-bottom: 5px;
+        }
+
+        .file-original {
+            font-weight: 500;
+        }
+
+        .file-barcode {
+            color: var(--text-secondary);
+        }
+
+        .material-icons {
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+
+        .progress-section {
+            margin-top: 20px;
+        }
+
+        .progress {
+            background-color: rgba(0, 0, 0, 0.1);
+            border-radius: 4px;
+            height: 8px;
+            margin: 10px 0px;
+            overflow: hidden;
+        }
+
+        .progress .determinate {
+            background-color: var(--primary-color);
+            transition: width 0.3s ease;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            margin: 5px 0;
+        }
+
+        .step-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 10px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: white;
+        }
+
+        input[type="text"], input[type="number"] {
+            background-color: var(--surface);
+            border: 1px solid rgba(0, 0, 0, 0.2);
+            padding: 8px 12px;
+            border-radius: 4px;
+            color: var(--text-primary);
+        }
+
+        .checkbox-container {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            margin: 10px 0;
+        }
+
+        /* Custom checkbox styling */
+        .checkbox-custom {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 2px solid var(--primary-color);
+            border-radius: 3px;
+            margin-right: 8px;
+            position: relative;
+        }
+        
+        input[type="checkbox"]:checked + label .checkbox-custom::after {
+            content: '';
+            position: absolute;
+            left: 4.6px;
+            top: 1px;
+            width: 4px;
+            height: 10px;
+            border: solid var(--primary-color);
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+        
+        /* Center checkmarks in progress bar */
+        .step-icon i.material-icons {
+            font-size: 14px !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+        }
+
+        /* Hide native file input */
+        .file-input {
+            display: none;
+        }
+
+        /* For the file browser button */
+        .file-browser-btn {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* Spinner customization */
+        .spinner-primary-color {
+            border-color: var(--primary-color);
+        }
+        
+        .spinner-primary-color .circle {
+            background-color: var(--primary-color) !important;
+        }
+        
+        /* Folder browser styling */
+        .folder-browser {
+            margin-top: 20px;
+        }
+        
+        .folder-path-navigator {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            background-color: rgba(0, 0, 0, 0.05);
+            padding: 8px;
+            border-radius: 4px;
+        }
+        
+        .current-path {
+            margin-left: 10px;
+            flex-grow: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-family: monospace;
+        }
+        
+        .folder-list-container {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 4px;
+        }
+        
+        .folder-list {
+            margin: 0;
+        }
+        
+        .folder-list .collection-item {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        
+        .folder-list .collection-item:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+        
+        .folder-list .collection-item i {
+            margin-right: 10px;
+            color: var(--primary-color);
+        }
+        
+        /* Theme toggle and settings container */
+        .theme-toggle-container {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            right: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        /* Ultra-simple progress indicators - rebuilt from scratch */
+        .floating-progress {
+            position: fixed;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            width: 80%;
+            margin: 0 auto;
+            background-color: var(--surface);
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            padding: 15px 20px;
+            z-index: 1000;
+            transition: transform 0.3s ease, bottom 0.3s ease;
+        }
+        
+        .floating-progress .progress {
+            height: 10px;
+            border-radius: 5px;
+            background-color: rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        
+        .floating-progress .progress .determinate {
+            background-color: #4CAF50; /* Nice green color */
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+        
+        /* Simple table layout for perfect alignment */
+        .progress-steps {
+            display: table;
+            width: 100%;
+            table-layout: fixed;
+            border-collapse: separate;
+        }
+        
+        .progress-step {
+            display: table-cell;
+            text-align: center;
+            vertical-align: middle;
+            position: relative;
+            padding: 0; /* Ensure no padding */
+        }
+        
+        /* Circle indicator */
+        .step-circle {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background-color: var(--text-secondary);
+            color: white;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            position: relative;
+            z-index: 2;
+            margin: 0 auto 5px; /* Reduced bottom margin */
+        }
+        
+        /* Step label */
+        .step-label {
+            display: block;
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-align: center;
+            margin: 0; /* Ensure no margin */
+            padding: 0; /* Ensure no padding */
+        }
+        
+        /* Step states - only apply to the circles, not the entire step */
+        .step-pending .step-circle {
+            background-color: var(--text-secondary);
+        }
+        
+        .step-success .step-circle {
+            background-color: #4CAF50;
+        }
+        
+        .step-error .step-circle {
+            background-color: var(--error);
+        }
+        
+        .step-active .step-circle {
+            background-color: var(--primary-color);
+        }
+        
+        /* Ensure icons in the steps are white */
+        .step-circle i.material-icons {
+            color: white;
+        }
+        
+        /* Ensure step labels always stay the same color regardless of state */
+        .progress-step .step-label {
+            color: var(--text-secondary) !important;
+        }
+        
+        /* Mobile adjustments */
+        @media only screen and (max-width: 992px) {
+            .floating-progress {
+                width: 90%;
+            }
+            
+            nav {
+                width: 90%;
+            }
+        }
+        
+        @media only screen and (max-width: 600px) {
+            .floating-progress {
+                width: 95%;
+                padding: 10px;
+            }
+            
+            nav {
+                width: 95%;
+                padding: 0 10px;
+            }
+            
+            .floating-progress .progress {
+                height: 8px;
+                margin-bottom: 15px;
+            }
+            
+            .step-circle {
+                width: 20px;
+                height: 20px;
+                font-size: 12px;
+                margin-bottom: 6px;
+            }
+            
+            .step-label {
+                font-size: 10px;
+            }
+        }
+
+        /* Edit barcode button */
+        .edit-barcode-btn {
+            background: transparent;
+            border: none;
+            color: var(--primary-color);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 50%;
+            margin-left: 8px;
+            transition: background-color 0.2s;
+        }
+
+        .edit-barcode-btn:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+
+        .edit-barcode-input {
+            width: 80px;
+            text-align: right;
+            border: 1px solid var(--primary-color);
+            border-radius: 4px;
+            padding: 0 8px;
+            background-color: var(--surface);
+            color: var(--text-primary);
+        }
+
+        /* Clear button */
+        .clear-btn {
+            margin-right: 10px;
+            background-color: #e53935 !important;
+        }
+
+        .clear-btn:hover {
+            background-color: #c62828 !important;
+        }
+        /* Exit button */
+        .exit-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            right: 120px;
+            background-color: #f44336 !important; /* Red color */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2) !important;
+            color: white !important;
+            padding: 0 15px;
+            height: 36px;
+            line-height: 36px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .exit-btn:hover {
+            background-color: #d32f2f !important; /* Darker red on hover */
+        }
+
+        .exit-btn i.material-icons {
+            vertical-align: middle;
+            margin-right: 5px;
+            display: inline-block;
+        }
+        
+        /* Mobile adjustments for exit button */
+        @media only screen and (max-width: 992px) {
+            .exit-btn {
+                right: 110px;
+                padding: 0 10px;
+            }
+        }
+        
+        @media only screen and (max-width: 600px) {
+            .exit-btn {
+                right: 95px;
+                font-size: 0.8rem;
+                padding: 0 5px;
+                height: 32px;
+                line-height: 32px;
+            }
+            
+            .exit-btn i.material-icons {
+                font-size: 16px;
+            }
+        }
+
+        /* File mapping styles */
+        .file-mapping-container {
+            max-height: 350px;
+            overflow-y: auto;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 4px;
+            background-color: var(--surface);
+        }
+        
+        .file-mapping-list {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .file-mapping-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            transition: background-color 0.2s ease;
+        }
+        
+        .file-mapping-item:last-child {
+            border-bottom: none;
+        }
+        
+        .file-mapping-item:hover {
+            background-color: rgba(0, 0, 0, 0.03);
+        }
+        
+        /* Fix checkbox alignment */
+        .file-mapping-item .checkbox-container {
+            min-width: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            height: 30px;
+        }
+        
+        .file-checkbox-label {
+            margin: 0;
+            padding: 0;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        
+        /* File name styling */
+        .file-mapping-item .file-name {
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .file-mapping-item .file-name i {
+            margin-right: 8px;
+            color: var(--primary-color);
+        }
+        
+        .file-mapping-item .barcode {
+            margin-left: 15px;
+            min-width: 80px;
+            text-align: right;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+        }
+        
+        /* Barcode text styling */
+        .file-mapping-item .barcode .barcode-value,
+        .file-mapping-item .barcode .barcode-placeholder {
+            font-weight: 600;
+            margin-right: 20px;
+            color: var(--primary-color);
+        }
+        
+        /* Select all row */
+        #select-all-row {
+            display: flex;
+            padding: 10px 17px;
+            background-color: rgba(0, 0, 0, 0.03);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            font-weight: 500;
+            align-items: center;
+        }
+        
+        /* Add select-all checkbox container to match file items */
+        #select-all-row .checkbox-container {
+            min-width: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            height: 30px;
+        }
+        
+        .select-all-label {
+            display: flex;
+            align-items: center;
+            margin: 0;
+            padding: 0;
+            height: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        
+        .select-count {
+            margin-left: auto;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        /* Custom checkbox styling - simplified */
+        .simple-checkbox {
+            display: flex;
+            align-items: center;
+            margin-right: 20px;
+        }
+        
+        .simple-checkbox input[type="checkbox"] {
+            margin-right: 8px;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        
+        .simple-checkbox label {
+            cursor: pointer;
+        }
+        
+        /* Mobile adjustments for file mapping */
+        @media only screen and (max-width: 600px) {
+            .file-mapping-item {
+                padding: 10px;
+            }
+            
+            .file-mapping-item .file-name {
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Custom toast positioning above progress bar */
+        #toast-container {
+            position: fixed !important;
+            bottom: 150px !important;  /* Position above the progress bar */
+            right: auto !important;
+            top: auto !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            width: fit-content;
+            z-index: 10000 !important; /* Ensure it's above everything */
+            pointer-events: none !important; /* Allow clicks to pass through container */
+        }
+        
+        /* Make toasts centered */
+        #toast-container .toast {
+            width: fit-content;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            pointer-events: auto !important; /* Allow interaction with toast itself */
+        }
+        
+        /* Responsive adjustments */
+        @media only screen and (max-width: 992px) {
+            #toast-container {
+                width: 90% !important;
+            }
+        }
+        
+        @media only screen and (max-width: 600px) {
+            #toast-container {
+                width: 95% !important;
+                bottom: 90px !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-wrapper">
+            <span class="brand-logo"><i class="material-icons">inventory_2</i>Tuong</span>
+            <a href="#" class="btn exit-btn" id="exit-button">
+                <i class="material-icons">exit_to_app</i>Exit
+            </a>
+            <div class="theme-toggle-container" style="right: 15px;">
+                <a href="#" id="settings-button" class="btn-floating btn-small white">
+                    <i class="material-icons" style="color: var(--primary-color);">settings</i>
+                </a>
+                <a href="#" id="theme-toggle" class="btn-floating btn-small white">
+                    <i class="material-icons" style="color: var(--primary-color);">brightness_4</i>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Step 1: Select Source Folder -->
+        <div class="workflow-section">
+            <h2 class="section-title">
+                <i class="material-icons">folder_open</i>1. Select Source Folder
+            </h2>
+            <div class="card">
+                <div class="card-content">
+                    <div class="row" style="margin-bottom: 0; display: flex; align-items: center; flex-wrap: wrap;">
+                        <div class="input-field col s9" style="margin-bottom: 0; margin-top: 0;">
+                            <input class="file-path validate" type="text" id="source-folder-path" placeholder="Select a source folder">
+                        </div>
+                        <div class="input-field col s3" style="display: flex; align-items: center; margin-top: 0; margin-bottom: 0;">
+                            <button class="btn waves-effect waves-light source-folder-btn" style="width: 100%;">
+                                <i class="material-icons left">folder</i>Browse
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Step 2: Configure Mapping -->
+        <div class="workflow-section">
+            <h2 class="section-title">
+                <i class="material-icons">settings</i>2. Configure Mapping
+            </h2>
+            <div class="card">
+                <div class="card-content">
+                    <div class="row" style="margin-bottom: 0; display: flex; align-items: center; flex-wrap: wrap;">
+                        <div class="input-field col s9" style="margin-bottom: 0; margin-top: 0;">
+                            <input id="first-barcode" type="number" class="validate" value="" min="1" placeholder="First Barcode">
+                        </div>
+                        <div class="input-field col s3" style="display: flex; align-items: center; margin-top: 0; margin-bottom: 0;">
+                            <button class="btn waves-effect waves-light" id="generate-mapping-btn" style="width: 100%;">
+                                <i class="material-icons left">refresh</i>Generate
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Step 3: Select Target Folder (moved up) -->
+        <div class="workflow-section">
+            <h2 class="section-title">
+                <i class="material-icons">save</i>3. Select Target Folder
+            </h2>
+            <div class="card">
+                <div class="card-content">
+                    <div class="row" style="margin-bottom: 0; display: flex; align-items: center; flex-wrap: wrap;">
+                        <div class="input-field col s9" style="margin-bottom: 0; margin-top: 0;">
+                            <input class="file-path validate" type="text" id="target-folder-path" placeholder="Select a target folder">
+                        </div>
+                        <div class="input-field col s3" style="display: flex; align-items: center; margin-top: 0; margin-bottom: 0;">
+                            <button class="btn waves-effect waves-light target-folder-btn" style="width: 100%;">
+                                <i class="material-icons left">folder</i>Browse
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 4: Review File Mappings -->
+        <div class="workflow-section">
+            <h2 class="section-title">
+                <i class="material-icons">description</i>4. Review File Mappings
+            </h2>
+            <div class="card">
+                <div class="card-content">
+                    <div class="file-mapping-container">
+                        <ul class="file-mapping-list" id="file-list">
+                            <li class="file-mapping-item non-interactive" id="no-files-message">
+                                <div class="file-name" style="pointer-events: none;">
+                                    <i class="material-icons">info_outline</i>
+                                    No files to display. Select a source folder and generate mapping.
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="row" style="margin-top: 20px;">
+                        <div class="col s12">
+                            <button class="btn waves-effect waves-light right" id="export-button" disabled>
+                                <i class="material-icons left">file_download</i>Export Files
+                            </button>
+                            <button class="btn waves-effect waves-light right view-folder-btn amber darken-2" id="view-folder-button" style="display: none; margin-right: 10px;">
+                                <i class="material-icons left">folder_open</i>View Folder
+                            </button>
+                            <button class="btn waves-effect waves-light right clear-btn" id="clear-button" style="display: none;">
+                                <i class="material-icons left">refresh</i>Clear All
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Extra space to accommodate floating progress bar -->
+        <div style="height: 100px;"></div>
+    </div>
+
+    <!-- Floating Progress Bar (completely rebuilt with table layout) -->
+    <div class="floating-progress">
+        <div class="progress">
+            <div class="determinate" style="width: 0%"></div>
+        </div>
+        <table class="progress-steps">
+            <tr>
+                <td class="progress-step" id="step-source">
+                    <div class="step-circle">1</div>
+                    <span class="step-label">Source</span>
+                </td>
+                <td class="progress-step" id="step-barcode">
+                    <div class="step-circle">2</div>
+                    <span class="step-label">Mapping</span>
+                </td>
+                <td class="progress-step" id="step-target">
+                    <div class="step-circle">3</div>
+                    <span class="step-label">Target</span>
+                </td>
+                <td class="progress-step" id="step-export">
+                    <div class="step-circle">4</div>
+                    <span class="step-label">Export</span>
+                </td>
+            </tr>
+        </table>
+    </div>
+    
+    <!-- Custom toast container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // State variables
+            let sourceFolder = '';
+            let targetFolder = '';
+            let fileMappings = [];
+            let rawFiles = []; // Store raw files before mapping
+            let progress = 0;
+            
+            // Initialize progress bar visibility based on scroll position
+            if ($(window).scrollTop() > 0 && $(window).scrollTop() < 50) {
+                $('.floating-progress').addClass('progress-hidden');
+            }
+            
+            // Configure Materialize toast to use our custom container
+            M.Toast.dismissAll(); // Clear any existing toasts
+            
+            // Override default Materialize toast with our custom implementation
+            const originalToast = M.toast;
+            M.toast = function(options) {
+                // Add our custom container
+                options.containerSelector = '.toast-container';
+                // Make toasts last a bit longer and ensure they have proper styling
+                if (!options.displayLength) options.displayLength = 4000;
+                if (!options.classes) options.classes = 'rounded';
+                
+                // Clean up any existing toasts occasionally to avoid stacking too many
+                if (document.querySelectorAll('.toast-container .toast').length > 3) {
+                    M.Toast.dismissAll();
+                }
+                
+                return originalToast(options);
+            };
+            
+            // Export button click event
+            $('#export-button').click(function() {
+                if (sourceFolder && targetFolder && fileMappings.length > 0) {
+                    exportFiles();
+                } else {
+                    if (!sourceFolder) {
+                        M.toast({html: 'Please select a source folder first', classes: 'red'});
+                    } else if (!targetFolder) {
+                        M.toast({html: 'Please select a target folder first', classes: 'red'});
+                    } else if (fileMappings.length === 0) {
+                        M.toast({html: 'No files to export', classes: 'red'});
+                    }
+                }
+            });
+            
+            // View Folder button click event
+            $('#view-folder-button').click(function() {
+                if (targetFolder) {
+                    openFolderInExplorer(targetFolder);
+                } else {
+                    M.toast({html: 'No target folder selected', classes: 'red'});
+                }
+            });
+            
+            // Function to open folder in Explorer
+            function openFolderInExplorer(folderPath) {
+                $.ajax({
+                    url: '/open_folder',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        folder_path: folderPath
+                    }),
+                    success: function(response) {
+                        if (response.success) {
+                            M.toast({html: 'Opening folder in Explorer', classes: 'green'});
+                        } else {
+                            M.toast({html: response.message || 'Failed to open folder', classes: 'red'});
+                        }
+                    },
+                    error: function() {
+                        M.toast({html: 'Error communicating with the server', classes: 'red'});
+                    }
+                });
+            }
+            
+            // Theme toggle
+            $('#theme-toggle').click(function() {
+                $('body').toggleClass('dark-mode');
+                const isDarkMode = $('body').hasClass('dark-mode');
+                $(this).find('i').text(isDarkMode ? 'brightness_7' : 'brightness_4');
+                
+                // Store preference in localStorage
+                localStorage.setItem('darkMode', isDarkMode);
+            });
+            
+            // Settings button
+            $('#settings-button').click(function() {
+                M.toast({html: 'Settings functionality coming soon!', classes: 'blue'});
+            });
+            
+            // Check for saved theme preference
+            if (localStorage.getItem('darkMode') === 'true') {
+                $('body').addClass('dark-mode');
+                $('#theme-toggle').find('i').text('brightness_7');
+            }
+
+            // Navigation bar hide/show on scroll
+            let lastScrollTop = 0;
+            let progressBarHidden = false; // Track if progress bar was hidden by user scrolling
+            
+            $(window).scroll(function() {
+                const currentScrollTop = $(this).scrollTop();
+                
+                // Determine scroll direction
+                const isScrollingDown = currentScrollTop > lastScrollTop;
+                
+                if (isScrollingDown) {
+                    // Scrolling down
+                    if (currentScrollTop > 50) {
+                        // Hide nav when past threshold
+                        $('nav').addClass('nav-hidden');
+                        // Show progress bar when scrolling down
+                        $('.floating-progress').removeClass('progress-hidden');
+                        progressBarHidden = false;
+                    } else if (lastScrollTop === 0 && currentScrollTop > 0) {
+                        // Special case: Starting to scroll down from the very top
+                        // Initially hide the progress bar
+                        $('.floating-progress').addClass('progress-hidden');
+                        progressBarHidden = true;
+                    }
+                } else {
+                    // Scrolling up
+                    $('nav').removeClass('nav-hidden');
+                    
+                    if (currentScrollTop > 0) {
+                        // When scrolling up (but not at top yet), hide progress bar
+                        $('.floating-progress').addClass('progress-hidden');
+                        progressBarHidden = true;
+                    } else if (currentScrollTop === 0 && progressBarHidden) {
+                        // Keep progress bar hidden when we reach the top if it was already hidden
+                        $('.floating-progress').addClass('progress-hidden');
+                    }
+                }
+                
+                lastScrollTop = currentScrollTop;
+            });
+
+            // Initialize Materialize components
+            $('.tooltipped').tooltip();
+            
+            // Source folder browse button
+            $('.source-folder-btn').click(function() {
+                openNativeDialog('source');
+            });
+            
+            // Target folder browse button
+            $('.target-folder-btn').click(function() {
+                openNativeDialog('target');
+            });
+            
+            // Exit button
+            $('#exit-button').click(function() {
+                if (confirm('Are you sure you want to exit the application?')) {
+                    $.ajax({
+                        url: '/shutdown',
+                        type: 'POST',
+                        success: function() {
+                            window.close();
+                        }
+                    });
+                }
+            });
+            
+            // Opens a native folder dialog through the backend
+            function openNativeDialog(targetType) {
+                // Show loading indicator
+                M.toast({html: 'Opening folder picker...', classes: 'blue'});
+                
+                // Get current path if available
+                let initialDir = null;
+                if (targetType === 'source' && sourceFolder) {
+                    initialDir = sourceFolder;
+                } else if (targetType === 'target') {
+                    // For target folder, use the source folder as initial directory if available
+                    initialDir = sourceFolder || null;
+                }
+                
+                // Call backend to open native dialog
+                $.ajax({
+                    url: '/open_folder_dialog',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        initial_dir: initialDir
+                    }),
+                    success: function(response) {
+                        if (response.success && response.path) {
+                            if (targetType === 'source') {
+                                sourceFolder = response.path;
+                                $('#source-folder-path').val(sourceFolder);
+                                updateStep('step-source', 'success');
+                                
+                                // Automatically load files in the folder
+                                loadFilesOnly();
+                            } else {
+                                targetFolder = response.path;
+                                $('#target-folder-path').val(targetFolder);
+                                updateStep('step-target', 'success');
+                                $('#export-button').prop('disabled', false);
+                                // Also show the view folder button
+                                $('#view-folder-button').show();
+                            }
+                            updateProgress();
+                        } else if (!response.success) {
+                            M.toast({html: response.message || 'No folder selected', classes: 'orange'});
+                        }
+                    },
+                    error: function() {
+                        M.toast({html: 'Error opening folder dialog', classes: 'red'});
+                    }
+                });
+            }
+            
+            // Function to load files only without mapping to barcodes
+            function loadFilesOnly() {
+                // Show loading indicator
+                $('#file-list').html('<li class="center-align"><div class="preloader-wrapper small active" style="margin-top: 20px;"><div class="spinner-layer spinner-primary-color"><div class="circle-clipper left"><div class="circle"></div></div><div class="gap-patch"><div class="circle"></div></div><div class="circle-clipper right"><div class="circle"></div></div></div></div><p>Loading files...</p></li>');
+                
+                // AJAX call to backend to get files
+                $.ajax({
+                    url: '/get_files',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        folder_path: sourceFolder,
+                        first_barcode: 1 // Default value, won't be used for display yet
+                    }),
+                    success: function(response) {
+                        if (response.success) {
+                            rawFiles = response.files;
+                            displayFilesOnly(rawFiles);
+                        } else {
+                            M.toast({html: response.message, classes: 'red'});
+                            $('#file-list').html(`
+                                <li class="file-mapping-item" id="no-files-message">
+                                    <div class="file-name">
+                                        <i class="material-icons">info_outline</i>
+                                        Error loading files: ${response.message}
+                                    </div>
+                                </li>
+                            `);
+                        }
+                    },
+                    error: function() {
+                        M.toast({html: 'Error communicating with the server', classes: 'red'});
+                        $('#file-list').html(`
+                            <li class="file-mapping-item" id="no-files-message">
+                                <div class="file-name">
+                                    <i class="material-icons">info_outline</i>
+                                    Error loading files. Please try again.
+                                </div>
+                            </li>
+                        `);
+                    }
+                });
+            }
+            
+            // Function to display files only (without barcode mapping)
+            function displayFilesOnly(files) {
+                const fileList = $('#file-list');
+                fileList.empty();
+                
+                if (files.length === 0) {
+                    // Show the "no files" message
+                    fileList.html(`
+                        <li class="file-mapping-item" id="no-files-message">
+                            <div class="file-name">
+                                <i class="material-icons">info_outline</i>
+                                No files found in this folder.
+                            </div>
+                        </li>
+                    `);
+                    return;
+                }
+                
+                // Add the select all row as the first item
+                fileList.append(`
+                    <li id="select-all-row">
+                        <input type="checkbox" id="select-all-checkbox" style="display: none;" checked>
+                        <label for="select-all-checkbox" class="select-all-label">
+                            <span class="checkbox-custom"></span>
+                            Select All
+                        </label>
+                        <span class="select-count">${files.length} files found</span>
+                    </li>
+                `);
+                
+                // Display all files without barcodes
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    const fileExt = file.original.split('.').pop().toLowerCase();
+                    let iconClass = 'insert_drive_file';
+                    
+                    // Set icon based on file type
+                    if (fileExt === 'pdf') {
+                        iconClass = 'picture_as_pdf';
+                    } else if (fileExt === 'docx') {
+                        iconClass = 'description';
+                    }
+                    
+                    const fileItem = $(`
+                        <li class="file-mapping-item" data-index="${i}">
+                            <div class="checkbox-container">
+                                <input type="checkbox" id="file-${i}" class="file-checkbox" style="display: none;" checked>
+                                <label for="file-${i}" class="file-checkbox-label">
+                                    <span class="checkbox-custom"></span>
+                                </label>
+                            </div>
+                            <div class="file-name">
+                                <i class="material-icons">${iconClass}</i>
+                                ${file.original}
+                            </div>
+                            <div class="barcode">
+                                <span class="barcode-placeholder">N/A</span>
+                            </div>
+                        </li>
+                    `);
+                    
+                    fileList.append(fileItem);
+                }
+                
+                // Handle checkbox events
+                $('#select-all-checkbox').on('change', function() {
+                    const isChecked = $(this).prop('checked');
+                    $('.file-checkbox').prop('checked', isChecked);
+                    updateSelectedCount();
+                });
+                
+                $('.file-checkbox').on('change', function() {
+                    updateSelectedCount();
+                    // Update select all checkbox state
+                    const allChecked = $('.file-checkbox:checked').length === $('.file-checkbox').length;
+                    $('#select-all-checkbox').prop('checked', allChecked);
+                });
+                
+                // Initialize selected count
+                updateSelectedCount();
+                
+                // Show notification
+                M.toast({html: `Found ${files.length} files. Generate barcodes to continue.`, classes: 'blue'});
+            }
+            
+            // Generate mapping button click
+            $('#generate-mapping-btn').click(function() {
+                if (!sourceFolder) {
+                    M.toast({html: 'Please select a source folder first', classes: 'red'});
+                    return;
+                }
+                
+                if (rawFiles.length === 0) {
+                    loadFilesOnly();
+                    setTimeout(() => {
+                        refreshFileList();
+                    }, 500);
+                } else {
+                    refreshFileList();
+                }
+            });
+            
+            // Clear button click
+            $('#clear-button').click(function() {
+                // Reset variables
+                sourceFolder = '';
+                targetFolder = '';
+                fileMappings = [];
+                rawFiles = [];
+                
+                // Reset UI
+                $('#source-folder-path').val('');
+                $('#target-folder-path').val('');
+                $('#first-barcode').val('');
+                
+                // Reset steps
+                updateStep('step-source', 'pending');
+                updateStep('step-barcode', 'pending');
+                updateStep('step-target', 'pending');
+                updateStep('step-export', 'pending');
+                updateProgress();
+                
+                // Reset file list
+                $('#file-list').html(`
+                    <li class="file-mapping-item" id="no-files-message">
+                        <div class="file-name">
+                            <i class="material-icons">info_outline</i>
+                            No files to display. Select a source folder and generate mapping.
+                        </div>
+                    </li>
+                `);
+                
+                // Disable buttons
+                $('#export-button').prop('disabled', true);
+                $('#clear-button').hide();
+                $('#view-folder-button').hide();
+                
+                M.toast({html: 'All data cleared. Ready to start a new session.', classes: 'blue'});
+            });
+            
+            // Function to refresh file list
+            function refreshFileList() {
+                const firstBarcode = parseInt($('#first-barcode').val()) || 1;
+                
+                // Show loading indicator
+                $('#file-list').html('<li class="center-align"><div class="preloader-wrapper small active" style="margin-top: 20px;"><div class="spinner-layer spinner-primary-color"><div class="circle-clipper left"><div class="circle"></div></div><div class="gap-patch"><div class="circle"></div></div><div class="circle-clipper right"><div class="circle"></div></div></div></div><p>Generating barcodes...</p></li>');
+                
+                // AJAX call to backend to get files
+                $.ajax({
+                    url: '/get_files',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        folder_path: sourceFolder,
+                        first_barcode: firstBarcode
+                    }),
+                    success: function(response) {
+                        if (response.success) {
+                            fileMappings = response.files;
+                            displayFiles(fileMappings);
+                            updateStep('step-barcode', 'success');
+                            if (response.count > 0) {
+                                M.toast({html: `Generated barcodes for ${response.count} files`, classes: 'green'});
+                            } else {
+                                M.toast({html: 'No files found', classes: 'orange'});
+                            }
+                        } else {
+                            M.toast({html: response.message, classes: 'red'});
+                            updateStep('step-barcode', 'error');
+                        }
+                        updateProgress();
+                    },
+                    error: function() {
+                        M.toast({html: 'Error communicating with the server', classes: 'red'});
+                        updateStep('step-barcode', 'error');
+                        updateProgress();
+                    }
+                });
+            }
+            
+            // Function to handle barcode editing - moved outside to prevent duplicate handlers
+            function attachBarcodeEditHandlers() {
+                // Remove any existing handlers first to prevent duplicates
+                $('.edit-barcode-btn').off('click');
+                
+                // Attach handlers to all edit buttons
+                $('.edit-barcode-btn').on('click', function(e) {
+                    // Prevent event bubbling
+                    e.stopPropagation();
+                    
+                    // Don't process if this is a save or cancel button
+                    if ($(this).hasClass('save') || $(this).hasClass('cancel')) {
+                        return;
+                    }
+                    
+                    const index = $(this).data('index');
+                    const currentBarcode = fileMappings[index].barcode;
+                    const barcodeElement = $(this).parent();
+                    const fileObj = fileMappings[index]; // Store reference to the file object
+                    
+                    // Replace display with input
+                    barcodeElement.html(`
+                        <input type="number" class="edit-barcode-input" value="${currentBarcode}" min="1">
+                        <button class="edit-barcode-btn save" data-index="${index}">
+                            <i class="material-icons" style="font-size: 16px; margin: 0;">check</i>
+                        </button>
+                        <button class="edit-barcode-btn cancel" data-index="${index}">
+                            <i class="material-icons" style="font-size: 16px; margin: 0;">close</i>
+                        </button>
+                    `);
+                    
+                    // Focus the input
+                    barcodeElement.find('input').focus();
+                    
+                    // Handle input keypress
+                    barcodeElement.find('input').on('keyup', function(e) {
+                        if (e.key === 'Enter') {
+                            barcodeElement.find('.save').click();
+                        } else if (e.key === 'Escape') {
+                            barcodeElement.find('.cancel').click();
+                        }
+                    });
+                    
+                    // Attach save handler
+                    barcodeElement.find('.save').on('click', function(e) {
+                        e.stopPropagation();
+                        
+                        const newBarcode = parseInt(barcodeElement.find('input').val());
+                        if (newBarcode && newBarcode > 0) {
+                            // Update the barcode in the mapping
+                            fileObj.barcode = newBarcode;
+                            
+                            // Get the file extension from original filename
+                            const extension = fileObj.original.substring(fileObj.original.lastIndexOf('.'));
+                            
+                            // Update the new filename with the new barcode
+                            fileObj.new = `${newBarcode}${extension}`;
+                            
+                            // Restore display
+                            barcodeElement.html(`
+                                <span class="barcode-value">${newBarcode}</span>
+                                <button class="edit-barcode-btn" data-index="${index}">
+                                    <i class="material-icons" style="font-size: 16px; margin: 0;">edit</i>
+                                </button>
+                            `);
+                            
+                            M.toast({html: 'Barcode updated', classes: 'green'});
+                            
+                            // Reattach all handlers
+                            attachBarcodeEditHandlers();
+                        } else {
+                            M.toast({html: 'Invalid barcode value', classes: 'red'});
+                        }
+                    });
+                    
+                    // Attach cancel handler
+                    barcodeElement.find('.cancel').on('click', function(e) {
+                        e.stopPropagation();
+                        
+                        // Restore display
+                        barcodeElement.html(`
+                            <span class="barcode-value">${currentBarcode}</span>
+                            <button class="edit-barcode-btn" data-index="${index}">
+                                <i class="material-icons" style="font-size: 16px; margin: 0;">edit</i>
+                            </button>
+                        `);
+                        
+                        // Reattach all handlers
+                        attachBarcodeEditHandlers();
+                    });
+                });
+            }
+            
+            // Function to display files
+            function displayFiles(files) {
+                const fileList = $('#file-list');
+                fileList.empty();
+                
+                if (files.length === 0) {
+                    // Show the "no files" message
+                    fileList.html(`
+                        <li class="file-mapping-item" id="no-files-message">
+                            <div class="file-name">
+                                <i class="material-icons">info_outline</i>
+                                No files match the current filters.
+                            </div>
+                        </li>
+                    `);
+                    return;
+                }
+                
+                // Add the select all row as the first item
+                fileList.append(`
+                    <li id="select-all-row">
+                        <input type="checkbox" id="select-all-checkbox" style="display: none;" checked>
+                        <label for="select-all-checkbox" class="select-all-label">
+                            <span class="checkbox-custom"></span>
+                            Select All
+                        </label>
+                        <span class="select-count">${files.length} selected</span>
+                    </li>
+                `);
+                
+                // Display all files
+                const displayCount = files.length;
+                
+                for (let i = 0; i < displayCount; i++) {
+                    const file = files[i];
+                    const fileExt = file.original.split('.').pop().toLowerCase();
+                    let iconClass = 'insert_drive_file';
+                    
+                    // Set icon based on file type
+                    if (fileExt === 'pdf') {
+                        iconClass = 'picture_as_pdf';
+                    } else if (fileExt === 'docx') {
+                        iconClass = 'description';
+                    }
+                    
+                    // Add selected property if it doesn't exist
+                    if (file.selected === undefined) {
+                        file.selected = true;
+                    }
+                    
+                    const fileItem = $(`
+                        <li class="file-mapping-item" data-index="${i}">
+                            <div class="checkbox-container">
+                                <input type="checkbox" id="file-${i}" class="file-checkbox" style="display: none;" ${file.selected ? 'checked' : ''}>
+                                <label for="file-${i}" class="file-checkbox-label">
+                                    <span class="checkbox-custom"></span>
+                                </label>
+                            </div>
+                            <div class="file-name">
+                                <i class="material-icons">${iconClass}</i>
+                                ${file.original}
+                            </div>
+                            <div class="barcode">
+                                <span class="barcode-value">${file.barcode}</span>
+                                <button class="edit-barcode-btn" data-index="${i}">
+                                    <i class="material-icons" style="font-size: 16px; margin: 0;">edit</i>
+                                </button>
+                            </div>
+                        </li>
+                    `);
+                    
+                    fileList.append(fileItem);
+                }
+                
+                // Handle individual checkbox changes
+                $('.file-checkbox').on('change', function() {
+                    const index = $(this).closest('.file-mapping-item').data('index');
+                    fileMappings[index].selected = $(this).prop('checked');
+                    updateSelectedCount();
+                    
+                    // Update select all checkbox state
+                    const allChecked = $('.file-checkbox:checked').length === $('.file-checkbox').length;
+                    $('#select-all-checkbox').prop('checked', allChecked);
+                });
+                
+                // Handle select all checkbox
+                $('#select-all-checkbox').on('change', function() {
+                    const isChecked = $(this).prop('checked');
+                    $('.file-checkbox').prop('checked', isChecked);
+                    updateSelectedCount();
+                    
+                    // Update each file's selected status in the data
+                    $('.file-mapping-item').each(function(index) {
+                        if (index < fileMappings.length) {
+                            fileMappings[index].selected = isChecked;
+                        }
+                    });
+                });
+                
+                // Attach edit handlers
+                attachBarcodeEditHandlers();
+                
+                // Initialize selected count
+                updateSelectedCount();
+            }
+            
+            // Function to update the selected count display
+            function updateSelectedCount() {
+                const selectedCount = $('.file-checkbox:checked').length;
+                const totalCount = $('.file-checkbox').length;
+                $('.select-count').text(`${selectedCount} of ${totalCount} selected`);
+            }
+            
+            // Function to export files
+            function exportFiles() {
+                updateStep('step-export', 'active');
+                
+                // Show loading indicator - change determinate to indeterminate
+                const progressBar = $('.floating-progress .progress .determinate');
+                progressBar.addClass('indeterminate').removeClass('determinate');
+                
+                // Filter only selected files for export
+                const selectedFileMappings = fileMappings.filter(file => file.selected);
+                
+                // AJAX call to backend to export files
+                $.ajax({
+                    url: '/export_files',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        source_folder: sourceFolder,
+                        target_folder: targetFolder,
+                        file_mappings: selectedFileMappings
+                    }),
+                    success: function(response) {
+                        // Restore determinate progress bar
+                        $('.floating-progress .progress .indeterminate').addClass('determinate').removeClass('indeterminate');
+                        
+                        if (response.success) {
+                            // Show the clear button after successful export
+                            $('#clear-button').show();
+                            $('#view-folder-button').show();
+                            
+                            if (response.errors && response.errors.length > 0) {
+                                // Some files had errors
+                                const errorMessage = `Exported ${response.exported_files.length} files with ${response.errors.length} errors`;
+                                M.toast({html: errorMessage, classes: 'orange'});
+                                updateStep('step-export', 'success');
+                                
+                                // Create a modal to show errors
+                                const errorListHtml = response.errors.map(error => `<li>${error}</li>`).join('');
+                                const errorModal = $(`
+                                    <div id="error-modal" class="modal">
+                                        <div class="modal-content">
+                                            <h4>Export Completed with Errors</h4>
+                                            <p>The following errors occurred during export:</p>
+                                            <ul class="browser-default">
+                                                ${errorListHtml}
+                                            </ul>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a>
+                                        </div>
+                                    </div>
+                                `);
+                                
+                                $('body').append(errorModal);
+                                const modal = M.Modal.init(document.getElementById('error-modal'));
+                                modal.open();
+                            } else {
+                                M.toast({html: response.message, classes: 'green'});
+                                updateStep('step-export', 'success');
+                            }
+                        } else {
+                            M.toast({html: response.message, classes: 'red'});
+                            updateStep('step-export', 'error');
+                        }
+                        updateProgress();
+                    },
+                    error: function() {
+                        // Restore determinate progress bar
+                        $('.floating-progress .progress .indeterminate').addClass('determinate').removeClass('indeterminate');
+                        M.toast({html: 'Error communicating with the server', classes: 'red'});
+                        updateStep('step-export', 'error');
+                        updateProgress();
+                    }
+                });
+            }
+            
+            // Function to update step state - modified for new structure
+            function updateStep(stepId, state) {
+                const step = $(`#${stepId}`);
+                
+                // Remove all state classes from the progress step
+                step.removeClass('step-pending step-active step-success step-error');
+                
+                // Add the new state class
+                step.addClass(`step-${state}`);
+                
+                // Reset the step label color to make sure it's not inheriting state colors
+                step.find('.step-label').css('color', 'var(--text-secondary)');
+                
+                // If success or error, add a checkmark or X with specific color
+                if (state === 'success') {
+                    step.find('.step-circle').html('<i class="material-icons" style="font-size: 14px; margin: 0; color: white;">check</i>');
+                    step.find('.step-circle').css('background-color', '#4CAF50');
+                } else if (state === 'error') {
+                    step.find('.step-circle').html('<i class="material-icons" style="font-size: 14px; margin: 0; color: white;">close</i>');
+                    step.find('.step-circle').css('background-color', 'var(--error)');
+                } else if (state === 'active') {
+                    step.find('.step-circle').text(step.index() + 1);
+                    step.find('.step-circle').css('background-color', 'var(--primary-color)');
+                } else {
+                    // Reset to number
+                    step.find('.step-circle').text(step.index() + 1);
+                    step.find('.step-circle').css('background-color', 'var(--text-secondary)');
+                }
+                
+                // Force an update of the progress bar
+                updateProgress();
+            }
+            
+            // Function to update progress bar
+            function updateProgress() {
+                // Count completed steps
+                const totalSteps = $('.progress-steps .progress-step').length;
+                const completedSteps = $('.progress-steps .progress-step.step-success').length;
+                
+                // Calculate percentage and make sure it's a number
+                const progressPercentage = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0;
+                
+                // Update the global progress variable
+                progress = progressPercentage;
+                
+                // Ensure we're working with a determinate progress bar
+                const progressBar = $('.floating-progress .progress .determinate');
+                progressBar.removeClass('indeterminate');
+                
+                // Update the width
+                progressBar.css('width', progressPercentage + '%');
+                
+                // Debug info
+                console.log(`Progress: ${progressPercentage}% (${completedSteps}/${totalSteps} steps completed)`);
+            }
+        });
+    </script>
+</body>
+</html>

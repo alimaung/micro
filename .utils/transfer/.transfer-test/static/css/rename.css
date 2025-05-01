@@ -1,0 +1,764 @@
+/* Additional styles for rename page */
+.file-list {
+    max-height: 400px;
+    overflow-y: auto;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    margin-top: 20px;
+}
+
+.file-items {
+    width: 100%;
+    display: table;
+    border-collapse: collapse;
+}
+
+.file-item {
+    display: table-row;
+    transition: background-color 0.2s ease;
+}
+
+.file-item:hover {
+    background-color: var(--hover-bg);
+}
+
+.file-item > div {
+    display: table-cell;
+    padding: 15px;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.file-icon {
+    margin-right: 10px;
+    color: var(--primary-color);
+    font-size: 1.2rem;
+}
+
+.file-info {
+    display: flex;
+    justify-content: space-between;
+}
+
+.file-original {
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+.file-new {
+    color: var(--primary-color);
+    font-family: inherit;
+}
+
+.pattern-form {
+    margin-top: 20px;
+    padding: 20px;
+    background-color: var(--secondary-bg);
+    border-radius: 8px;
+}
+
+.rename-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+@media (max-width: 768px) {
+    .rename-options {
+        grid-template-columns: 1fr;
+    }
+}
+
+.pattern-preview {
+    margin-top: 5px;
+    font-family: monospace;
+    color: var(--secondary-text-color);
+}
+
+.buttons-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.preview-btn {
+    background-color: var(--secondary-color);
+}
+
+.rename-btn {
+    background-color: var(--primary-color);
+}
+
+.no-files {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--secondary-text-color);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.no-files p {
+    margin: 5px 0;
+}
+
+.no-files .small-text {
+    font-size: 0.85rem;
+    opacity: 0.8;
+}
+
+.rename-example {
+    font-size: 0.85rem;
+    color: var(--secondary-text-color);
+    margin-top: 5px;
+}
+
+.badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background-color: var(--secondary-bg);
+    margin-left: 8px;
+}
+
+/* Input with button style */
+.input-with-button {
+    display: flex;
+    gap: 10px;
+}
+
+.input-with-button .path-input {
+    flex-grow: 1;
+}
+
+.secondary-btn {
+    background-color: #f5f5f5;
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+}
+
+.secondary-btn:hover {
+    background-color: #e8e8e8;
+}
+
+.secondary-btn:disabled {
+    background-color: var(--disabled-color, #cccccc);
+    cursor: not-allowed;
+}
+
+/* File list header styling */
+.file-item.header {
+    background-color: var(--secondary-bg);
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.file-item.header > div {
+    text-align: center;
+    padding: 12px 15px;
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.file-number {
+    width: 50px;
+    text-align: center;
+}
+
+.file-checkbox {
+    width: 40px;
+    text-align: center;
+}
+
+.file-actions {
+    width: 70px;
+    text-align: center;
+}
+
+.file-name {
+    width: 42%;
+    text-align: center;
+    font-size: 15px;
+}
+
+.new-name {
+    color: var(--primary-color);
+    font-weight: 600;
+    font-family: inherit;
+}
+
+/* Alternating row colors for better readability */
+.file-item:nth-child(even) {
+    background-color: rgba(0,0,0,0.02);
+}
+
+.file-extension {
+    opacity: 0.6;
+    font-size: 0.95em;
+}
+
+/* Custom checkbox styling */
+.custom-checkbox {
+    position: relative;
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    margin: 0 auto;
+}
+
+.custom-checkbox input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    position: absolute;
+}
+
+.checkmark {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 18px;
+    width: 18px;
+    background-color: #fff;
+    border: 1px solid var(--border-color);
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.custom-checkbox input:checked ~ .checkmark {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.checkmark:after {
+    content: "";
+    position: absolute;
+    display: none;
+}
+
+.custom-checkbox input:checked ~ .checkmark:after {
+    display: block;
+}
+
+.custom-checkbox .checkmark:after {
+    left: 6px;
+    top: 2px;
+    width: 5px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+/* Edit button styling */
+.edit-btn, .action-btn {
+    background: none;
+    border: none;
+    color: var(--secondary-color);
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 5px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.edit-btn:hover, .action-btn:hover {
+    color: var(--primary-color);
+    background-color: rgba(0,0,0,0.05);
+}
+
+.save-btn {
+    color: #4caf50;
+}
+
+.cancel-btn {
+    color: #f44336;
+}
+
+/* Select all checkbox styling */
+.select-all-container {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.select-all-container .custom-checkbox {
+    margin-right: 8px;
+}
+
+.select-all-label {
+    font-size: 0.9rem;
+    color: var(--secondary-text-color);
+    cursor: pointer;
+}
+
+/* Selected file counter */
+.selected-counter {
+    font-size: 0.9rem;
+    color: var(--secondary-text-color);
+    margin-left: auto;
+}
+
+/* Inline edit styling */
+.inline-edit-container {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.inline-edit-input {
+    flex-grow: 1;
+    padding: 5px 8px;
+    border: 1px solid var(--primary-color);
+    border-radius: 4px;
+    font-size: 15px;
+    outline: none;
+}
+
+.inline-edit-actions {
+    display: flex;
+    gap: 2px;
+}
+
+/* Table header selection info */
+.table-header-selection {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background-color: var(--secondary-bg-color);
+    border-radius: 8px 8px 0 0;
+    margin-bottom: 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.selection-info {
+    display: flex;
+    align-items: center;
+    font-size: 0.9rem;
+    color: var(--primary-text-color);
+}
+
+.selection-count {
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-right: 3px;
+}
+
+.selection-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.select-all-btn, .deselect-all-btn {
+    background: none;
+    border: none;
+    color: var(--primary-color);
+    font-size: 0.85rem;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+}
+
+.select-all-btn:hover, .deselect-all-btn:hover {
+    background-color: var(--hover-color);
+}
+
+/* File Table Styles */
+.file-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid var(--border-color);
+    border-radius: 0 0 8px 8px;
+    table-layout: fixed;
+    overflow: hidden;
+}
+
+.file-table thead {
+    background-color: var(--secondary-bg-color);
+}
+
+.file-table th, .file-table td {
+    padding: 12px 16px;
+    vertical-align: middle;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.file-table th {
+    text-align: center;
+    font-weight: 600;
+    color: var(--secondary-text-color);
+    font-size: 0.9rem;
+}
+
+.file-table td {
+    text-align: center;
+    color: var(--primary-text-color);
+}
+
+/* Column widths */
+.checkbox-col, .file-table th:first-child, .file-table td:first-child {
+    width: 48px;
+    text-align: center;
+}
+
+.file-table .actions, .file-table th:last-child, .file-table td:last-child {
+    width: 80px;
+    text-align: center;
+}
+
+/* Set equal widths for the original name and new name columns */
+.file-table th:nth-child(2), .file-table td:nth-child(2),
+.file-table th:nth-child(3), .file-table td:nth-child(3) {
+    width: calc((100% - 128px) / 2);
+}
+
+.file-table tbody tr {
+    border-top: 1px solid var(--border-color);
+    transition: background-color 0.2s ease;
+}
+
+.file-table tbody tr:hover {
+    background-color: var(--hover-color);
+}
+
+.file-table tbody tr.selected {
+    background-color: var(--selected-row-color, rgba(0, 123, 255, 0.05));
+}
+
+/* Custom Checkbox Styles */
+.custom-checkbox {
+    display: inline-block;
+    position: relative;
+    padding-left: 30px;
+    cursor: pointer;
+    user-select: none;
+    height: 20px;
+    width: 20px;
+}
+
+.custom-checkbox input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+.checkmark {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 20px;
+    width: 20px;
+    background-color: var(--input-bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.custom-checkbox:hover .checkmark {
+    background-color: var(--hover-color);
+}
+
+.custom-checkbox input:checked ~ .checkmark {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.checkmark:after {
+    content: "";
+    position: absolute;
+    display: none;
+}
+
+.custom-checkbox input:checked ~ .checkmark:after {
+    display: block;
+}
+
+.custom-checkbox .checkmark:after {
+    left: 7px;
+    top: 3px;
+    width: 5px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+/* Edit Button Styles */
+.edit-btn {
+    background: none;
+    border: none;
+    color: var(--primary-color);
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.edit-btn:hover {
+    background-color: var(--hover-color);
+}
+
+/* Inline Editing Styles */
+.inline-edit-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+
+.inline-edit-input {
+    flex: 1;
+    border: 1px solid var(--primary-color);
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    background-color: var(--input-bg-color);
+    color: var(--primary-text-color);
+    outline: none;
+}
+
+.extension-text {
+    color: var(--secondary-text-color);
+    font-size: 0.9rem;
+}
+
+.inline-edit-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.inline-save-btn, .inline-cancel-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.inline-save-btn {
+    background-color: var(--success-color, #28a745);
+    color: white;
+}
+
+.inline-save-btn:hover {
+    background-color: var(--success-hover-color, #218838);
+}
+
+.inline-cancel-btn {
+    background-color: var(--danger-color, #dc3545);
+    color: white;
+}
+
+.inline-cancel-btn:hover {
+    background-color: var(--danger-hover-color, #c82333);
+}
+
+/* Original/New Name Display */
+.original-name {
+    color: var(--secondary-text-color);
+}
+
+.file-name {
+    font-weight: 500;
+}
+
+/* Unified button styling - base class for all buttons */
+.button-base {
+    border: none;
+    border-radius: 4px;
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.button-base i {
+    font-size: 1rem;
+}
+
+.button-base:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+/* Primary button style (rename-btn) */
+.primary-btn {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.2s ease;
+}
+
+.primary-btn:hover {
+    background-color: var(--primary-hover-color, #0056b3);
+}
+
+.primary-btn:disabled {
+    background-color: var(--disabled-color, #cccccc);
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+/* Danger button style */
+.danger-btn {
+    background-color: var(--danger-color, #dc3545);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.2s ease;
+}
+
+.danger-btn:hover {
+    background-color: var(--danger-hover-color, #c82333);
+}
+
+.danger-btn:disabled {
+    background-color: var(--disabled-color, #cccccc);
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+/* Warning button style */
+.warning-btn {
+    background-color: var(--warning-color, #ffc107);
+    color: #212529;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.2s ease;
+}
+
+.warning-btn:hover {
+    background-color: var(--warning-hover-color, #e0a800);
+}
+
+.warning-btn:disabled {
+    background-color: var(--disabled-color, #cccccc);
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+/* Custom notification styles */
+.micro-notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    max-width: 350px;
+    padding: 15px 20px;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    z-index: 9999;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    opacity: 0;
+    transform: translateY(20px);
+    background-color: white;
+    color: var(--primary-text-color);
+}
+
+.dark-mode .micro-notification {
+    background-color: #333;
+    color: #eee;
+}
+
+.micro-notification.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.micro-notification-icon {
+    font-size: 1.2rem;
+    padding-top: 1px;
+}
+
+.micro-notification-content {
+    flex: 1;
+}
+
+.micro-notification-content p {
+    margin: 0;
+    line-height: 1.4;
+}
+
+.micro-notification-close {
+    background: none;
+    border: none;
+    color: var(--secondary-text-color);
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 0;
+    margin-left: 12px;
+}
+
+.micro-notification-success {
+    border-left: 4px solid var(--success-color, #28a745);
+}
+
+.micro-notification-success .micro-notification-icon {
+    color: var(--success-color, #28a745);
+}
+
+.micro-notification-error {
+    border-left: 4px solid var(--danger-color, #dc3545);
+}
+
+.micro-notification-error .micro-notification-icon {
+    color: var(--danger-color, #dc3545);
+}
+
+.micro-notification-warning {
+    border-left: 4px solid var(--warning-color, #ffc107);
+}
+
+.micro-notification-warning .micro-notification-icon {
+    color: var(--warning-color, #ffc107);
+}
+
+.micro-notification-info {
+    border-left: 4px solid var(--info-color, #17a2b8);
+}
+
+.micro-notification-info .micro-notification-icon {
+    color: var(--info-color, #17a2b8);
+}
