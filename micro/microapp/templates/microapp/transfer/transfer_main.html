@@ -5,7 +5,7 @@
 {% load static %}
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'microapp/css/transfer/transfer.css' %}">
-    <link rel="stylesheet" href="{% static 'microapp/css/register/project/folderPicker.css' %}">
+    <link rel="stylesheet" href="{% static 'microapp/css/common/folderPicker.css' %}">
 {% endblock %}
 
 
@@ -25,12 +25,13 @@
         {% include 'microapp/transfer/transfer_status.html' %}
     </div> 
     <!-- Include the folder picker component -->
-    {% include 'microapp/register/project/folderPicker.html' %}
+    {% include 'microapp/register/project_old/folderPicker.html' %}
 {% endblock %}
 
 {% block extra_js %}
-    <script src="{% static 'microapp/js/register/project/folderPicker.js' %}"></script>
+    <script src="{% static 'microapp/js/common/folderPicker.js' %}"></script>
     <!-- Load refactored transfer modules in order of dependency -->
+    <script src="/static/microapp/js/common/database-service.js"></script>
     <script src="{% static 'microapp/js/transfer/utilities.js' %}"></script>
     <script src="{% static 'microapp/js/transfer/event-manager.js' %}"></script>
     <script src="{% static 'microapp/js/transfer/validation.js' %}"></script>
@@ -39,6 +40,4 @@
     <script src="{% static 'microapp/js/transfer/transfer-ui.js' %}"></script>
     <script src="{% static 'microapp/js/transfer/transfer-core.js' %}"></script>
     <script src="{% static 'microapp/js/transfer/index.js' %}"></script>
-    <!-- Original file - to be removed after refactoring is complete -->
-    <!-- <script src="{% static 'microapp/js/transfer/transfer.js' %}"></script> -->
 {% endblock %}

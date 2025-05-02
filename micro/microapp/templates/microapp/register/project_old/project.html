@@ -1,0 +1,191 @@
+<!-- Step 1: Project Setup Stage -->
+<div class="workflow-step active" id="step-1">
+    <div class="workflow-step-header">
+        <div class="project-content">
+            <h2>Project Setup</h2>
+            <p class="subtitle">Configure the project details and source documents</p>
+        </div>
+        <div class="project-actions">
+            <div class="step-status">
+                <span class="status-badge initial">
+                    <i class="fas fa-clock"></i>
+                    Awaiting Configuration
+                </span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="workflow-cards">
+        <!-- Project Setup Card -->
+        <div class="workflow-card primary-card">
+            <div class="card-header">
+                <h3><i class="fas fa-folder-open"></i> Project Configuration</h3>
+            </div>
+            <div class="card-content">
+                <div class="form-group">
+                    <label for="project-folder">Source Folder</label>
+                    <div class="folder-input-container">
+                        <input type="text" id="project-folder" class="form-input" placeholder="Select source documents folder" readonly disabled>
+                        <button class="browse-button">
+                            <i class="fas fa-folder-open"></i>
+                            Browse
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="output-folder">Output Destination (Optional)</label>
+                    <div class="folder-input-container">
+                        <input type="text" id="output-folder" class="form-input" placeholder="Select output destination folder" readonly disabled>
+                        <button class="browse-button">
+                            <i class="fas fa-folder-open"></i>
+                            Browse
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="pdf-folder">PDF Folder (Optional)</label>
+                    <div class="folder-input-container">
+                        <input type="text" id="pdf-folder" class="form-input" placeholder="Select folder containing .pdf files" readonly disabled>
+                        <button class="browse-button secondary" id="pdf-browse-btn">
+                            <i class="fas fa-folder-open"></i>
+                            Browse
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="comlist-file">COMList File (Optional)</label>
+                    <div class="folder-input-container">
+                        <input type="text" id="comlist-file" class="form-input" placeholder="Select comlist excel file" readonly disabled>
+                        <button class="browse-button secondary" id="comlist-browse-btn">
+                            <i class="fas fa-file-excel"></i>
+                            Browse
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="option-toggles">
+                    <div class="toggle-group">
+                        <span class="toggle-label">Auto-parse project information</span>
+                        <label class="switch">
+                            <input type="checkbox" id="auto-parse" checked>
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <button class="action-button primary" id="validate-project">
+                    <i class="fas fa-check-circle"></i>
+                    Validate Project
+                </button>
+            </div>
+        </div>
+        
+        <!-- Project Information Card (Previously Details Panel) -->
+        <div class="workflow-card project-info-card">
+            <div class="card-header with-actions">
+                <h3><i class="fas fa-info-circle"></i> Project Information</h3>
+                <div class="card-actions">
+                    <button class="panel-action" id="toggle-details" title="Toggle details panel">
+                        <i class="fas fa-chevron-up"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-content details-content">
+                <!-- Hidden input fields for form submission -->
+                <input type="hidden" id="archive-id">
+                <input type="hidden" id="location">
+                <input type="hidden" id="document-type">
+                
+                <!-- Project Information Card -->
+                <div class="project-field-container">
+                    <div class="project-field">
+                        <div class="field-label">Archive ID</div>
+                        <div class="field-value-container">
+                            <span class="field-value" id="details-archive-id">Not set</span>
+                            <input type="text" id="edit-archive-id" class="form-input field-edit" placeholder="e.g., RRD001-2024" disabled>
+                            <button class="icon-button edit-field" data-field="archive-id" data-display="details-archive-id">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="project-field">
+                        <div class="field-label">Location</div>
+                        <div class="field-value-container">
+                            <span class="field-value" id="details-location">Not set</span>
+                            <input type="text" id="edit-location" class="form-input field-edit" placeholder="e.g., OU, DW" disabled>
+                            <button class="icon-button edit-field" data-field="location" data-display="details-location">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="project-field">
+                        <div class="field-label">Document Type</div>
+                        <div class="field-value-container">
+                            <span class="field-value" id="details-document-type">Not set</span>
+                            <input type="text" id="edit-document-type" class="form-input field-edit" placeholder="e.g., Correspondence" disabled>
+                            <button class="icon-button edit-field" data-field="document-type" data-display="details-document-type">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="project-field">
+                        <div class="field-label">Source Folder</div>
+                        <div class="field-value-container">
+                            <span class="field-value" id="details-source-path">Not set</span>
+                        </div>
+                    </div>
+                    
+                    <div class="project-field">
+                        <div class="field-label">Output Folder</div>
+                        <div class="field-value-container">
+                            <span class="field-value" id="details-output-path">Not set</span>
+                        </div>
+                    </div>
+                    
+                    <div class="project-field">
+                        <div class="field-label">PDF Folder</div>
+                        <div class="field-value-container">
+                            <span class="field-value" id="details-pdf-folder">Not set</span>
+                        </div>
+                    </div>
+                    
+                    <div class="project-field">
+                        <div class="field-label">COMList File</div>
+                        <div class="field-value-container">
+                            <span class="field-value" id="details-comlist-file">Not set</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Source Stats -->
+                <div class="source-stats" id="source-stats">
+                    <div class="stat-item">
+                        <i class="fas fa-file"></i>
+                        <span class="stat-label">Files:</span>
+                        <span class="stat-value" id="source-file-count">-</span>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-database"></i>
+                        <span class="stat-label">Size:</span>
+                        <span class="stat-value" id="source-size">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="workflow-navigation">
+        <div></div> <!-- Empty space for alignment -->
+        <button class="nav-button next" id="to-step-2" disabled>
+            Continue to Document Analysis
+            <i class="fas fa-arrow-right"></i>
+        </button>
+    </div>
+</div>

@@ -1,0 +1,225 @@
+<!-- Step 6: Index Generation Stage -->
+<div class="workflow-step" id="step-4">
+    <div class="workflow-step-header">
+        <h2>Index Generation</h2>
+        <div class="step-status">
+            <span id="index-status-badge" class="status-badge pending">
+                <i class="fas fa-clock"></i>
+                Awaiting Allocation
+            </span>
+        </div>
+    </div>
+    
+    <div class="workflow-cards">
+        <!-- Index Generation Card -->
+        <div class="workflow-card primary-card">
+            <div class="card-header">
+                <h3><i class="fas fa-table"></i> Index Generation</h3>
+            </div>
+            <div class="card-content">
+                <div class="index-controls">
+                    <div class="indexing-options">
+                        <div class="option-group">
+                            <label for="index-format">Index Format:</label>
+                            <select id="index-format" class="form-input">
+                                <option value="json">JSON</option>
+                                <option value="csv">CSV (Comma Separated)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="index-fields">
+                        <h4>Index Fields</h4>
+                        <div class="field-options">
+                            <div class="field-option">
+                                <input type="checkbox" id="field-document-id" checked>
+                                <label for="field-document-id">Document ID</label>
+                            </div>
+                            <div class="field-option">
+                                <input type="checkbox" id="field-com-id" checked>
+                                <label for="field-com-id">COM ID</label>
+                            </div>
+                            <div class="field-option">
+                                <input type="checkbox" id="field-roll-id" checked>
+                                <label for="field-roll-id">Roll ID</label>
+                            </div>
+                            <div class="field-option">
+                                <input type="checkbox" id="field-frame-range" checked>
+                                <label for="field-frame-range">Frame Range</label>
+                            </div>
+                            <div class="field-option">
+                                <input type="checkbox" id="field-final-index" checked>
+                                <label for="field-final-index">Final Index</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Progress Bar Section -->
+                <div id="index-progress-container" class="progress-container" style="display: none;">
+                    <div class="progress-label">Generating Index...</div>
+                    <div class="progress-bar-container">
+                        <div id="index-progress-bar" class="progress-bar" style="width: 0%"></div>
+                    </div>
+                    <div id="index-progress-status" class="progress-status">0%</div>
+                </div>
+                
+                <div class="index-preview">
+                    <h4>Index Preview</h4>
+                    <div class="index-table-container">
+                        <table class="index-table data-table">
+                            <thead>
+                                <tr>
+                                    <th>Document ID</th>
+                                    <th>COM ID</th>
+                                    <th>Roll ID</th>
+                                    <th>Frame Range</th>
+                                    <th>Final Index</th>
+                                </tr>
+                            </thead>
+                            <tbody id="index-table-body">
+                                <tr>
+                                    <td colspan="5" class="empty-table">
+                                        <div class="empty-state">
+                                            <i class="fas fa-table"></i>
+                                            <p>Generate the index to see a preview</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="pagination-controls" class="table-pagination">
+                        <button id="prev-page-btn" class="pagination-button" disabled>
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <span id="pagination-info" class="pagination-info">Page 1 of 1</span>
+                        <button id="next-page-btn" class="pagination-button" disabled>
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <button class="action-button primary" id="initialize-index-btn">
+                    <i class="fas fa-file-alt"></i>
+                    Generate Index
+                </button>
+                <button class="action-button secondary" id="export-index-btn" disabled>
+                    <i class="fas fa-download"></i>
+                    Export Index
+                </button>
+            </div>
+        </div>
+        
+        <!-- Project Information Card -->
+        <div class="workflow-card info-card">
+            <div class="card-header">
+                <h3><i class="fas fa-info-circle"></i> Project Information</h3>
+            </div>
+            <div class="card-content">
+                <div class="info-group">
+                    <p id="project-id"><strong>Project ID:</strong> <span>-</span></p>
+                    <p id="archive-id"><strong>Archive ID:</strong> <span>-</span></p>
+                    <p id="document-count"><strong>Document Count:</strong> <span>0</span></p>
+                </div>
+                <div class="info-group">
+                    <h4>Allocated Rolls</h4>
+                    <p id="roll-count-16mm"><strong>16mm Rolls:</strong> <span>0</span></p>
+                    <p id="roll-count-35mm"><strong>35mm Rolls:</strong> <span>0</span></p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Output Data Panel -->
+        <div class="workflow-card data-panel">
+            <div class="card-header with-actions">
+                <h3><i class="fas fa-code"></i> Index Data</h3>
+                <div class="card-actions">
+                    <div class="form-group">
+                        <label for="format-select">Format:</label>
+                        <select id="format-select" class="form-select">
+                            <option value="json">JSON</option>
+                            <option value="csv">CSV</option>
+                        </select>
+                    </div>
+                    <button class="panel-action" id="toggle-index-data">
+                        <i class="fas fa-expand-alt"></i>
+                    </button>
+                    <button class="panel-action" id="copy-index-data">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-content">
+                <pre id="index-data-output" class="data-output">// Index data will appear here after generation</pre>
+            </div>
+        </div>
+    </div>
+    
+    <div class="workflow-navigation">
+        <button class="nav-button back" id="back-to-allocation">
+            <i class="fas fa-arrow-left"></i>
+            Back to Film Allocation
+        </button>
+        <button class="nav-button next" id="to-film-numbering" disabled>
+            Continue to Film Numbering
+            <i class="fas fa-arrow-right"></i>
+        </button>
+    </div>
+</div>
+
+<!-- Export Modal -->
+<div id="export-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Export Index</h2>
+            <button class="modal-close" id="close-export-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="export-filename">Filename</label>
+                <input type="text" id="export-filename" class="form-input" placeholder="index_export">
+            </div>
+            <div class="form-group">
+                <label for="export-format">Format</label>
+                <select id="export-format" class="form-input">
+                    <option value="json">JSON</option>
+                    <option value="csv">CSV</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Fields to Include</label>
+                <div class="field-options">
+                    <div class="field-option">
+                        <input type="checkbox" id="export-field-document-id" checked>
+                        <label for="export-field-document-id">Document ID</label>
+                    </div>
+                    <div class="field-option">
+                        <input type="checkbox" id="export-field-com-id" checked>
+                        <label for="export-field-com-id">COM ID</label>
+                    </div>
+                    <div class="field-option">
+                        <input type="checkbox" id="export-field-roll-id" checked>
+                        <label for="export-field-roll-id">Roll ID</label>
+                    </div>
+                    <div class="field-option">
+                        <input type="checkbox" id="export-field-frame-range" checked>
+                        <label for="export-field-frame-range">Frame Range</label>
+                    </div>
+                    <div class="field-option">
+                        <input type="checkbox" id="export-field-final-index" checked>
+                        <label for="export-field-final-index">Final Index</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="action-button secondary" id="cancel-export">Cancel</button>
+            <button class="action-button primary" id="confirm-export">Export</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Container -->
+<div id="toast-container" class="toast-container"></div>

@@ -4,7 +4,7 @@
 
 {% load static %}
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'microapp/css/explore.css' %}">
+    <link rel="stylesheet" href="{% static 'microapp/css/explore/explore.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -460,5 +460,7 @@
 
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="{% static 'microapp/js/explore.js' %}"></script>
+<script src="{% static 'microapp/js/common/database-service.js' %}"></script>
+<script src="{% static 'microapp/js/explore/explore_details.js' %}"></script>
+<script src="{% static 'microapp/js/explore/explore.js' %}"></script>
 {% endblock %} 

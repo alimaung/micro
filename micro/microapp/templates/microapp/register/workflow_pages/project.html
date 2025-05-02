@@ -1,0 +1,45 @@
+{% extends 'microapp/base.html' %}
+{% csrf_token %}
+
+{% block title %}Project Setup - Microfilm Processing{% endblock %}
+
+{% load static %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'microapp/css/register/register.css' %}">
+    <link rel="stylesheet" href="{% static 'microapp/css/register/progress.css' %}">
+    <link rel="stylesheet" href="{% static 'microapp/css/register/project/project.css' %}">
+    <link rel="stylesheet" href="{% static 'microapp/css/common/folderPicker.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="register-container">
+        {% include 'microapp/register/progress.html' %}
+        
+        <!-- Main Content Area -->
+        <div class="workflow-content">
+            <!-- Include project components which already have their own structure -->
+            {% include 'microapp/register/project/project_main.html' %}
+            {% include 'microapp/register/project/project_status.html' %}
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'microapp/js/register/progress.js' %}"></script>
+    <script src="{% static 'microapp/js/register/register.js' %}"></script>
+    
+    <!-- Script to ensure the step is active -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Save the current step in localStorage
+            const state = JSON.parse(localStorage.getItem('microfilmWorkflowState') || '{}');
+            state.currentStep = 'step-1';
+            localStorage.setItem('microfilmWorkflowState', JSON.stringify(state));
+            
+            // Initialize the progress indicator
+            if (window.progressComponent && typeof window.progressComponent.updateProgress === 'function') {
+                window.progressComponent.updateProgress(0);
+            }
+        });
+    </script>
+{% endblock %} 

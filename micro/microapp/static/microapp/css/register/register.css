@@ -566,3 +566,73 @@ input:checked + .slider:before {
     color: var(--color-dark-text);
     background-color: rgba(255, 255, 255, 0.03);
 }
+
+/* Welcome page specific styles */
+.welcome-content {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.welcome-content h1 {
+    color: var(--primary-color, #3498db);
+    margin-bottom: 1rem;
+}
+
+.workflow-steps-overview {
+    margin: 2rem 0;
+}
+
+.workflow-steps-overview ol {
+    padding-left: 1.5rem;
+}
+
+.workflow-steps-overview li {
+    margin-bottom: 0.5rem;
+}
+
+.action-buttons {
+    margin-top: 2rem;
+    display: flex;
+    gap: 1rem;
+}
+
+.action-buttons .btn {
+    padding: 0.75rem 1.5rem;
+    text-decoration: none;
+    border-radius: 4px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.action-buttons .btn-primary {
+    background-color: var(--primary-color, #3498db);
+    color: white;
+    border: none;
+}
+
+.action-buttons .btn-primary:hover {
+    background-color: var(--primary-color-dark, #2980b9);
+}
+
+.action-buttons .btn-secondary {
+    background-color: var(--secondary-color, #95a5a6);
+    color: white;
+    border: none;
+}
+
+.action-buttons .btn-secondary:hover {
+    background-color: var(--secondary-color-dark, #7f8c8d);
+}
+
+.action-buttons .btn-secondary.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.action-buttons .btn-secondary.disabled:hover {
+    background-color: var(--secondary-color, #95a5a6);
+}

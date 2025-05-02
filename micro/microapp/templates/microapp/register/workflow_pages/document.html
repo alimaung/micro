@@ -1,0 +1,215 @@
+{% extends 'microapp/base.html' %}
+{% csrf_token %}
+
+{% block title %}Document Analysis - Microfilm Processing{% endblock %}
+
+{% load static %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'microapp/css/register/register.css' %}">
+    <link rel="stylesheet" href="{% static 'microapp/css/register/progress.css' %}">
+    <link rel="stylesheet" href="{% static 'microapp/css/register/document/analysis.css' %}">
+    <link rel="stylesheet" href="{% static 'microapp/css/register/document/document-analysis.css' %}">
+    <style>
+        /* Add styles for error message display */
+        .error-message {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 10px 15px;
+            margin-bottom: 15px;
+            border: 1px solid #f5c6cb;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .error-message i {
+            font-size: 1.2em;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="register-container">
+        {% include 'microapp/register/progress.html' %}
+        
+        <!-- Main Content Area -->
+        <div class="workflow-content">
+            <!-- Include the Analysis component which already has a workflow-step div -->
+            {% include 'microapp/register/document/analysis.html' %}
+        </div>
+    </div>
+{% endblock %}
+
+
+{% block extra_js %}
+<!-- Core dependencies -->
+<script src="{% static 'microapp/js/register/progress.js' %}"></script>
+<script src="{% static 'microapp/js/register/register.js' %}"></script>
+
+<!-- Document Analysis Modular Scripts -->
+<script src="{% static 'microapp/js/register/document/analysis-core.js' %}"></script>
+<script src="{% static 'microapp/js/register/document/analysis-ui.js' %}"></script>
+<script src="{% static 'microapp/js/register/document/analysis-data.js' %}"></script>
+<script src="{% static 'microapp/js/register/document/analysis-document-list.js' %}"></script>
+<script src="{% static 'microapp/js/register/document/analysis-workflow.js' %}"></script>
+<script src="{% static 'microapp/js/register/document/analysis-simulation.js' %}"></script>
+<script src="{% static 'microapp/js/register/document/reference-calculation.js' %}"></script>
+<script src="{% static 'microapp/js/register/document/analysis-api.js' %}"></script>
+
+
+<script>
+    // Force global availability of URL parameters function
+    window.initializeDocumentAnalysisParams = function() {
+        // Extract URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const projectId = urlParams.get('id');
+        const mode = urlParams.get('mode') || 'auto';
+        const flow = urlParams.get('flow') || 'standard';
+        const step = urlParams.get('step') || '2';
+        
+        console.log('[Document] Direct URL parameters:', {
+            id: projectId,
+            mode: mode,
+            flow: flow,
+            step: step
+        });
+        
+        // Make sure step-2 div is active
+        document.querySelectorAll('.workflow-step').forEach(step => {
+            step.classList.remove('active');
+        });
+        document.getElementById('step-2').classList.add('active');
+        
+        // Get existing workflow state
+        const workflowState = JSON.parse(localStorage.getItem('microfilmWorkflowState') || '{}');
+        console.log('[Document] Existing workflow state before update:', workflowState);
+        
+        // Only update these parameters if they exist in the URL
+        workflowState.currentStep = 'step-2';
+        
+        // Update processing mode if provided in URL
+        if (urlParams.has('mode')) {
+            workflowState.workflowMode = mode;
+        }
+        
+        // Update flow type if provided in URL
+        if (urlParams.has('flow')) {
+            workflowState.workflowType = flow;
+        } else if (!workflowState.workflowType) {
+            // Set a default if not already set
+            workflowState.workflowType = 'standard';
+        }
+        
+        workflowState.lastModified = Date.now();
+        
+        // Store project ID if available
+        if (projectId) {
+            workflowState.projectId = projectId;
+            console.log(`Project ID stored in workflow state: ${projectId}`);
+        } else {
+            console.warn('No project ID found in URL parameters');
+            
+            // Check if there's a project ID in the existing workflow state
+            if (workflowState.projectId) {
+                console.log(`Using existing project ID from workflow state: ${workflowState.projectId}`);
+            } else {
+                console.error('No project ID found in URL or workflow state');
+                // Show error message to user
+                const errorMsg = document.createElement('div');
+                errorMsg.className = 'error-message';
+                errorMsg.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Error: No project ID found. Please start from the project registration page.';
+                document.querySelector('.workflow-content').prepend(errorMsg);
+            }
+        }
+        
+        localStorage.setItem('microfilmWorkflowState', JSON.stringify(workflowState));
+        console.log('[Document] Updated workflow state:', workflowState);
+        
+        // Make URL parameters available globally
+        window.microfilmUrlParams = { 
+            projectId: projectId, 
+            mode: workflowState.workflowMode, 
+            flow: workflowState.workflowType, 
+            step: step 
+        };
+        console.log('[Document] Global URL parameters set:', window.microfilmUrlParams);
+        
+        return { 
+            projectId: projectId, 
+            mode: workflowState.workflowMode, 
+            flow: workflowState.workflowType, 
+            step: step 
+        };
+    };
+    
+    // Initialize progress component
+    window.initializeProgressComponent = function(mode) {
+        try {
+            if (window.progressComponent) {
+                console.log('Progress component found, initializing...');
+                
+                // Use the new API methods
+                if (typeof window.progressComponent.setActiveStep === 'function') {
+                    console.log('Using setActiveStep method');
+                    window.progressComponent.setActiveStep(1); // Step 2 is index 1
+                } else {
+                    console.error('No valid initialization method found on progress component');
+                }
+                
+                // Update mode with new API
+                if (typeof window.progressComponent.setWorkflowMode === 'function') {
+                    console.log('Setting workflow mode to:', mode);
+                    window.progressComponent.setWorkflowMode(mode);
+                }
+            } else {
+                console.error('Progress component not found');
+                
+                // Attempt to initialize progress component after a delay
+                setTimeout(function() {
+                    if (window.progressComponent) {
+                        console.log('Progress component found after delay, initializing...');
+                        if (typeof window.progressComponent.setActiveStep === 'function') {
+                            window.progressComponent.setActiveStep(1); // Step 2 is index 1
+                            
+                            if (typeof window.progressComponent.setWorkflowMode === 'function') {
+                                console.log('Setting workflow mode to:', mode);
+                                window.progressComponent.setWorkflowMode(mode);
+                            }
+                        }
+                    } else {
+                        console.error('Progress component still not found after delay');
+                    }
+                }, 500);
+            }
+        } catch (error) {
+            console.error('Error initializing progress component:', error);
+        }
+    };
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize URL parameters
+        const { projectId, mode, flow, step } = window.initializeDocumentAnalysisParams();
+        
+        console.log('[Document] Document Analysis Initialization:', { 
+            projectId: projectId, 
+            mode: mode, 
+            flow: flow, 
+            step: step 
+        });
+        
+        // Log the localStorage state after initialization
+        try {
+            const state = JSON.parse(localStorage.getItem('microfilmWorkflowState') || '{}');
+            console.log('[Document] localStorage state after initialization:', state);
+        } catch (e) {
+            console.error('[Document] Error logging localStorage state:', e);
+        }
+        
+        // Initialize progress component
+        window.initializeProgressComponent(mode);
+        
+        // Enable real API if needed
+        window.useRealAPI = false; // Set to true to use actual API endpoints
+    });
+</script>
+{% endblock %}

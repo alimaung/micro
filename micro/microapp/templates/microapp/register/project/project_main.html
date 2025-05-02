@@ -1,0 +1,35 @@
+{% load static %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'microapp/css/register/project/project.css' %}">
+    <link rel="stylesheet" href="{% static 'microapp/css/common/folderPicker.css' %}">
+{% endblock %}
+
+
+{% block content %}
+        {% include 'microapp/register/project/project_header.html' %}
+
+        <div class="transfer-grid main-section">
+            <!-- Location Selection Card -->
+            {% include 'microapp/register/project/project_config.html' %}
+
+            <!-- Project Information Card -->
+            {% include 'microapp/register/project/project_info.html' %}
+        </div>
+    <!-- Include the folder picker component -->
+    {% include 'microapp/common/folderPicker.html' %}
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'microapp/js/common/folderPicker.js' %}"></script>
+    <!-- Load refactored transfer modules in order of dependency -->
+    <script src="/static/microapp/js/common/database-service.js"></script>
+    <script src="{% static 'microapp/js/register/project/utilities.js' %}"></script>
+    <script src="{% static 'microapp/js/register/project/event-manager.js' %}"></script>
+    <script src="{% static 'microapp/js/register/project/validation.js' %}"></script>
+    <script src="{% static 'microapp/js/register/project/api-service.js' %}"></script>
+    <script src="{% static 'microapp/js/register/project/file-finders.js' %}"></script>
+    <script src="{% static 'microapp/js/register/project/project-ui.js' %}"></script>
+    <script src="{% static 'microapp/js/register/project/project-core.js' %}"></script>
+    <script src="{% static 'microapp/js/register/project/index.js' %}"></script>
+
+{% endblock %}

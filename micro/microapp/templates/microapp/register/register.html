@@ -5,11 +5,11 @@
 
 {% load static %}
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'microapp/css/register/project/project.css' %}">
-    <link rel="stylesheet" href="{% static 'microapp/css/register/project/folderPicker.css' %}">
+    <link rel="stylesheet" href="{% static 'microapp/css/common/folderPicker.css' %}">
+
     <link rel="stylesheet" href="{% static 'microapp/css/register/register.css' %}">
-    <link rel="stylesheet" href="{% static 'microapp/css/register/analysis.css' %}">
-    <link rel="stylesheet" href="{% static 'microapp/css/register/workflow.css' %}">
+    <link rel="stylesheet" href="{% static 'microapp/css/register/project/project.css' %}">
+    <link rel="stylesheet" href="{% static 'microapp/css/register/document/analysis.css' %}">
     <link rel="stylesheet" href="{% static 'microapp/css/register/references.css' %}">
     <link rel="stylesheet" href="{% static 'microapp/css/register/allocation.css' %}">
     <link rel="stylesheet" href="{% static 'microapp/css/register/index.css' %}">
@@ -17,6 +17,7 @@
     <link rel="stylesheet" href="{% static 'microapp/css/register/distribution.css' %}">
     <link rel="stylesheet" href="{% static 'microapp/css/register/export.css' %}">
     <link rel="stylesheet" href="{% static 'microapp/css/register/progress.css' %}">
+    <link rel="stylesheet" href="{% static 'microapp/css/register/project/project-info.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -25,10 +26,10 @@
     {% include 'microapp/register/progress.html' %}
     <!-- Main Content Area -->
     <div class="workflow-content">
-        {% include 'microapp/register/project/project.html' %}
-        {% include 'microapp/register/project/folderPicker.html' %}
-        {% include 'microapp/register/analysis.html' %}
-        {% include 'microapp/register/workflow.html' %}
+        {% include 'microapp/common/folderPicker.html' %}
+
+        {% include 'microapp/register/project/project_main.html' %}
+        {% include 'microapp/register/document/analysis.html' %}
         {% include 'microapp/register/references.html' %}
         {% include 'microapp/register/allocation.html' %}
         {% include 'microapp/register/index.html' %}
@@ -43,10 +44,9 @@
 {% block extra_js %}
     <!-- Load component scripts -->
     <script src="{% static 'microapp/js/register/progress.js' %}"></script>
-    <script src="{% static 'microapp/js/register/project/folderPicker.js' %}"></script>
+    <script src="{% static 'microapp/js/common/folderPicker.js' %}"></script>
     <script src="{% static 'microapp/js/register/project/project.js' %}"></script>
-    <script src="{% static 'microapp/js/register/analysis.js' %}"></script>
-    <script src="{% static 'microapp/js/register/workflow.js' %}"></script>
+    <script src="{% static 'microapp/js/register/document/analysis.js' %}"></script>
     <script src="{% static 'microapp/js/register/references.js' %}"></script>
     <script src="{% static 'microapp/js/register/allocation.js' %}"></script>
     <script src="{% static 'microapp/js/register/index.js' %}"></script>

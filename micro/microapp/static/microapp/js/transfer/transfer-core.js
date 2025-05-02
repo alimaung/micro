@@ -13,6 +13,7 @@ window.TransferCore = class TransferCore {
         this.validator = new ValidationService();
         this.apiService = new ApiService();
         this.utils = new Utilities();
+        this.dbService = new DatabaseService();
         
         // Initialize state
         this.state = this.getInitialState();
@@ -62,7 +63,8 @@ window.TransferCore = class TransferCore {
                 autoFindPdfEnabled: true,
                 autoFindComlistEnabled: true,
                 createSubfolderEnabled: true
-            }
+            },
+            addToDatabase: true
         };
     }
     
@@ -153,6 +155,12 @@ window.TransferCore = class TransferCore {
         // COMList file not found by auto-finder
         this.eventManager.subscribe('comlist-file-not-found', (data) => {
             this.handleComlistFileNotFound(data.message, data.error);
+        });
+        
+        // Add to database toggle
+        this.eventManager.subscribe('add-to-database-toggle-changed', (data) => {
+            this.state.addToDatabase = data.checked;
+            this.ui.addLogEntry(`Database storage ${data.checked ? 'enabled' : 'disabled'}`);
         });
     }
     
@@ -629,7 +637,7 @@ window.TransferCore = class TransferCore {
     /**
      * Handle start transfer button clicked
      */
-    handleStartTransferClicked() {
+    async handleStartTransferClicked() {
         // Perform full validation before starting transfer
         const validationResult = this.validator.validateAllRequirements({
             sourceData: this.state.sourceData,
@@ -640,7 +648,32 @@ window.TransferCore = class TransferCore {
         });
         
         if (validationResult.valid) {
-            this.startTransfer();
+            // First save to database, then start transfer
+            if (this.state.addToDatabase) {
+                try {
+                    this.ui.addLogEntry("Saving project to database before transfer...");
+                    const dbResult = await this.saveProjectToDatabase();
+                    
+                    if (dbResult.status === 'success') {
+                        // Store the project ID for future reference
+                        this.state.projectId = dbResult.project_id;
+                        this.ui.showNotification(`Project saved to database (ID: ${dbResult.project_id})`, 'success');
+                        // Now start the transfer
+                        this.startTransfer();
+                    } else {
+                        // Database save failed
+                        this.ui.showNotification('Failed to save project to database. Transfer cancelled.', 'error');
+                        this.ui.updateStatusBadge('error', 'Database save failed', 'both');
+                    }
+                } catch (error) {
+                    console.error('Database save error:', error);
+                    this.ui.showNotification('Error saving to database. Transfer cancelled.', 'error');
+                    this.ui.updateStatusBadge('error', 'Database error', 'both');
+                }
+            } else {
+                // If not saving to database, just start transfer
+                this.startTransfer();
+            }
         } else {
             // Show notification with summary message
             this.ui.showNotification('Transfer cannot start: ' + validationResult.message, 'error');
@@ -686,56 +719,27 @@ window.TransferCore = class TransferCore {
             // Update UI to show transfer is starting
             this.ui.updateTransferStatus('in-progress', 'Transfer in Progress');
             
-            // Call API service to transfer files
+            // Start the actual transfer
             const result = await this.apiService.transferFiles(
                 this.state.sourceData.path,
                 this.state.destinationPath,
                 this.state.sourceData.files,
-                (progress) => this.updateTransferProgress(progress)
+                this.updateTransferProgress.bind(this)
             );
             
-            // Handle successful completion
+            // Handle transfer result
             if (result.status === 'completed') {
+                // Transfer was successful
                 this.finishTransfer('completed');
-                
-                // Add success details to log
-                this.ui.addLogEntry(`Transfer completed: ${result.filesTransferred} files (${this.utils.formatSize(result.bytesTransferred)})`);
-                
-                // Show any errors that occurred during transfer
-                if (result.errors && result.errors.length > 0) {
-                    this.ui.addLogEntry(`Completed with ${result.errors.length} errors or warnings:`);
-                    result.errors.forEach(error => {
-                        this.ui.addLogEntry(`- ${error}`);
-                    });
-                }
             } else if (result.status === 'cancelled') {
                 this.finishTransfer('cancelled');
             } else {
                 this.finishTransfer('error');
-                
-                // Show errors in log
-                if (result.errors && result.errors.length > 0) {
-                    this.ui.addLogEntry(`Transfer failed with ${result.errors.length} errors:`);
-                    result.errors.forEach(error => {
-                        this.ui.addLogEntry(`- ${error}`);
-                    });
-                }
             }
         } catch (error) {
-            console.error('Error during transfer:', error);
-            
-            // Try to extract a meaningful message from the error
-            let errorMessage = 'Transfer failed due to an unexpected error';
-            if (error.message) {
-                errorMessage = `Transfer failed: ${error.message}`;
-            }
-            
-            // Update UI
-            this.ui.addLogEntry(errorMessage);
+            console.error('Process transfer error:', error);
+            this.ui.addLogEntry(`Transfer error: ${error.message}`);
             this.finishTransfer('error');
-            
-            // Show a notification with the error
-            this.ui.showNotification(errorMessage, 'error');
         }
     }
     
@@ -784,33 +788,37 @@ window.TransferCore = class TransferCore {
      * Finish the transfer with a status
      * @param {string} status - Status of the transfer (completed, error, cancelled)
      */
-    finishTransfer(status) {
+    async finishTransfer(status) {
+        // Stop timer if active
+        if (this.transferTimer) {
+            clearInterval(this.transferTimer);
+            this.transferTimer = null;
+        }
+        
+        if (status === 'completed') {
+            this.ui.updateTransferStatus('completed', 'Transfer Complete');
+            this.ui.addLogEntry("Transfer completed successfully");
+            
+            // No database saving here anymore - it's done before transfer
+            
+            // Show completion notification
+            this.ui.showNotification('Transfer completed successfully', 'success');
+        } else if (status === 'cancelled') {
+            this.ui.updateTransferStatus('cancelled', 'Transfer Cancelled');
+            this.ui.addLogEntry("Transfer was cancelled by user");
+            this.ui.showNotification('Transfer cancelled', 'warning');
+        } else {
+            this.ui.updateTransferStatus('error', 'Transfer Failed');
+            this.ui.addLogEntry("Transfer failed with errors");
+            this.ui.showNotification('Transfer failed. Check log for details.', 'error');
+        }
+        
         // Re-enable UI controls
         this.enableUIControls();
         
-        // Update state
-        this.state.transferState.status = status;
-        
-        // Update UI
-        this.ui.updateTransferStatus(status);
-        
-        // Generate appropriate message
-        let message = '';
-        switch (status) {
-            case 'completed':
-                message = 'Transfer completed successfully';
-                break;
-            case 'error':
-                message = 'Transfer failed due to an error';
-                break;
-            case 'cancelled':
-                message = 'Transfer was cancelled';
-                break;
-        }
-        
-        // Add log entry and show notification
-        this.ui.addLogEntry(message);
-        this.ui.showNotification(message, status === 'completed' ? 'success' : 'error');
+        // Update workflow state
+        this.state.transferInProgress = false;
+        this.state.transferComplete = status === 'completed';
     }
     
     /**
@@ -854,5 +862,49 @@ window.TransferCore = class TransferCore {
         
         elements.startTransferBtn.disabled = false;
         elements.cancelTransferBtn.disabled = true;
+    }
+
+    /**
+     * Save the project to database
+     * @returns {Promise<Object>} Database result
+     */
+    async saveProjectToDatabase() {
+        if (!this.state.addToDatabase) {
+            return { status: 'skipped', message: 'Database storage disabled by user' };
+        }
+        
+        try {
+            // Create structured project data from current state
+            const projectData = {
+                archive_id: this.state.projectInfo.archiveId || '',
+                location: this.state.projectInfo.location || '',
+                doc_type: this.state.projectInfo.documentType || '',
+                project_path: this.state.sourceData.path || '',
+                project_folder_name: this.state.sourceData.folderName || '',
+                comlist_path: this.state.projectInfo.comlistPath || null,
+                output_dir: this.state.destinationPath || null,
+                add_to_database: true,
+                
+                // Include processed metadata if available
+                has_pdf_folder: !!this.state.projectInfo.pdfPath,
+                pdf_folder_path: this.state.projectInfo.pdfPath || null,
+            };
+            
+            this.ui.addLogEntry("Saving project to database...");
+            
+            // Use DatabaseService to make the request
+            const result = await this.dbService.createProject(projectData);
+            
+            if (result.status === 'success') {
+                this.ui.addLogEntry(`Project added to database with ID: ${result.project_id}`);
+                return result;
+            } else {
+                this.ui.addLogEntry(`Failed to add project to database: ${result.message}`, 'error');
+                return result;
+            }
+        } catch (error) {
+            this.ui.addLogEntry(`Error adding project to database: ${error.message}`, 'error');
+            return { status: 'error', message: error.message };
+        }
     }
 }

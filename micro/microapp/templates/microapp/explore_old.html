@@ -1,0 +1,464 @@
+{% extends 'microapp/base.html' %}
+
+{% block title %}Explore - Microfilm Processing System{% endblock %}
+
+{% load static %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'microapp/css/explore_old.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="explore-container">
+        <!-- Header section -->
+        <div class="explore-header">
+            <div class="header-content">
+                <h1>Microfilm Database Explorer</h1>
+                <p class="subtitle">Search, filter and analyze your microfilm collection</p>
+            </div>
+            <div class="quick-stats">
+                <div class="stat-item">
+                    <span class="stat-value">{{ total_projects|default:"0" }}</span>
+                    <span class="stat-label">Projects</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">{{ total_rolls|default:"0" }}</span>
+                    <span class="stat-label">Rolls</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">{{ total_documents|default:"0" }}</span>
+                    <span class="stat-label">Documents</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main explorer section -->
+        <div class="explorer-main">
+            <!-- Filter panel -->
+            <div class="filter-panel">
+                <div class="panel-header">
+                    <h2>Filters</h2>
+                    <button id="toggle-advanced" class="toggle-button">
+                        <i class="fas fa-sliders-h"></i>
+                        <span>Advanced</span>
+                    </button>
+                </div>
+                
+                <!-- Entity selection -->
+                <div class="filter-section">
+                    <h3>Entity Type</h3>
+                    <div class="entity-selector">
+                        <div class="entity-option selected" data-entity="projects">
+                            <i class="fas fa-folder"></i>
+                            <span>Projects</span>
+                        </div>
+                        <div class="entity-option" data-entity="rolls">
+                            <i class="fas fa-film"></i>
+                            <span>Rolls</span>
+                        </div>
+                        <div class="entity-option" data-entity="documents">
+                            <i class="fas fa-file-alt"></i>
+                            <span>Documents</span>
+                        </div>
+                        <div class="entity-option" data-entity="temp-rolls">
+                            <i class="fas fa-scroll"></i>
+                            <span>Temp Rolls</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Basic filters -->
+                <div class="filter-section">
+                    <h3>Quick Filters</h3>
+                    <div class="search-box">
+                        <input type="text" id="search-term" placeholder="Search by ID, name, or film number...">
+                        <button id="search-button">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="filter-row">
+                        <label for="date-range">Date Range:</label>
+                        <div class="date-inputs">
+                            <input type="date" id="date-from" placeholder="From">
+                            <input type="date" id="date-to" placeholder="To">
+                        </div>
+                    </div>
+                    
+                    <div id="projects-filters" class="entity-filters active">
+                        <div class="filter-row">
+                            <label for="doc-type">Document Type:</label>
+                            <select id="doc-type">
+                                <option value="">All Types</option>
+                                <option value="archive">Archive</option>
+                                <option value="document">Document</option>
+                                <option value="book">Book</option>
+                                <option value="newspaper">Newspaper</option>
+                            </select>
+                        </div>
+                        <div class="filter-row">
+                            <label for="location">Location:</label>
+                            <select id="location">
+                                <option value="">All Locations</option>
+                                <option value="main-archive">Main Archive</option>
+                                <option value="satellite-office">Satellite Office</option>
+                                <option value="remote-storage">Remote Storage</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div id="rolls-filters" class="entity-filters">
+                        <div class="filter-row">
+                            <label for="film-type">Film Type:</label>
+                            <select id="film-type">
+                                <option value="">All Types</option>
+                                <option value="16mm">16mm</option>
+                                <option value="35mm">35mm</option>
+                            </select>
+                        </div>
+                        <div class="filter-row">
+                            <label for="roll-status">Status:</label>
+                            <select id="roll-status">
+                                <option value="">All Statuses</option>
+                                <option value="available">Available</option>
+                                <option value="in-use">In Use</option>
+                                <option value="complete">Complete</option>
+                                <option value="archived">Archived</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div id="documents-filters" class="entity-filters">
+                        <div class="filter-row">
+                            <label for="oversized">Size:</label>
+                            <select id="oversized">
+                                <option value="">All Sizes</option>
+                                <option value="1">Oversized</option>
+                                <option value="0">Standard</option>
+                            </select>
+                        </div>
+                        <div class="filter-row">
+                            <label for="blip-type">Blip Type:</label>
+                            <select id="blip-type">
+                                <option value="">All Types</option>
+                                <option value="16mm">16mm</option>
+                                <option value="35mm">35mm</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div id="temp-rolls-filters" class="entity-filters">
+                        <div class="filter-row">
+                            <label for="temp-film-type">Film Type:</label>
+                            <select id="temp-film-type">
+                                <option value="">All Types</option>
+                                <option value="16mm">16mm</option>
+                                <option value="35mm">35mm</option>
+                            </select>
+                        </div>
+                        <div class="filter-row">
+                            <label for="temp-roll-status">Status:</label>
+                            <select id="temp-roll-status">
+                                <option value="">All Statuses</option>
+                                <option value="available">Available</option>
+                                <option value="used">Used</option>
+                                <option value="reserved">Reserved</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Advanced filters -->
+                <div id="advanced-filters" class="filter-section advanced-section">
+                    <h3>Advanced Filters</h3>
+                    
+                    <div class="advanced-filter-group">
+                        <div class="filter-builder">
+                            <div class="filter-condition">
+                                <select class="condition-field">
+                                    <option value="">Select field</option>
+                                    <optgroup label="Projects">
+                                        <option value="project_id">Project ID</option>
+                                        <option value="archive_id">Archive ID</option>
+                                        <option value="total_pages">Total Pages</option>
+                                        <option value="oversized">Oversized</option>
+                                    </optgroup>
+                                    <optgroup label="Rolls">
+                                        <option value="film_number">Film Number</option>
+                                        <option value="capacity">Capacity</option>
+                                        <option value="pages_used">Pages Used</option>
+                                        <option value="pages_remaining">Pages Remaining</option>
+                                    </optgroup>
+                                    <optgroup label="Documents">
+                                        <option value="document_name">Document Name</option>
+                                        <option value="com_id">COM ID</option>
+                                        <option value="blip">Blip</option>
+                                    </optgroup>
+                                </select>
+                                
+                                <select class="condition-operator">
+                                    <option value="equals">equals</option>
+                                    <option value="not_equals">not equals</option>
+                                    <option value="greater_than">greater than</option>
+                                    <option value="less_than">less than</option>
+                                    <option value="contains">contains</option>
+                                    <option value="starts_with">starts with</option>
+                                    <option value="ends_with">ends with</option>
+                                </select>
+                                
+                                <input type="text" class="condition-value" placeholder="Value">
+                                
+                                <button class="remove-condition">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <button id="add-condition" class="add-button">
+                            <i class="fas fa-plus"></i> Add Condition
+                        </button>
+                        
+                        <div class="filter-join">
+                            <span>Join conditions with:</span>
+                            <div class="join-options">
+                                <label class="join-option">
+                                    <input type="radio" name="join-type" value="AND" checked>
+                                    <span>AND</span>
+                                </label>
+                                <label class="join-option">
+                                    <input type="radio" name="join-type" value="OR">
+                                    <span>OR</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="custom-sql">
+                        <h4>Custom SQL Query</h4>
+                        <textarea id="sql-query" placeholder="SELECT * FROM Projects WHERE ..."></textarea>
+                        <div class="sql-controls">
+                            <button id="validate-sql" class="secondary-button">
+                                <i class="fas fa-check-circle"></i> Validate
+                            </button>
+                            <button id="run-sql" class="primary-button">
+                                <i class="fas fa-play"></i> Run Query
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Apply filters section -->
+                <div class="filter-actions">
+                    <button id="reset-filters" class="secondary-button">
+                        <i class="fas fa-undo"></i> Reset
+                    </button>
+                    <button id="apply-filters" class="primary-button">
+                        <i class="fas fa-filter"></i> Apply Filters
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Results section -->
+            <div class="results-panel">
+                <div class="panel-header">
+                    <h2>Results <span id="result-count">(0)</span></h2>
+                    <div class="view-controls">
+                        <button class="view-control active" data-view="table">
+                            <i class="fas fa-table"></i>
+                        </button>
+                        <button class="view-control" data-view="cards">
+                            <i class="fas fa-th-large"></i>
+                        </button>
+                        <button class="view-control" data-view="visualization">
+                            <i class="fas fa-chart-bar"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="results-options">
+                    <div class="page-controls">
+                        <span>Show</span>
+                        <select id="page-size">
+                            <option value="10">10</option>
+                            <option value="25" selected>25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                        <span>entries</span>
+                    </div>
+                    
+                    <div class="sort-controls">
+                        <span>Sort by</span>
+                        <select id="sort-field">
+                            <option value="id">ID</option>
+                            <option value="created">Date Created</option>
+                            <option value="name">Name</option>
+                        </select>
+                        <select id="sort-order">
+                            <option value="asc">Ascending</option>
+                            <option value="desc">Descending</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Table view (default) -->
+                <div id="table-view" class="result-view active">
+                    <div class="results-table-wrapper">
+                        <table class="results-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Archive ID</th>
+                                    <th>Location</th>
+                                    <th>Document Type</th>
+                                    <th>Total Pages</th>
+                                    <th>Date Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="results-body">
+                                <!-- This will be populated by JavaScript -->
+                                <tr class="empty-row">
+                                    <td colspan="7">No data available. Apply filters to see results.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="pagination">
+                        <button id="prev-page" disabled>
+                            <i class="fas fa-chevron-left"></i> Previous
+                        </button>
+                        <div id="page-numbers">
+                            <span class="page-number active">1</span>
+                        </div>
+                        <button id="next-page" disabled>
+                            Next <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Card view -->
+                <div id="cards-view" class="result-view">
+                    <div id="results-cards" class="cards-container">
+                        <!-- This will be populated by JavaScript -->
+                        <div class="empty-state">
+                            <i class="fas fa-search"></i>
+                            <p>No data available. Apply filters to see results.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="pagination">
+                        <button id="prev-page-cards" disabled>
+                            <i class="fas fa-chevron-left"></i> Previous
+                        </button>
+                        <div id="page-numbers-cards">
+                            <span class="page-number active">1</span>
+                        </div>
+                        <button id="next-page-cards" disabled>
+                            Next <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Visualization view -->
+                <div id="visualization-view" class="result-view">
+                    <div class="visualization-container">
+                        <div class="visualization-controls">
+                            <div class="viz-control">
+                                <label for="chart-type">Chart Type:</label>
+                                <select id="chart-type">
+                                    <option value="bar">Bar Chart</option>
+                                    <option value="pie">Pie Chart</option>
+                                    <option value="line">Line Chart</option>
+                                </select>
+                            </div>
+                            <div class="viz-control">
+                                <label for="x-axis">X-Axis:</label>
+                                <select id="x-axis">
+                                    <option value="doc_type">Document Type</option>
+                                    <option value="location">Location</option>
+                                    <option value="creation_date">Creation Date</option>
+                                </select>
+                            </div>
+                            <div class="viz-control">
+                                <label for="y-axis">Y-Axis:</label>
+                                <select id="y-axis">
+                                    <option value="count">Count</option>
+                                    <option value="total_pages">Total Pages</option>
+                                    <option value="avg_pages">Average Pages</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="chart-container">
+                            <canvas id="results-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Export options -->
+                <div class="export-section">
+                    <h3>Export Results</h3>
+                    <div class="export-buttons">
+                        <button id="export-csv" class="export-button">
+                            <i class="fas fa-file-csv"></i> CSV
+                        </button>
+                        <button id="export-excel" class="export-button">
+                            <i class="fas fa-file-excel"></i> Excel
+                        </button>
+                        <button id="export-pdf" class="export-button">
+                            <i class="fas fa-file-pdf"></i> PDF
+                        </button>
+                        <button id="export-json" class="export-button">
+                            <i class="fas fa-file-code"></i> JSON
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Detail modal -->
+        <div id="detail-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="modal-title">Project Details</h2>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="detail-tabs">
+                        <button class="tab-button active" data-tab="details">Details</button>
+                        <button class="tab-button" data-tab="related">Related Items</button>
+                        <button class="tab-button" data-tab="history">History</button>
+                    </div>
+                    
+                    <div id="details-tab" class="tab-content active">
+                        <div class="detail-properties">
+                            <!-- This will be populated by JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <div id="related-tab" class="tab-content">
+                        <div class="related-items">
+                            <!-- This will be populated by JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <div id="history-tab" class="tab-content">
+                        <div class="history-timeline">
+                            <!-- This will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="secondary-button close-modal">Close</button>
+                    <button class="primary-button" id="edit-item">Edit</button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{% static 'microapp/js/explore_old.js' %}"></script>
+{% endblock %} 

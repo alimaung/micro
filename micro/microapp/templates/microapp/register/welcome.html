@@ -1,0 +1,388 @@
+{% extends 'microapp/base.html' %}
+{% csrf_token %}
+
+{% block title %}Microfilm Processing Welcome{% endblock %}
+
+{% load static %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'microapp/css/register/register.css' %}">
+    <link rel="stylesheet" href="{% static 'microapp/css/register/progress.css' %}">
+    <link rel="stylesheet" href="{% static 'microapp/css/register/welcome.css' %}">
+    <style>
+        /* Custom styles for the resume project section */
+        .resume-project-section {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 25px;
+            margin: 30px 0;
+            text-align: center;
+            display: none; /* Hidden by default, shown by JS if a project exists */
+        }
+        
+        .resume-project-section h3 {
+            color: #2a4365;
+            margin-bottom: 15px;
+        }
+        
+        .resume-project-section p {
+            color: #4a5568;
+            margin-bottom: 20px;
+        }
+        
+        .project-info {
+            background-color: #EBF4FF;
+            padding: 10px 15px;
+            border-radius: 6px;
+            border-left: 4px solid #4299E1;
+            margin-bottom: 20px;
+            text-align: left;
+            font-size: 0.95rem;
+        }
+        
+        .resume-project-btn, .clear-project-btn {
+            display: inline-block;
+            padding: 10px 24px;
+            margin: 5px 10px;
+            border-radius: 6px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+        
+        .resume-project-btn {
+            background-color: #4299E1;
+            color: white;
+            border: 2px solid #4299E1;
+        }
+        
+        .resume-project-btn:hover {
+            background-color: #3182CE;
+            border-color: #3182CE;
+        }
+        
+        .clear-project-btn {
+            background-color: transparent;
+            color: #E53E3E;
+            border: 2px solid #E53E3E;
+        }
+        
+        .clear-project-btn:hover {
+            background-color: #FED7D7;
+        }
+        
+        @media (max-width: 768px) {
+            .resume-project-btn, .clear-project-btn {
+                display: block;
+                margin: 10px auto;
+                width: 80%;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="register-container">        
+        <!-- Hero Section -->
+        <section class="hero-section">
+            <div class="hero-background"></div>
+            <div class="hero-content">
+                <div class="hero-text">
+                    <h1>Microfilm Processing Workflow</h1>
+                    <p>Streamline your document digitization process with our advanced workflow system. From project setup to final export, our platform guides you through every step of the microfilm processing journey.</p>
+                </div>
+                <div class="hero-image">
+                    <img src="{% static 'microapp/img/microfilm-illustration.png' %}" alt="Microfilm Processing Illustration">
+                </div>
+            </div>
+        </section>
+        
+        <!-- Workflow Options -->
+        <section class="workflow-options">
+            <!-- Semi-Automatic Option -->
+            <div class="workflow-card semi-card">
+                <span class="workflow-option-icon semi-icon">⚙️</span>
+                <h3>Semi Automatic</h3>
+                <p>AI assistance with human review and correction capabilities.</p>
+                <ul class="features">
+                    <li>Suggested document categorization</li>
+                    <li>Review before each step</li>
+                    <li>Manual corrections allowed</li>
+                    <li>Balanced efficiency and control</li>
+                </ul>
+                <a href="{% url 'register_project' %}?mode=semi" class="option-btn semi-btn" id="semi-workflow">
+                    Start Semi Automatic
+                </a>
+            </div>
+            
+            <!-- Fully Automatic Option (MIDDLE, EMPHASIZED) -->
+            <div class="workflow-card auto-card">
+                <div class="recommended-badge">Recommended</div>
+                <span class="workflow-option-icon auto-icon">✨</span>
+                <h3>Full Automatic</h3>
+                <p>Let AI handle the entire workflow with minimal human intervention.</p>
+                <ul class="features">
+                    <li>AI-powered document analysis</li>
+                    <li>Automatic workflow determination</li>
+                    <li>Smart film allocation</li>
+                    <li>Automatic indexing and export</li>
+                </ul>
+                <a href="{% url 'register_project' %}?mode=auto" class="option-btn auto-btn" id="auto-workflow">
+                    Start Full Automatic
+                </a>
+            </div>
+            
+            <!-- Manual Option -->
+            <div class="workflow-card manual-card">
+                <span class="workflow-option-icon manual-icon">🔧</span>
+                <h3>Manual Process</h3>
+                <p>Full control over every aspect of the workflow.</p>
+                <ul class="features">
+                    <li>Complete manual configuration</li>
+                    <li>Full customization options</li>
+                    <li>Detailed step-by-step control</li>
+                    <li>Expert-level workflow management</li>
+                </ul>
+                <a href="{% url 'register_project' %}?mode=manual" class="option-btn manual-btn" id="manual-workflow">
+                    Start Manual Process
+                </a>
+            </div>
+        </section>
+
+        <!-- Resume Project Section (shown by JS if a project exists) -->
+        <section class="resume-project-section" id="resume-section">
+            <h3>Continue Your Previous Project</h3>
+            <p>You have an in-progress project. Would you like to resume where you left off?</p>
+            <a href="#" class="resume-project-btn" id="resume-project-btn">Resume Project</a>
+        </section>
+        
+        <!-- Workflow Steps Overview -->
+        <section class="workflow-steps">
+            <h2>Workflow Process</h2>
+            <p class="workflow-description">Our workflow process is designed to guide you through each step of microfilm digitization, from initial setup to final indexing. Each step builds upon the previous one to ensure a smooth and efficient process.</p>
+            <div class="workflow-steps-grid">
+                <div class="step-item">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h4>Project Setup</h4>
+                        <p>Configure your project details and document sources.</p>
+                    </div>
+                </div>
+                
+                <div class="step-item">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h4>Document Analysis</h4>
+                        <p>Analyze document types, sizes, and structures.</p>
+                    </div>
+                </div>
+                
+                <div class="step-item">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h4>Workflow Determination</h4>
+                        <p>Select the appropriate workflow based on analysis.</p>
+                    </div>
+                </div>
+                
+                <div class="step-item">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h4>Reference Sheets</h4>
+                        <p>Create reference sheets for cross-format documentation.</p>
+                    </div>
+                </div>
+                
+                <div class="step-item">
+                    <div class="step-number">5</div>
+                    <div class="step-content">
+                        <h4>Film Allocation</h4>
+                        <p>Allocate documents to appropriate film formats.</p>
+                    </div>
+                </div>
+                
+                <div class="step-item">
+                    <div class="step-number">6</div>
+                    <div class="step-content">
+                        <h4>Index Generation</h4>
+                        <p>Generate index information for document retrieval.</p>
+                    </div>
+                </div>
+                
+                <div class="step-item">
+                    <div class="step-number">7</div>
+                    <div class="step-content">
+                        <h4>Film Numbering</h4>
+                        <p>Assign identification numbers to each film.</p>
+                    </div>
+                </div>
+                
+                <div class="step-item">
+                    <div class="step-number">8</div>
+                    <div class="step-content">
+                        <h4>Distribution</h4>
+                        <p>Prepare film distribution and delivery plans.</p>
+                    </div>
+                </div>
+                
+                <div class="step-item">
+                    <div class="step-number">9</div>
+                    <div class="step-content">
+                        <h4>Export</h4>
+                        <p>Export project files and documentation.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'microapp/js/register/progress.js' %}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Welcome module initialized');
+            
+            // Set progress bar to show no progress (before any steps)
+            if (window.progressComponent && typeof window.progressComponent.updateProgress === 'function') {
+                window.progressComponent.updateProgress(-1); // -1 indicates welcome/pre-step state
+            }
+            
+            // Check if there's a saved project in localStorage
+            const savedState = loadWorkflowState();
+            const projectState = localStorage.getItem('microfilmProjectState') ? 
+                JSON.parse(localStorage.getItem('microfilmProjectState')) : null;
+            const resumeSection = document.getElementById('resume-section');
+            const resumeBtn = document.getElementById('resume-project-btn');
+            
+            // Show resume section if there's a saved project
+            if (savedState && savedState.currentStep) {
+                resumeSection.style.display = 'block';
+                
+                // Add project details to the resume section if available
+                if (projectState && projectState.projectInfo) {
+                    const projectInfoElem = document.createElement('p');
+                    projectInfoElem.classList.add('project-info');
+                    projectInfoElem.innerHTML = `Project: <strong>${projectState.projectInfo.archiveId || 'Unknown ID'}</strong>`;
+                    
+                    if (projectState.projectInfo.documentType) {
+                        projectInfoElem.innerHTML += ` | Type: <strong>${projectState.projectInfo.documentType}</strong>`;
+                    }
+                    
+                    // Insert after the existing paragraph
+                    const existingP = resumeSection.querySelector('p');
+                    if (existingP) {
+                        existingP.after(projectInfoElem);
+                    }
+                }
+                
+                // Add event listener for the resume button
+                resumeBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Determine the URL based on the saved step
+                    const stepNumber = parseInt(savedState.currentStep.split('-')[1]);
+                    let targetUrl = '';
+                    
+                    switch(stepNumber) {
+                        case 1: targetUrl = '/register/project/'; break;
+                        case 2: targetUrl = '/register/document/'; break;
+                        case 3: targetUrl = '/register/workflow/'; break;
+                        case 4: targetUrl = '/register/references/'; break;
+                        case 5: targetUrl = '/register/allocation/'; break;
+                        case 6: targetUrl = '/register/index/'; break;
+                        case 7: targetUrl = '/register/filmnumber/'; break;
+                        case 8: targetUrl = '/register/distribution/'; break;
+                        case 9: targetUrl = '/register/export/'; break;
+                        default: targetUrl = '/register/project/';
+                    }
+                    
+                    // Add workflow mode if available
+                    if (savedState.workflowMode) {
+                        targetUrl += `?mode=${savedState.workflowMode}`;
+                    }
+                    
+                    // Add project ID if available
+                    if (projectState && projectState.projectId) {
+                        // Add either ? or & depending on whether we already have parameters
+                        targetUrl += targetUrl.includes('?') ? '&' : '?';
+                        targetUrl += `id=${projectState.projectId}`;
+                    }
+                    
+                    // Add the step number for clarity
+                    targetUrl += targetUrl.includes('?') ? '&' : '?';
+                    targetUrl += `step=${stepNumber}`;
+                    
+                    // Navigate to the appropriate step
+                    window.location.href = targetUrl;
+                });
+            }
+            
+            // Add a Clear Project button if there's a saved project
+            if (savedState && savedState.currentStep) {
+                const clearBtn = document.createElement('a');
+                clearBtn.href = '#';
+                clearBtn.classList.add('clear-project-btn');
+                clearBtn.textContent = 'Start New Project';
+                
+                clearBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    if (confirm('This will clear your current project data. Are you sure?')) {
+                        // Clear both localStorage items
+                        localStorage.removeItem('microfilmWorkflowState');
+                        localStorage.removeItem('microfilmProjectState');
+                        
+                        // Refresh the page
+                        window.location.reload();
+                    }
+                });
+                
+                // Add after the resume button
+                resumeBtn.after(clearBtn);
+            }
+            
+            // Set up workflow mode buttons
+            const autoBtn = document.getElementById('auto-workflow');
+            const semiBtn = document.getElementById('semi-workflow');
+            const manualBtn = document.getElementById('manual-workflow');
+            
+            // Function to save the selected workflow mode to localStorage
+            function saveWorkflowMode(mode) {
+                // Clear existing project data to start fresh
+                localStorage.removeItem('microfilmWorkflowState');
+                localStorage.removeItem('microfilmProjectState');
+                
+                // Create a new workflow state
+                const state = { workflowMode: mode, lastModified: Date.now() };
+                localStorage.setItem('microfilmWorkflowState', JSON.stringify(state));
+                console.log(`Workflow mode saved: ${mode}`);
+            }
+            
+            // Add click handlers for the workflow mode buttons
+            if (autoBtn) {
+                autoBtn.addEventListener('click', function(e) {
+                    saveWorkflowMode('auto');
+                });
+            }
+            
+            if (semiBtn) {
+                semiBtn.addEventListener('click', function(e) {
+                    saveWorkflowMode('semi');
+                });
+            }
+            
+            if (manualBtn) {
+                manualBtn.addEventListener('click', function(e) {
+                    saveWorkflowMode('manual');
+                });
+            }
+        });
+        
+        // --- Local Storage State Management ---
+        function loadWorkflowState() {
+            const state = localStorage.getItem('microfilmWorkflowState');
+            return state ? JSON.parse(state) : null;
+        }
+    </script>
+{% endblock %} 

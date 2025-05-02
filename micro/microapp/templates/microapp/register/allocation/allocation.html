@@ -1,0 +1,169 @@
+<!-- Film Allocation Component -->
+<div class="allocation-component" id="step-3">
+    <!-- Allocation Status Header -->
+    <div class="allocation-status">
+        <div class="status-container">
+            <h3 class="section-title">Film Allocation</h3>
+            <div class="status-badge pending" id="allocation-status-badge">
+                <i class="fas fa-clock"></i>
+                <span>Awaiting Allocation</span>
+            </div>
+        </div>
+        <div class="allocation-actions">
+            <button class="btn secondary" id="reset-allocation">
+                <i class="fas fa-redo"></i> Reset
+            </button>
+            <button class="btn primary" id="start-allocation">
+                <i class="fas fa-calculator"></i> Calculate Allocation
+            </button>
+        </div>
+    </div>
+
+    <!-- Project Overview Panel -->
+    <div class="panel project-overview">
+        <div class="panel-header">
+            <h4><i class="fas fa-info-circle"></i> Project Overview</h4>
+        </div>
+        <div class="panel-content">
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="info-label">Project ID:</span>
+                    <span class="info-value" id="project-id">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Documents:</span>
+                    <span class="info-value" id="document-count">0</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Total Pages:</span>
+                    <span class="info-value" id="total-pages">0</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Workflow Type:</span>
+                    <span class="info-value" id="workflow-type">Standard</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Oversized Pages:</span>
+                    <span class="info-value" id="oversized-count">0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Film Allocation Results -->
+    <div class="allocation-results-container">
+        <!-- 16mm Film Section -->
+        <div class="film-section" id="film-16mm-section">
+            <div class="section-header">
+                <h4><i class="fas fa-film"></i> 16mm Film Rolls</h4>
+                <div class="section-summary">
+                    <span id="roll-count-16mm">0</span> rolls | 
+                    <span id="pages-allocated-16mm">0</span> pages | 
+                    <span id="utilization-16mm">0%</span> avg. utilization
+                </div>
+            </div>
+            <div class="film-rolls-container" id="film-rolls-16mm">
+                <!-- Film rolls will be added here dynamically -->
+                <div class="empty-state">
+                    <i class="fas fa-film fa-3x"></i>
+                    <p>No film rolls allocated yet. Click "Calculate Allocation" to start.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 35mm Film Section (only shown for hybrid workflow) -->
+        <div class="film-section hidden" id="film-35mm-section">
+            <div class="section-header">
+                <h4><i class="fas fa-film"></i> 35mm Film Rolls</h4>
+                <div class="section-summary">
+                    <span id="roll-count-35mm">0</span> rolls | 
+                    <span id="pages-allocated-35mm">0</span> pages | 
+                    <span id="utilization-35mm">0%</span> avg. utilization
+                </div>
+            </div>
+            <div class="film-rolls-container" id="film-rolls-35mm">
+                <!-- Film rolls will be added here dynamically -->
+                <div class="empty-state">
+                    <i class="fas fa-film fa-3x"></i>
+                    <p>No 35mm film rolls allocated yet.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Split Documents Section -->
+    <div class="panel split-documents hidden" id="split-documents-panel">
+        <div class="panel-header">
+            <h4><i class="fas fa-cut"></i> Split Documents</h4>
+        </div>
+        <div class="panel-content">
+            <table class="data-table" id="split-documents-table">
+                <thead>
+                    <tr>
+                        <th>Document ID</th>
+                        <th>Total Pages</th>
+                        <th>Split Across</th>
+                        <th>Rolls</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Split documents will be added here -->
+                </tbody>
+            </table>
+            <div class="empty-state">
+                <i class="fas fa-file-alt fa-3x"></i>
+                <p>No documents are split across multiple rolls.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Allocation Details -->
+    <div class="panel allocation-details">
+        <div class="panel-header with-actions">
+            <h4><i class="fas fa-list-alt"></i> Allocation Details</h4>
+            <div class="panel-actions">
+                <button class="action-button" id="copy-allocation-data" title="Copy allocation data">
+                    <i class="fas fa-copy"></i>
+                </button>
+                <button class="action-button" id="export-allocation-data" title="Export allocation data">
+                    <i class="fas fa-download"></i>
+                </button>
+            </div>
+        </div>
+        <div class="panel-content">
+            <pre id="allocation-details-json" class="json-viewer">{}</pre>
+        </div>
+    </div>
+</div>
+
+<!-- Allocation Progress Modal -->
+<div class="modal fade" id="allocation-progress-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Calculating Film Allocation</h5>
+            </div>
+            <div class="modal-body">
+                <div class="progress-container">
+                    <div class="progress">
+                        <div class="progress-bar" id="allocation-progress-bar" style="width: 0%"></div>
+                    </div>
+                    <div class="progress-text">
+                        <span id="allocation-progress-text">Starting allocation...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="workflow-navigation">
+    <button class="nav-button back" id="back-to-analysis">
+        <i class="fas fa-arrow-left"></i>
+        Back to Analysis
+    </button>
+    <button class="nav-button next" id="to-step-6" disabled>
+        Continue to Index Generation
+        <i class="fas fa-arrow-right"></i>
+    </button>
+</div>

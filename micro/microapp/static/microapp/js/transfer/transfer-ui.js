@@ -9,6 +9,9 @@ window.TransferUI = class TransferUI {
         this.eventManager = eventManager;
         this.elements = this.cacheElements();
         this.bindEventListeners();
+        
+        // Initialize the database service
+        this.dbService = new DatabaseService();
     }
     
     /**
@@ -50,6 +53,7 @@ window.TransferUI = class TransferUI {
             autoSelectPath: document.getElementById('auto-select-path'),
             autoFindPdf: document.getElementById('auto-find-pdf'),
             autoFindComlist: document.getElementById('auto-find-comlist'),
+            addToDatabase: document.getElementById('add-to-database'),
             
             // Project info elements
             archiveId: document.getElementById('archive-id'),
@@ -188,6 +192,13 @@ window.TransferUI = class TransferUI {
         this.elements.toggleLogBtn.addEventListener('click', () => {
             this.elements.toggleLogBtn.classList.toggle('expanded');
             this.elements.transferLog.classList.toggle('expanded');
+        });
+        
+        // Add to database toggle
+        this.elements.addToDatabase.addEventListener('change', () => {
+            this.eventManager.publish('add-to-database-toggle-changed', {
+                checked: this.elements.addToDatabase.checked
+            });
         });
     }
     
@@ -772,6 +783,63 @@ window.TransferUI = class TransferUI {
                     }, 300);
                 }
             }, 5000);
+        }
+    }
+    
+    /**
+     * Get CSRF token
+     * @returns {string} CSRF token
+     */
+    getCsrfToken() {
+        // Use DatabaseService to get CSRF token
+        return this.dbService._getCsrfToken();
+    }
+
+    /**
+     * Add a method to collect current project info
+     * @returns {Object} Current project info
+     */
+    getProjectInfo() {
+        return {
+            archiveId: this.elements.archiveId.value.trim(),
+            location: this.elements.location.value.trim(),
+            documentType: this.elements.documentType.value.trim(),
+            pdfPath: this.elements.pdfFolder.value.trim(),
+            comlistPath: this.elements.comlistFile.value.trim(),
+            
+            // Include other properties as needed for your database
+            addToDatabase: this.elements.addToDatabase.checked,
+            autoSelectPath: this.elements.autoSelectPath.checked,
+            autoParse: this.elements.autoParse.checked,
+            autoFindPdf: this.elements.autoFindPdf.checked,
+            autoFindComlist: this.elements.autoFindComlist.checked,
+            createSubfolder: this.elements.createSubfolder.checked
+        };
+    }
+
+    /**
+     * Update database status in UI
+     * @param {Object} dbResult - Database operation result
+     */
+    updateDatabaseStatus(dbResult) {
+        if (dbResult.status === 'success') {
+            this.addLogEntry(`Project saved to database with ID: ${dbResult.project_id}`);
+            
+            // Update status badge to show database ID if needed
+            const dbBadge = document.createElement('span');
+            dbBadge.className = 'database-badge';
+            dbBadge.innerHTML = `<i class="fas fa-database"></i> ID: ${dbResult.project_id}`;
+            
+            // Add to status area if you have one
+            const statusArea = document.querySelector('.database-status');
+            if (statusArea) {
+                statusArea.innerHTML = '';
+                statusArea.appendChild(dbBadge);
+            }
+        } else if (dbResult.status === 'error') {
+            this.addLogEntry(`Database error: ${dbResult.message}`);
+        } else if (dbResult.status === 'skipped') {
+            this.addLogEntry('Database storage skipped (disabled by user)');
         }
     }
 }

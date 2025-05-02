@@ -5,6 +5,11 @@
 
 // Make the class available globally
 window.ApiService = class ApiService {
+    constructor() {
+        // Initialize the database service
+        this.dbService = new DatabaseService();
+    }
+
     /**
      * Get file statistics from server
      * @param {string} path - Path to get statistics for
@@ -119,7 +124,7 @@ window.ApiService = class ApiService {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': this._getCsrfToken()
+                    'X-CSRFToken': this.dbService._getCsrfToken()
                 },
                 body: JSON.stringify({
                     sourcePath,
@@ -219,22 +224,17 @@ window.ApiService = class ApiService {
     }
     
     /**
-     * Get CSRF token from cookies
-     * @returns {string} - CSRF token
+     * Create a new project in the database
+     * @param {Object} projectData - Project data to save
+     * @returns {Promise<Object>} - Response object
      */
-    _getCsrfToken() {
-        const name = 'csrftoken';
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
+    async createProject(projectData) {
+        try {
+            // Use the DatabaseService to create the project
+            return await this.dbService.createProject(projectData);
+        } catch (error) {
+            console.error('Error creating project:', error);
+            throw error;
         }
-        return cookieValue;
     }
 }

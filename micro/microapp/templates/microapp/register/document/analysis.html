@@ -1,0 +1,178 @@
+<div class="container mt-4 mb-5 register-container">
+    <!-- Document Analysis Component -->
+    <div class="analysis-component workflow-step" id="step-2">
+        <h3 class="step-title">Document Analysis <span class="status-badge pending"><i class="fas fa-clock"></i> Ready to Analyze</span></h3>
+        
+        <!-- Project Information -->
+        <div class="project-info-panel">
+            <div class="panel-header">
+                <h4><i class="fas fa-project-diagram"></i> Project Information</h4>
+            </div>
+            <div class="panel-content">
+                <div class="info-row">
+                    <div class="info-label">Project ID:</div>
+                    <div class="info-value" id="project-id-display">--</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Archive ID:</div>
+                    <div class="info-value" id="archive-id-display">--</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Location:</div>
+                    <div class="info-value" id="location-display">--</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Document Type:</div>
+                    <div class="info-value" id="document-type-display">--</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label" for="project-source-path">PDF Documents Path:</div>
+                    <div class="info-value" id="project-source-path">--</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analysis Controls -->
+        <div class="analysis-controls">
+            <div class="analysis-controls-actions">
+                <button id="start-analysis" class="action-button primary">
+                    <i class="fas fa-microscope"></i> Start Analysis
+                </button>
+                <button id="reset-analysis" class="action-button secondary" disabled>
+                    <i class="fas fa-redo"></i> Reset
+                </button>
+            </div>
+            
+            <div class="progress-container">
+                <div class="progress">
+                    <div class="progress-bar-fill" style="width: 0%"></div>
+                </div>
+                <div class="progress-percentage">0%</div>
+            </div>
+            
+            <div class="current-document" style="display: none;">
+                <span class="current-document-label">Currently analyzing:</span>
+                <span class="current-document-value" id="current-document">-</span>
+            </div>
+            
+            <div class="status-text" id="analysis-status">Waiting to start...</div>
+        </div>
+
+        <!-- Analysis Results -->
+        <div class="analysis-results">
+            <div class="results-header">
+                <h4>Analysis Results</h4>
+            </div>
+            
+            <!-- Document Counters -->
+            <div class="counter-container">
+                <div class="document-counter">
+                    <div class="counter-icon"><i class="fas fa-file-pdf"></i></div>
+                    <div class="counter-value">0</div>
+                    <div class="counter-label">Documents</div>
+                </div>
+                <div class="document-counter">
+                    <div class="counter-icon"><i class="fas fa-file-alt"></i></div>
+                    <div class="counter-value">0</div>
+                    <div class="counter-label">Pages</div>
+                </div>
+                <div class="document-counter">
+                    <div class="counter-icon"><i class="fas fa-expand"></i></div>
+                    <div class="counter-value">0</div>
+                    <div class="counter-label">Oversized</div>
+                </div>
+                <div class="document-counter">
+                    <div class="counter-icon"><i class="fas fa-external-link-alt"></i></div>
+                    <div class="counter-value">0</div>
+                    <div class="counter-label">References</div>
+                </div>
+                <div class="document-counter">
+                    <div class="counter-icon"><i class="fas fa-calculator"></i></div>
+                    <div class="counter-value">0</div>
+                    <div class="counter-label">Total Pages</div>
+                </div>
+            </div>
+            
+            <!-- Document List -->
+            <div class="document-list-container" id="document-list-container">
+                <div class="document-list-header">
+                    <div class="doc-name">Document Name</div>
+                    <div class="doc-pages">Pages</div>
+                    <div class="doc-oversized">Oversized</div>
+                    <div class="doc-status">Status</div>
+                </div>
+                <div class="document-list" id="document-list">
+                    <!-- Document items will be added dynamically -->
+                    <div class="empty-list-message">No documents analyzed yet</div>
+                </div>
+            </div>
+            
+            <!-- Oversized Documents and Reference Sheets -->
+            <div class="document-list-container" id="oversized-documents-container" style="display: none;">
+                <div class="results-subheader">
+                    <h5><i class="fas fa-expand"></i> Oversized Documents & Reference Sheets</h5>
+                </div>
+                <div class="document-list-header">
+                    <div class="doc-name">Document Name</div>
+                    <div class="doc-oversized">Oversized Pages</div>
+                    <div class="doc-references">References</div>
+                    <div class="doc-ref-positions">Adjusted Ranges</div>
+                </div>
+                <div class="document-list" id="oversized-documents-list">
+                    <!-- Oversized document items will be added dynamically -->
+                    <div class="empty-list-message">No oversized documents found</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Workflow Recommendation -->
+        <div class="workflow-recommendation">
+            <div class="recommendation-header">
+                <h4>Workflow Recommendation</h4>
+            </div>
+            <div class="workflow-branches pending-recommendation">
+                <div class="workflow-branch standard inactive">
+                    <div class="branch-header">
+                        <h5>Standard Workflow</h5>
+                    </div>
+                    <div class="branch-description">
+                        <p>For projects with standard-sized documents only.</p>
+                        <p>All documents will be processed on 16mm film.</p>
+                    </div>
+                    <div class="branch-icon">
+                        <i class="fas fa-film"></i>
+                        <span class="film-size">16mm</span>
+                    </div>
+                </div>
+                <div class="workflow-branch oversized inactive">
+                    <div class="branch-header">
+                        <h5>Hybrid Workflow</h5>
+                    </div>
+                    <div class="branch-description">
+                        <p>For projects with oversized documents.</p>
+                        <p>Standard documents on 16mm film, oversized on 35mm film with reference sheets.</p>
+                    </div>
+                    <div class="branch-icon">
+                        <i class="fas fa-film"></i>
+                        <span class="film-size">16mm + 35mm</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="step-navigation">
+            <div class="nav-buttons">
+                <button class="nav-button secondary prev-step" data-previous-step="true">
+                    <i class="fas fa-arrow-left"></i> 
+                    <span>Back to Project</span>
+                </button>
+                <button id="to-step-3" class="nav-button primary next-step" disabled data-next-step="true">
+                    <span>Continue to Allocation</span>
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
