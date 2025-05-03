@@ -416,10 +416,32 @@ function updateDocumentList(documents) {
         return;
     }
     
+    // Sort documents naturally by name
+    const naturalSort = (a, b) => {
+        // Get document names to compare
+        const aName = a.name || a.fileName || '';
+        const bName = b.name || b.fileName || '';
+        
+        // Extract numbers from document names if present
+        const aNum = /^(\d+)/.exec(aName);
+        const bNum = /^(\d+)/.exec(bName);
+        
+        // If both names start with numbers, compare them numerically
+        if (aNum && bNum) {
+            return parseInt(aNum[1], 10) - parseInt(bNum[1], 10);
+        }
+        
+        // Otherwise, fall back to standard string comparison
+        return aName.localeCompare(bName);
+    };
+    
+    // Create a sorted copy of the documents array
+    const sortedDocuments = [...documents].sort(naturalSort);
+    
     // Add each document to the list
     console.log('[Analysis UI] Adding', documents.length, 'documents to list');
     
-    documents.forEach(doc => {
+    sortedDocuments.forEach(doc => {
         // Skip invalid documents
         if (!doc || !doc.name) {
             console.warn('[Analysis UI] Skipping invalid document:', doc);

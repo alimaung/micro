@@ -14,9 +14,25 @@ import uuid
 import threading
 from pathlib import Path
 from enum import Enum
+import re
 
 # Dictionary to store allocation tasks and their progress
 allocation_tasks = {}
+
+# Helper function for natural sorting
+def natural_sort_key(item):
+    """
+    Natural sorting key function.
+    Sorts strings with embedded numbers in the expected human way.
+    For example: ["1", "10", "2"] sorts to ["1", "2", "10"]
+    """
+    if not isinstance(item, str):
+        item = str(item)
+    
+    def atoi(text):
+        return int(text) if text.isdigit() else text
+    
+    return [atoi(c) for c in re.split(r'(\d+)', item)]
 
 # Constants for film capacity - matching the original implementation
 CAPACITY_16MM = 2900  # Pages per 16mm film roll
@@ -304,8 +320,8 @@ def process_film_allocation(task_id, project_id, analysis_results):
             if not doc.get('docId', ''):
                 doc['docId'] = doc.get('name', f'doc-{hash(str(doc.get("path", "")))}')
         
-        # Sort documents alphabetically by ID or name
-        sorted_documents = sorted(documents, key=lambda d: d.get('docId', '') or d.get('name', ''))
+        # Sort documents using natural sorting
+        sorted_documents = sorted(documents, key=lambda d: natural_sort_key(d.get('docId', '') or d.get('name', '')))
         
         task['progress'] = 20
         task['lastUpdateTime'] = time.time()
@@ -549,15 +565,21 @@ def allocate_no_oversized(film_allocation, documents):
                 film_allocation['split_documents_16mm'][doc_id].append({
                     'roll': roll['roll_id'],
                     'pageRange': segment['page_range'],
-                    'frameRange': segment['frame_range']
+                    'frameRange': segment.get('frame_range', [0, 0])
                 })
+    
+    # Sort the split document keys using natural sorting
+    sorted_split_docs = {}
+    for doc_id in sorted(split_documents, key=natural_sort_key):
+        sorted_split_docs[doc_id] = film_allocation['split_documents_16mm'][doc_id]
+    
+    film_allocation['split_documents_16mm'] = sorted_split_docs
     
     return film_allocation
 
 def allocate_with_oversized(film_allocation, documents):
     """
-    Allocate documents to film rolls when there are oversized pages.
-    Uses 16mm for all pages and 35mm for oversized pages.
+    Allocate documents to 16mm and 35mm film rolls when there are oversized pages.
     
     Args:
         film_allocation: Film allocation structure to update
@@ -566,30 +588,29 @@ def allocate_with_oversized(film_allocation, documents):
     Returns:
         Updated film allocation structure
     """
-    print("Starting specialized allocation for project with oversized pages")
+    print(f"Starting hybrid allocation with {len(documents)} documents")
     
-    # Count oversized pages and documents
-    total_oversized = sum(doc.get('oversizedCount', 0) or doc.get('totalOversized', 0) for doc in documents)
-    docs_with_oversized = sum(1 for doc in documents if doc.get('hasOversized', False))
-    
-    print(f"Project has {total_oversized} oversized pages in {docs_with_oversized} documents")
-    print(f"Proceeding with dual film allocation (16mm for all pages, 35mm for oversized)")
-    
-    # Step 1: Allocate all documents to 16mm film
-    print("Step 1: Allocating all documents to 16mm film")
+    # First, allocate all standard pages to 16mm film rolls
     film_allocation = allocate_16mm_with_oversized(film_allocation, documents)
     
-    # Step 2: Allocate oversized pages to 35mm film
-    print("Step 2: Allocating oversized pages to 35mm film")
+    # Check if we need to process any 35mm allocation
+    standard_only = all(not doc.get('hasOversized', False) for doc in documents)
+    if standard_only:
+        print("Warning: No oversized documents found in hybrid workflow")
+        return film_allocation
+    
+    # Next, allocate oversized pages to 35mm film rolls
     film_allocation = allocate_35mm_strict(film_allocation, documents)
     
-    print("Completed specialized allocation for project with oversized pages")
+    # Process 35mm allocation requests into proper roll allocations
+    if film_allocation['doc_allocation_requests_35mm']:
+        film_allocation = process_35mm_allocation_requests(film_allocation)
     
     return film_allocation
 
 def allocate_16mm_with_oversized(film_allocation, documents):
     """
-    Allocate all documents to 16mm film when project has oversized pages.
+    Allocate documents to 16mm film rolls when project has oversized pages.
     
     This is similar to allocate_no_oversized but handles the complexities
     of documents with oversized pages and reference sheets.
@@ -877,21 +898,18 @@ def allocate_35mm_strict(film_allocation, documents):
     Returns:
         Updated film allocation structure
     """
-    # Get oversized documents
+    # Filter for documents with oversized pages
     oversized_docs = [doc for doc in documents if doc.get('hasOversized', False)]
     
-    # Sort documents alphabetically by ID
-    sorted_oversized_docs = sorted(oversized_docs, key=lambda d: d.get('docId', '') or d.get('name', ''))
+    # Skip processing if no oversized documents
+    if not oversized_docs:
+        print("No oversized documents found for 35mm allocation")
+        return film_allocation
+        
+    # Sort oversized documents by document ID using natural sorting
+    sorted_oversized_docs = sorted(oversized_docs, key=lambda d: natural_sort_key(d.get('docId', '') or d.get('name', '')))
     
-    # Log debug information
-    print(f"Found {len(oversized_docs)} oversized documents out of {len(documents)} total documents")
-    if oversized_docs:
-        first_doc = oversized_docs[0]
-        print(f"First oversized document details: docId={first_doc.get('docId', '') or first_doc.get('name', '')}, "
-              f"path={first_doc.get('path', '')}, hasOversized={first_doc.get('hasOversized', False)}")
-        print(f"Oversized count: {first_doc.get('oversizedCount', first_doc.get('totalOversized', 0))}, "
-              f"Reference count: {first_doc.get('referenceCount', first_doc.get('totalReferences', 0))}")
-        print(f"Oversized pages: {first_doc.get('oversizedPages', [])}")
+    print(f"Allocating {len(sorted_oversized_docs)} oversized documents to 35mm film")
     
     # Initialize the document allocation requests and prepare film rolls array
     film_allocation['doc_allocation_requests_35mm'] = []

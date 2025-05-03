@@ -27,6 +27,7 @@ def initialize_index(request):
     
     Args:
         projectId: Project ID (JSON parameter)
+        allocationResults: Allocation results from frontend (JSON parameter)
         
     Returns:
         JSON response with task ID and status
@@ -35,6 +36,10 @@ def initialize_index(request):
         try:
             data = json.loads(request.body)
             project_id = data.get('projectId')
+            allocation_results = data.get('allocationResults', {})
+            
+            print(f"DEBUG: Received initialize-index request for project {project_id}")
+            print(f"DEBUG: Allocation results keys: {list(allocation_results.keys()) if allocation_results else 'None'}")
             
             # Validate inputs
             if not project_id:
@@ -59,7 +64,7 @@ def initialize_index(request):
             # Start a background thread to process the index initialization
             index_thread = threading.Thread(
                 target=process_index_initialization, 
-                args=(task_id, project_id)
+                args=(task_id, project_id, allocation_results)
             )
             index_thread.daemon = True
             index_thread.start()
@@ -75,6 +80,9 @@ def initialize_index(request):
                 'error': 'Invalid JSON in request body'
             }, status=400)
         except Exception as e:
+            print(f"DEBUG: Error in initialize_index: {str(e)}")
+            import traceback
+            print(f"DEBUG: Traceback: {traceback.format_exc()}")
             return JsonResponse({
                 'error': str(e)
             }, status=500)
@@ -248,13 +256,14 @@ def get_index_results(request):
         'error': 'Invalid request method'
     }, status=400)
 
-def process_index_initialization(task_id, project_id):
+def process_index_initialization(task_id, project_id, allocation_results=None):
     """
     Process index initialization in a background thread.
     
     Args:
         task_id: ID of the task
         project_id: ID of the project
+        allocation_results: Allocation results from frontend
     """
     task = index_tasks[task_id]
     
@@ -263,38 +272,61 @@ def process_index_initialization(task_id, project_id):
         task['status'] = 'in-progress'
         task['progress'] = 10
         task['lastUpdateTime'] = time.time()
+        print(f"DEBUG: Index initialization started for task {task_id}, project {project_id}")
         
         # Get the project from the database
         try:
             project = Project.objects.get(id=project_id)
+            print(f"DEBUG: Found project {project_id}: {project.archive_id}, comlist_path: {project.comlist_path}")
         except Project.DoesNotExist:
             task['status'] = 'error'
             task['errors'].append(f'Project with ID {project_id} not found')
             task['lastUpdateTime'] = time.time()
+            print(f"DEBUG: Project {project_id} not found")
             return
         
-        # Get allocation results from previous tasks
-        matching_allocation_tasks = []
-        from .allocation_views import allocation_tasks
-        for allocation_task_id, allocation_task in allocation_tasks.items():
-            if allocation_task['projectId'] == project_id and allocation_task['status'] == 'completed':
-                matching_allocation_tasks.append(allocation_task)
-        
-        if not matching_allocation_tasks:
-            task['status'] = 'error'
-            task['errors'].append('No completed allocation found for this project')
-            task['lastUpdateTime'] = time.time()
-            return
+        # Check if we have allocation results from the frontend
+        if allocation_results:
+            print(f"DEBUG: Using allocation results from frontend")
+            most_recent_allocation = {'results': allocation_results, 'lastUpdateTime': time.time()}
+        else:
+            # Get allocation results from previous tasks
+            print(f"DEBUG: No allocation results from frontend, checking backend tasks")
+            matching_allocation_tasks = []
+            from .allocation_views import allocation_tasks
+            print(f"DEBUG: Looking for allocation tasks for project {project_id}")
+            for allocation_task_id, allocation_task in allocation_tasks.items():
+                if allocation_task['projectId'] == project_id and allocation_task['status'] == 'completed':
+                    matching_allocation_tasks.append(allocation_task)
+                    print(f"DEBUG: Found matching allocation task {allocation_task_id}")
             
-        # Get the most recent allocation
-        most_recent_allocation = sorted(matching_allocation_tasks, key=lambda x: x['lastUpdateTime'], reverse=True)[0]
+            if not matching_allocation_tasks:
+                print(f"DEBUG: No completed allocation found for project {project_id}")
+                if allocation_results:
+                    print(f"DEBUG: Using directly provided allocation results")
+                    most_recent_allocation = {'results': allocation_results, 'lastUpdateTime': time.time()}
+                else:
+                    task['status'] = 'error'
+                    task['errors'].append('No allocation results found. Please complete allocation first.')
+                    task['lastUpdateTime'] = time.time()
+                    return
+            else:
+                # Get the most recent allocation
+                most_recent_allocation = sorted(matching_allocation_tasks, key=lambda x: x['lastUpdateTime'], reverse=True)[0]
+                print(f"DEBUG: Using most recent allocation completed at {most_recent_allocation['lastUpdateTime']}")
+        
+        # Extract allocation results
         allocation_results = most_recent_allocation.get('results', {})
+        print(f"DEBUG: Allocation results structure: {type(allocation_results)}")
+        if isinstance(allocation_results, dict):
+            print(f"DEBUG: Allocation results keys: {list(allocation_results.keys())}")
         
         # Update task progress
         task['progress'] = 20
         task['lastUpdateTime'] = time.time()
         
         # Convert to Python data structure used by IndexService
+        print(f"DEBUG: Creating pseudo project objects")
         # Build a pseudo project object with film allocation that matches the original
         class PseudoProject:
             def __init__(self, project_db, allocation_data):
@@ -304,12 +336,19 @@ def process_index_initialization(task_id, project_id):
                 self.documents = []
                 
                 # Create film allocation
+                print(f"DEBUG: Creating film allocation from allocation data")
                 self.film_allocation = PseudoFilmAllocation(allocation_data)
                 
                 # Extract documents
                 if 'results' in allocation_data and 'documents' in allocation_data['results']:
+                    print(f"DEBUG: Found documents in allocation results")
                     for doc in allocation_data['results']['documents']:
                         self.documents.append(PseudoDocument(doc))
+                else:
+                    print(f"DEBUG: No documents found in allocation results")
+                    print(f"DEBUG: allocation_data keys: {list(allocation_data.keys())}")
+                    if 'results' in allocation_data:
+                        print(f"DEBUG: allocation_data['results'] keys: {list(allocation_data['results'].keys())}")
         
         class PseudoFilmAllocation:
             def __init__(self, allocation_data):
@@ -318,6 +357,7 @@ def process_index_initialization(task_id, project_id):
                 
                 self.rolls_16mm = []
                 rolls_16mm_data = results.get('rolls_16mm', [])
+                print(f"DEBUG: Found {len(rolls_16mm_data)} 16mm rolls in allocation results")
                 for roll_data in rolls_16mm_data:
                     self.rolls_16mm.append(PseudoFilmRoll(roll_data))
         
@@ -326,7 +366,9 @@ def process_index_initialization(task_id, project_id):
                 self.roll_id = roll_data.get('roll_id')
                 self.document_segments = []
                 
-                for segment in roll_data.get('document_segments', []):
+                segments = roll_data.get('document_segments', [])
+                print(f"DEBUG: Roll {self.roll_id} has {len(segments)} document segments")
+                for segment in segments:
                     self.document_segments.append(PseudoDocumentSegment(segment))
         
         class PseudoDocumentSegment:
@@ -341,7 +383,15 @@ def process_index_initialization(task_id, project_id):
                 self.com_id = None
         
         # Create the pseudo project
-        pseudo_project = PseudoProject(project, most_recent_allocation)
+        try:
+            pseudo_project = PseudoProject(project, allocation_results)
+            print(f"DEBUG: Created pseudo project with archive_id {pseudo_project.archive_id}")
+        except Exception as e:
+            print(f"DEBUG: Error creating pseudo project: {str(e)}")
+            task['status'] = 'error'
+            task['errors'].append(f'Error creating project structure: {str(e)}')
+            task['lastUpdateTime'] = time.time()
+            return
         
         # Update task progress
         task['progress'] = 40
@@ -357,32 +407,57 @@ def process_index_initialization(task_id, project_id):
         try:
             # Implement Excel file reading using xlwings
             if project.comlist_path and os.path.exists(project.comlist_path):
+                print(f"DEBUG: Reading COM list Excel file: {project.comlist_path}")
                 wb = None
                 try:
                     # Try to use already open workbook
                     wb = xw.books.active
+                    print(f"DEBUG: Found active workbook: {wb.name}")
                     if Path(wb.fullname).resolve() != Path(project.comlist_path).resolve():
+                        print(f"DEBUG: Active workbook is not the COM list, opening: {project.comlist_path}")
                         wb = xw.Book(str(project.comlist_path))
-                except Exception:
+                except Exception as e:
+                    print(f"DEBUG: No active workbook or error: {str(e)}")
                     # Open the workbook directly
+                    print(f"DEBUG: Attempting to open workbook directly: {project.comlist_path}")
                     wb = xw.Book(str(project.comlist_path))
                 
                 # Get the first worksheet
+                print(f"DEBUG: Accessing first worksheet")
                 ws = wb.sheets[0]
                 
                 # Get data range with potential barcode and ComID values
+                print(f"DEBUG: Getting used range")
                 used_range = ws.used_range
                 if used_range:
+                    print(f"DEBUG: Getting data from used range")
                     data = used_range.value
                     
                     # Skip header row if exists
                     start_row = 1 if isinstance(data[0][0], str) and not data[0][0].isdigit() else 0
+                    print(f"DEBUG: Processing data with {len(data)} rows, starting at row {start_row}")
                     
                     # Extract barcode and ComID pairs
                     for i in range(start_row, len(data)):
                         if i < len(data) and len(data[i]) >= 2:
-                            barcode = str(data[i][0]) if data[i][0] is not None else None
+                            barcode_raw = data[i][0]
                             com_id = data[i][1]
+                            
+                            # Convert barcode to integer if possible
+                            try:
+                                if isinstance(barcode_raw, float) and barcode_raw.is_integer():
+                                    # Convert float to integer (remove decimal)
+                                    barcode = str(int(barcode_raw))
+                                elif isinstance(barcode_raw, int):
+                                    barcode = str(barcode_raw)
+                                else:
+                                    # Try to convert string to integer
+                                    barcode = str(int(float(str(barcode_raw))))
+                            except (ValueError, TypeError, AttributeError):
+                                # If conversion fails, use as-is
+                                barcode = str(barcode_raw) if barcode_raw is not None else None
+                            
+                            print(f"DEBUG: Extracted barcode: {barcode_raw} -> {barcode}, com_id: {com_id}")
                             
                             # Convert ComID to integer if possible
                             if com_id is not None:
@@ -400,8 +475,12 @@ def process_index_initialization(task_id, project_id):
                 
                 # Close Excel if we opened it
                 if wb:
+                    print(f"DEBUG: Closing Excel application")
                     wb.app.quit()
+                
+                print(f"DEBUG: Extracted {len(com_id_mappings)} COM ID mappings")
         except Exception as e:
+            print(f"DEBUG: Error reading COM list Excel file: {str(e)}")
             task['errors'].append(f'Error reading COM list Excel file: {str(e)}')
             # Continue anyway, using placeholder COM IDs
         
@@ -410,6 +489,7 @@ def process_index_initialization(task_id, project_id):
         task['lastUpdateTime'] = time.time()
         
         # Process 16mm film rolls
+        print(f"DEBUG: Processing film rolls to build index")
         index_data = {
             "metadata": {
                 "creation_date": datetime.now().isoformat(),
@@ -423,6 +503,7 @@ def process_index_initialization(task_id, project_id):
         # Iterate through 16mm film rolls
         for roll in pseudo_project.film_allocation.rolls_16mm:
             roll_id = roll.roll_id
+            print(f"DEBUG: Processing roll {roll_id} with {len(roll.document_segments)} segments")
             
             # Iterate through document segments in this roll
             for segment in roll.document_segments:
@@ -434,13 +515,19 @@ def process_index_initialization(task_id, project_id):
                 # Get frame range for this segment
                 frame_range = segment.frame_range
                 
+                # Create index entry with document index
+                doc_id_base = doc_id.replace('.pdf', '') if doc_id.endswith('.pdf') else doc_id
+                
                 # Get COM ID from the mapping or use a placeholder
-                com_id = com_id_mappings.get(doc_id, None)
+                com_id = com_id_mappings.get(doc_id_base, None)
                 
                 # If COM ID is not found, generate a placeholder
                 if com_id is None:
                     # Use a placeholder COM ID (negative roll_id to avoid conflicts)
                     com_id = -roll_id
+                    print(f"DEBUG: No COM ID found for doc_id: {doc_id}, using placeholder: {com_id}")
+                else:
+                    print(f"DEBUG: Found COM ID: {com_id} for doc_id: {doc_id}")
                 
                 # Update document COM ID if available
                 for doc in pseudo_project.documents:
@@ -461,8 +548,11 @@ def process_index_initialization(task_id, project_id):
                 
                 # Add to index
                 index_data["index"].append(index_entry)
+                
         
         # Update task progress
+        print(f"DEBUG: Index built with {len(index_data['index'])} entries")
+        print(f"DEBUG: Index data: {index_data}")
         task['progress'] = 90
         task['lastUpdateTime'] = time.time()
         
@@ -471,9 +561,13 @@ def process_index_initialization(task_id, project_id):
         task['progress'] = 100
         task['results'] = index_data
         task['lastUpdateTime'] = time.time()
+        print(f"DEBUG: Index generation completed for task {task_id}")
         
     except Exception as e:
         # Log the error and update task status
+        print(f"DEBUG: Error in index generation: {str(e)}")
+        import traceback
+        print(f"DEBUG: Traceback: {traceback.format_exc()}")
         task['status'] = 'error'
         task['errors'].append(str(e))
         task['lastUpdateTime'] = time.time()

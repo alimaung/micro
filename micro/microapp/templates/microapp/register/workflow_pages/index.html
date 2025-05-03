@@ -1,66 +1,41 @@
 {% extends 'microapp/base.html' %}
-{% csrf_token %}
 
-{% block title %}Index Generation - Microfilm Processing{% endblock %}
+{% block title %}Film Index Generation - Microfilm Processing{% endblock %}
 
-{% load static %}
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'microapp/css/register/register.css' %}">
-    <link rel="stylesheet" href="{% static 'microapp/css/register/progress.css' %}">
-    <link rel="stylesheet" href="{% static 'microapp/css/register/index/index.css' %}">
+    <link rel="stylesheet" href="/static/microapp/css/register/register.css">
+    <link rel="stylesheet" href="/static/microapp/css/register/progress.css">
+    <link rel="stylesheet" href="/static/microapp/css/register/index/index.css">
+    <link rel="stylesheet" href="/static/microapp/css/register/allocation/allocation.css">
 {% endblock %}
 
 {% block content %}
-    <div class="register-container">
-        {% include 'microapp/register/progress.html' %}
-        
-        <!-- Main Content Area -->
-        <div class="workflow-content">
-            <!-- Include the Index component which already has a workflow-step div -->
-            {% include 'microapp/register/index/index.html' %}
-        </div>
-    </div>
+<div class="register-container">
+    <!-- Progress Tracker -->
+    {% include 'microapp/register/progress.html' %}
+
+    <!-- Index Generation component -->
+    {% include 'microapp/register/index/index.html' %}
+</div>
 {% endblock %}
 
 {% block extra_js %}
-    <script>
-        // Pass Django template variables to JavaScript
-        window.projectId = {{ project.id }};
-    </script>
-    <script src="{% static 'microapp/js/register/progress.js' %}"></script>
-    <script src="{% static 'microapp/js/register/index/index.js' %}"></script>
-    <script src="{% static 'microapp/js/register/register.js' %}"></script>
+    <!-- Core libraries -->
+    <script src="/static/microapp/js/register/progress.js"></script>
     
-    <!-- Script to ensure the step is active and update DOM after loading -->
+    <!-- Index module dependencies (order matters) -->
+    <script src="/static/microapp/js/register/index/index-api.js"></script>
+    <script src="/static/microapp/js/register/index/index-core.js"></script>
+    <script src="/static/microapp/js/register/index/index-ui.js"></script>
+    <script src="/static/microapp/js/register/index/index-events.js"></script>
+    
     <script>
+        // Initialize progress tracker with active step
         document.addEventListener('DOMContentLoaded', function() {
-            // Make sure the step-4 div is active
-            document.getElementById('step-4').classList.add('active');
-            
-            // Save the current step in localStorage
-            const state = JSON.parse(localStorage.getItem('microfilmWorkflowState') || '{}');
-            state.currentStep = 'index';
-            localStorage.setItem('microfilmWorkflowState', JSON.stringify(state));
-            
-            // Initialize the progress indicator
-            if (window.progressComponent && typeof window.progressComponent.updateProgress === 'function') {
-                window.progressComponent.updateProgress(3);
+            if (typeof ProgressTracker !== 'undefined') {
+                ProgressTracker.setActiveStep(4);
+                ProgressTracker.setProgress(50);
             }
-            
-            // Initialize our index components
-            if (IndexCore && typeof IndexCore.initAfterDOM === 'function') {
-                IndexCore.initAfterDOM();
-            }
-            
-            if (IndexUI && typeof IndexUI.init === 'function') {
-                IndexUI.init();
-            }
-            
-            if (IndexEvents && typeof IndexEvents.bindEvents === 'function') {
-                IndexEvents.bindEvents();
-            }
-            
-            console.log('Index page initialized successfully');
         });
     </script>
 {% endblock %} 

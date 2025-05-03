@@ -115,8 +115,30 @@ function updateDocumentList(documents) {
     // Clear current list
     clearDocumentList();
     
+    // Sort documents naturally by name/filename
+    const naturalSort = (a, b) => {
+        // Get document names to compare
+        const aName = a.fileName || a.name || '';
+        const bName = b.fileName || b.name || '';
+        
+        // Extract numbers from document names if present
+        const aNum = /^(\d+)/.exec(aName);
+        const bNum = /^(\d+)/.exec(bName);
+        
+        // If both names start with numbers, compare them numerically
+        if (aNum && bNum) {
+            return parseInt(aNum[1], 10) - parseInt(bNum[1], 10);
+        }
+        
+        // Otherwise, fall back to standard string comparison
+        return aName.localeCompare(bName);
+    };
+    
+    // Create a sorted copy of the documents array
+    const sortedDocuments = [...documents].sort(naturalSort);
+    
     // Add each document
-    documents.forEach(docData => {
+    sortedDocuments.forEach(docData => {
         addDocumentToList(docData);
     });
     

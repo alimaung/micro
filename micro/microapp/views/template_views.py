@@ -44,20 +44,7 @@ def register_allocation(request):
 
 def register_index(request):
     """Index step view."""
-    # Get project ID from query parameter
-    project_id = request.GET.get('id')
-    project = None
-    
-    if project_id:
-        try:
-            # Fetch project from database
-            project = Project.objects.get(id=project_id)
-        except Project.DoesNotExist:
-            # Handle case where project doesn't exist
-            pass
-    
-    # Pass project to the template context
-    return render(request, 'microapp/register/workflow_pages/index.html', {'project': project})
+    return render(request, 'microapp/register/workflow_pages/index.html')
 
 def register_filmnumber(request):
     """Film number step view."""

@@ -206,7 +206,26 @@ const AllocationUI = (function() {
             // Add document items to the documents list
             const docsList = rollElement.querySelector('.documents-list');
             if (docsList) {
-                Array.from(uniqueDocs).forEach(docId => {
+                // Helper function for natural sorting of document IDs
+                const naturalSort = (a, b) => {
+                    // Extract numbers from document IDs if present
+                    const aNum = /^(\d+)/.exec(a);
+                    const bNum = /^(\d+)/.exec(b);
+                    
+                    // If both IDs start with numbers, compare them numerically
+                    if (aNum && bNum) {
+                        return parseInt(aNum[1], 10) - parseInt(bNum[1], 10);
+                    }
+                    
+                    // Otherwise, fall back to standard string comparison
+                    return a.localeCompare(b);
+                };
+                
+                // Convert uniqueDocs Set to Array and sort naturally
+                const sortedDocs = Array.from(uniqueDocs).sort(naturalSort);
+                
+                // Create document items in sorted order
+                sortedDocs.forEach(docId => {
                     const segments = roll.document_segments.filter(seg => seg.doc_id === docId);
                     const totalPages = segments.reduce((sum, seg) => sum + seg.pages, 0);
                     const isSplit = segments.length > 1 || roll.has_split_documents;
@@ -281,7 +300,21 @@ const AllocationUI = (function() {
         });
         
         // Create allocation request cards for each document
-        Object.keys(groupedRequests).forEach(docId => {
+        Object.keys(groupedRequests)
+            .sort((a, b) => {
+                // Extract numbers from document IDs if present
+                const aNum = /^(\d+)/.exec(a);
+                const bNum = /^(\d+)/.exec(b);
+                
+                // If both IDs start with numbers, compare them numerically
+                if (aNum && bNum) {
+                    return parseInt(aNum[1], 10) - parseInt(bNum[1], 10);
+                }
+                
+                // Otherwise, fall back to standard string comparison
+                return a.localeCompare(b);
+            })
+            .forEach(docId => {
             const docRequests = groupedRequests[docId];
             const totalPages = docRequests.reduce((sum, req) => sum + req.pages, 0);
             const isSplit = docRequests.length > 1;
@@ -392,19 +425,33 @@ const AllocationUI = (function() {
             tableBody.innerHTML = '';
             
             // Add rows for each split document
-            Object.keys(splitDocs).forEach(docId => {
-                const segments = splitDocs[docId];
-                const rolls = segments.map(seg => `Roll 16mm-${String(seg.roll).padStart(3, '0')}`).join(', ');
-                
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${docId}</td>
-                    <td>${segments.reduce((sum, seg) => sum + (seg.pageRange[1] - seg.pageRange[0] + 1), 0)}</td>
-                    <td>${segments.length} rolls</td>
-                    <td>${rolls}</td>
-                `;
-                tableBody.appendChild(row);
-            });
+            Object.keys(splitDocs)
+                .sort((a, b) => {
+                    // Extract numbers from document IDs if present
+                    const aNum = /^(\d+)/.exec(a);
+                    const bNum = /^(\d+)/.exec(b);
+                    
+                    // If both IDs start with numbers, compare them numerically
+                    if (aNum && bNum) {
+                        return parseInt(aNum[1], 10) - parseInt(bNum[1], 10);
+                    }
+                    
+                    // Otherwise, fall back to standard string comparison
+                    return a.localeCompare(b);
+                })
+                .forEach(docId => {
+                    const segments = splitDocs[docId];
+                    const rolls = segments.map(seg => `Roll 16mm-${String(seg.roll).padStart(3, '0')}`).join(', ');
+                    
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${docId}</td>
+                        <td>${segments.reduce((sum, seg) => sum + (seg.pageRange[1] - seg.pageRange[0] + 1), 0)}</td>
+                        <td>${segments.length} rolls</td>
+                        <td>${rolls}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
             
             // Hide empty state
             dom.splitDocumentsPanel.querySelector('.empty-state').classList.add('hidden');

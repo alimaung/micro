@@ -71,6 +71,15 @@ const AllocationEvents = (function() {
                     };
                 }
                 
+                // Save analysis results if available
+                if (state.analysisResults) {
+                    workflowState.analysisResults = state.analysisResults;
+                    workflowState.analysis = {
+                        completed: true,
+                        timestamp: new Date().toISOString()
+                    };
+                }
+                
                 // Save updated workflow state
                 localStorage.setItem('microfilmWorkflowState', JSON.stringify(workflowState));
                 
@@ -111,6 +120,15 @@ const AllocationEvents = (function() {
                     timestamp: new Date().toISOString()
                 };
                 
+                // Save analysis results if available
+                if (state.analysisResults) {
+                    workflowState.analysisResults = state.analysisResults;
+                    workflowState.analysis = {
+                        completed: true,
+                        timestamp: new Date().toISOString()
+                    };
+                }
+                
                 // Save updated workflow state
                 localStorage.setItem('microfilmWorkflowState', JSON.stringify(workflowState));
                 
@@ -124,7 +142,17 @@ const AllocationEvents = (function() {
                 // Display loading state on button
                 toIndexGenerationBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
                 toIndexGenerationBtn.disabled = true;
+
+                // Log all available state data
+                console.log('Analysis Results:', state.analysisResults);
+                console.log('Allocation Results:', state.allocationResults);
                 
+                // Log localStorage AFTER saving to verify content
+                const savedWorkflowState = JSON.parse(localStorage.getItem('microfilmWorkflowState') || '{}');
+                console.log('Saved Workflow State:', savedWorkflowState);
+                console.log('Saved Allocation Results:', savedWorkflowState.allocationResults);
+                console.log('Saved Analysis Results:', savedWorkflowState.analysisResults);
+
                 // Navigate to index generation page with all parameters
                 window.location.href = `/register/index?step=${step}&id=${projectId}&mode=${mode}&flow=${flow}`;
             });
