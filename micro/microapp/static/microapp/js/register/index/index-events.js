@@ -188,15 +188,25 @@ const IndexEvents = (function() {
                 // Save the current state
                 IndexCore.saveState();
                 
-                // Redirect to allocation page
+                // Get URL parameters
+                const urlParams = new URLSearchParams(window.location.search);
                 const state = IndexCore.getState();
                 const projectId = state.projectId;
                 const workflowType = state.workflowType || 'hybrid';
+                const processingMode = urlParams.get('mode') || 'auto';
+                const currentStep = urlParams.get('step') || '4';
                 
-                console.log('Navigating to allocation page with:', { projectId, workflowType });
+                console.log('Navigating to allocation page with:', { projectId, workflowType, processingMode, currentStep });
                 
                 // Ensure we're using the same URL parameter names as the allocation page expects
-                window.location.href = `/register/allocation/?id=${projectId}&flow=${workflowType}`;
+                let url = `/register/allocation/?step=${currentStep}`;
+                if (projectId) {
+                    url += `&id=${projectId}`;
+                }
+                url += `&flow=${workflowType}`;
+                url += `&mode=${processingMode}`;
+                
+                window.location.href = url;
             });
         }
         
@@ -222,6 +232,7 @@ const IndexEvents = (function() {
                 console.log('DEBUGGING - Project data being saved:');
                 const projectData = JSON.parse(localStorage.getItem('microfilmProjectState') || '{}');
                 console.log(projectData);
+                console.log(JSON.parse(localStorage.getItem('microfilmIndexData')));
                 
                 // Log the analysis data specifically
                 console.log('DEBUGGING - Analysis data being saved:');
@@ -234,15 +245,25 @@ const IndexEvents = (function() {
                 console.log('From dedicated storage:', dedicatedAllocationData);
 
 
-                // Redirect to film number page
+                // Get URL parameters
+                const urlParams = new URLSearchParams(window.location.search);
                 const state = IndexCore.getState();
                 const projectId = state.projectId;
                 const workflowType = state.workflowType || 'hybrid';
+                const processingMode = urlParams.get('mode') || 'auto';
+                const nextStep = '5'; // Film number is step 5
                 
-                console.log('Navigating to film number page with:', { projectId, workflowType });
+                console.log('Navigating to film number page with:', { projectId, workflowType, processingMode, nextStep });
                 
                 // Use the same parameter names as expected by the film number page
-                window.location.href = `/register/filmnumber/?id=${projectId}&flow=${workflowType}`;
+                let url = `/register/filmnumber/?step=${nextStep}`;
+                if (projectId) {
+                    url += `&id=${projectId}`;
+                }
+                url += `&flow=${workflowType}`;
+                url += `&mode=${processingMode}`;
+                
+                window.location.href = url;
             });
         }
     }

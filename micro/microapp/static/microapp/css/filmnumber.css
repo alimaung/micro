@@ -1,0 +1,39 @@
+.index-stats {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    margin-bottom: 1rem;
+}
+
+.index-stats .stat-group {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 2rem;
+}
+
+.index-stats .stat-label {
+    color: #6c757d;
+    margin-right: 0.5rem;
+    font-weight: 500;
+}
+
+.index-stats .stat-value {
+    font-weight: 600;
+    min-width: 2rem;
+    text-align: right;
+}
+
+/* Add colored indicators for different statuses */
+.index-stats .stat-value#total-entries {
+    color: #0d6efd;  /* Bootstrap primary blue */
+}
+
+.index-stats .stat-value#updated-entries {
+    color: #198754;  /* Bootstrap success green */
+}
+
+.index-stats .stat-value#pending-entries {
+    color: #ffc107;  /* Bootstrap warning yellow */
+} 

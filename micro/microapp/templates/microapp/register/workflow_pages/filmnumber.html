@@ -7,6 +7,7 @@
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'microapp/css/register/register.css' %}">
     <link rel="stylesheet" href="{% static 'microapp/css/register/progress.css' %}">
+    <link rel="stylesheet" href="{% static 'microapp/css/register/allocation/allocation.css' %}">
     <link rel="stylesheet" href="{% static 'microapp/css/register/filmnumber/filmnumber.css' %}">
 {% endblock %}
 
@@ -24,7 +25,15 @@
 
 {% block extra_js %}
     <script src="{% static 'microapp/js/register/progress.js' %}"></script>
+    
+    <!-- Add film number modules in the correct loading order -->
+    <script src="{% static 'microapp/js/register/filmnumber/filmnumber-core.js' %}"></script>
+    <script src="{% static 'microapp/js/register/filmnumber/filmnumber-api.js' %}"></script>
+    <script src="{% static 'microapp/js/register/filmnumber/filmnumber-ui.js' %}"></script>
+    <script src="{% static 'microapp/js/register/filmnumber/filmnumber-events.js' %}"></script>
+    
+    <!-- Main initialization file should be loaded last -->
     <script src="{% static 'microapp/js/register/filmnumber/filmnumber.js' %}"></script>
+    
     <script src="{% static 'microapp/js/register/register.js' %}"></script>
-
 {% endblock %} 

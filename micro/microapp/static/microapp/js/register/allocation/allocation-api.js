@@ -236,6 +236,15 @@ const AllocationAPI = (function() {
                 
                 // Update UI with results
                 AllocationUI.updateAllocationResults();
+                
+                // Save state to localStorage
+                AllocationCore.saveState();
+                
+                // Show success notification
+                AllocationUI.updateStatusBadge('completed', 'Allocation complete');
+                AllocationUI.showToast('Allocation completed and saved', 'success');
+                
+                console.log('[Allocation] Allocation results fetched and saved:', stateRef.allocationResults);
             })
             .catch(error => {
                 console.error('Error fetching allocation results:', error);

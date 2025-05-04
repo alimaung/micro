@@ -8,7 +8,7 @@ class FilmType(models.TextChoices):
 
 class Project(models.Model):
     # Core project identification
-    archive_id = models.CharField(max_length=20, help_text="Format: RRDxxx-xxxx")
+    archive_id = models.CharField(max_length=20, help_text="Format: RRDxxx-yyyy")
     location = models.CharField(max_length=10, help_text="Location code (e.g., OU, DW)")
     doc_type = models.CharField(max_length=50, blank=True, null=True)
     

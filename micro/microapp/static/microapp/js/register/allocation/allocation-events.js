@@ -55,53 +55,24 @@ const AllocationEvents = (function() {
             backToAnalysisBtn.addEventListener('click', function() {
                 // Save current state and allocation results before navigating
                 const state = AllocationCore.getState();
-                const workflowState = JSON.parse(localStorage.getItem('microfilmWorkflowState') || '{}');
                 
-                // Update workflow state with current information
-                workflowState.currentStep = 'step-2'; // Analysis is step 2
-                workflowState.projectId = state.projectId;
-                workflowState.workflowType = state.workflowType;
-                
-                // Save allocation results if available
-                if (state.allocationResults) {
-                    workflowState.allocationResults = state.allocationResults;
-                    workflowState.allocation = {
-                        completed: true,
-                        timestamp: new Date().toISOString()
-                    };
-
-                    // NEW: Save to dedicated allocation storage
-                    try {
-                        localStorage.setItem('microfilmAllocationData', JSON.stringify({
-                            allocationResults: state.allocationResults,
-                            lastUpdated: new Date().toISOString(),
-                            projectId: state.projectId || workflowState.projectId,
-                            completed: true
-                        }));
-                        console.log('[Allocation] Saved to dedicated allocation storage');
-                    } catch (error) {
-                        console.error('[Allocation] Error saving to dedicated storage:', error);
-                    }
-                }
-                
-                // Save analysis results if available
-                if (state.analysisResults) {
-                    workflowState.analysisResults = state.analysisResults;
-                    workflowState.analysis = {
-                        completed: true,
-                        timestamp: new Date().toISOString()
-                    };
-                }
-                
-                // Save updated workflow state
-                localStorage.setItem('microfilmWorkflowState', JSON.stringify(workflowState));
+                // Use the new saveState function to save all state information
+                AllocationCore.saveState();
                 
                 // Get current URL parameters
                 const urlParams = new URLSearchParams(window.location.search);
-                const projectId = urlParams.get('id') || workflowState.projectId;
-                const flow = urlParams.get('flow') || workflowState.workflowType || 'standard';
+                const projectId = urlParams.get('id') || state.projectId;
+                const flow = urlParams.get('flow') || state.workflowType || 'standard';
                 const mode = urlParams.get('mode') || 'auto';
                 const step = '2'; // Step for analysis page
+                
+                // Log navigation information
+                console.log('[Allocation] Navigating back to analysis:', {
+                    projectId,
+                    flow,
+                    mode,
+                    step
+                });
                 
                 // Navigate to analysis page with all parameters
                 window.location.href = `/register/document?step=${step}&id=${projectId}&mode=${mode}&flow=${flow}`;
@@ -113,7 +84,6 @@ const AllocationEvents = (function() {
             toIndexGenerationBtn.addEventListener('click', function() {
                 // Save current state and allocation results before navigating
                 const state = AllocationCore.getState();
-                const workflowState = JSON.parse(localStorage.getItem('microfilmWorkflowState') || '{}');
                 
                 // Validate that allocation is complete before proceeding
                 if (!state.allocationResults) {
@@ -121,64 +91,34 @@ const AllocationEvents = (function() {
                     return;
                 }
                 
-                // Update workflow state with current information
-                workflowState.currentStep = 'step-4'; // Index generation is step 4
-                workflowState.projectId = state.projectId;
-                workflowState.workflowType = state.workflowType;
+                // Use the new saveState function to save all state information
+                AllocationCore.saveState();
                 
-                // Save allocation results
-                workflowState.allocationResults = state.allocationResults;
-                workflowState.allocation = {
-                    completed: true,
-                    timestamp: new Date().toISOString()
-                };
+                // Log all available state data
+                console.log('[Allocation] Analysis Results:', state.analysisResults);
+                console.log('[Allocation] Allocation Results:', state.allocationResults);
                 
-                // Save analysis results if available
-                if (state.analysisResults) {
-                    workflowState.analysisResults = state.analysisResults;
-                    workflowState.analysis = {
-                        completed: true,
-                        timestamp: new Date().toISOString()
-                    };
-
-                    // NEW: Save to dedicated allocation storage
-                    try {
-                        localStorage.setItem('microfilmAllocationData', JSON.stringify({
-                            allocationResults: state.allocationResults,
-                            lastUpdated: new Date().toISOString(),
-                            projectId: state.projectId || workflowState.projectId,
-                            completed: true
-                        }));
-                        console.log('[Allocation] Saved to dedicated allocation storage');
-                    } catch (error) {
-                        console.error('[Allocation] Error saving to dedicated storage:', error);
-                    }
-                }
+                // Log localStorage AFTER saving to verify content
+                const savedWorkflowState = JSON.parse(localStorage.getItem('microfilmWorkflowState') || '{}');
+                console.log('[Allocation] Saved Workflow State:', savedWorkflowState);
+                console.log('[Allocation] Saved Allocation Results:', savedWorkflowState.allocationResults);
+                console.log('[Allocation] Saved Analysis Results:', savedWorkflowState.analysisResults);
                 
-                // Save updated workflow state
-                localStorage.setItem('microfilmWorkflowState', JSON.stringify(workflowState));
+                // Also log the dedicated allocation storage
+                const dedicatedAllocationData = JSON.parse(localStorage.getItem('microfilmAllocationData') || '{}');
+                console.log('[Allocation] Dedicated Allocation Storage:', dedicatedAllocationData);
                 
                 // Get current URL parameters
                 const urlParams = new URLSearchParams(window.location.search);
-                const projectId = urlParams.get('id') || workflowState.projectId;
-                const flow = urlParams.get('flow') || workflowState.workflowType || 'standard';
+                const projectId = urlParams.get('id') || state.projectId;
+                const flow = urlParams.get('flow') || state.workflowType || 'standard';
                 const mode = urlParams.get('mode') || 'auto';
                 const step = '4'; // Step for index generation page
                 
                 // Display loading state on button
                 toIndexGenerationBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
                 toIndexGenerationBtn.disabled = true;
-
-                // Log all available state data
-                console.log('Analysis Results:', state.analysisResults);
-                console.log('Allocation Results:', state.allocationResults);
                 
-                // Log localStorage AFTER saving to verify content
-                const savedWorkflowState = JSON.parse(localStorage.getItem('microfilmWorkflowState') || '{}');
-                console.log('Saved Workflow State:', savedWorkflowState);
-                console.log('Saved Allocation Results:', savedWorkflowState.allocationResults);
-                console.log('Saved Analysis Results:', savedWorkflowState.analysisResults);
-
                 // Navigate to index generation page with all parameters
                 window.location.href = `/register/index?step=${step}&id=${projectId}&mode=${mode}&flow=${flow}`;
             });

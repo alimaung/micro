@@ -294,6 +294,27 @@ def results_view(request, project_id):
     
     paginated_rolls = rolls_to_display[start_idx:end_idx]
     
+    # Get the original roll mappings from allocation data
+    original_roll_mappings = {}
+    allocation_results = allocation_data['allocationResults']['results']
+
+    # Map 16mm rolls
+    for roll in allocation_results['rolls_16mm']:
+        original_roll_mappings[str(roll['roll_id'])] = {
+            'film_type': '16mm',
+            'original_roll_id': roll['roll_id']
+        }
+
+    # Map 35mm rolls if they exist
+    if 'rolls_35mm' in allocation_results:
+        for roll in allocation_results['rolls_35mm']:
+            original_roll_mappings[str(roll['roll_id'])] = {
+                'film_type': '35mm',
+                'original_roll_id': roll['roll_id']
+            }
+
+    logger.info(f"Original roll mappings: {original_roll_mappings}")
+
     # Format rolls for display
     formatted_rolls = []
     for roll in paginated_rolls:
@@ -349,16 +370,6 @@ def results_view(request, project_id):
 def start_film_number_allocation(request):
     """
     API endpoint to start film number allocation for a project.
-    
-    Args:
-        projectId: Project ID (JSON parameter)
-        projectData: Project data (JSON parameter)
-        analysisData: Document analysis data (JSON parameter)
-        allocationData: Film allocation data (JSON parameter)
-        indexData: Index data for updating (JSON parameter)
-        
-    Returns:
-        JSON response with task ID and status
     """
     if request.method == 'POST':
         print("Starting film number allocation")
@@ -384,7 +395,6 @@ def start_film_number_allocation(request):
             # Get basic project info from database for verification
             try:
                 project_db = Project.objects.get(pk=project_id)
-                print(project_id)
             except Project.DoesNotExist:
                 return JsonResponse({
                     'error': 'Project not found'
@@ -395,7 +405,7 @@ def start_film_number_allocation(request):
             
             # Initialize allocation task status
             filmnumber_tasks[task_id] = {
-                'status': 'pending',
+                'status': 'processing',
                 'projectId': project_id,
                 'progress': 0,
                 'hasOversized': project_db.has_oversized,
@@ -405,18 +415,14 @@ def start_film_number_allocation(request):
                 'lastUpdateTime': time.time()
             }
             
-            # Start a background thread to process the allocation
-            allocation_thread = threading.Thread(
-                target=process_film_number_allocation, 
-                args=(task_id, project_id, project_data, analysis_data, allocation_data, index_data)
-            )
-            allocation_thread.daemon = True
-            allocation_thread.start()
+            # Process the allocation directly instead of in a thread
+            process_film_number_allocation(task_id, project_id, project_data, analysis_data, allocation_data, index_data)
             
+            # Return the task ID - the client can still poll for status
             return JsonResponse({
                 'taskId': task_id,
-                'status': 'started',
-                'message': 'Film number allocation started successfully'
+                'status': 'completed',  # Since we're processing synchronously now
+                'message': 'Film number allocation completed'
             })
             
         except json.JSONDecodeError:
@@ -479,14 +485,6 @@ def get_film_number_status(request):
 def process_film_number_allocation(task_id, project_id, project_data, analysis_data, allocation_data, index_data=None):
     """
     Background thread function to process film number allocation.
-    
-    Args:
-        task_id: Task ID for tracking progress
-        project_id: Project ID to allocate film numbers for
-        project_data: Project data
-        analysis_data: Document analysis data
-        allocation_data: Film allocation data
-        index_data: Optional index data to update
     """
     task = filmnumber_tasks[task_id]
     task['status'] = 'processing'
@@ -509,22 +507,124 @@ def process_film_number_allocation(task_id, project_id, project_data, analysis_d
             allocation_data=allocation_data,
             index_data=index_data
         )
-        
+        logger.info(f"\033[34mAllocation data: {allocation_data}\033[0m")
         # Update progress
         task['progress'] = 90
         task['lastUpdateTime'] = time.time()
         
-        # Get allocation statistics
-        from microapp.models import Roll
+        # Get all rolls with film numbers for this project
+        rolls_16mm = Roll.objects.filter(
+            project=project,
+            film_type='16mm',
+            film_number__isnull=False
+        ).order_by('film_number')
+
+        rolls_35mm = Roll.objects.filter(
+            project=project,
+            film_type='35mm',
+            film_number__isnull=False
+        ).order_by('film_number')
+
+        # Format roll data
+        formatted_rolls_16mm = []
+        formatted_rolls_35mm = []
+
+        # Get the original roll mappings from allocation data
+        original_roll_mappings = {}
+        allocation_results = allocation_data['allocationResults']['results']
+
+        # Map 16mm rolls
+        for roll in allocation_results['rolls_16mm']:
+            original_roll_mappings[str(roll['roll_id'])] = {
+                'film_type': '16mm',
+                'original_roll_id': roll['roll_id']
+            }
+
+        # Map 35mm rolls if they exist
+        if 'rolls_35mm' in allocation_results:
+            for roll in allocation_results['rolls_35mm']:
+                original_roll_mappings[str(roll['roll_id'])] = {
+                    'film_type': '35mm',
+                    'original_roll_id': roll['roll_id']
+                }
+
+        logger.info(f"Original roll mappings: {original_roll_mappings}")
+
+        # Format 16mm rolls
+        for roll in rolls_16mm:
+            segments = DocumentSegment.objects.filter(roll=roll).order_by('document_index')
+            formatted_segments = []
+            
+            # Find the original roll_id from the segments
+            first_segment = segments.first()
+            original_roll_id = None
+            if first_segment:
+                # Look through segments to find matching document in allocation data
+                for roll_data in allocation_results['rolls_16mm']:
+                    for seg in roll_data['document_segments']:
+                        if seg['doc_id'] == first_segment.document.doc_id:
+                            original_roll_id = roll_data['roll_id']
+                            break
+                    if original_roll_id:
+                        break
+            
+            for segment in segments:
+                formatted_segments.append({
+                    'doc_id': segment.document.doc_id,
+                    'document_id': segment.document.doc_id,  # For compatibility
+                    'pages': segment.pages,
+                    'start_page': segment.start_page,
+                    'end_page': segment.end_page,
+                    'blip': segment.blip,
+                    'blipend': segment.blipend
+                })
+
+            formatted_rolls_16mm.append({
+                'roll_id': original_roll_id,  # Use the found original roll_id
+                'film_number': roll.film_number,
+                'capacity': roll.capacity,
+                'pages_used': roll.pages_used,
+                'pages_remaining': roll.pages_remaining,
+                'document_segments': formatted_segments
+            })
+            
+
+        # Format 35mm rolls
+        for roll in rolls_35mm:
+            segments = DocumentSegment.objects.filter(roll=roll).order_by('document_index')
+            formatted_segments = []
+            
+            for segment in segments:
+                formatted_segments.append({
+                    'doc_id': segment.document.doc_id,
+                    'document_id': segment.document.doc_id,  # For compatibility
+                    'pages': segment.pages,
+                    'start_page': segment.start_page,
+                    'end_page': segment.end_page,
+                    'blip': segment.blip,
+                    'blipend': segment.blipend
+                })
+
+            formatted_rolls_35mm.append({
+                'roll_id': str(roll.roll_id),  # Use original roll_id
+                'film_number': roll.film_number,
+                'capacity': roll.capacity,
+                'pages_used': roll.pages_used,
+                'pages_remaining': roll.pages_remaining,
+                'document_segments': formatted_segments
+            })
+
+        # Create complete response data
         allocation_stats = {
             "project_id": project.pk,
             "archive_id": project.archive_id,
             "film_allocation_complete": project.film_allocation_complete,
-            "rolls_allocated": Roll.objects.filter(
-                project=project,
-                film_number__isnull=False
-            ).count(),
-            "total_rolls": Roll.objects.filter(project=project).count()
+            "total_rolls_16mm": rolls_16mm.count(),
+            "total_rolls_35mm": rolls_35mm.count(),
+            "total_pages_16mm": sum(r.pages_used for r in rolls_16mm),
+            "total_pages_35mm": sum(r.pages_used for r in rolls_35mm),
+            "rolls_16mm": formatted_rolls_16mm,
+            "rolls_35mm": formatted_rolls_35mm
         }
         
         # Include updated index if provided
@@ -537,6 +637,8 @@ def process_film_number_allocation(task_id, project_id, project_data, analysis_d
         task['progress'] = 100
         task['results'] = allocation_stats
         task['lastUpdateTime'] = time.time()
+        
+        logger.info(f"Film number allocation completed successfully for project {project.archive_id}")
         
     except Exception as e:
         logger.error(f"Error in film number allocation: {str(e)}")

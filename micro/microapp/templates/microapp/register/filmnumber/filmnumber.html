@@ -1,107 +1,229 @@
-<div class="container mt-4">
-    <h1 class="mb-4">Film Number Allocation Testing</h1>
-    
-    <!-- Project Information -->
-    <div class="card mb-4">
-        <div class="card-header bg-primary text-white">
-            <h2 class="h5 mb-0">Project Information</h2>
+<!-- Film Number Allocation Component -->
+<div class="allocation-component" id="step-5">
+    <!-- Allocation Status Header -->
+    <div class="allocation-status">
+        <div class="status-container">
+            <h3 class="section-title">Film Number Allocation</h3>
+            <div class="status-badge pending" id="filmnumber-status-badge">
+                <i class="fas fa-clock"></i>
+                <span>Awaiting Film Number Allocation</span>
+            </div>
         </div>
-        <div class="card-body">
-            <div class="project-info">
-                <p><strong>Project ID:</strong> <span id="projectIdDisplay">Loading...</span></p>
-                <p><strong>Archive ID:</strong> <span id="archiveIdDisplay">Loading...</span></p>
-                <p><strong>Project Name:</strong> <span id="projectNameDisplay">Loading...</span></p>
+        <div class="allocation-actions">
+            <button class="btn secondary" id="reset-filmnumber">
+                <i class="fas fa-redo"></i> Reset
+            </button>
+            <button class="btn primary" id="start-filmnumber">
+                <i class="fas fa-tag"></i> Assign Film Numbers
+            </button>
+        </div>
+    </div>
+
+    <!-- Project Overview Panel -->
+    <div class="panel project-overview">
+        <div class="panel-header">
+            <h4><i class="fas fa-info-circle"></i> Project Overview</h4>
+        </div>
+        <div class="panel-content">
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="info-label">Project ID:</span>
+                    <span class="info-value" id="project-id">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Documents:</span>
+                    <span class="info-value" id="document-count">0</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Total Pages:</span>
+                    <span class="info-value" id="total-pages">0</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Workflow Type:</span>
+                    <span class="info-value" id="workflow-type">Standard</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Oversized Pages:</span>
+                    <span class="info-value" id="oversized-count">0</span>
+                </div>
             </div>
         </div>
     </div>
-    
-    <!-- Data Preview -->
-    <div class="card mb-4">
-        <div class="card-header bg-info text-white">
-            <h2 class="h5 mb-0">LocalStorage Data Preview</h2>
-        </div>
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-6">
-                    <h3 class="h6">Project Data</h3>
-                    <pre id="projectDataPreview" class="data-preview">No data available</pre>
-                </div>
-                <div class="col-md-6">
-                    <h3 class="h6">Analysis Data</h3>
-                    <pre id="analysisDataPreview" class="data-preview">No data available</pre>
+
+    <!-- Film Allocation Results -->
+    <div class="allocation-results-container">
+        <!-- 16mm Film Section -->
+        <div class="film-section" id="film-16mm-section">
+            <div class="section-header">
+                <h4><i class="fas fa-film"></i> 16mm Film Rolls with Numbers</h4>
+                <div class="section-summary">
+                    <span id="roll-count-16mm">0</span> rolls | 
+                    <span id="pages-allocated-16mm">0</span> pages | 
+                    <span id="utilization-16mm">0%</span> avg. utilization
                 </div>
             </div>
-            <div class="row mt-3">
-                <div class="col-md-6">
-                    <h3 class="h6">Allocation Data</h3>
-                    <pre id="allocationDataPreview" class="data-preview">No data available</pre>
-                </div>
-                <div class="col-md-6">
-                    <h3 class="h6">Index Data</h3>
-                    <pre id="indexDataPreview" class="data-preview">No data available</pre>
+            <div class="film-rolls-container" id="film-rolls-16mm">
+                <!-- Film rolls will be added here dynamically -->
+                <div class="empty-state">
+                    <i class="fas fa-film fa-3x"></i>
+                    <p>No film rolls with numbers allocated yet. Click "Assign Film Numbers" to start.</p>
                 </div>
             </div>
-            <div class="mt-3">
-                <button id="clearDataBtn" class="btn btn-warning">Clear Data</button>
-            </div>
         </div>
-    </div>
-    
-    <!-- Allocation Controls -->
-    <div class="card mb-4">
-        <div class="card-header bg-success text-white">
-            <h2 class="h5 mb-0">Film Number Allocation</h2>
-        </div>
-        <div class="card-body">
-            <div id="errorContainer" class="alert alert-danger" style="display: none;"></div>
-            <button id="allocateBtn" class="btn btn-primary">Start Film Number Allocation</button>
-            
-            <!-- Progress Panel -->
-            <div id="progressPanel" class="mt-3" style="display: none;">
-                <h3 class="h6">Allocation Progress</h3>
-                <div class="progress">
-                    <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" 
-                         role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" 
-                         style="width: 0%">0%</div>
+
+        <!-- 35mm Film Section (only shown for hybrid workflow) -->
+        <div class="film-section hidden" id="film-35mm-section">
+            <div class="section-header">
+                <h4><i class="fas fa-film"></i> 35mm Film Rolls with Numbers</h4>
+                <div class="section-summary">
+                    <span id="roll-count-35mm">0</span> rolls | 
+                    <span id="pages-allocated-35mm">0</span> pages | 
+                    <span id="utilization-35mm">0%</span> avg. utilization
                 </div>
-                <p id="statusMessage" class="mt-2">Preparing to allocate film numbers...</p>
+            </div>
+            <div class="film-rolls-container" id="film-rolls-35mm">
+                <!-- Film rolls will be added here dynamically -->
+                <div class="empty-state">
+                    <i class="fas fa-film fa-3x"></i>
+                    <p>No 35mm film rolls with numbers allocated yet.</p>
+                </div>
             </div>
         </div>
     </div>
-    
-    <!-- Results Section -->
-    <div id="resultsSection" class="card mb-4" style="display: none;">
-        <div class="card-header bg-success text-white">
-            <h2 class="h5 mb-0">Allocation Results</h2>
+
+    <!-- Unified Index Panel -->
+    <div class="panel index-panel" id="index-panel">
+        <div class="panel-header with-actions">
+            <h4><i class="fas fa-table"></i> Document Index</h4>
+            <div class="panel-actions">
+                <button class="action-button" id="export-json" title="Export as JSON">
+                    <i class="fas fa-file-code"></i>
+                </button>
+                <button class="action-button" id="download-csv" title="Download as CSV">
+                    <i class="fas fa-file-csv"></i>
+                </button>
+            </div>
         </div>
-        <div class="card-body">
-            <pre id="resultsPreview" class="data-preview">No results available</pre>
+        
+        <!-- Statistics Section -->
+        <div class="index-stats">
+            <div class="stat-group">
+                <span class="stat-label">Total entries:</span>
+                <span class="stat-value" id="total-entries">0</span>
+            </div>
+            <div class="stat-group">
+                <span class="stat-label">Updated:</span>
+                <span class="stat-value" id="updated-entries">0</span>
+            </div>
+            <div class="stat-group">
+                <span class="stat-label">Pending:</span>
+                <span class="stat-value" id="pending-entries">0</span>
+            </div>
+        </div>
+
+        <div class="panel-content">
+            <div class="search-container">
+                <input type="text" id="index-search" class="search-input" 
+                       placeholder="Search by Document ID, COM ID, Roll ID, Film Number...">
+            </div>
+            <div class="table-container">
+                <table class="data-table" id="index-table">
+                    <thead>
+                        <tr>
+                            <th>Document ID</th>
+                            <th>COM ID</th>
+                            <th>Roll ID</th>
+                            <th>Frames</th>
+                            <th>Film Number</th>
+                            <th>Final Index</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="index-table-body">
+                        <!-- Entries will be added here dynamically -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="table-pagination">
+                <span id="table-info">Showing 0 of 0 entries</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Split Documents Section -->
+    <div class="panel split-documents hidden" id="split-documents-panel">
+        <div class="panel-header">
+            <h4><i class="fas fa-cut"></i> Split Documents</h4>
+        </div>
+        <div class="panel-content">
+            <table class="data-table" id="split-documents-table">
+                <thead>
+                    <tr>
+                        <th>Document ID</th>
+                        <th>Total Pages</th>
+                        <th>Split Across</th>
+                        <th>Rolls</th>
+                        <th>Blip Codes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Split documents will be added here -->
+                </tbody>
+            </table>
+            <div class="empty-state">
+                <i class="fas fa-file-alt fa-3x"></i>
+                <p>No documents are split across multiple rolls.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Film Number Allocation Details -->
+    <div class="panel allocation-details">
+        <div class="panel-header with-actions">
+            <h4><i class="fas fa-list-alt"></i> Film Number Allocation Details</h4>
+            <div class="panel-actions">
+                <button class="action-button" id="copy-filmnumber-data" title="Copy film number allocation data">
+                    <i class="fas fa-copy"></i>
+                </button>
+                <button class="action-button" id="export-filmnumber-data" title="Export film number allocation data">
+                    <i class="fas fa-download"></i>
+                </button>
+            </div>
+        </div>
+        <div class="panel-content">
+            <pre id="filmnumber-details-json" class="json-viewer">{}</pre>
         </div>
     </div>
 </div>
 
-{% block extra_js %}
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Get project ID from URL parameters
-        const urlParams = new URLSearchParams(window.location.search);
-        const urlProjectId = urlParams.get('id');
-        
-        // Initialize with project ID from URL or localStorage
-        if (urlProjectId) {
-            initFilmNumberAllocation(parseInt(urlProjectId));
-        } else {
-            // Fallback to localStorage
-            const projectData = JSON.parse(localStorage.getItem('microfilmProjectState') || '{}');
-            if (projectData.projectId) {
-                initFilmNumberAllocation(projectData.projectId);
-            } else {
-                showError('No project ID found in URL or localStorage');
-            }
-        }
-        
-        // Initialize data display
-        loadAndDisplayData();
-    });
-</script>
-{% endblock %}
+<!-- Film Number Allocation Progress Modal -->
+<div class="modal fade" id="filmnumber-progress-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Assigning Film Numbers</h5>
+            </div>
+            <div class="modal-body">
+                <div class="progress-container">
+                    <div class="progress">
+                        <div class="progress-bar" id="filmnumber-progress-bar" style="width: 0%"></div>
+                    </div>
+                    <div class="progress-text">
+                        <span id="filmnumber-progress-text">Starting film number allocation...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="workflow-navigation">
+    <button class="nav-button back" id="back-to-allocation">
+        <i class="fas fa-arrow-left"></i>
+        Back to Allocation
+    </button>
+    <button class="nav-button next" id="to-step-6" disabled>
+        Continue to Index Generation
+        <i class="fas fa-arrow-right"></i>
+    </button>
+</div> 
