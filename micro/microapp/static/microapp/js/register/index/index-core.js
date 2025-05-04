@@ -206,6 +206,17 @@ const IndexCore = (function() {
             };
             
             localStorage.setItem('microfilmWorkflowState', JSON.stringify(stateToSave));
+            
+            // Save index data in a dedicated object
+            if (state.indexData) {
+                localStorage.setItem('microfilmIndexData', JSON.stringify({
+                    projectId: state.projectId,
+                    indexData: state.indexData,
+                    timestamp: new Date().toISOString()
+                }));
+                console.log('Index data saved to dedicated localStorage object');
+            }
+            
             console.log('Workflow state saved to localStorage');
         } catch (error) {
             console.error('Error saving state to localStorage:', error);

@@ -69,6 +69,19 @@ const AllocationEvents = (function() {
                         completed: true,
                         timestamp: new Date().toISOString()
                     };
+
+                    // NEW: Save to dedicated allocation storage
+                    try {
+                        localStorage.setItem('microfilmAllocationData', JSON.stringify({
+                            allocationResults: state.allocationResults,
+                            lastUpdated: new Date().toISOString(),
+                            projectId: state.projectId || workflowState.projectId,
+                            completed: true
+                        }));
+                        console.log('[Allocation] Saved to dedicated allocation storage');
+                    } catch (error) {
+                        console.error('[Allocation] Error saving to dedicated storage:', error);
+                    }
                 }
                 
                 // Save analysis results if available
@@ -127,6 +140,19 @@ const AllocationEvents = (function() {
                         completed: true,
                         timestamp: new Date().toISOString()
                     };
+
+                    // NEW: Save to dedicated allocation storage
+                    try {
+                        localStorage.setItem('microfilmAllocationData', JSON.stringify({
+                            allocationResults: state.allocationResults,
+                            lastUpdated: new Date().toISOString(),
+                            projectId: state.projectId || workflowState.projectId,
+                            completed: true
+                        }));
+                        console.log('[Allocation] Saved to dedicated allocation storage');
+                    } catch (error) {
+                        console.error('[Allocation] Error saving to dedicated storage:', error);
+                    }
                 }
                 
                 // Save updated workflow state

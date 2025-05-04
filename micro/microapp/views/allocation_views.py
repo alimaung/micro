@@ -339,6 +339,7 @@ def process_film_allocation(task_id, project_id, analysis_results):
         task['progress'] = 80
         task['lastUpdateTime'] = time.time()
         
+        #print("\033[31m" + f"Film allocation structure: {film_allocation}" + "\033[0m")
         # Update statistics 
         film_allocation = update_statistics(film_allocation)
         
@@ -601,11 +602,13 @@ def allocate_with_oversized(film_allocation, documents):
     
     # Next, allocate oversized pages to 35mm film rolls
     film_allocation = allocate_35mm_strict(film_allocation, documents)
+    #print("\033[32m" + f"Film allocation structure after allocation: {film_allocation}" + "\033[0m") # Exists
     
     # Process 35mm allocation requests into proper roll allocations
     if film_allocation['doc_allocation_requests_35mm']:
         film_allocation = process_35mm_allocation_requests(film_allocation)
-    
+        
+    #print("\033[31m" + f"Film allocation structure after allocation: {film_allocation}" + "\033[0m") # None
     return film_allocation
 
 def allocate_16mm_with_oversized(film_allocation, documents):
@@ -1006,14 +1009,7 @@ def allocate_35mm_strict(film_allocation, documents):
             start_page = end_page + 1
     
     print(f"Created {len(film_allocation['doc_allocation_requests_35mm'])} allocation requests for 35mm film")
-    
-    # Step 2: Now process allocation requests into actual film rolls
-    # Only create rolls if we have allocation requests
-    if film_allocation['doc_allocation_requests_35mm']:
-        process_35mm_allocation_requests(film_allocation)
-    else:
-        print("No 35mm allocation requests to process")
-    
+        
     return film_allocation
 
 def process_35mm_allocation_requests(film_allocation):
@@ -1022,6 +1018,9 @@ def process_35mm_allocation_requests(film_allocation):
     
     Args:
         film_allocation: Film allocation structure containing allocation requests
+        
+    Returns:
+        Updated film allocation structure
     """
     print("Processing 35mm allocation requests into film rolls")
     
@@ -1135,6 +1134,9 @@ def process_35mm_allocation_requests(film_allocation):
     print(f"Total 35mm pages: {sum(roll['pages_used'] for roll in film_allocation['rolls_35mm'])}")
     print(f"Total partial 35mm rolls: {len(film_allocation.get('partial_rolls_35mm', []))}")
     print(f"Total split documents on 35mm: {len(film_allocation['split_documents_35mm'])}")
+    
+    # Return the updated film_allocation
+    return film_allocation
 
 def add_document_segment(roll, doc_id, path, pages, page_range, has_oversized):
     """

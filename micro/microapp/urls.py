@@ -1,6 +1,7 @@
 from django.urls import path, include
 from . import views
 from django.views.i18n import JavaScriptCatalog
+from . import api
 
 
 urlpatterns = [
@@ -33,8 +34,6 @@ urlpatterns = [
     path('oldcontrol/', views.oldcontrol, name='oldcontrol'),
     path('oldtransfer/', views.oldtransfer, name='oldtransfer'),
     path('oldexplore/', views.oldexplore, name='oldexplore'),
-    
-    # Testing URLs
     
     # API Endpoints
     path('control_relay/', views.control_relay, name='control_relay'),
@@ -93,4 +92,38 @@ urlpatterns = [
     path('api/index/update-index', views.update_index, name='update_index'),
     path('api/index/index-status', views.get_index_status, name='get_index_status'),
     path('api/index/index-results', views.get_index_results, name='get_index_results'),
+    
+    # Project endpoints
+    path('api/projects/', api.get_projects, name='api_get_projects'),
+    path('api/projects/<int:project_id>/', api.get_project, name='api_get_project'),
+    path('api/projects/create/', api.create_project, name='api_create_project'),
+    path('api/projects/<int:project_id>/process/', api.process_project, name='api_process_project'),
+    path('api/projects/<int:project_id>/import-documents/', api.import_documents, name='api_import_documents'),
+    path('api/projects/<int:project_id>/complete/', api.complete_project, name='api_complete_project'),
+    path('api/projects/<int:project_id>/export-allocation/', api.export_allocation_data, name='api_export_allocation_data'),
+    
+    # Document endpoints
+    path('api/documents/<str:doc_id>/', api.get_document, name='api_get_document'),
+    path('api/documents/blip/<str:blip>/', api.lookup_blip, name='api_lookup_blip'),
+    path('api/projects/<int:project_id>/bulk-import-documents/', api.bulk_import_documents, name='api_bulk_import_documents'),
+    path('api/projects/<int:project_id>/documents/<str:doc_id>/split/', api.split_document, name='api_split_document'),
+    
+    # Roll endpoints
+    path('api/projects/<int:project_id>/rolls/', api.get_rolls, name='api_get_rolls'),
+    path('api/rolls/<int:roll_id>/', api.get_roll, name='api_get_roll'),
+    path('api/rolls/<int:roll_id>/mark-scanned/', api.mark_roll_scanned, name='api_mark_roll_scanned'),
+    path('api/rolls/merge/', api.merge_rolls, name='api_merge_rolls'),
+    
+    # Film number endpoints
+    path('api/projects/<int:project_id>/allocate-film-numbers/', api.allocate_film_numbers, name='api_allocate_film_numbers'),
+    
+    # New FilmNumber view URLs
+    path('filmnumber/', views.film_number_view, name='film_number_view'),
+    path('filmnumber/project/<int:project_id>/', views.film_number_view, name='film_number_project_view'),
+    path('filmnumber/roll/<int:roll_id>/', views.roll_detail_view, name='roll_detail_view'),
+    path('filmnumber/results/<int:project_id>/', views.results_view, name='film_number_results'),
+    
+    # New FilmNumber API URLs
+    path('api/filmnumber/allocate/', views.start_film_number_allocation, name='start_film_number_allocation'),
+    path('api/filmnumber/status/', views.get_film_number_status, name='get_film_number_status'),
 ]

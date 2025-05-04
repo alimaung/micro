@@ -321,6 +321,16 @@ function loadStepData(stepKey) {
             return state.analysisResults;
         }
         
+        // NEW: Try to load from dedicated analysis storage if looking for analysis data
+        if (stepKey === 'analysis') {
+            const dedicatedAnalysisData = localStorage.getItem('microfilmAnalysisData');
+            if (dedicatedAnalysisData) {
+                const analysisData = JSON.parse(dedicatedAnalysisData);
+                console.log('[Analysis] Found data in dedicated analysis storage');
+                return analysisData.analysisResults;
+            }
+        }
+        
         console.log(`[Analysis] No ${stepKey} data found in localStorage`);
         return null;
     } catch (error) {
@@ -336,18 +346,29 @@ function saveStepData(stepKey, data) {
     console.log(`[Analysis] Saving ${stepKey} data to localStorage:`, data);
     
     try {
-        const state = JSON.parse(localStorage.getItem('microfilmWorkflowState') || '{}');
+        // Get current workflow state
+        const workflowState = JSON.parse(localStorage.getItem('microfilmWorkflowState') || '{}');
         
-        // Save to specific step key
-        state[stepKey] = data;
+        // Save to specific step key in workflow state (original behavior)
+        workflowState[stepKey] = data;
         
-        // If it's analysis data, also save to analysisResults for consistency
+        // If it's analysis data, also save to analysisResults for consistency (original behavior)
         if (stepKey === 'analysis' && data) {
             console.log('[Analysis] Also updating analysisResults for consistency');
-            state.analysisResults = data;
+            workflowState.analysisResults = data;
+            
+            // NEW: Save to dedicated microfilmAnalysisData storage
+            // This creates a separate storage location just for analysis data
+            console.log('[Analysis] Saving to dedicated analysis storage');
+            localStorage.setItem('microfilmAnalysisData', JSON.stringify({
+                analysisResults: data,
+                lastUpdated: new Date().toISOString(),
+                projectId: workflowState.projectId || data.projectId || null
+            }));
         }
         
-        localStorage.setItem('microfilmWorkflowState', JSON.stringify(state));
+        // Save updated workflow state
+        localStorage.setItem('microfilmWorkflowState', JSON.stringify(workflowState));
         console.log(`[Analysis] Successfully saved ${stepKey} data`);
     } catch (error) {
         console.error('[Analysis] Error saving step data:', error);
@@ -399,9 +420,19 @@ function saveAnalysisData(documentCount, pageCount, oversizedCount, documentsWit
     
     // Save to local storage - directly access the function to avoid recursion
     try {
+        // Original storage (workflow state)
         const state = JSON.parse(localStorage.getItem('microfilmWorkflowState') || '{}');
         state['analysis'] = analysisData;
         localStorage.setItem('microfilmWorkflowState', JSON.stringify(state));
+        
+        // NEW: Save to dedicated analysis storage
+        localStorage.setItem('microfilmAnalysisData', JSON.stringify({
+            analysisResults: analysisData,
+            lastUpdated: new Date().toISOString(),
+            projectId: state.projectId || null
+        }));
+        
+        console.log('[Analysis] Saved to both workflow state and dedicated analysis storage');
     } catch (error) {
         console.error('[Analysis] Error saving analysis data:', error);
     }
@@ -642,8 +673,8 @@ function handleAnalysisCompleted(results) {
         analysisState.totalPagesWithRefs = totalPagesWithRefs;
     }
     
-    // Save the analysis results to localStorage
-    saveStepData('analysis', {
+    // Prepare analysis results data
+    const analysisResults = {
         status: 'completed',
         documentCount: documentCount,
         pageCount: pageCount,
@@ -654,7 +685,10 @@ function handleAnalysisCompleted(results) {
         showReferenceTable: oversizedCount > 0,
         documents: results.documents || [],
         timestamp: new Date().toISOString()
-    });
+    };
+    
+    // Save the analysis results to localStorage - both to workflow state and dedicated storage
+    saveStepData('analysis', analysisResults);
 }
 
 /**

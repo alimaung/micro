@@ -1,0 +1,27 @@
+{
+  "sourceData": {
+    "path": "Y:\\RRD003-2002_DW_INVOICE",
+    "folderName": "RRD003-2002_DW_INVOICE",
+    "fileCount": 21,
+    "totalSize": 1607468,
+    "totalSizeFormatted": "1.5 MB"
+  },
+  "destinationPath": "Y:\\RRD003-2002_DW_INVOICE\\",
+  "projectInfo": {
+    "archiveId": "RRD003-2002",
+    "location": "DW",
+    "documentType": "INVOICE",
+    "pdfPath": "Y:\\RRD003-2002_DW_INVOICE\\B1_MixedSingleRoll",
+    "comlistPath": "Y:\\RRD003-2002_DW_INVOICE\\comlist.xlsx",
+    "isValid": true
+  },
+  "projectId": "45",
+  "uiState": {
+    "autoParseEnabled": true,
+    "autoSelectPathEnabled": true,
+    "autoFindPdfEnabled": true,
+    "autoFindComlistEnabled": true,
+    "createSubfolderEnabled": true
+  },
+  "isValidated": 45
+}

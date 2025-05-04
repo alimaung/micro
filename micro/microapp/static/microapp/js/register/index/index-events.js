@@ -207,7 +207,33 @@ const IndexEvents = (function() {
                 
                 // Save the current state
                 IndexCore.saveState();
+
+                // Log the full workflow state from localStorage for debugging
+                console.log('DEBUGGING - Full workflowState from localStorage:');
+                const workflowState = JSON.parse(localStorage.getItem('microfilmWorkflowState') || '{}');
+                console.log(workflowState);
                 
+                // Log the index data specifically
+                console.log('DEBUGGING - Index data being saved:');
+                const dedicatedIndexData = JSON.parse(localStorage.getItem('microfilmIndexData') || '{}');
+                console.log('From dedicated storage:', dedicatedIndexData);
+
+                // Log the project data specifically
+                console.log('DEBUGGING - Project data being saved:');
+                const projectData = JSON.parse(localStorage.getItem('microfilmProjectState') || '{}');
+                console.log(projectData);
+                
+                // Log the analysis data specifically
+                console.log('DEBUGGING - Analysis data being saved:');
+                const dedicatedAnalysisData = JSON.parse(localStorage.getItem('microfilmAnalysisData') || '{}');
+                console.log('From dedicated storage:', dedicatedAnalysisData);
+
+                // Log the allocation data specifically
+                console.log('DEBUGGING - Allocation data being saved:');
+                const dedicatedAllocationData = JSON.parse(localStorage.getItem('microfilmAllocationData') || '{}');
+                console.log('From dedicated storage:', dedicatedAllocationData);
+
+
                 // Redirect to film number page
                 const state = IndexCore.getState();
                 const projectId = state.projectId;
@@ -216,7 +242,7 @@ const IndexEvents = (function() {
                 console.log('Navigating to film number page with:', { projectId, workflowType });
                 
                 // Use the same parameter names as expected by the film number page
-                window.location.href = `/register/workflow/film_number/?id=${projectId}&flow=${workflowType}`;
+                window.location.href = `/register/filmnumber/?id=${projectId}&flow=${workflowType}`;
             });
         }
     }

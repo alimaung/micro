@@ -46,3 +46,8 @@ from .allocation_views import (
 from .index_views import (
     initialize_index, update_index, get_index_status, get_index_results
 )
+
+from .filmnumber import (
+    film_number_view, roll_detail_view, results_view, 
+    start_film_number_allocation, get_film_number_status, process_film_number_allocation
+)

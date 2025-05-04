@@ -173,6 +173,12 @@ const AllocationCore = (function() {
             // Convert results to proper format expected by backend
             state.analysisResults.documents = state.analysisResults.results;
         }
+
+        // Log the data sent to the API
+        console.log('Sending data to API:', {
+            projectId: state.projectId,
+            analysisResults: state.analysisResults
+        });
         
         // Call the API to start allocation
         AllocationAPI.startAllocationProcess();

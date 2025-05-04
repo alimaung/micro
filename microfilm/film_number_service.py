@@ -511,7 +511,7 @@ class FilmNumberService:
                     )
                 )
                 
-                # Initialize or update roll info in the reference model
+                # Register the roll in reference_info if not already there
                 if roll_db_id not in project.reference_info['rolls']:
                     roll_info = RollReferenceInfo(roll_db_id, film_number)
                     
@@ -521,8 +521,9 @@ class FilmNumberService:
                     if result and result[0] == project_id:
                         roll_info.is_new_roll = True
                     
-                    # Store in reference model
                     project.reference_info['rolls'][roll_db_id] = roll_info
+                    if self.logger:
+                        self.logger.film_debug(f"Added existing roll ID {roll_db_id} to reference_info with film number {film_number}")
             else:
                 # No existing roll with enough space, create a new roll
                 if self.logger:
@@ -682,6 +683,14 @@ class FilmNumberService:
                 roll_frame_positions[roll_db_id] = frame_start + doc_pages
                 if self.logger:
                     self.logger.film_debug(f"Updated frame position for roll {roll_db_id}: {old_position} → {roll_frame_positions[roll_db_id]} (added {doc_pages} pages)")
+                
+                # Register the new roll in reference_info
+                if roll_db_id not in project.reference_info['rolls']:
+                    roll_info = RollReferenceInfo(roll_db_id, film_number)
+                    roll_info.is_new_roll = True  # This is a new roll created in this project
+                    project.reference_info['rolls'][roll_db_id] = roll_info
+                    if self.logger:
+                        self.logger.film_debug(f"Added new roll ID {roll_db_id} to reference_info with film number {film_number}")
         
         # Set the 35mm rolls for the project
         project.film_allocation.rolls_35mm = project_rolls_35mm

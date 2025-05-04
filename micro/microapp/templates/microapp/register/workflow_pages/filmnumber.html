@@ -7,7 +7,7 @@
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'microapp/css/register/register.css' %}">
     <link rel="stylesheet" href="{% static 'microapp/css/register/progress.css' %}">
-    <link rel="stylesheet" href="{% static 'microapp/css/register/filmnumber.css' %}">
+    <link rel="stylesheet" href="{% static 'microapp/css/register/filmnumber/filmnumber.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -17,31 +17,14 @@
         <!-- Main Content Area -->
         <div class="workflow-content">
             <!-- Include the Filmnumber component which already has a workflow-step div -->
-            {% include 'microapp/register/filmnumber.html' %}
+            {% include 'microapp/register/filmnumber/filmnumber.html' %}
         </div>
     </div>
 {% endblock %}
 
 {% block extra_js %}
     <script src="{% static 'microapp/js/register/progress.js' %}"></script>
-    <script src="{% static 'microapp/js/register/filmnumber.js' %}"></script>
+    <script src="{% static 'microapp/js/register/filmnumber/filmnumber.js' %}"></script>
     <script src="{% static 'microapp/js/register/register.js' %}"></script>
-    
-    <!-- Script to ensure the step is active -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Make sure the step-5 div is active
-            document.getElementById('step-5').classList.add('active');
-            
-            // Save the current step in localStorage
-            const state = JSON.parse(localStorage.getItem('microfilmWorkflowState') || '{}');
-            state.currentStep = 'step-5';
-            localStorage.setItem('microfilmWorkflowState', JSON.stringify(state));
-            
-            // Initialize the progress indicator
-            if (window.progressComponent && typeof window.progressComponent.updateProgress === 'function') {
-                window.progressComponent.updateProgress(4);
-            }
-        });
-    </script>
+
 {% endblock %} 
