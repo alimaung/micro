@@ -7,7 +7,7 @@
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'microapp/css/register/register.css' %}">
     <link rel="stylesheet" href="{% static 'microapp/css/register/progress.css' %}">
-    <link rel="stylesheet" href="{% static 'microapp/css/register/references.css' %}">
+    <link rel="stylesheet" href="{% static 'microapp/css/register/references/references.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -17,19 +17,38 @@
         <!-- Main Content Area -->
         <div class="workflow-content">
             <!-- Include the References component which already has a workflow-step div -->
-            {% include 'microapp/register/references.html' %}
+            {% include 'microapp/register/references/references.html' %}
         </div>
     </div>
 {% endblock %}
 
 {% block extra_js %}
     <script src="{% static 'microapp/js/register/progress.js' %}"></script>
-    <script src="{% static 'microapp/js/register/references.js' %}"></script>
+    <!-- Load utility modules first -->
+    <script src="{% static 'microapp/js/register/references/utils.js' %}"></script>
+    <script src="{% static 'microapp/js/register/references/api.js' %}"></script>
+    <script src="{% static 'microapp/js/register/references/ui.js' %}"></script>
+    <script src="{% static 'microapp/js/register/references/core.js' %}"></script>
+    <script src="{% static 'microapp/js/register/references/events.js' %}"></script>
+    <!-- Then load the main module that uses them -->
+    <script src="{% static 'microapp/js/register/references/index.js' %}"></script>
+    <!-- Other scripts -->
     <script src="{% static 'microapp/js/register/register.js' %}"></script>
     
-    <!-- Script to ensure the step is active -->
+    <!-- Initialization script -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Initialize the ReferencesManager
+            if (typeof ReferencesManager !== 'undefined' && typeof ReferencesUtils !== 'undefined') {
+                ReferencesManager.init({
+                    Utils: ReferencesUtils,
+                    UI: ReferencesUI,
+                    API: ReferencesAPI,
+                    Core: ReferencesCore,
+                    Events: ReferencesEvents
+                });
+            }
+            
             // Make sure the step-6 div is active
             document.getElementById('step-6').classList.add('active');
             

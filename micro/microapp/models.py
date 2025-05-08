@@ -374,3 +374,151 @@ class DocumentAllocationRequest35mm(models.Model):
     
     def __str__(self):
         return f"35mm allocation request: {self.document.doc_id} pages {self.start_page}-{self.end_page}"
+
+class DistributionResult(models.Model):
+    """Stores results from the document distribution process."""
+    project = models.OneToOneField(Project, on_delete=models.CASCADE, related_name='distribution_result')
+    
+    # Standard workflow results
+    processed_count = models.IntegerField(default=0)
+    error_count = models.IntegerField(default=0)
+    output_dir = models.CharField(max_length=500, blank=True, null=True)
+    
+    # Oversized workflow results
+    reference_sheets = models.IntegerField(default=0, help_text="Total reference sheets generated")
+    documents_with_references = models.IntegerField(default=0, help_text="Documents with reference sheets")
+    oversized_documents_extracted = models.IntegerField(default=0)
+    processed_35mm_documents = models.IntegerField(default=0)
+    copied_35mm_documents = models.IntegerField(default=0)
+    processed_16mm_documents = models.IntegerField(default=0)
+    copied_16mm_documents = models.IntegerField(default=0)
+    
+    # Process tracking
+    completed_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=20, default="success", 
+                             choices=[("success", "Success"), 
+                                      ("error", "Error"), 
+                                      ("partial", "Partial Success")])
+    
+    def __str__(self):
+        return f"Distribution results for {self.project.archive_id}"
+
+
+class ReferenceSheet(models.Model):
+    """Represents a reference sheet generated for oversized pages."""
+    document = models.ForeignKey(Document, on_delete=models.CASCADE, related_name='reference_sheets')
+    document_range = models.ForeignKey(DocumentRange, on_delete=models.CASCADE, 
+                                     related_name='reference_sheet', null=True)
+    
+    # Range information (also stored directly for convenience)
+    range_start = models.IntegerField(help_text="Start page of oversized range")
+    range_end = models.IntegerField(help_text="End page of oversized range")
+    
+    # Reference sheet information
+    path = models.CharField(max_length=500, help_text="Path to reference sheet PDF")
+    blip_35mm = models.CharField(max_length=50, blank=True, null=True, 
+                                help_text="Blip code for 35mm film")
+    film_number_35mm = models.CharField(max_length=50, blank=True, null=True,
+                                      help_text="Film number for 35mm roll")
+    human_range = models.CharField(max_length=100, blank=True, null=True,
+                                 help_text="Human-readable page range (e.g. '1 von 5')")
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['document', 'range_start']
+    
+    def __str__(self):
+        return f"Reference for {self.document.doc_id} pages {self.range_start}-{self.range_end}"
+
+
+class ReadablePageDescription(models.Model):
+    """Stores human-readable page descriptions for document ranges."""
+    document = models.ForeignKey(Document, on_delete=models.CASCADE, related_name='readable_page_descriptions')
+    range_index = models.IntegerField(help_text="Index of the range in document's ranges")
+    description = models.CharField(max_length=100, help_text="Human-readable description e.g. '1 von 5'")
+    
+    class Meta:
+        ordering = ['document', 'range_index']
+        unique_together = ['document', 'range_index']
+    
+    def __str__(self):
+        return f"{self.document.doc_id}: {self.description} (index {self.range_index})"
+
+
+class AdjustedRange(models.Model):
+    """Maps between original document ranges and adjusted ranges after reference insertion."""
+    document = models.ForeignKey(Document, on_delete=models.CASCADE, related_name='adjusted_ranges')
+    original_start = models.IntegerField(help_text="Original start page")
+    original_end = models.IntegerField(help_text="Original end page")
+    adjusted_start = models.IntegerField(help_text="Adjusted start page after reference insertion")
+    adjusted_end = models.IntegerField(help_text="Adjusted end page after reference insertion")
+    
+    class Meta:
+        ordering = ['document', 'original_start']
+    
+    def __str__(self):
+        return f"{self.document.doc_id}: {self.original_start}-{self.original_end} → {self.adjusted_start}-{self.adjusted_end}"
+
+
+class ProcessedDocument(models.Model):
+    """Tracks processed versions of documents (with references, extracted pages, etc.)"""
+    DOCUMENT_TYPES = [
+        ('16mm_with_refs', '16mm with references'),
+        ('35mm_with_refs', '35mm with references'),
+        ('extracted_oversized', 'Extracted oversized pages'),
+        ('standard', 'Standard document'),
+        ('split', 'Split document')
+    ]
+    
+    document = models.ForeignKey(Document, on_delete=models.CASCADE, related_name='processed_versions')
+    path = models.CharField(max_length=500, help_text="Path to processed document file")
+    processing_type = models.CharField(max_length=20, choices=DOCUMENT_TYPES)
+    
+    # For split documents or specific page ranges
+    start_page = models.IntegerField(null=True, blank=True, help_text="Start page if this is a document segment")
+    end_page = models.IntegerField(null=True, blank=True, help_text="End page if this is a document segment")
+    
+    # Roll allocation information
+    roll = models.ForeignKey(Roll, on_delete=models.CASCADE, related_name='processed_documents', null=True, blank=True)
+    segment = models.ForeignKey(DocumentSegment, on_delete=models.CASCADE, related_name='processed_document', 
+                              null=True, blank=True)
+    
+    # Status information
+    processed_at = models.DateTimeField(auto_now_add=True)
+    copied_to_output = models.BooleanField(default=False, help_text="Whether copied to output directory")
+    output_path = models.CharField(max_length=500, blank=True, null=True, help_text="Path in output directory")
+    
+    class Meta:
+        ordering = ['document', 'processing_type', 'start_page']
+    
+    def __str__(self):
+        if self.start_page and self.end_page:
+            return f"{self.document.doc_id} ({self.processing_type}): pages {self.start_page}-{self.end_page}"
+        return f"{self.document.doc_id} ({self.processing_type})"
+
+
+class DistributionLog(models.Model):
+    """Captures detailed logs from the distribution process."""
+    LOG_LEVELS = [
+        ('INFO', 'Info'),
+        ('WARNING', 'Warning'),
+        ('ERROR', 'Error'),
+        ('DEBUG', 'Debug'),
+        ('SUCCESS', 'Success')
+    ]
+    
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='distribution_logs')
+    timestamp = models.DateTimeField(auto_now_add=True)
+    level = models.CharField(max_length=10, choices=LOG_LEVELS)
+    message = models.TextField()
+    document = models.ForeignKey(Document, on_delete=models.CASCADE, 
+                               related_name='distribution_logs', null=True, blank=True)
+    roll = models.ForeignKey(Roll, on_delete=models.CASCADE,
+                           related_name='distribution_logs', null=True, blank=True)
+    
+    class Meta:
+        ordering = ['project', '-timestamp']
+    
+    def __str__(self):
+        return f"{self.timestamp.strftime('%Y-%m-%d %H:%M:%S')} [{self.level}]: {self.message[:50]}..."

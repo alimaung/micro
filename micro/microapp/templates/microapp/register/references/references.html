@@ -1,0 +1,135 @@
+<!-- References Management Component -->
+<div id="step-6" class="workflow-step">
+    <div class="step-header">
+        <h2>Reference Sheet Management</h2>
+        <div class="status-badge pending">
+            <i class="fas fa-clock"></i> Pending
+        </div>
+    </div>
+
+    <div class="step-content">
+        <!-- Status Overview Card -->
+        <div class="status-card">
+            <div class="card-header">
+                <h3>Reference Sheets Status</h3>
+            </div>
+            <div class="card-body">
+                <div class="status-grid">
+                    <div class="status-item">
+                        <span class="status-label">Total Documents:</span>
+                        <span class="status-value" id="total-documents">0</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Oversized Documents:</span>
+                        <span class="status-value" id="oversized-documents">0</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Reference Sheets Generated:</span>
+                        <span class="status-value" id="sheets-generated">0</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Status:</span>
+                        <span class="status-value" id="generation-status">Not Started</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+         <!-- Status Message for Non-Hybrid Workflow -->
+         <div class="status-message inactive">
+            <i class="fas fa-check-circle"></i>
+            <p>Reference sheets are not required for this project as it does not have any oversized pages or is not using a hybrid workflow.</p>
+        </div>
+
+        <!-- Information Section -->
+        <div class="info-section">
+            <div class="info-icon">
+                <i class="fas fa-info-circle"></i>
+            </div>
+            <div class="info-content">
+                <h4>What are Reference Sheets?</h4>
+                <p>Reference sheets are special pages inserted into documents to indicate where oversized pages are located in the film roll. When a page is too large for the standard microfilm format, it is extracted and filmed separately. The reference sheet provides location information for these extracted pages.</p>
+                <h4>When are Reference Sheets Required?</h4>
+                <p>Reference sheets are required for hybrid workflow projects where documents contain pages larger than the standard microfilm format. If your project does not have oversized pages, this step will be automatically marked as completed.</p>
+            </div>
+        </div>
+
+        <!-- Action Panel -->
+        <div class="action-panel">
+            <div class="action-description">
+                <p>Generate reference sheets for all documents with oversized pages. These reference sheets will be inserted into the document to provide location information for the oversized pages.</p>
+            </div>
+            <div class="action-buttons">
+                <button id="generate-references" class="primary-button">
+                    <i class="fas fa-file-pdf"></i> Generate Reference Sheets
+                </button>
+            </div>
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-bar-fill" style="width: 0%"></div>
+                </div>
+                <div class="progress-info">
+                    <span class="progress-percentage">0%</span>
+                    <span id="reference-status">Ready to generate</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Document List -->
+        <div class="document-list-container">
+            <div class="list-header">
+                <h3>Documents with Oversized Pages</h3>
+                <div class="list-controls">
+                    <button id="refresh-list" class="secondary-button">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                </div>
+            </div>
+            <div class="document-list" id="oversized-document-list">
+                <!-- Document items will be added dynamically -->
+                <div class="empty-state">
+                    <i class="fas fa-search"></i>
+                    <p>No documents with oversized pages found.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reference Sheet Visualization -->
+        <div class="reference-visualization">
+            <div class="visualization-header">
+                <h3>Reference Sheet Details</h3>
+            </div>
+            <div class="visualization-content">
+                <div class="reference-animation">
+                    <div class="document-icon">
+                        <i class="fas fa-file-alt"></i>
+                        <div class="animation-arrow">
+                            <i class="fas fa-long-arrow-alt-right"></i>
+                        </div>
+                        <div class="reference-icon">
+                            <i class="fas fa-file-pdf"></i>
+                        </div>
+                    </div>
+                    <p class="animation-description">
+                        Select a document from the list above to view its reference sheets. Each reference sheet corresponds to a range of oversized pages and will be inserted at the appropriate position in the document.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Output (Hidden, used for debugging or data transfer) -->
+        <pre class="data-output hidden"></pre>
+    </div>
+
+    <!-- Navigation Buttons -->
+    <div class="workflow-navigation">
+        <button class="nav-button back" id="back-to-step-5">
+            <i class="fas fa-arrow-left"></i>
+            Back to Film Numbering
+        </button>
+        <button class="nav-button next" id="to-step-7">
+            Continue to Document Distribution
+            <i class="fas fa-arrow-right"></i>
+        </button>
+    </div>
+</div>

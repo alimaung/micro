@@ -1027,3 +1027,283 @@ class FilmNumberManager:
                 )
                 
                 self.logger.info(f"Created document {doc_id} from analysis data") 
+
+    def prepare_reference_sheet_data(self, project):
+        """Prepare data for reference sheets using accurate roll information.
+        
+        Args:
+            project: Project with oversized documents
+            
+        Returns:
+            Dictionary mapping document IDs to lists of reference sheet data
+        """
+        results = {}
+        
+        # Use reference info if available
+        if hasattr(project, 'reference_info') and project.reference_info and project.reference_info.get('documents'):
+            self.logger.info(f"Using reference info model with {len(project.reference_info['documents'])} documents")
+            
+            for doc_id, doc_info in project.reference_info['documents'].items():
+                results[doc_id] = []
+                
+                # Get the roll info
+                roll_info = project.reference_info['rolls'].get(doc_info.roll_id)
+                if not roll_info:
+                    self.logger.warning(f"No roll info found for document {doc_id} roll {doc_info.roll_id}")
+                    continue
+                    
+                # Add each range with its precise blip
+                for range_info in doc_info.ranges:
+                    results[doc_id].append({
+                        'range': (range_info.range_start, range_info.range_end),
+                        'blip_35mm': range_info.blip,
+                        'film_number_35mm': roll_info.film_number,
+                        'reference_position': range_info.position + 1
+                    })
+        else:
+            # If no reference info, query database directly
+            if self.logger:
+                self.logger.info("No reference info model found, querying database directly")
+            
+            for document in project.documents.all():
+                if not document.has_oversized or not hasattr(document, 'ranges') or not document.ranges:
+                    continue
+                    
+                doc_id = document.doc_id
+                results[doc_id] = []
+                
+                # Process each range
+                for i, range_data in enumerate(document.ranges):
+                    range_start, range_end = range_data
+                    
+                    # Get document segments for this document
+                    segments = DocumentSegment.objects.filter(
+                        document=document,
+                        start_page__lte=range_start,
+                        end_page__gte=range_end
+                    )
+                    
+                    if segments.exists():
+                        segment = segments.first()
+                        film_number = segment.roll.film_number
+                        blip = segment.blip
+                        
+                        results[doc_id].append({
+                            'range': (range_start, range_end),
+                            'blip_35mm': blip,
+                            'film_number_35mm': film_number,
+                            'reference_position': i + 1
+                        })
+                    else:
+                        self.logger.warning(f"No segment found for document {doc_id}, range {range_start}-{range_end}")
+                
+        return results
+        
+    def prepare_reference_sheet_data_with_frontend(self, project, film_number_results=None):
+        """Prepare reference sheet data using frontend data while ensuring cross-project continuity.
+        
+        This method works in several stages:
+        1. First tries to use database records (same as prepare_reference_sheet_data)
+        2. If no database records, uses film_number_results from frontend
+        3. Ensures correct blip calculation for each range
+        
+        Args:
+            project: Project with oversized documents
+            film_number_results: Film number results from frontend
+            
+        Returns:
+            Dictionary mapping document IDs to lists of reference sheet data
+        """
+        self.logger.info(f"Preparing reference sheet data with frontend data for project {project.archive_id}")
+        
+        # First try the database approach to leverage any existing records
+        db_results = self.prepare_reference_sheet_data(project)
+        
+        # If we have database results, use them
+        if any(len(sheets) > 0 for sheets in db_results.values()):
+            self.logger.info(f"Using database records for reference sheet data")
+            for doc_id, sheets in db_results.items():
+                self.logger.info(f"Document {doc_id} has {len(sheets)} reference sheets from DB")
+                for i, sheet_data in enumerate(sheets):
+                    self.logger.info(f"  Sheet {i+1}: range={sheet_data['range']}, blip={sheet_data['blip_35mm']}")
+            return db_results
+        
+        # If no database results and no frontend data, can't proceed
+        if not film_number_results or 'results' not in film_number_results:
+            self.logger.warning("No database records or frontend data available")
+            return {}
+        
+        # We'll build our results from frontend data
+        results = {}
+        document_ranges = {}
+        
+        # Process 35mm rolls from frontend data
+        rolls_35mm = film_number_results.get('results', {}).get('rolls_35mm', [])
+        self.logger.info(f"Processing {len(rolls_35mm)} 35mm rolls from frontend data")
+        
+        # Track if this is a continuation roll
+        is_continuation = {}
+        
+        # First pass: collect all ranges for each document
+        for roll in rolls_35mm:
+            film_number = roll.get('film_number')
+            roll_id = roll.get('roll_id')
+            
+            self.logger.info(f"Processing roll {roll_id} with film number {film_number}")
+            
+            # Check if this is a continuation roll
+            is_continuation[roll_id] = roll.get('is_continuation', False)
+            
+            # Process document segments
+            doc_segments = roll.get('document_segments', [])
+            for segment in doc_segments:
+                doc_id = segment.get('doc_id')
+                if not doc_id:
+                    continue
+                    
+                # Initialize document in results if needed
+                if doc_id not in results:
+                    results[doc_id] = []
+                    document_ranges[doc_id] = []
+                
+                # Extract segment information
+                range_start = segment.get('start_page', 1)
+                range_end = segment.get('end_page', 1)
+                document_index = segment.get('document_index', 0)
+                
+                # Add range to document
+                document_ranges[doc_id].append((range_start, range_end))
+                
+                # Get existing blip from segment or calculate one
+                blip = segment.get('blip')
+                
+                # If no blip, need to generate one
+                if not blip:
+                    # If we're in a continuation roll, try to get the next frame position
+                    if is_continuation.get(roll_id, False):
+                        # Find the highest frame number in existing segments
+                        max_frame = 0
+                        for r in rolls_35mm:
+                            if r.get('roll_id') == roll_id:
+                                for s in r.get('document_segments', []):
+                                    if s.get('frame_range') and len(s.get('frame_range')) >= 2:
+                                        max_frame = max(max_frame, s.get('frame_range')[1])
+                        
+                        # Use next frame after max_frame, or default to document_index + 1
+                        frame_start = max_frame + 1 if max_frame > 0 else document_index + 1
+                    else:
+                        # Start with document_index + 1 for new rolls
+                        frame_start = document_index + 1
+                    
+                    # Generate blip
+                    blip = self._generate_blip(film_number, document_index + 1, frame_start)
+                    self.logger.info(f"Generated blip {blip} for document {doc_id}, range {range_start}-{range_end}")
+        
+        # Second pass: calculate range-specific blips for each document
+        for doc_id, ranges in document_ranges.items():
+            self.logger.info(f"Processing ranges for document {doc_id}: {ranges}")
+            
+            # Look for segments in frontend data that match this document
+            for roll in rolls_35mm:
+                film_number = roll.get('film_number')
+                
+                for segment in roll.get('document_segments', []):
+                    if segment.get('doc_id') == doc_id:
+                        range_start = segment.get('start_page', 1)
+                        range_end = segment.get('end_page', 1)
+                        document_index = segment.get('document_index', 0)
+                        
+                        # Check which range index this corresponds to
+                        range_idx = -1
+                        for i, (r_start, r_end) in enumerate(ranges):
+                            if r_start == range_start and r_end == range_end:
+                                range_idx = i
+                                break
+                        
+                        if range_idx == -1:
+                            self.logger.warning(f"Could not find range ({range_start}, {range_end}) in document ranges")
+                            continue
+                        
+                        # Get the base blip from segment
+                        base_blip = segment.get('blip')
+                        
+                        # If no blip, generate base blip
+                        if not base_blip:
+                            frame_start = segment.get('frame_range', [1, None])[0] if segment.get('frame_range') else 1
+                            base_blip = self._generate_blip(film_number, document_index + 1, frame_start)
+                        
+                        # Get all oversized positions from ranges
+                        oversized_positions = []
+                        for r_start, r_end in ranges:
+                            for pos in range(r_start, r_end + 1):
+                                oversized_positions.append(pos)
+                        oversized_positions = sorted(oversized_positions)
+                        
+                        # Generate range-specific blip by calculating correct frame
+                        # using the base blip as a starting point
+                        range_blip = self._calculate_range_specific_blip_from_base(
+                            base_blip, range_idx, oversized_positions, range_start, range_end
+                        )
+                        
+                        results[doc_id].append({
+                            'range': (range_start, range_end),
+                            'blip_35mm': range_blip,
+                            'film_number_35mm': film_number,
+                            'reference_position': range_idx + 1
+                        })
+        
+        # Check if any document has missing ranges
+        for doc_id, ranges in document_ranges.items():
+            result_ranges = [data['range'] for data in results.get(doc_id, [])]
+            for range_data in ranges:
+                if range_data not in result_ranges:
+                    self.logger.warning(f"Missing blip for document {doc_id}, range {range_data}")
+        
+        return results
+    
+    def _calculate_range_specific_blip_from_base(self, base_blip, range_idx, oversized_positions, range_start, range_end):
+        """Calculate a range-specific blip from a base blip.
+        
+        Args:
+            base_blip: Base blip for the document (e.g., 10000002-0001.00001)
+            range_idx: Index of the current range within the document's ranges
+            oversized_positions: List of all oversized page positions in the document
+            range_start: Start page of the current range
+            range_end: End page of the current range
+            
+        Returns:
+            String with the adjusted blip
+        """
+        try:
+            # Parse base blip
+            parts = base_blip.split('-')
+            film_num = parts[0]
+            rest = parts[1].split('.')
+            doc_index = rest[0]
+            base_frame = int(rest[1])
+            
+            # Count oversized pages and reference sheets before this range
+            os_count = 0
+            ref_count = 0
+            
+            # Count oversized pages before this range
+            for os_pos in oversized_positions:
+                if os_pos < range_start:
+                    os_count += 1
+            
+            # Each range before this one gets a reference sheet
+            ref_count = range_idx
+            
+            # Calculate frame position: base + oversized pages + reference sheets before this range
+            target_frame = base_frame + os_count + ref_count
+            
+            # Create range-specific blip
+            range_blip = f"{film_num}-{doc_index}.{target_frame:05d}"
+            
+            self.logger.info(f"Calculated range-specific blip: base={base_blip}, result={range_blip} (os_count={os_count}, ref_count={ref_count})")
+            
+            return range_blip
+            
+        except Exception as e:
+            self.logger.warning(f"Error calculating range blip: {str(e)}")
+            return base_blip 

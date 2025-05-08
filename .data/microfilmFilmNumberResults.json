@@ -1,0 +1,224 @@
+{
+  "projectId": "6",
+  "results": {
+      "project_id": 6,
+      "archive_id": "RRD003-2002",
+      "film_allocation_complete": true,
+      "total_rolls_16mm": 1,
+      "total_rolls_35mm": 1,
+      "total_pages_16mm": 2425,
+      "total_pages_35mm": 20,
+      "rolls_16mm": [
+          {
+              "roll_id": 1,
+              "film_number": "20000001",
+              "capacity": 2900,
+              "pages_used": 2425,
+              "pages_remaining": 475,
+              "document_segments": [
+                  {
+                      "doc_id": "document_001.pdf",
+                      "document_id": "document_001.pdf",
+                      "pages": 106,
+                      "start_page": 1,
+                      "end_page": 106,
+                      "blip": "20000001-0001.00001",
+                      "blipend": "20000001-0001.00106"
+                  },
+                  {
+                      "doc_id": "document_002.pdf",
+                      "document_id": "document_002.pdf",
+                      "pages": 125,
+                      "start_page": 1,
+                      "end_page": 125,
+                      "blip": "20000001-0002.00107",
+                      "blipend": "20000001-0002.00231"
+                  },
+                  {
+                      "doc_id": "document_003.pdf",
+                      "document_id": "document_003.pdf",
+                      "pages": 136,
+                      "start_page": 1,
+                      "end_page": 136,
+                      "blip": "20000001-0003.00232",
+                      "blipend": "20000001-0003.00367"
+                  },
+                  {
+                      "doc_id": "document_004.pdf",
+                      "document_id": "document_004.pdf",
+                      "pages": 96,
+                      "start_page": 1,
+                      "end_page": 96,
+                      "blip": "20000001-0004.00368",
+                      "blipend": "20000001-0004.00463"
+                  },
+                  {
+                      "doc_id": "document_005.pdf",
+                      "document_id": "document_005.pdf",
+                      "pages": 129,
+                      "start_page": 1,
+                      "end_page": 129,
+                      "blip": "20000001-0005.00464",
+                      "blipend": "20000001-0005.00592"
+                  },
+                  {
+                      "doc_id": "document_006.pdf",
+                      "document_id": "document_006.pdf",
+                      "pages": 138,
+                      "start_page": 1,
+                      "end_page": 138,
+                      "blip": "20000001-0006.00593",
+                      "blipend": "20000001-0006.00730"
+                  },
+                  {
+                      "doc_id": "document_007.pdf",
+                      "document_id": "document_007.pdf",
+                      "pages": 106,
+                      "start_page": 1,
+                      "end_page": 106,
+                      "blip": "20000001-0007.00731",
+                      "blipend": "20000001-0007.00836"
+                  },
+                  {
+                      "doc_id": "document_008.pdf",
+                      "document_id": "document_008.pdf",
+                      "pages": 139,
+                      "start_page": 1,
+                      "end_page": 139,
+                      "blip": "20000001-0008.00837",
+                      "blipend": "20000001-0008.00975"
+                  },
+                  {
+                      "doc_id": "document_009.pdf",
+                      "document_id": "document_009.pdf",
+                      "pages": 103,
+                      "start_page": 1,
+                      "end_page": 103,
+                      "blip": "20000001-0009.00976",
+                      "blipend": "20000001-0009.01078"
+                  },
+                  {
+                      "doc_id": "document_010.pdf",
+                      "document_id": "document_010.pdf",
+                      "pages": 106,
+                      "start_page": 1,
+                      "end_page": 106,
+                      "blip": "20000001-0010.01079",
+                      "blipend": "20000001-0010.01184"
+                  },
+                  {
+                      "doc_id": "document_011.pdf",
+                      "document_id": "document_011.pdf",
+                      "pages": 124,
+                      "start_page": 1,
+                      "end_page": 124,
+                      "blip": "20000001-0011.01185",
+                      "blipend": "20000001-0011.01308"
+                  },
+                  {
+                      "doc_id": "document_012.pdf",
+                      "document_id": "document_012.pdf",
+                      "pages": 142,
+                      "start_page": 1,
+                      "end_page": 142,
+                      "blip": "20000001-0012.01309",
+                      "blipend": "20000001-0012.01450"
+                  },
+                  {
+                      "doc_id": "document_013.pdf",
+                      "document_id": "document_013.pdf",
+                      "pages": 112,
+                      "start_page": 1,
+                      "end_page": 112,
+                      "blip": "20000001-0013.01451",
+                      "blipend": "20000001-0013.01562"
+                  },
+                  {
+                      "doc_id": "document_014.pdf",
+                      "document_id": "document_014.pdf",
+                      "pages": 128,
+                      "start_page": 1,
+                      "end_page": 128,
+                      "blip": "20000001-0014.01563",
+                      "blipend": "20000001-0014.01690"
+                  },
+                  {
+                      "doc_id": "document_015.pdf",
+                      "document_id": "document_015.pdf",
+                      "pages": 118,
+                      "start_page": 1,
+                      "end_page": 118,
+                      "blip": "20000001-0015.01691",
+                      "blipend": "20000001-0015.01808"
+                  },
+                  {
+                      "doc_id": "document_016.pdf",
+                      "document_id": "document_016.pdf",
+                      "pages": 116,
+                      "start_page": 1,
+                      "end_page": 116,
+                      "blip": "20000001-0016.01809",
+                      "blipend": "20000001-0016.01924"
+                  },
+                  {
+                      "doc_id": "document_017.pdf",
+                      "document_id": "document_017.pdf",
+                      "pages": 121,
+                      "start_page": 1,
+                      "end_page": 121,
+                      "blip": "20000001-0017.01925",
+                      "blipend": "20000001-0017.02045"
+                  },
+                  {
+                      "doc_id": "document_018.pdf",
+                      "document_id": "document_018.pdf",
+                      "pages": 137,
+                      "start_page": 1,
+                      "end_page": 137,
+                      "blip": "20000001-0018.02046",
+                      "blipend": "20000001-0018.02182"
+                  },
+                  {
+                      "doc_id": "document_019.pdf",
+                      "document_id": "document_019.pdf",
+                      "pages": 103,
+                      "start_page": 1,
+                      "end_page": 103,
+                      "blip": "20000001-0019.02183",
+                      "blipend": "20000001-0019.02285"
+                  },
+                  {
+                      "doc_id": "document_020.pdf",
+                      "document_id": "document_020.pdf",
+                      "pages": 140,
+                      "start_page": 1,
+                      "end_page": 140,
+                      "blip": "20000001-0020.02286",
+                      "blipend": "20000001-0020.02425"
+                  }
+              ]
+          }
+      ],
+      "rolls_35mm": [
+          {
+              "roll_id": "None",
+              "film_number": "20000002",
+              "capacity": 110,
+              "pages_used": 20,
+              "pages_remaining": 90,
+              "document_segments": [
+                  {
+                      "doc_id": "document_008.pdf",
+                      "document_id": "document_008.pdf",
+                      "pages": 20,
+                      "start_page": 1,
+                      "end_page": 20,
+                      "blip": "20000002-0001.00001",
+                      "blipend": "20000002-0001.00020"
+                  }
+              ]
+          }
+      ]
+  },
+  "timestamp": "2025-05-07T17:18:20.825Z"
+}

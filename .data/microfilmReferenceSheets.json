@@ -1,0 +1,116 @@
+{
+  "projectId": "6",
+  "referenceSheets": {
+    "document_008.pdf": [
+      {
+        "range": [4, 4],
+        "id": 111
+      },
+      {
+        "range": [6, 6],
+        "id": 112
+      },
+      {
+        "range": [9, 9],
+        "id": 113
+      },
+      {
+        "range": [39, 39],
+        "id": 114
+      },
+      {
+        "range": [83, 83],
+        "id": 115
+      },
+      {
+        "range": [87, 87],
+        "id": 116
+      },
+      {
+        "range": [91, 91],
+        "id": 117
+      },
+      {
+        "range": [103, 103],
+        "id": 118
+      },
+      {
+        "range": [106, 106],
+        "id": 119
+      },
+      {
+        "range": [128, 128],
+        "id": 120
+      }
+    ]
+  },
+  "sheetsCreated": 10,
+  "status": "success",
+  "timestamp": "2025-05-08T06:37:42.037366",
+  "enhancedDetails": {
+    "document_008.pdf": {
+      "sheet_count": 10,
+      "ranges": [
+        [4, 4],
+        [6, 6],
+        [9, 9],
+        [39, 39],
+        [83, 83],
+        [87, 87],
+        [91, 91],
+        [103, 103],
+        [106, 106],
+        [128, 128]
+      ],
+      "blips": [
+        "20000002-0001.00001",
+        "20000002-0001.00001",
+        "20000002-0001.00001",
+        "20000002-0001.00001",
+        "20000002-0001.00001",
+        "20000002-0001.00001",
+        "20000002-0001.00001",
+        "20000002-0001.00001",
+        "20000002-0001.00001",
+        "20000002-0001.00001"
+      ],
+      "film_numbers": [
+        "20000002",
+        "20000002",
+        "20000002",
+        "20000002",
+        "20000002",
+        "20000002",
+        "20000002",
+        "20000002",
+        "20000002",
+        "20000002"
+      ],
+      "sheet_ids": [111, 112, 113, 114, 115, 116, 117, 118, 119, 120],
+      "file_paths": [
+        "Y:\\RRD003-2002_DW_INVOICE\\.temp\\references\\document_008.pdf_ref_4-4.pdf",
+        "Y:\\RRD003-2002_DW_INVOICE\\.temp\\references\\document_008.pdf_ref_6-6.pdf",
+        "Y:\\RRD003-2002_DW_INVOICE\\.temp\\references\\document_008.pdf_ref_9-9.pdf",
+        "Y:\\RRD003-2002_DW_INVOICE\\.temp\\references\\document_008.pdf_ref_39-39.pdf",
+        "Y:\\RRD003-2002_DW_INVOICE\\.temp\\references\\document_008.pdf_ref_83-83.pdf",
+        "Y:\\RRD003-2002_DW_INVOICE\\.temp\\references\\document_008.pdf_ref_87-87.pdf",
+        "Y:\\RRD003-2002_DW_INVOICE\\.temp\\references\\document_008.pdf_ref_91-91.pdf",
+        "Y:\\RRD003-2002_DW_INVOICE\\.temp\\references\\document_008.pdf_ref_103-103.pdf",
+        "Y:\\RRD003-2002_DW_INVOICE\\.temp\\references\\document_008.pdf_ref_106-106.pdf",
+        "Y:\\RRD003-2002_DW_INVOICE\\.temp\\references\\document_008.pdf_ref_128-128.pdf"
+      ],
+      "human_readable_ranges": [
+        "1 von 10",
+        "2 von 10",
+        "3 von 10",
+        "4 von 10",
+        "5 von 10",
+        "6 von 10",
+        "7 von 10",
+        "8 von 10",
+        "9 von 10",
+        "10 von 10"
+      ]
+    }
+  }
+}
