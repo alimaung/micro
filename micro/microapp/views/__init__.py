@@ -51,3 +51,15 @@ from .filmnumber_views import (
     film_number_view, roll_detail_view, results_view, 
     start_film_number_allocation, get_film_number_status, process_film_number_allocation
 )
+
+# Import distribution views
+from .distribution_views import (
+    distribution_status, distribute_documents, generate_reference_sheets
+)
+
+from .reference_views import (
+    get_processed_documents, copy_to_output, clean_temporary_files, 
+    reference_sheet_status, generate_reference_sheets, get_reference_sheets,
+    get_reference_sheet_pdf, insert_reference_sheets, get_document_ranges,
+    generate_readable_descriptions, calculate_adjusted_ranges
+)

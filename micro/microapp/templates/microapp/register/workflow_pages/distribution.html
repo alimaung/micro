@@ -7,7 +7,7 @@
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'microapp/css/register/register.css' %}">
     <link rel="stylesheet" href="{% static 'microapp/css/register/progress.css' %}">
-    <link rel="stylesheet" href="{% static 'microapp/css/register/distribution.css' %}">
+    <link rel="stylesheet" href="{% static 'microapp/css/register/distribution/distribution.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -17,14 +17,21 @@
         <!-- Main Content Area -->
         <div class="workflow-content">
             <!-- Include the Distribution component which already has a workflow-step div -->
-            {% include 'microapp/register/distribution.html' %}
+            {% include 'microapp/register/distribution/distribution.html' %}
         </div>
     </div>
 {% endblock %}
 
 {% block extra_js %}
     <script src="{% static 'microapp/js/register/progress.js' %}"></script>
-    <script src="{% static 'microapp/js/register/distribution.js' %}"></script>
+    
+    <!-- Load distribution scripts in correct dependency order -->
+    <script src="{% static 'microapp/js/register/distribution/core.js' %}"></script>
+    <script src="{% static 'microapp/js/register/distribution/api.js' %}"></script>
+    <script src="{% static 'microapp/js/register/distribution/ui.js' %}"></script>
+    <script src="{% static 'microapp/js/register/distribution/events.js' %}"></script>
+    <script src="{% static 'microapp/js/register/distribution/distribution.js' %}"></script>
+
     <script src="{% static 'microapp/js/register/register.js' %}"></script>
     
     <!-- Script to ensure the step is active -->

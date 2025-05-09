@@ -71,7 +71,43 @@ const FilmNumberEvents = (function() {
      */
     function navigateToIndex() {
         const state = getState();
-        window.location.href = `/register/index/?id=${state.projectId}&flow=${state.workflowType}`;
+        console.log('Navigating back to index...');
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        const nextUrl = '/register/index/';
+
+        const flowType = urlParams.get('flow') || state.workflowType;
+        const projectId = urlParams.get('id') || state.projectId || '';
+        const mode = urlParams.get('mode') || '';
+        const step = urlParams.get('step') || '';
+
+        // Add parameters to URL
+        const separator = nextUrl.includes('?') ? '&' : '?';
+        const paramsToAdd = [];
+        
+        if (flowType) {
+            paramsToAdd.push(`flow=${flowType}`);
+        }
+        
+        if (projectId) {
+            paramsToAdd.push(`id=${projectId}`);
+        }
+
+        if (mode) {
+            paramsToAdd.push(`mode=${mode}`);
+        }
+
+        if (step) {
+            paramsToAdd.push(`step=${step}`);
+        }
+        
+        if (paramsToAdd.length > 0) {
+            window.location.href = `${nextUrl}${separator}${paramsToAdd.join('&')}`;
+            return;
+        }
+        
+        // Default navigation if no parameters to preserve
+        window.location.href = nextUrl;
     }
 
     /**
@@ -99,9 +135,39 @@ const FilmNumberEvents = (function() {
         } catch (error) {
             console.error('Error handling film data before navigation:', error);
         }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const nextUrl = '/register/references/';
+
+        const flowType = urlParams.get('flow');
+        const projectId = urlParams.get('id') || '';
+        const mode = urlParams.get('mode') || '';
+        const step = urlParams.get('step') || '';
+
+        // Add parameters to URL
+        const separator = nextUrl.includes('?') ? '&' : '?';
+        const paramsToAdd = [];
         
-        // Navigate to the next step
-        window.location.href = `/register/references/?id=${state.projectId}&flow=${state.workflowType}`;
+        if (flowType) {
+            paramsToAdd.push(`flow=${flowType}`);
+        }
+        
+        if (projectId) {
+            paramsToAdd.push(`id=${projectId}`);
+        }
+
+        if (mode) {
+            paramsToAdd.push(`mode=${mode}`);
+        }
+
+        if (step) {
+            paramsToAdd.push(`step=${step}`);
+        }
+        
+        if (paramsToAdd.length > 0) {
+            window.location.href = `${nextUrl}${separator}${paramsToAdd.join('&')}`;
+            return;
+        }
     }
 
     /**

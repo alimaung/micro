@@ -2,7 +2,9 @@ from django.contrib import admin
 from .models import (
     Project, Document, DocumentDimension, DocumentRange, ReferencePage,
     Roll, TempRoll, DocumentSegment, RollReferenceInfo, DocumentReferenceInfo,
-    RangeReferenceInfo, FilmAllocation, DocumentAllocationRequest35mm
+    RangeReferenceInfo, FilmAllocation, DocumentAllocationRequest35mm,
+    DistributionResult, ReferenceSheet, ReadablePageDescription, AdjustedRange,
+    ProcessedDocument
 )
 
 class ProjectAdmin(admin.ModelAdmin):
@@ -191,6 +193,91 @@ class DocumentAllocationRequest35mmAdmin(admin.ModelAdmin):
     list_filter = ('processed',)
     readonly_fields = ('id',)
 
+class DistributionResultAdmin(admin.ModelAdmin):
+    list_display = ('id', 'project', 'processed_count', 'error_count', 'output_dir',
+                   'reference_sheets', 'documents_with_references', 'oversized_documents_extracted',
+                   'processed_35mm_documents', 'copied_35mm_documents',
+                   'processed_16mm_documents', 'copied_16mm_documents',
+                   'completed_at', 'status')
+    search_fields = ('project__archive_id',)
+    list_filter = ('status',)
+    readonly_fields = ('id',)
+    fieldsets = (
+        ('Project', {
+            'fields': ('id', 'project', 'output_dir')
+        }),
+        ('Processing Results', {
+            'fields': ('processed_count', 'error_count', 'status')
+        }),
+        ('Reference Processing', {
+            'fields': ('reference_sheets', 'documents_with_references')
+        }),
+        ('Document Processing', {
+            'fields': ('oversized_documents_extracted', 
+                      'processed_35mm_documents', 'copied_35mm_documents',
+                      'processed_16mm_documents', 'copied_16mm_documents')
+        }),
+        ('Timestamps', {
+            'fields': ('completed_at',)
+        }),
+    )
+
+class ReferenceSheetAdmin(admin.ModelAdmin):
+    list_display = ('id', 'document', 'document_range', 'range_start', 'range_end',
+                   'path', 'blip_35mm', 'film_number_35mm', 'human_range', 'created_at')
+    search_fields = ('document__doc_id', 'film_number_35mm')
+    list_filter = ('created_at',)
+    readonly_fields = ('id',)
+    fieldsets = (
+        ('Document Information', {
+            'fields': ('id', 'document', 'document_range')
+        }),
+        ('Range Information', {
+            'fields': ('range_start', 'range_end', 'human_range')
+        }),
+        ('Reference Sheet', {
+            'fields': ('path', 'blip_35mm', 'film_number_35mm')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at',)
+        }),
+    )
+
+class ReadablePageDescriptionAdmin(admin.ModelAdmin):
+    list_display = ('id', 'document', 'range_index', 'description')
+    search_fields = ('document__doc_id', 'description')
+    list_filter = ('document',)
+    readonly_fields = ('id',)
+
+class AdjustedRangeAdmin(admin.ModelAdmin):
+    list_display = ('id', 'document', 'original_start', 'original_end', 
+                   'adjusted_start', 'adjusted_end')
+    search_fields = ('document__doc_id',)
+    list_filter = ('document',)
+    readonly_fields = ('id',)
+
+class ProcessedDocumentAdmin(admin.ModelAdmin):
+    list_display = ('id', 'document', 'processing_type', 'path', 
+                   'start_page', 'end_page', 'roll', 'segment',
+                   'processed_at', 'copied_to_output', 'output_path')
+    search_fields = ('document__doc_id', 'path')
+    list_filter = ('processing_type', 'copied_to_output')
+    readonly_fields = ('id',)
+    fieldsets = (
+        ('Document Information', {
+            'fields': ('id', 'document', 'processing_type', 'path')
+        }),
+        ('Page Range', {
+            'fields': ('start_page', 'end_page')
+        }),
+        ('Roll Information', {
+            'fields': ('roll', 'segment')
+        }),
+        ('Output Status', {
+            'fields': ('processed_at', 'copied_to_output', 'output_path')
+        }),
+    )
+
 # Register all models
 admin.site.register(Project, ProjectAdmin)
 admin.site.register(Document, DocumentAdmin)
@@ -205,3 +292,8 @@ admin.site.register(DocumentReferenceInfo, DocumentReferenceInfoAdmin)
 admin.site.register(RangeReferenceInfo, RangeReferenceInfoAdmin)
 admin.site.register(FilmAllocation, FilmAllocationAdmin)
 admin.site.register(DocumentAllocationRequest35mm, DocumentAllocationRequest35mmAdmin)
+admin.site.register(DistributionResult, DistributionResultAdmin)
+admin.site.register(ReferenceSheet, ReferenceSheetAdmin)
+admin.site.register(ReadablePageDescription, ReadablePageDescriptionAdmin)
+admin.site.register(AdjustedRange, AdjustedRangeAdmin)
+admin.site.register(ProcessedDocument, ProcessedDocumentAdmin)

@@ -982,7 +982,10 @@ class ReferenceManager:
         destination_dir.mkdir(parents=True, exist_ok=True)
         
         # Use the document ID as the filename
-        dest_filename = f"{doc_id}.pdf"
+        if doc_id.lower().endswith('.pdf'):
+            dest_filename = doc_id
+        else:
+            dest_filename = f"{doc_id}.pdf"
         dest_path = destination_dir / dest_filename
         
         try:

@@ -191,12 +191,9 @@ const ReferencesEvents = (function() {
                 }
             });
             
-            // Get current URL parameters
-            const urlParams = new URLSearchParams(window.location.search);
-            
             // Navigate to next step with workflow parameter preserved
             const nextUrl = '/register/distribution/';
-            this.navigateWithParams(nextUrl, urlParams);
+            this.navigateWithParams(nextUrl);
         }
         
         /**
@@ -208,7 +205,9 @@ const ReferencesEvents = (function() {
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.has('flow')) {
                 const flowType = urlParams.get('flow');
-                const projectId = urlParams.get('project_id') || '';
+                const projectId = urlParams.get('id') || '';
+                const mode = urlParams.get('mode') || '';
+                const step = urlParams.get('step') || '';
                 
                 // Add parameters to URL
                 const separator = baseUrl.includes('?') ? '&' : '?';
@@ -219,7 +218,15 @@ const ReferencesEvents = (function() {
                 }
                 
                 if (projectId) {
-                    paramsToAdd.push(`project_id=${projectId}`);
+                    paramsToAdd.push(`id=${projectId}`);
+                }
+
+                if (mode) {
+                    paramsToAdd.push(`mode=${mode}`);
+                }
+
+                if (step) {
+                    paramsToAdd.push(`step=${step}`);
                 }
                 
                 if (paramsToAdd.length > 0) {
@@ -241,9 +248,26 @@ const ReferencesEvents = (function() {
             const referenceSheets = this.core.getReferenceSheets();
             const docSheets = referenceSheets[documentId] || [];
             
+            console.log(`[ReferencesEvents] Viewing document ${documentId}`);
+            console.log(`[ReferencesEvents] Reference sheets available:`, docSheets.length);
+            console.log(`[ReferencesEvents] Sheet details:`, docSheets);
+            
             if (docSheets.length === 0) {
                 this.ui.showNotification('No reference sheets found for this document', 'info');
                 return;
+            }
+            
+            // Debug log the first sheet to check if blip data is present
+            if (docSheets.length > 0) {
+                const firstSheet = docSheets[0];
+                console.log(`[ReferencesEvents] First sheet details:`, {
+                    id: firstSheet.id,
+                    range: firstSheet.range,
+                    blip: firstSheet.blip,
+                    blip_35mm: firstSheet.blip_35mm,
+                    film_number: firstSheet.film_number,
+                    human_readable_range: firstSheet.human_readable_range
+                });
             }
             
             // Render the list of reference sheets for this document
@@ -262,11 +286,43 @@ const ReferencesEvents = (function() {
             const referenceSheets = this.core.getReferenceSheets();
             const docSheets = referenceSheets[documentId] || [];
             
+            console.log(`[ReferencesEvents] Viewing reference sheet ${sheetId} for document ${documentId}`);
+            
             // Find the specific sheet by ID
             const sheetIndex = docSheets.findIndex(sheet => sheet.id === sheetId);
             if (sheetIndex === -1) {
                 this.ui.showNotification('Reference sheet not found', 'error');
                 return;
+            }
+            
+            // Get the sheet data
+            const sheetData = docSheets[sheetIndex];
+            
+            // Log the sheet data for debugging
+            console.log(`[ReferencesEvents] Sheet data:`, sheetData);
+            
+            // If sheet doesn't have blip info but we have document details, try to get it
+            if ((!sheetData.blip && !sheetData.blip_35mm) || !sheetData.film_number) {
+                console.log(`[ReferencesEvents] Sheet ${sheetId} is missing blip/film data, attempting to retrieve from document details`);
+                
+                // Try to get from document details
+                const docDetails = this.core.getDocumentDetails(documentId);
+                if (docDetails && docDetails.sheet_ids) {
+                    // Find the index of this sheet in the document details
+                    const detailIndex = docDetails.sheet_ids.indexOf(sheetId);
+                    if (detailIndex >= 0 && docDetails.blips && docDetails.blips[detailIndex]) {
+                        // Update the sheet data with blip info
+                        sheetData.blip = docDetails.blips[detailIndex];
+                        sheetData.blip_35mm = docDetails.blips[detailIndex];
+                        
+                        console.log(`[ReferencesEvents] Retrieved blip info: ${sheetData.blip}`);
+                        
+                        if (docDetails.film_numbers && docDetails.film_numbers[detailIndex]) {
+                            sheetData.film_number = docDetails.film_numbers[detailIndex];
+                            console.log(`[ReferencesEvents] Retrieved film number: ${sheetData.film_number}`);
+                        }
+                    }
+                }
             }
             
             // Fetch the PDF data

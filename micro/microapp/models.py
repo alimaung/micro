@@ -496,29 +496,3 @@ class ProcessedDocument(models.Model):
         if self.start_page and self.end_page:
             return f"{self.document.doc_id} ({self.processing_type}): pages {self.start_page}-{self.end_page}"
         return f"{self.document.doc_id} ({self.processing_type})"
-
-
-class DistributionLog(models.Model):
-    """Captures detailed logs from the distribution process."""
-    LOG_LEVELS = [
-        ('INFO', 'Info'),
-        ('WARNING', 'Warning'),
-        ('ERROR', 'Error'),
-        ('DEBUG', 'Debug'),
-        ('SUCCESS', 'Success')
-    ]
-    
-    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='distribution_logs')
-    timestamp = models.DateTimeField(auto_now_add=True)
-    level = models.CharField(max_length=10, choices=LOG_LEVELS)
-    message = models.TextField()
-    document = models.ForeignKey(Document, on_delete=models.CASCADE, 
-                               related_name='distribution_logs', null=True, blank=True)
-    roll = models.ForeignKey(Roll, on_delete=models.CASCADE,
-                           related_name='distribution_logs', null=True, blank=True)
-    
-    class Meta:
-        ordering = ['project', '-timestamp']
-    
-    def __str__(self):
-        return f"{self.timestamp.strftime('%Y-%m-%d %H:%M:%S')} [{self.level}]: {self.message[:50]}..."

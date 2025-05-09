@@ -84,11 +84,11 @@ const ReferencesCore = (function() {
                 if (referenceSheets.referenceSheets && typeof referenceSheets.referenceSheets === 'object') {
                     // Format is { projectId, referenceSheets: { doc1: [...], doc2: [...] } }
                     DEBUG && console.log('[ReferencesCore] Using reference sheets from camelCase format');
-                    this.referenceSheets = referenceSheets.referenceSheets;
+                    this.referenceSheets = this.enrichReferenceSheets(referenceSheets.referenceSheets, referenceSheets);
                 } else if (referenceSheets.reference_sheets && typeof referenceSheets.reference_sheets === 'object') {
                     // Format is { project_id, reference_sheets: { doc1: [...], doc2: [...] } }
                     DEBUG && console.log('[ReferencesCore] Using reference sheets from snake_case format');
-                    this.referenceSheets = referenceSheets.reference_sheets;
+                    this.referenceSheets = this.enrichReferenceSheets(referenceSheets.reference_sheets, referenceSheets);
                 } else if (referenceSheets.projectId === this.projectId && typeof referenceSheets === 'object') {
                     // Look for document keys directly (fallback)
                     DEBUG && console.log('[ReferencesCore] Looking for valid document keys in reference data');
@@ -123,6 +123,7 @@ const ReferencesCore = (function() {
                                     id: id,
                                     range: docDetails.ranges[index],
                                     blip: docDetails.blips ? docDetails.blips[index] : null,
+                                    blip_35mm: docDetails.blips ? docDetails.blips[index] : null, // Add for UI compatibility
                                     film_number: docDetails.film_numbers ? docDetails.film_numbers[index] : null,
                                     human_readable_range: docDetails.human_readable_ranges ? docDetails.human_readable_ranges[index] : null
                                 };
@@ -367,11 +368,11 @@ const ReferencesCore = (function() {
             if (refsData.referenceSheets && typeof refsData.referenceSheets === 'object') {
                 // Format is { projectId, referenceSheets: { doc1: [...], doc2: [...] } }
                 DEBUG && console.log('[ReferencesCore] Using referenceSheets (camelCase) from localStorage');
-                result = refsData.referenceSheets;
+                result = this.enrichReferenceSheets(refsData.referenceSheets, refsData);
             } else if (refsData.reference_sheets && typeof refsData.reference_sheets === 'object') {
                 // Format is { project_id, reference_sheets: { doc1: [...], doc2: [...] } }
                 DEBUG && console.log('[ReferencesCore] Using reference_sheets (snake_case) from localStorage');
-                result = refsData.reference_sheets;
+                result = this.enrichReferenceSheets(refsData.reference_sheets, refsData);
             } else if (refsData.enhancedDetails && typeof refsData.enhancedDetails === 'object') {
                 // Format is { enhancedDetails: { doc1: { ... } } }
                 DEBUG && console.log('[ReferencesCore] Using enhancedDetails from localStorage');
@@ -424,6 +425,88 @@ const ReferencesCore = (function() {
         }
         
         /**
+         * Enriches reference sheets with detailed data from documents_details
+         * @param {Object} sheetsByDocument - Basic reference sheets by document
+         * @param {Object} fullData - The full reference sheets data
+         * @returns {Object} Enriched reference sheets with blip data
+         */
+        enrichReferenceSheets(sheetsByDocument, fullData) {
+            // Clone the sheets to avoid modifying the original
+            const enrichedSheets = JSON.parse(JSON.stringify(sheetsByDocument));
+            
+            // Check if we have documents_details to enrich with
+            if (fullData.documents_details) {
+                DEBUG && console.log('[ReferencesCore] Enriching sheets with documents_details data');
+                DEBUG && console.log('[ReferencesCore] documents_details:', fullData.documents_details);
+                
+                // Process each document
+                Object.keys(enrichedSheets).forEach(docId => {
+                    // Skip if no document details
+                    if (!fullData.documents_details[docId]) {
+                        DEBUG && console.log(`[ReferencesCore] No document details for ${docId}`);
+                        return;
+                    }
+                    
+                    const docDetails = fullData.documents_details[docId];
+                    const sheets = enrichedSheets[docId];
+                    
+                    DEBUG && console.log(`[ReferencesCore] Enriching ${sheets.length} sheets for ${docId}`);
+                    DEBUG && console.log(`[ReferencesCore] Document details:`, docDetails);
+                    
+                    // Map each sheet to an enriched version
+                    enrichedSheets[docId] = sheets.map((sheet, sheetIdx) => {
+                        // First try to find by sheet ID
+                        let detailIndex = docDetails.sheet_ids ? 
+                            docDetails.sheet_ids.findIndex(id => id === sheet.id) : -1;
+                        
+                        // If not found by ID, try to match by range
+                        if (detailIndex === -1 && sheet.range && docDetails.ranges) {
+                            DEBUG && console.log(`[ReferencesCore] Sheet ID ${sheet.id} not found, looking for range match`);
+                            detailIndex = docDetails.ranges.findIndex(range => 
+                                range[0] === sheet.range[0] && range[1] === sheet.range[1]);
+                        }
+                        
+                        // If no match found, try to use index-based matching (fallback)
+                        if (detailIndex === -1 && sheetIdx < (docDetails.sheet_ids?.length || 0)) {
+                            DEBUG && console.log(`[ReferencesCore] No exact match found for sheet ${sheet.id}, using index ${sheetIdx}`);
+                            detailIndex = sheetIdx;
+                        }
+                        
+                        // If we found a matching sheet in details
+                        if (detailIndex >= 0) {
+                            const blipValue = docDetails.blips ? docDetails.blips[detailIndex] : null;
+                            const filmNumber = docDetails.film_numbers ? docDetails.film_numbers[detailIndex] : null;
+                            const humanRange = docDetails.human_readable_ranges ? docDetails.human_readable_ranges[detailIndex] : null;
+                            
+                            DEBUG && console.log(`[ReferencesCore] Found details for sheet ${sheet.id}: blip=${blipValue}, film=${filmNumber}`);
+                            
+                            return {
+                                ...sheet,
+                                blip: blipValue,
+                                blip_35mm: blipValue, // Add for UI compatibility
+                                film_number: filmNumber,
+                                human_readable_range: humanRange
+                            };
+                        } else {
+                            DEBUG && console.log(`[ReferencesCore] No matching details found for sheet ${sheet.id}`);
+                        }
+                        
+                        return sheet;
+                    });
+                    
+                    // Log the first enriched sheet to verify data
+                    if (enrichedSheets[docId].length > 0) {
+                        DEBUG && console.log(`[ReferencesCore] First enriched sheet for ${docId}:`, enrichedSheets[docId][0]);
+                    }
+                });
+            } else {
+                DEBUG && console.log('[ReferencesCore] No documents_details available for enrichment');
+            }
+            
+            return enrichedSheets;
+        }
+        
+        /**
          * Get document details from the enhanced response
          * @param {string} documentId - The document ID
          * @returns {Object} Document details or empty object if not available
@@ -456,6 +539,8 @@ const ReferencesCore = (function() {
          * @param {string} documentId - The document ID
          */
         displayDocumentInfo(documentId) {
+            DEBUG && console.log(`[ReferencesCore] Displaying info for document ${documentId}`);
+            
             // Get detailed information if available
             const docDetails = this.getDocumentDetails(documentId);
             
@@ -477,7 +562,13 @@ const ReferencesCore = (function() {
                 // Update UI
                 this.ui.updateDocumentMetadata(documentId, metadata);
             } else {
-                DEBUG && console.log(`[ReferencesCore] No metadata to update for ${documentId}`);
+                DEBUG && console.log(`[ReferencesCore] No metadata to update for ${documentId} or UI not available`);
+            }
+            
+            // If events instance has a selectDocument method, call it
+            if (this.events && typeof this.events.onSelectDocument === 'function') {
+                DEBUG && console.log(`[ReferencesCore] Calling events.onSelectDocument for ${documentId}`);
+                this.events.onSelectDocument(documentId);
             }
         }
         

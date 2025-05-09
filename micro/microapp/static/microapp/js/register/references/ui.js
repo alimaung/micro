@@ -623,6 +623,9 @@ const ReferencesUI = (function() {
         renderReferenceSheetsList(documentId, referenceSheets, viewSheetCallback) {
             if (!this.elements.referenceSheetsList) return;
             
+            console.log(`[ReferencesUI] Rendering reference sheets for document ${documentId}`);
+            console.log(`[ReferencesUI] Reference sheets:`, referenceSheets);
+            
             // Hide the animation and show the reference sheets container
             if (this.elements.referenceAnimation) {
                 this.elements.referenceAnimation.classList.add('hidden');
@@ -653,6 +656,7 @@ const ReferencesUI = (function() {
             
             // Show empty state if no reference sheets
             if (!referenceSheets || referenceSheets.length === 0) {
+                console.log(`[ReferencesUI] No reference sheets found for document ${documentId}`);
                 if (this.elements.referenceSheetEmptyState) {
                     this.elements.referenceSheetEmptyState.classList.remove('hidden');
                     const firstParagraph = this.elements.referenceSheetEmptyState.querySelector('p:first-child');
@@ -670,23 +674,45 @@ const ReferencesUI = (function() {
             
             // Add reference sheet items
             referenceSheets.forEach((sheet, index) => {
+                // Log detailed sheet data for debugging
+                console.log(`[ReferencesUI] Sheet ${index} data:`, {
+                    id: sheet.id,
+                    range: sheet.range,
+                    blip: sheet.blip,
+                    blip_35mm: sheet.blip_35mm,
+                    film_number: sheet.film_number,
+                    human_readable_range: sheet.human_readable_range
+                });
+                
                 const sheetItem = document.createElement('div');
                 sheetItem.className = 'reference-sheet-item';
                 sheetItem.dataset.sheetId = sheet.id;
                 
                 // Format range for display
-                const rangeStart = sheet.range[0];
-                const rangeEnd = sheet.range[1];
+                const rangeStart = sheet.range ? sheet.range[0] : 'Unknown';
+                const rangeEnd = sheet.range ? sheet.range[1] : 'Unknown';
                 const rangeText = rangeStart === rangeEnd ? 
                     `Page ${rangeStart}` : 
                     `Pages ${rangeStart}-${rangeEnd}`;
+                
+                // Get blip value - try all possible fields
+                const blipValue = sheet.blip || sheet.blip_35mm || 'N/A';
+                console.log(`[ReferencesUI] Sheet ${index} blip value: ${blipValue}`);
+                
+                // Prepare human readable range
+                const humanRange = sheet.human_readable_range || '';
+                
+                // Prepare film number
+                const filmNumber = sheet.film_number || '';
                 
                 sheetItem.innerHTML = `
                     <div class="sheet-info">
                         <div class="sheet-title">Reference Sheet ${index + 1}</div>
                         <div class="sheet-details">
                             <span class="sheet-range">${rangeText}</span>
-                            <span class="sheet-blip">Blip: ${sheet.blip_35mm || 'N/A'}</span>
+                            ${filmNumber ? `<span class="sheet-film-number">Film: ${filmNumber}</span>` : ''}
+                            <span class="sheet-blip">Blip: ${blipValue}</span>
+                            ${humanRange ? `<span class="sheet-human-range">Blätter: ${humanRange}</span>` : ''}
                         </div>
                     </div>
                     <div class="sheet-actions">

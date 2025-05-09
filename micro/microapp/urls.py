@@ -2,7 +2,6 @@ from django.urls import path, include
 from . import views
 from django.views.i18n import JavaScriptCatalog
 from . import api
-from .views import reference_views
 
 
 urlpatterns = [
@@ -129,19 +128,24 @@ urlpatterns = [
     path('api/filmnumber/status/', views.get_film_number_status, name='get_film_number_status'),
     
     # Reference Sheet API URLs
-    path('api/references/status/<int:project_id>/', reference_views.reference_sheet_status, name='reference_sheet_status'),
-    path('api/references/generate/<int:project_id>/', reference_views.generate_reference_sheets, name='generate_reference_sheets'),
-    path('api/references/get/<int:project_id>/', reference_views.get_reference_sheets, name='get_reference_sheets'),
-    path('api/references/pdf/<int:reference_sheet_id>/', reference_views.get_reference_sheet_pdf, name='get_reference_sheet_pdf'),
-    path('api/references/insert/<int:project_id>/<str:document_id>/', reference_views.insert_reference_sheets, name='insert_reference_sheets'),
+    path('api/references/status/<int:project_id>/', views.reference_sheet_status, name='reference_sheet_status'),
+    path('api/references/generate/<int:project_id>/', views.generate_reference_sheets, name='generate_reference_sheets'),
+    path('api/references/get/<int:project_id>/', views.get_reference_sheets, name='get_reference_sheets'),
+    path('api/references/pdf/<int:reference_sheet_id>/', views.get_reference_sheet_pdf, name='get_reference_sheet_pdf'),
+    path('api/references/insert/<int:project_id>/<str:document_id>/', views.insert_reference_sheets, name='insert_reference_sheets'),
     
     # Document ranges and readable descriptions API URLs
-    path('api/references/ranges/<int:project_id>/<str:document_id>/', reference_views.get_document_ranges, name='get_document_ranges'),
-    path('api/references/descriptions/<int:project_id>/<str:document_id>/', reference_views.generate_readable_descriptions, name='generate_readable_descriptions'),
-    path('api/references/adjusted-ranges/<int:project_id>/<str:document_id>/', reference_views.calculate_adjusted_ranges, name='calculate_adjusted_ranges'),
+    path('api/references/ranges/<int:project_id>/<str:document_id>/', views.get_document_ranges, name='get_document_ranges'),
+    path('api/references/descriptions/<int:project_id>/<str:document_id>/', views.generate_readable_descriptions, name='generate_readable_descriptions'),
+    path('api/references/adjusted-ranges/<int:project_id>/<str:document_id>/', views.calculate_adjusted_ranges, name='calculate_adjusted_ranges'),
     
     # Processed documents API URLs
-    path('api/references/processed/<int:project_id>/', reference_views.get_processed_documents, name='get_processed_documents'),
-    path('api/references/copy-output/<int:project_id>/', reference_views.copy_to_output, name='copy_to_output'),
-    path('api/references/clean-temp/<int:project_id>/', reference_views.clean_temporary_files, name='clean_temporary_files'),
+    path('api/references/processed/<int:project_id>/', views.get_processed_documents, name='get_processed_documents'),
+    path('api/references/copy-output/<int:project_id>/', views.copy_to_output, name='copy_to_output'),
+    path('api/references/clean-temp/<int:project_id>/', views.clean_temporary_files, name='clean_temporary_files'),
+    
+    # Distribution endpoints
+    path('api/distribution/status/<int:project_id>/', views.distribution_status, name='distribution_status'),
+    path('api/distribution/distribute/<int:project_id>/', views.distribute_documents, name='distribute_documents'),
+    path('api/distribution/generate-references/<int:project_id>/', views.generate_reference_sheets, name='generate_reference_sheets'),
 ]

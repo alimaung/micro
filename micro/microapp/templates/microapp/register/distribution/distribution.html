@@ -1,0 +1,290 @@
+{% load i18n %}
+<div class="register-container">
+    <div class="step-content" id="step-7">
+        <div class="step-header">
+            <h2>{% trans "Step 7: Document Distribution" %}</h2>
+            <div class="status-indicator" id="distribution-status-indicator">
+                <span class="status-badge not-started">{% trans "Not Started" %}</span>
+            </div>
+        </div>
+
+        <!-- Project Overview Panel -->
+        <div class="panel project-overview-panel">
+            <div class="panel-header collapsible">
+                <h3>{% trans "Project Overview" %}</h3>
+                <span class="toggle-icon"><i class="fas fa-chevron-down"></i></span>
+            </div>
+            <div class="panel-content">
+                <div class="project-details">
+                    <div class="detail-row">
+                        <span class="detail-label">{% trans "Project ID" %}</span>
+                        <span class="detail-value" id="project-id"></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">{% trans "Archive ID" %}</span>
+                        <span class="detail-value" id="archive-id"></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">{% trans "Location" %}</span>
+                        <span class="detail-value" id="location"></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">{% trans "Document Type" %}</span>
+                        <span class="detail-value" id="document-type"></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">{% trans "Total Documents" %}</span>
+                        <span class="detail-value" id="total-documents"></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">{% trans "Total Pages" %}</span>
+                        <span class="detail-value" id="total-pages"></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">{% trans "Has Oversized" %}</span>
+                        <span class="detail-value" id="has-oversized"></span>
+                    </div>
+                    <div class="detail-row" id="oversized-doc-row">
+                        <span class="detail-label">{% trans "Oversized Documents" %}</span>
+                        <span class="detail-value" id="oversized-documents"></span>
+                    </div>
+                </div>
+                
+                <div class="film-allocation-summary">
+                    <div class="detail-row">
+                        <span class="detail-label">{% trans "16mm Rolls" %}</span>
+                        <span class="detail-value" id="rolls-16mm">0</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">{% trans "35mm Rolls" %}</span>
+                        <span class="detail-value" id="rolls-35mm">0</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">{% trans "Reference Sheets" %}</span>
+                        <span class="detail-value" id="reference-sheets">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Distribution Controls -->
+        <div class="panel distribution-controls-panel">
+            <div class="panel-header">
+                <h3>{% trans "Distribution Controls" %}</h3>
+            </div>
+            <div class="panel-content">
+                <div class="distribution-progress">
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" id="distribution-progress-bar"></div>
+                    </div>
+                    <div class="progress-status" id="distribution-progress-status">
+                        {% trans "Ready to start distribution" %}
+                    </div>
+                </div>
+                <div class="control-buttons">
+                    <button class="primary-button" id="start-distribution-btn">
+                        <i class="fas fa-play"></i>
+                        {% trans "Start Distribution" %}
+                    </button>
+                    <button class="secondary-button" id="reset-distribution-btn">
+                        <i class="fas fa-redo"></i>
+                        {% trans "Reset Distribution" %}
+                    </button>
+                </div>
+                <div class="advanced-options">
+                    <div class="toggle-container">
+                        <label class="toggle-label" for="show-advanced-options">
+                            {% trans "Advanced Options" %}
+                        </label>
+                        <input type="checkbox" id="show-advanced-options" class="toggle-checkbox">
+                        <label for="show-advanced-options" class="toggle-switch"></label>
+                    </div>
+                    <div class="advanced-options-content" id="advanced-options-content">
+                        <div class="option-row">
+                            <input type="checkbox" id="use-cached-refs" class="option-checkbox">
+                            <label for="use-cached-refs">{% trans "Use cached reference sheets" %}</label>
+                        </div>
+                        <div class="option-row">
+                            <span class="option-label">{% trans "Film Types:" %}</span>
+                            <select id="film-type-select" class="option-select">
+                                <option value="both">{% trans "Both 16mm and 35mm" %}</option>
+                                <option value="16mm">{% trans "16mm Only" %}</option>
+                                <option value="35mm">{% trans "35mm Only" %}</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Distribution Results -->
+        <div class="panel distribution-results-panel" id="distribution-results-panel">
+            <div class="panel-header">
+                <h3>{% trans "Distribution Results" %}</h3>
+            </div>
+            <div class="panel-content">
+                <div class="output-directory">
+                    <span class="directory-label">{% trans "Output Directory:" %}</span>
+                    <span class="directory-path" id="output-directory-path"></span>
+                    <button class="small-button" id="open-output-directory-btn">
+                        <i class="fas fa-folder-open"></i>
+                        {% trans "Open" %}
+                    </button>
+                </div>
+
+                <!-- 16mm Rolls -->
+                <div class="roll-section" id="rolls-16mm-section">
+                    <h4>{% trans "16mm Rolls" %}</h4>
+                    <div class="rolls-table-container">
+                        <table class="rolls-table" id="rolls-16mm-table">
+                            <thead>
+                                <tr>
+                                    <th>{% trans "Film Number" %}</th>
+                                    <th>{% trans "Documents" %}</th>
+                                    <th>{% trans "Pages" %}</th>
+                                    <th>{% trans "Status" %}</th>
+                                    <th>{% trans "Actions" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rolls-16mm-table-body">
+                                <!-- Rolls will be added here dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 35mm Rolls -->
+                <div class="roll-section" id="rolls-35mm-section">
+                    <h4>{% trans "35mm Rolls" %}</h4>
+                    <div class="rolls-table-container">
+                        <table class="rolls-table" id="rolls-35mm-table">
+                            <thead>
+                                <tr>
+                                    <th>{% trans "Film Number" %}</th>
+                                    <th>{% trans "Documents" %}</th>
+                                    <th>{% trans "Pages" %}</th>
+                                    <th>{% trans "Status" %}</th>
+                                    <th>{% trans "Actions" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rolls-35mm-table-body">
+                                <!-- Rolls will be added here dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Distribution Statistics -->
+                <div class="distribution-statistics">
+                    <h4>{% trans "Distribution Summary" %}</h4>
+                    <div class="stats-container">
+                        <div class="stat-item">
+                            <span class="stat-label">{% trans "Processed Documents:" %}</span>
+                            <span class="stat-value" id="processed-docs-count">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">{% trans "Errors:" %}</span>
+                            <span class="stat-value" id="error-count">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">{% trans "Reference Sheets Generated:" %}</span>
+                            <span class="stat-value" id="ref-sheets-count">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">{% trans "Documents with References:" %}</span>
+                            <span class="stat-value" id="docs-with-refs-count">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Distribution Logs -->
+        <div class="panel distribution-logs-panel">
+            <div class="panel-header collapsible">
+                <h3>{% trans "Distribution Logs" %}</h3>
+                <span class="toggle-icon"><i class="fas fa-chevron-down"></i></span>
+            </div>
+            <div class="panel-content">
+                <div class="logs-filter">
+                    <select id="log-level-filter" class="log-filter-select">
+                        <option value="all">{% trans "All Levels" %}</option>
+                        <option value="info">{% trans "Info" %}</option>
+                        <option value="warning">{% trans "Warning" %}</option>
+                        <option value="error">{% trans "Error" %}</option>
+                        <option value="success">{% trans "Success" %}</option>
+                    </select>
+                    <input type="text" id="log-search" class="log-search-input" placeholder="{% trans 'Search logs...' %}">
+                    <button class="small-button" id="copy-logs-btn">
+                        <i class="fas fa-copy"></i>
+                        {% trans "Copy Logs" %}
+                    </button>
+                </div>
+                <div class="logs-container" id="distribution-logs-container">
+                    <!-- Logs will be added here dynamically -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Error Summary -->
+        <div class="panel error-summary-panel" id="error-summary-panel">
+            <div class="panel-header">
+                <h3>{% trans "Error Summary" %}</h3>
+            </div>
+            <div class="panel-content">
+                <div class="error-list" id="error-list">
+                    <!-- Errors will be added here dynamically -->
+                </div>
+                <button class="secondary-button" id="retry-failed-btn">
+                    <i class="fas fa-sync"></i>
+                    {% trans "Retry Failed Items" %}
+                </button>
+            </div>
+        </div>
+
+        <!-- Document Preview Modal -->
+        <div class="modal" id="document-preview-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 id="preview-document-title">{% trans "Document Preview" %}</h3>
+                    <span class="close-modal" id="close-preview-modal">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <div class="document-info">
+                        <div class="detail-row">
+                            <span class="detail-label">{% trans "Document ID:" %}</span>
+                            <span class="detail-value" id="preview-document-id"></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">{% trans "Path:" %}</span>
+                            <span class="detail-value" id="preview-document-path"></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">{% trans "Pages:" %}</span>
+                            <span class="detail-value" id="preview-document-pages"></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">{% trans "Blip:" %}</span>
+                            <span class="detail-value" id="preview-document-blip"></span>
+                        </div>
+                    </div>
+                    <div class="document-preview-container" id="document-preview-container">
+                        <!-- PDF preview will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Workflow Navigation -->
+        <div class="workflow-navigation">
+            <button class="nav-button back" id="back-to-step-6">
+                <i class="fas fa-arrow-left"></i>
+                {% trans "Back to Reference Sheet Generation" %}
+            </button>
+            <button class="nav-button next" id="to-step-8" disabled>
+                {% trans "Continue to Export & Summary" %}
+                <i class="fas fa-arrow-right"></i>
+            </button>
+        </div>
+    </div>
+</div>
