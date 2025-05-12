@@ -148,4 +148,12 @@ urlpatterns = [
     path('api/distribution/status/<int:project_id>/', views.distribution_status, name='distribution_status'),
     path('api/distribution/distribute/<int:project_id>/', views.distribute_documents, name='distribute_documents'),
     path('api/distribution/generate-references/<int:project_id>/', views.generate_reference_sheets, name='generate_reference_sheets'),
+    
+    # Export endpoints
+    path('api/export/<int:project_id>/save/', views.export_project_data, name='export_project_data'),
+    path('api/export/<int:project_id>/generate/', views.generate_exports, name='generate_exports'),
+    path('api/export/<int:project_id>/download/', views.download_export_zip, name='download_export_zip'),
+    path('api/export/<int:project_id>/file/<str:export_type>/', views.download_specific_export, name='download_specific_export'),
+    path('api/export/<int:project_id>/list/', views.get_available_exports, name='get_available_exports'),
+    path('api/export/<int:project_id>/reveal-in-explorer/', views.reveal_in_explorer, name='reveal_in_explorer'),
 ]

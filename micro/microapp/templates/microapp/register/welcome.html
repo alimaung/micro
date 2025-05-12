@@ -329,10 +329,17 @@
                     e.preventDefault();
                     
                     if (confirm('This will clear your current project data. Are you sure?')) {
+                        
                         // Clear both localStorage items
                         localStorage.removeItem('microfilmWorkflowState');
                         localStorage.removeItem('microfilmProjectState');
-                        
+                        localStorage.removeItem('microfilmFilmNumberResults');
+                        localStorage.removeItem('microfilmDistributionResults');
+                        localStorage.removeItem('microfilmIndexData');
+                        localStorage.removeItem('microfilmAnalysisData');
+                        localStorage.removeItem('microfilmAllocationData');
+                        localStorage.removeItem('microfilmReferenceSheets');
+
                         // Refresh the page
                         window.location.reload();
                     }

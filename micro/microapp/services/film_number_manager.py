@@ -11,6 +11,7 @@ from datetime import datetime
 from django.db import transaction
 from django.db.models import Sum, Count, Q
 from django.conf import settings
+from django.core.cache import cache
 
 from microapp.models import (
     Project, Roll, TempRoll, Document, DocumentSegment,
@@ -23,7 +24,7 @@ CAPACITY_16MM = 2900
 CAPACITY_35MM = 110
 TEMP_ROLL_PADDING_16MM = 100
 TEMP_ROLL_PADDING_35MM = 100
-TEMP_ROLL_MIN_USABLE_PAGES = 500
+TEMP_ROLL_MIN_USABLE_PAGES = 150
 
 logger = logging.getLogger(__name__)
 
@@ -194,7 +195,7 @@ class FilmNumberManager:
         
         # ADDED: Debug check for all 35mm rolls
         all_35mm_rolls = Roll.objects.filter(
-            project=project,
+            #project=project,
             film_type=FilmType.FILM_35MM
         )
         self.logger.info(f"\033[35mDEBUG: Found {all_35mm_rolls.count()} 35mm rolls at start of _process_35mm_rolls\033[0m")
@@ -235,6 +236,30 @@ class FilmNumberManager:
         
         # Track frame start positions for each roll
         roll_frame_positions = {}
+        
+        # Map to track document ID to original roll ID 
+        # We'll use this to maintain consistent roll IDs from frontend data
+        doc_to_roll_id = {}
+        # Try to populate this map from allocation requests
+        try:
+            # Find the original allocation data if it's stored in the project
+            cache_key = f"allocation_data_{project.pk}"
+            allocation_data = cache.get(cache_key)
+            
+            if allocation_data and 'allocationResults' in allocation_data:
+                results = allocation_data['allocationResults'].get('results', {})
+                # If we have 35mm rolls in the allocation data, use those to map documents to rolls
+                if 'rolls_35mm' in results:
+                    for roll_data in results['rolls_35mm']:
+                        roll_id = roll_data.get('roll_id')
+                        if roll_id:
+                            for seg in roll_data.get('document_segments', []):
+                                doc_id = seg.get('doc_id')
+                                if doc_id:
+                                    doc_to_roll_id[doc_id] = roll_id
+                                    self.logger.info(f"Mapped document {doc_id} to roll_id {roll_id} from allocation data")
+        except Exception as e:
+            self.logger.warning(f"Could not load allocation data for document-to-roll mapping: {str(e)}")
         
         # Process each document allocation request in order
         # This preserves the alphabetical ordering
@@ -358,9 +383,19 @@ class FilmNumberManager:
                 # Get a new film number
                 film_number = self._get_next_film_number(project.location_code)
                 
+                # Try to find the original roll_id from our mapping
+                roll_id_to_use = doc_to_roll_id.get(doc_id)
+                if roll_id_to_use is None:
+                    # If no mapping exists, use 1 as default
+                    self.logger.info(f"No original roll_id found for document {doc_id}, using default roll_id=1")
+                    roll_id_to_use = 1
+                else:
+                    self.logger.info(f"Using original roll_id={roll_id_to_use} for document {doc_id} from allocation data")
+                
                 # Create a new roll
                 roll = Roll.objects.create(
                     project=project,
+                    roll_id=roll_id_to_use,  # Use the original roll_id from allocation data when possible
                     film_number=film_number,
                     film_type=FilmType.FILM_35MM,
                     capacity=CAPACITY_35MM,
@@ -474,8 +509,15 @@ class FilmNumberManager:
                 roll.source_temp_roll = temp_roll_obj
                 roll.film_number_source = "temp_roll"
                 
+                # IMPORTANT FIX: Set the roll's capacity to the temp roll's capacity
+                # instead of using the default full roll capacity
+                roll.capacity = temp_roll_obj.capacity
+                self.logger.info(f"\033[31mSetting roll capacity to temp roll capacity: {temp_roll_obj.capacity}\033[0m")
+                
                 # Calculate remaining capacity
-                remaining_capacity = usable_capacity - roll.pages_used
+                remaining_capacity = temp_roll_obj.capacity - roll.pages_used
+                roll.pages_remaining = remaining_capacity
+                self.logger.info(f"\033[31mTemp roll capacity: {temp_roll_obj.capacity}, Used: {roll.pages_used}, Remaining: {remaining_capacity}\033[0m")
                 
                 # Save roll
                 roll.save()
@@ -495,10 +537,11 @@ class FilmNumberManager:
                 
                 if usable_remainder >= TEMP_ROLL_MIN_USABLE_PAGES:
                     # Create new temp roll
+                    self.logger.info(f"\033[31mCreating new temp roll from remainder with {remaining_capacity} capacity and {usable_remainder} usable capacity\033[0m")
                     new_temp_roll = self._create_temp_roll_from_remainder(
                         temp_roll_obj,
                         remaining_capacity,
-                        usable_capacity,
+                        usable_remainder,  # FIXED: Use the calculated usable remainder
                         roll
                     )
                     
@@ -506,6 +549,8 @@ class FilmNumberManager:
                         # Update roll with created temp roll
                         roll.created_temp_roll = new_temp_roll
                         roll.save()
+                else:
+                    self.logger.info(f"\033[31mNot enough usable capacity remaining to create a new temp roll: {usable_remainder} < {TEMP_ROLL_MIN_USABLE_PAGES}\033[0m")
             else:
                 # No suitable temp roll, assign new film number
                 self.logger.info("\033[31mNo suitable temp roll, assigning new film number\033[0m")
@@ -518,11 +563,20 @@ class FilmNumberManager:
                 roll.save()
                 
                 # If partial roll with enough capacity, create temp roll
-                if roll.is_partial and roll.usable_capacity >= TEMP_ROLL_MIN_USABLE_PAGES:
+                if roll.is_partial and roll.pages_remaining >= TEMP_ROLL_MIN_USABLE_PAGES + (TEMP_ROLL_PADDING_16MM if roll.film_type == FilmType.FILM_16MM else TEMP_ROLL_PADDING_35MM):
+                    # Calculate usable capacity
+                    if roll.film_type == FilmType.FILM_16MM:
+                        padding = TEMP_ROLL_PADDING_16MM
+                    else:
+                        padding = TEMP_ROLL_PADDING_35MM
+                    
+                    usable_capacity = roll.pages_remaining - padding
+                    
+                    self.logger.info(f"\033[31mCreating temp roll with capacity={roll.pages_remaining}, usable_capacity={usable_capacity}\033[0m")
                     new_temp_roll = self._create_temp_roll(
                         roll.film_type,
-                        roll.remaining_capacity,
-                        roll.usable_capacity,
+                        roll.pages_remaining,
+                        usable_capacity,
                         roll
                     )
                     
@@ -530,7 +584,6 @@ class FilmNumberManager:
                         # Update roll with created temp roll
                         roll.created_temp_roll = new_temp_roll
                         roll.save()
-                
         else:
             # Full roll, assign new film number
             film_number = self._get_next_film_number(location_code)
@@ -693,11 +746,13 @@ class FilmNumberManager:
             New temp roll if created, None otherwise
         """
         try:
-            # Create new temp roll
+            # Create new temp roll with the remaining capacity from the original temp roll
+            self.logger.info(f"\033[31mCreating new temp roll with remaining_capacity={remaining_capacity}, usable_capacity={usable_capacity}\033[0m")
+            
             new_temp_roll = TempRoll.objects.create(
                 film_type=original_temp_roll.film_type,
-                capacity=remaining_capacity,
-                usable_capacity=usable_capacity,
+                capacity=remaining_capacity,  # This is the actual remaining capacity
+                usable_capacity=usable_capacity,  # This is the capacity after padding
                 status="available",
                 source_roll=roll
             )
@@ -724,6 +779,8 @@ class FilmNumberManager:
             New temp roll if created, None otherwise
         """
         try:
+            self.logger.info(f"\033[31mCreating new temp roll with capacity={capacity}, usable_capacity={usable_capacity}\033[0m")
+            
             temp_roll = TempRoll.objects.create(
                 film_type=film_type,
                 capacity=capacity,
@@ -890,11 +947,20 @@ class FilmNumberManager:
 
     def _create_rolls_from_allocation_data(self, project, allocation_data):
         """Create roll records from allocation data if they don't exist."""
+        # Store allocation data in cache for later retrieval in _process_35mm_rolls
+        try:
+            # Cache the allocation data for 24 hours (86400 seconds)
+            cache_key = f"allocation_data_{project.pk}"
+            cache.set(cache_key, allocation_data, 86400)
+            self.logger.info(f"Stored allocation data in cache with key {cache_key}")
+        except Exception as e:
+            self.logger.warning(f"Could not cache allocation data: {str(e)}")
+        
         results = allocation_data.get('allocationResults', {}).get('results', {})
         
         # Process 16mm rolls
         for roll_data in results.get('rolls_16mm', []):
-            self.logger.info(f"\033[33mProcessing 16mm roll {roll_data}\033[0m")
+            #self.logger.info(f"\033[33mProcessing 16mm roll {roll_data}\033[0m")
             roll_id = roll_data.get('roll_id')
             film_type = FilmType.FILM_16MM
             capacity = roll_data.get('capacity', CAPACITY_16MM)
@@ -953,6 +1019,17 @@ class FilmNumberManager:
         # For 35mm, ONLY create allocation requests, NOT actual roll objects
         doc_requests = results.get('doc_allocation_requests_35mm', [])
         self.logger.info(f"Processing {len(doc_requests)} 35mm document allocation requests from allocation data")
+        
+        # Additionally, also process any 35mm rolls if they exist
+        # This is to ensure roll_id consistency for 35mm rolls that come from frontend
+        for roll_data in results.get('rolls_35mm', []):
+            # We don't create the actual roll here, just log that we received it
+            # The reason is that 35mm rolls are created on-demand during the allocation process
+            roll_id = roll_data.get('roll_id')
+            if roll_id == 'None' or roll_id is None:
+                self.logger.info(f"Received 35mm roll with None roll_id, will use numeric ID during allocation")
+            else:
+                self.logger.info(f"Received 35mm roll with roll_id={roll_id}")
         
         for req_data in doc_requests:
             doc_id = req_data.get('doc_id')
@@ -1066,19 +1143,21 @@ class FilmNumberManager:
                 self.logger.info("No reference info model found, querying database directly")
             
             for document in project.documents.all():
-                if not document.has_oversized or not hasattr(document, 'ranges') or not document.ranges:
+                if not document.has_oversized or not hasattr(document, 'ranges') or not document.ranges.exists():
                     continue
                     
                 doc_id = document.doc_id
                 results[doc_id] = []
                 
                 # Process each range
-                for i, range_data in enumerate(document.ranges):
-                    range_start, range_end = range_data
+                for i, range_data in enumerate(document.ranges.all()):
+                    range_start = range_data.start_page
+                    range_end = range_data.end_page
                     
-                    # Get document segments for this document
+                    # Get document segments for this document - specifically from 35mm rolls
                     segments = DocumentSegment.objects.filter(
                         document=document,
+                        roll__film_type=FilmType.FILM_35MM,  # Explicitly filter for 35mm rolls
                         start_page__lte=range_start,
                         end_page__gte=range_end
                     )
@@ -1095,7 +1174,27 @@ class FilmNumberManager:
                             'reference_position': i + 1
                         })
                     else:
-                        self.logger.warning(f"No segment found for document {doc_id}, range {range_start}-{range_end}")
+                        # Fallback: Try to find any 35mm segment for this document
+                        any_35mm_segment = DocumentSegment.objects.filter(
+                            document=document,
+                            roll__film_type=FilmType.FILM_35MM
+                        ).first()
+                        
+                        if any_35mm_segment:
+                            film_number = any_35mm_segment.roll.film_number
+                            blip = any_35mm_segment.blip
+                            
+                            # Adjust blip for specific range if needed
+                            adjusted_blip = self._calculate_range_specific_blip_from_base(
+                                blip, i, [], range_start, range_end
+                            )
+                            
+                            results[doc_id].append({
+                                'range': (range_start, range_end),
+                                'blip_35mm': adjusted_blip,
+                                'film_number_35mm': film_number,
+                                'reference_position': i + 1
+                            })
                 
         return results
         
@@ -1103,9 +1202,9 @@ class FilmNumberManager:
         """Prepare reference sheet data using frontend data while ensuring cross-project continuity.
         
         This method works in several stages:
-        1. First tries to use database records (same as prepare_reference_sheet_data)
-        2. If no database records, uses film_number_results from frontend
-        3. Ensures correct blip calculation for each range
+        1. Process frontend data directly without relying on database
+        2. Generate blips for document segments as needed
+        3. Calculate range-specific blips for each document range
         
         Args:
             project: Project with oversized documents
@@ -1114,23 +1213,16 @@ class FilmNumberManager:
         Returns:
             Dictionary mapping document IDs to lists of reference sheet data
         """
-        self.logger.info(f"Preparing reference sheet data with frontend data for project {project.archive_id}")
+        self.logger.info(f"[TRACE] Entering prepare_reference_sheet_data_with_frontend for project {project.archive_id}")
         
-        # First try the database approach to leverage any existing records
-        db_results = self.prepare_reference_sheet_data(project)
+        # If no frontend data, can't proceed
+        if not film_number_results:
+            self.logger.warning("[TRACE] No film_number_results provided, cannot proceed")
+            return {}
         
-        # If we have database results, use them
-        if any(len(sheets) > 0 for sheets in db_results.values()):
-            self.logger.info(f"Using database records for reference sheet data")
-            for doc_id, sheets in db_results.items():
-                self.logger.info(f"Document {doc_id} has {len(sheets)} reference sheets from DB")
-                for i, sheet_data in enumerate(sheets):
-                    self.logger.info(f"  Sheet {i+1}: range={sheet_data['range']}, blip={sheet_data['blip_35mm']}")
-            return db_results
-        
-        # If no database results and no frontend data, can't proceed
-        if not film_number_results or 'results' not in film_number_results:
-            self.logger.warning("No database records or frontend data available")
+        if 'results' not in film_number_results:
+            self.logger.warning("[TRACE] film_number_results does not contain 'results' key, cannot proceed")
+            self.logger.info(f"[TRACE] film_number_results keys: {list(film_number_results.keys())}")
             return {}
         
         # We'll build our results from frontend data
@@ -1139,17 +1231,33 @@ class FilmNumberManager:
         
         # Process 35mm rolls from frontend data
         rolls_35mm = film_number_results.get('results', {}).get('rolls_35mm', [])
-        self.logger.info(f"Processing {len(rolls_35mm)} 35mm rolls from frontend data")
+        self.logger.info(f"[TRACE] Processing {len(rolls_35mm)} 35mm rolls from frontend data")
+        
+        # Log details about the 35mm rolls
+        for i, roll in enumerate(rolls_35mm):
+            film_number = roll.get('film_number')
+            roll_id = roll.get('roll_id')
+            doc_segments = roll.get('document_segments', [])
+            self.logger.info(f"[TRACE] Roll #{i+1}: film_number={film_number}, roll_id={roll_id}, segments={len(doc_segments)}")
+            
+            # Log details about each segment
+            for j, segment in enumerate(doc_segments):
+                doc_id = segment.get('doc_id')
+                range_start = segment.get('start_page')
+                range_end = segment.get('end_page')
+                blip = segment.get('blip')
+                self.logger.info(f"[TRACE]   Segment #{j+1}: doc_id={doc_id}, range={range_start}-{range_end}, blip={blip}")
         
         # Track if this is a continuation roll
         is_continuation = {}
         
         # First pass: collect all ranges for each document
+        self.logger.info("[TRACE] First pass: collecting ranges for each document")
         for roll in rolls_35mm:
             film_number = roll.get('film_number')
             roll_id = roll.get('roll_id')
             
-            self.logger.info(f"Processing roll {roll_id} with film number {film_number}")
+            self.logger.info(f"[TRACE] Processing roll {roll_id} with film number {film_number}")
             
             # Check if this is a continuation roll
             is_continuation[roll_id] = roll.get('is_continuation', False)
@@ -1159,10 +1267,12 @@ class FilmNumberManager:
             for segment in doc_segments:
                 doc_id = segment.get('doc_id')
                 if not doc_id:
+                    self.logger.warning("[TRACE] Segment missing doc_id, skipping")
                     continue
                     
                 # Initialize document in results if needed
                 if doc_id not in results:
+                    self.logger.info(f"[TRACE] Initializing results for document {doc_id}")
                     results[doc_id] = []
                     document_ranges[doc_id] = []
                 
@@ -1171,16 +1281,21 @@ class FilmNumberManager:
                 range_end = segment.get('end_page', 1)
                 document_index = segment.get('document_index', 0)
                 
+                self.logger.info(f"[TRACE] Adding range ({range_start}, {range_end}) for document {doc_id}")
+                
                 # Add range to document
                 document_ranges[doc_id].append((range_start, range_end))
                 
                 # Get existing blip from segment or calculate one
                 blip = segment.get('blip')
+                self.logger.info(f"[TRACE] Found blip in segment: {blip}")
                 
                 # If no blip, need to generate one
                 if not blip:
+                    self.logger.info("[TRACE] No blip in segment, will generate one")
                     # If we're in a continuation roll, try to get the next frame position
                     if is_continuation.get(roll_id, False):
+                        self.logger.info("[TRACE] This is a continuation roll, finding highest frame")
                         # Find the highest frame number in existing segments
                         max_frame = 0
                         for r in rolls_35mm:
@@ -1189,19 +1304,22 @@ class FilmNumberManager:
                                     if s.get('frame_range') and len(s.get('frame_range')) >= 2:
                                         max_frame = max(max_frame, s.get('frame_range')[1])
                         
+                        self.logger.info(f"[TRACE] Highest frame found: {max_frame}")
                         # Use next frame after max_frame, or default to document_index + 1
                         frame_start = max_frame + 1 if max_frame > 0 else document_index + 1
                     else:
                         # Start with document_index + 1 for new rolls
                         frame_start = document_index + 1
+                        self.logger.info(f"[TRACE] Using frame_start={frame_start} for new roll")
                     
                     # Generate blip
                     blip = self._generate_blip(film_number, document_index + 1, frame_start)
-                    self.logger.info(f"Generated blip {blip} for document {doc_id}, range {range_start}-{range_end}")
+                    self.logger.info(f"[TRACE] Generated blip {blip} for document {doc_id}, range {range_start}-{range_end}")
         
         # Second pass: calculate range-specific blips for each document
+        self.logger.info("[TRACE] Second pass: calculating range-specific blips")
         for doc_id, ranges in document_ranges.items():
-            self.logger.info(f"Processing ranges for document {doc_id}: {ranges}")
+            self.logger.info(f"[TRACE] Processing ranges for document {doc_id}: {ranges}")
             
             # Look for segments in frontend data that match this document
             for roll in rolls_35mm:
@@ -1213,6 +1331,8 @@ class FilmNumberManager:
                         range_end = segment.get('end_page', 1)
                         document_index = segment.get('document_index', 0)
                         
+                        self.logger.info(f"[TRACE] Found matching segment for document {doc_id}, range {range_start}-{range_end}")
+                        
                         # Check which range index this corresponds to
                         range_idx = -1
                         for i, (r_start, r_end) in enumerate(ranges):
@@ -1221,16 +1341,18 @@ class FilmNumberManager:
                                 break
                         
                         if range_idx == -1:
-                            self.logger.warning(f"Could not find range ({range_start}, {range_end}) in document ranges")
+                            self.logger.warning(f"[TRACE] Could not find range ({range_start}, {range_end}) in document ranges")
                             continue
                         
                         # Get the base blip from segment
                         base_blip = segment.get('blip')
+                        self.logger.info(f"[TRACE] Base blip from segment: {base_blip}")
                         
                         # If no blip, generate base blip
                         if not base_blip:
                             frame_start = segment.get('frame_range', [1, None])[0] if segment.get('frame_range') else 1
                             base_blip = self._generate_blip(film_number, document_index + 1, frame_start)
+                            self.logger.info(f"[TRACE] Generated base blip: {base_blip}")
                         
                         # Get all oversized positions from ranges
                         oversized_positions = []
@@ -1238,6 +1360,7 @@ class FilmNumberManager:
                             for pos in range(r_start, r_end + 1):
                                 oversized_positions.append(pos)
                         oversized_positions = sorted(oversized_positions)
+                        self.logger.info(f"[TRACE] Oversized positions: {oversized_positions}")
                         
                         # Generate range-specific blip by calculating correct frame
                         # using the base blip as a starting point
@@ -1245,20 +1368,42 @@ class FilmNumberManager:
                             base_blip, range_idx, oversized_positions, range_start, range_end
                         )
                         
+                        self.logger.info(f"[TRACE] Calculated range-specific blip: base={base_blip}, result={range_blip} (range_idx={range_idx})")
+                        
                         results[doc_id].append({
                             'range': (range_start, range_end),
                             'blip_35mm': range_blip,
                             'film_number_35mm': film_number,
                             'reference_position': range_idx + 1
                         })
+                        self.logger.info(f"[TRACE] Added blip data for document {doc_id}, range {range_start}-{range_end}")
         
         # Check if any document has missing ranges
+        self.logger.info("[TRACE] Checking for missing ranges")
         for doc_id, ranges in document_ranges.items():
             result_ranges = [data['range'] for data in results.get(doc_id, [])]
             for range_data in ranges:
                 if range_data not in result_ranges:
-                    self.logger.warning(f"Missing blip for document {doc_id}, range {range_data}")
+                    self.logger.warning(f"[TRACE] Missing blip for document {doc_id}, range {range_data}")
         
+        # Fall back to database approach if no results from frontend
+        if not any(len(sheets) > 0 for sheets in results.values()):
+            self.logger.info("[TRACE] No blip data generated from frontend, trying database as fallback")
+            db_results = self.prepare_reference_sheet_data(project)
+            
+            # Log what was found in the database
+            self.logger.info(f"[TRACE] Database fallback returned data for {len(db_results)} documents")
+            if any(len(sheets) > 0 for sheets in db_results.values()):
+                self.logger.info(f"[TRACE] Using database records as fallback")
+                return db_results
+            else:
+                self.logger.warning("[TRACE] No blip data found in database either")
+        
+        self.logger.info(f"[TRACE] Final results contain data for {len(results)} documents")
+        for doc_id, entries in results.items():
+            self.logger.info(f"[TRACE] Document {doc_id} has {len(entries)} blip entries in final results")
+        
+        self.logger.info("[TRACE] Exiting prepare_reference_sheet_data_with_frontend")
         return results
     
     def _calculate_range_specific_blip_from_base(self, base_blip, range_idx, oversized_positions, range_start, range_end):

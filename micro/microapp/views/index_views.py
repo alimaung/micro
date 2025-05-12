@@ -443,21 +443,23 @@ def process_index_initialization(task_id, project_id, allocation_results=None):
                             barcode_raw = data[i][0]
                             com_id = data[i][1]
                             
-                            # Convert barcode to integer if possible
+                            # Keep the original barcode format AND create a normalized version
+                            barcode_original = str(barcode_raw) if barcode_raw is not None else None
+                            
+                            # Also normalize to simple number format (for backward compatibility)
                             try:
                                 if isinstance(barcode_raw, float) and barcode_raw.is_integer():
                                     # Convert float to integer (remove decimal)
-                                    barcode = str(int(barcode_raw))
+                                    barcode_normalized = str(int(barcode_raw))
                                 elif isinstance(barcode_raw, int):
-                                    barcode = str(barcode_raw)
+                                    barcode_normalized = str(barcode_raw)
                                 else:
                                     # Try to convert string to integer
-                                    barcode = str(int(float(str(barcode_raw))))
+                                    barcode_normalized = str(int(float(str(barcode_raw))))
                             except (ValueError, TypeError, AttributeError):
-                                # If conversion fails, use as-is
-                                barcode = str(barcode_raw) if barcode_raw is not None else None
+                                barcode_normalized = barcode_original
                             
-                            print(f"DEBUG: Extracted barcode: {barcode_raw} -> {barcode}, com_id: {com_id}")
+                            print(f"DEBUG: Extracted barcode: {barcode_raw} -> original: {barcode_original}, normalized: {barcode_normalized}, com_id: {com_id}")
                             
                             # Convert ComID to integer if possible
                             if com_id is not None:
@@ -468,8 +470,11 @@ def process_index_initialization(task_id, project_id, allocation_results=None):
                                     else:
                                         com_id = int(com_id)
                                     
-                                    if barcode and com_id:
-                                        com_id_mappings[barcode] = com_id
+                                    # Store both formats in the mappings dictionary
+                                    if barcode_original and com_id:
+                                        com_id_mappings[barcode_original] = com_id
+                                    if barcode_normalized and com_id:
+                                        com_id_mappings[barcode_normalized] = com_id
                                 except (ValueError, TypeError):
                                     pass
                 
@@ -520,12 +525,21 @@ def process_index_initialization(task_id, project_id, allocation_results=None):
                 
                 # Get COM ID from the mapping or use a placeholder
                 com_id = com_id_mappings.get(doc_id_base, None)
-                
-                # If COM ID is not found, generate a placeholder
+
+                # If not found, try alternative lookup methods
+                if com_id is None:
+                    # Try without leading zeros
+                    try:
+                        normalized_id = str(int(doc_id_base))
+                        com_id = com_id_mappings.get(normalized_id, None)
+                    except (ValueError, TypeError):
+                        pass
+
+                # If COM ID is still not found, generate a placeholder
                 if com_id is None:
                     # Use a placeholder COM ID (negative roll_id to avoid conflicts)
                     com_id = -roll_id
-                    print(f"DEBUG: No COM ID found for doc_id: {doc_id}, using placeholder: {com_id}")
+                    print(f"DEBUG: No COM ID found for doc_id: {doc_id}, tried '{doc_id_base}', using placeholder: {com_id}")
                 else:
                     print(f"DEBUG: Found COM ID: {com_id} for doc_id: {doc_id}")
                 

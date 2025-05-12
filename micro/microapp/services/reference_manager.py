@@ -19,7 +19,8 @@ import datetime
 from django.conf import settings
 from microapp.models import (
     Project, Document, DocumentRange, ReferenceSheet, RangeReferenceInfo,
-    DocumentReferenceInfo, ReadablePageDescription, AdjustedRange, ProcessedDocument
+    DocumentReferenceInfo, ReadablePageDescription, AdjustedRange, ProcessedDocument,
+    Roll, FilmType, DocumentSegment
 )
 
 logger = logging.getLogger(__name__)
@@ -1057,7 +1058,6 @@ class ReferenceManager:
         document = Document.objects.get(project=project, doc_id=document_id)
         
         if not document.has_oversized:
-            self.logger.info(f"Document {document.doc_id} has no oversized pages, no special processing needed")
             return {
                 'document_id': document_id,
                 'processed': False,
@@ -1294,6 +1294,11 @@ class ReferenceManager:
         """
         Generate reference sheets for a project using frontend data instead of database queries.
         
+        This method ensures all data is properly saved to the database before references are generated:
+        1. Process frontend data to identify oversized documents and ranges
+        2. Save document segments to the database to ensure availability
+        3. Generate reference sheets using the calculated blip data
+        
         Args:
             project_id: ID of the project (used for database reference)
             project_data: Project data from frontend
@@ -1305,31 +1310,40 @@ class ReferenceManager:
             Dictionary mapping document IDs to lists of reference sheet paths
         """
         # Log what data was received from frontend
-        self.logger.info(f"Received frontend data:")
-        self.logger.info(f"- project_data: {type(project_data).__name__}, available: {project_data is not None}")
-        self.logger.info(f"- analysis_data: {type(analysis_data).__name__}, available: {analysis_data is not None}")
-        self.logger.info(f"- allocation_data: {type(allocation_data).__name__}, available: {allocation_data is not None}")
-        self.logger.info(f"- film_number_results: {type(film_number_results).__name__}, available: {film_number_results is not None}")
+        self.logger.info(f"[TRACE] Entering generate_reference_sheets_with_frontend_data for project_id={project_id}")
+        self.logger.info(f"[TRACE] Received frontend data:")
+        self.logger.info(f"[TRACE] - project_data: {type(project_data).__name__}, available: {project_data is not None}")
+        self.logger.info(f"[TRACE] - analysis_data: {type(analysis_data).__name__}, available: {analysis_data is not None}")
+        self.logger.info(f"[TRACE] - allocation_data: {type(allocation_data).__name__}, available: {allocation_data is not None}")
+        self.logger.info(f"[TRACE] - film_number_results: {type(film_number_results).__name__}, available: {film_number_results is not None}")
         
         # Additional debug logging for keys in data structures
         if project_data:
-            self.logger.info(f"project_data keys: {list(project_data.keys())}")
+            self.logger.info(f"[TRACE] project_data keys: {list(project_data.keys())}")
         if analysis_data:
-            self.logger.info(f"analysis_data keys: {list(analysis_data.keys())}")
+            self.logger.info(f"[TRACE] analysis_data keys: {list(analysis_data.keys())}")
         if allocation_data:
-            self.logger.info(f"allocation_data keys: {list(allocation_data.keys())}")
+            self.logger.info(f"[TRACE] allocation_data keys: {list(allocation_data.keys())}")
         if film_number_results:
-            self.logger.info(f"film_number_results keys: {list(film_number_results.keys())}")
+            self.logger.info(f"[TRACE] film_number_results keys: {list(film_number_results.keys())}")
+            self.logger.info(f"[TRACE] film_number_results.results keys: {list(film_number_results.get('results', {}).keys())}")
+            if 'rolls_35mm' in film_number_results.get('results', {}):
+                self.logger.info(f"[TRACE] Found {len(film_number_results['results']['rolls_35mm'])} 35mm rolls in film_number_results")
+                for i, roll in enumerate(film_number_results['results']['rolls_35mm']):
+                    self.logger.info(f"[TRACE] 35mm roll #{i+1}: film_number={roll.get('film_number')}, roll_id={roll.get('roll_id')}")
+                    self.logger.info(f"[TRACE] - document_segments: {len(roll.get('document_segments', []))} segments")
         
         # Get the basic project from database (we still need this for the project path)
+        self.logger.info(f"[TRACE] Getting project from database with id={project_id}")
         project = Project.objects.get(pk=project_id)
+        self.logger.info(f"[TRACE] Retrieved project: {project.archive_id}, has_oversized={project.has_oversized}")
         
         # Early return if no analysis data or project has no oversized documents
         if not analysis_data or not analysis_data.get('analysisResults', {}).get('hasOversized', False):
-            self.logger.info("No oversized documents found, skipping reference sheet generation")
+            self.logger.info("[TRACE] No oversized documents found, skipping reference sheet generation")
             return {}
         
-        self.logger.info(f"Generating reference sheets for {project.archive_id} using frontend data")
+        self.logger.info(f"[TRACE] Generating reference sheets for {project.archive_id} using frontend data")
         
         # Create temp directory structure
         temp_dir = Path(project.project_path) / ".temp"
@@ -1337,6 +1351,7 @@ class ReferenceManager:
         
         # Create directories
         references_dir.mkdir(parents=True, exist_ok=True)
+        self.logger.info(f"[TRACE] Created references directory at {references_dir}")
         
         # Results dictionary to track reference sheets
         reference_sheets = {}
@@ -1344,22 +1359,97 @@ class ReferenceManager:
         # Extract needed data from frontend
         archive_id = project_data.get('projectInfo', {}).get('archiveId', project.archive_id)
         doc_type = project_data.get('projectInfo', {}).get('documentType', 'DOCUMENT')
+        self.logger.info(f"[TRACE] Using archive_id={archive_id}, doc_type={doc_type}")
+        
+        # First, ensure that all document segments from the frontend data are saved in the database
+        # This makes sure all blip data is available for reference sheet generation
+        if film_number_results and 'results' in film_number_results:
+            self.logger.info("[TRACE] Saving document segments to database before generating reference sheets")
+            
+            # Process 35mm rolls
+            rolls_35mm = film_number_results.get('results', {}).get('rolls_35mm', [])
+            for roll_data in rolls_35mm:
+                film_number = roll_data.get('film_number')
+                roll_id = roll_data.get('roll_id')
+                
+                # Instead of get_or_create, just use get to find the existing roll
+                try:
+                    roll = Roll.objects.get(
+                        film_number=film_number,  # Primary key for finding the roll
+                    )
+                    self.logger.info(f"[TRACE] Found existing Roll record for film number {film_number}")
+                except Roll.DoesNotExist:
+                    self.logger.warning(f"[TRACE] No Roll found for film number {film_number}, skipping reference generation")
+                    continue
+                
+                # Process document segments for this roll
+                for segment_data in roll_data.get('document_segments', []):
+                    doc_id = segment_data.get('doc_id')
+                    if not doc_id:
+                        continue
+                    
+                    range_start = segment_data.get('start_page', 1)
+                    range_end = segment_data.get('end_page', 1)
+                    blip = segment_data.get('blip')
+                    
+                    # Get or create the Document object
+                    document, doc_created = Document.objects.get_or_create(
+                        project=project,
+                        doc_id=doc_id,
+                        defaults={'has_oversized': True}
+                    )
+                    
+                    # Count existing document segments for this roll to determine the next document_index
+                    existing_segments_count = DocumentSegment.objects.filter(roll=roll).count()
+
+                    # Get or create the DocumentSegment with the existing roll
+                    segment, seg_created = DocumentSegment.objects.get_or_create(
+                        roll=roll,
+                        document=document,
+                        start_page=range_start,
+                        end_page=range_end,
+                        defaults={
+                            'blip': blip or '',
+                            'document_index': existing_segments_count + 1,  # Use the count we calculated above
+                            'has_oversized': True
+                        }
+                    )
+                    
+                    if seg_created:
+                        self.logger.info(f"[TRACE] Created new DocumentSegment for document {doc_id}, range {range_start}-{range_end}")
+                    else:
+                        # Update the blip if needed
+                        if blip and segment.blip != blip:
+                            segment.blip = blip
+                            segment.save()
+                            self.logger.info(f"[TRACE] Updated blip for existing DocumentSegment: {doc_id}, range {range_start}-{range_end}")
+                        else:
+                            self.logger.info(f"[TRACE] Using existing DocumentSegment for document {doc_id}, range {range_start}-{range_end}")
         
         # Use film_number_manager to get blip data with proper range-specific blips
+        self.logger.info(f"[TRACE] About to call film_number_manager.prepare_reference_sheet_data_with_frontend")
         if self.film_number_manager:
             blip_data = self.film_number_manager.prepare_reference_sheet_data_with_frontend(
                 project, film_number_results
             )
         else:
             # If no film number manager provided, try to import it
+            self.logger.info(f"[TRACE] No film_number_manager provided, creating one")
             from .film_number_manager import FilmNumberManager
             film_number_manager = FilmNumberManager(logger=self.logger)
             blip_data = film_number_manager.prepare_reference_sheet_data_with_frontend(
                 project, film_number_results
             )
         
+        self.logger.info(f"[TRACE] Received blip_data with {len(blip_data)} documents")
+        for doc_id, blips in blip_data.items():
+            self.logger.info(f"[TRACE] Document {doc_id} has {len(blips)} blip entries")
+            for i, blip_entry in enumerate(blips):
+                self.logger.info(f"[TRACE] - Blip entry #{i+1}: range={blip_entry.get('range')}, blip={blip_entry.get('blip_35mm')}")
+        
         # Process documents from analysis data
         documents_data = analysis_data.get('analysisResults', {}).get('documents', [])
+        self.logger.info(f"[TRACE] Processing {len(documents_data)} documents from analysis data")
         
         # For each document with oversized pages
         for doc_data in documents_data:
@@ -1367,10 +1457,13 @@ class ReferenceManager:
             
             # Skip if document has no oversized pages
             if not doc_data.get('hasOversized', False) or not doc_data.get('oversizedPages'):
+                self.logger.info(f"[TRACE] Document {doc_id} has no oversized pages, skipping")
                 continue
             
+            self.logger.info(f"[TRACE] Document {doc_id} has oversized pages: {doc_data.get('oversizedPages')}")
+            
             # Get or create document and document range records so we can use ReferenceSheet model
-            document, _ = Document.objects.get_or_create(
+            document, created = Document.objects.get_or_create(
                 project=project,
                 doc_id=doc_id,
                 defaults={
@@ -1378,6 +1471,7 @@ class ReferenceManager:
                     'has_oversized': True
                 }
             )
+            self.logger.info(f"[TRACE] {'Created' if created else 'Retrieved'} Document record for {doc_id}")
             
             # Prepare ranges from oversized pages
             # Group consecutive page numbers into ranges
@@ -1385,6 +1479,7 @@ class ReferenceManager:
             ranges = []
             
             if oversized_pages:
+                self.logger.info(f"[TRACE] Document {doc_id} has {len(oversized_pages)} oversized pages")
                 start = oversized_pages[0]
                 end = start
                 
@@ -1395,20 +1490,25 @@ class ReferenceManager:
                     else:
                         # Non-consecutive, start a new range
                         ranges.append((start, end))
+                        self.logger.info(f"[TRACE] Added range ({start}, {end}) for document {doc_id}")
                         start = page
                         end = page
                 
                 # Add the final range
                 ranges.append((start, end))
+                self.logger.info(f"[TRACE] Added final range ({start}, {end}) for document {doc_id}")
+            
+            self.logger.info(f"[TRACE] Document {doc_id} has {len(ranges)} ranges: {ranges}")
             
             # Create DocumentRange records for each range
             range_objects = []
             for range_start, range_end in ranges:
-                range_obj, _ = DocumentRange.objects.get_or_create(
+                range_obj, created = DocumentRange.objects.get_or_create(
                     document=document,
                     start_page=range_start,
                     end_page=range_end
                 )
+                self.logger.info(f"[TRACE] {'Created' if created else 'Retrieved'} DocumentRange record for {doc_id}, range {range_start}-{range_end}")
                 range_objects.append(range_obj)
             
             # Generate human-readable page descriptions
@@ -1422,16 +1522,19 @@ class ReferenceManager:
                 if range_size == 1:
                     # Single page format: "X von Y"
                     human_range = f"{current_count} von {total_oversized}"
+                    self.logger.info(f"[TRACE] Generated human range for single page: {human_range}")
                 else:
                     # Range format: "X bis Y von Z"
                     human_range = f"{current_count} bis {current_count + range_size - 1} von {total_oversized}"
+                    self.logger.info(f"[TRACE] Generated human range for multiple pages: {human_range}")
                 
                 # Create or update ReadablePageDescription
-                ReadablePageDescription.objects.update_or_create(
+                desc_obj, created = ReadablePageDescription.objects.update_or_create(
                     document=document,
                     range_index=i,
                     defaults={'description': human_range}
                 )
+                self.logger.info(f"[TRACE] {'Created' if created else 'Updated'} ReadablePageDescription for {doc_id}, range_index={i}")
                 
                 readable_pages.append(human_range)
                 current_count += range_size
@@ -1441,31 +1544,62 @@ class ReferenceManager:
             
             # Get blip data for this document
             doc_blip_data = blip_data.get(doc_id, [])
+            self.logger.info(f"[TRACE] Document {doc_id} has {len(doc_blip_data)} blip entries from blip_data")
             
             # Process each range
             for i, ((range_start, range_end), range_obj) in enumerate(zip(ranges, range_objects)):
+                self.logger.info(f"[TRACE] Processing range #{i+1}: {range_start}-{range_end} for document {doc_id}")
+                
                 # Get human-readable description
                 human_range = readable_pages[i] if i < len(readable_pages) else f"Pages {range_start}-{range_end}"
                 
-                # Find matching blip data for this range
+                # Find blip information for this range
                 range_blip = None
                 film_number_35mm = None
                 
-                # Try to find matching blip data
-                for blip_entry in doc_blip_data:
-                    entry_range = blip_entry.get('range')
-                    if entry_range and entry_range[0] == range_start and entry_range[1] == range_end:
-                        range_blip = blip_entry.get('blip_35mm')
-                        film_number_35mm = blip_entry.get('film_number_35mm')
-                        break
+                if doc_blip_data:
+                    self.logger.info(f"[TRACE] Looking for blip in doc_blip_data with {len(doc_blip_data)} entries")
+                    
+                    # Option 1: Use range index
+                    if i < len(doc_blip_data):
+                        range_blip = doc_blip_data[i].get('blip_35mm')
+                        film_number_35mm = doc_blip_data[i].get('film_number_35mm')
+                        self.logger.info(f"[TRACE] Found blip by index: {range_blip}, film_number: {film_number_35mm}")
+                    
+                    # Option 2: Find by exact range match
+                    if not range_blip:
+                        self.logger.info(f"[TRACE] Looking for exact range match {(range_start, range_end)}")
+                        for blip_entry in doc_blip_data:
+                            entry_range = blip_entry.get('range')
+                            if entry_range and entry_range[0] == range_start and entry_range[1] == range_end:
+                                range_blip = blip_entry.get('blip_35mm')
+                                film_number_35mm = blip_entry.get('film_number_35mm')
+                                self.logger.info(f"[TRACE] Found blip by exact range match: {range_blip}, film_number: {film_number_35mm}")
+                                break
+                
+                    # Option 3: Find by range size similarity
+                    if not range_blip:
+                        self.logger.info(f"[TRACE] Looking for similar range size match")
+                        current_size = range_end - range_start + 1
+                        for blip_entry in doc_blip_data:
+                            entry_range = blip_entry.get('range')
+                            if entry_range:
+                                entry_size = entry_range[1] - entry_range[0] + 1
+                                self.logger.info(f"[TRACE] Comparing size {current_size} with entry size {entry_size} for range {entry_range}")
+                                if entry_size == current_size:
+                                    range_blip = blip_entry.get('blip_35mm')
+                                    film_number_35mm = blip_entry.get('film_number_35mm')
+                                    self.logger.info(f"[TRACE] Found blip by range size similarity: {range_blip}, film_number: {film_number_35mm}")
+                                    break
                 
                 # Skip if no blip found
                 if not range_blip or not film_number_35mm:
-                    self.logger.warning(f"No 35mm blip found for document {doc_id}, range {range_start}-{range_end}")
+                    self.logger.warning(f"[TRACE] No 35mm blip found for document {doc_id}, range {range_start}-{range_end}")
                     continue
                 
                 # Create reference sheet
                 try:
+                    self.logger.info(f"[TRACE] Creating reference sheet for {doc_id}, range {range_start}-{range_end}, blip={range_blip}")
                     reference_sheet = self.create_reference_sheet(
                         document_name=doc_id,
                         film_number=film_number_35mm,
@@ -1478,10 +1612,12 @@ class ReferenceManager:
                     
                     # Generate path for reference sheet
                     ref_sheet_path = self.get_reference_sheet_path(project, doc_id, range_start, range_end)
+                    self.logger.info(f"[TRACE] Reference sheet path: {ref_sheet_path}")
                     
                     # Save reference sheet
                     with open(ref_sheet_path, "wb") as f:
                         f.write(reference_sheet)
+                    self.logger.info(f"[TRACE] Saved reference sheet to disk")
                     
                     # Create ReferenceSheet model
                     ref_sheet = ReferenceSheet.objects.create(
@@ -1494,6 +1630,7 @@ class ReferenceManager:
                         film_number_35mm=film_number_35mm,
                         human_range=human_range
                     )
+                    self.logger.info(f"[TRACE] Created ReferenceSheet database record with id={ref_sheet.id}")
                     
                     # Add to results
                     reference_sheets[doc_id].append({
@@ -1504,14 +1641,14 @@ class ReferenceManager:
                         'id': ref_sheet.id
                     })
                     
-                    self.logger.info(f"Generated reference sheet for {doc_id}, range {range_start}-{range_end}")
+                    self.logger.info(f"[TRACE] Generated reference sheet for {doc_id}, range {range_start}-{range_end}")
                     
                 except Exception as e:
-                    self.logger.error(f"Error creating reference sheet for {doc_id}, range {range_start}-{range_end}: {str(e)}")
+                    self.logger.error(f"[TRACE] Error creating reference sheet for {doc_id}, range {range_start}-{range_end}: {str(e)}")
         
         # Calculate totals
         total_sheets = sum(len(sheets) for sheets in reference_sheets.values())
-        self.logger.info(f"Generated {total_sheets} reference sheets for {len(reference_sheets)} documents")
+        self.logger.info(f"[TRACE] Generated {total_sheets} reference sheets for {len(reference_sheets)} documents")
         
         # At the end, build a more detailed response
         detailed_response = {
@@ -1529,7 +1666,7 @@ class ReferenceManager:
             "timestamp": datetime.datetime.now().isoformat()
         }
         
-        print(f"\033[32mDetailed response: {detailed_response}\033[0m")
+        self.logger.info(f"[TRACE] Detailed response: {detailed_response}")
         
         # Add detailed information for each document
         for doc_id, sheets in reference_sheets.items():
@@ -1549,7 +1686,8 @@ class ReferenceManager:
                 readable_ranges = ReadablePageDescription.objects.filter(document=doc).order_by('range_index')
                 detailed_response["documents_details"][doc_id]["human_readable_ranges"] = [r.description for r in readable_ranges]
             except Exception as e:
-                self.logger.error(f"Error fetching readable ranges for {doc_id}: {str(e)}")
+                self.logger.error(f"[TRACE] Error fetching readable ranges for {doc_id}: {str(e)}")
         
-        self.logger.info(f"Completed reference sheet generation with {detailed_response['statistics']['total_sheets']} sheets")
+        self.logger.info(f"[TRACE] Completed reference sheet generation with {detailed_response['statistics']['total_sheets']} sheets")
+        self.logger.info(f"[TRACE] Exiting generate_reference_sheets_with_frontend_data")
         return detailed_response

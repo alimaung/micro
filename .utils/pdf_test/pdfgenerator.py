@@ -23,7 +23,7 @@ class PDFGenerator:
             if self.logger:
                 self.logger.info(f"Created output directory: {self.output_dir}")
     
-    def generate_pdf(self, num_pages, filename=None, oversized_percentage=0, include_a3=False):
+    def generate_pdf(self, num_pages, filename=None, oversized_percentage=0, include_a3=False, consecutive_oversized_percentage=0):
         """
         Generate a PDF with the specified number of pages and size distribution.
         
@@ -32,6 +32,7 @@ class PDFGenerator:
             filename: Name of the output file (default: generated timestamp)
             oversized_percentage: Percentage of pages that should be A2 (default: 0)
             include_a3: Whether to include A3 pages (15% of non-oversized pages)
+            consecutive_oversized_percentage: Percentage of oversized pages that should appear in consecutive ranges
             
         Returns:
             Path to the generated PDF file and list of page dimensions
@@ -50,23 +51,56 @@ class PDFGenerator:
         num_a3 = int(num_regular * 0.15) if include_a3 else 0
         num_a4 = num_regular - num_a3
         
+        # Calculate how many oversized pages should be in consecutive ranges
+        num_consecutive_oversized = int(num_oversized * consecutive_oversized_percentage)
+        num_random_oversized = num_oversized - num_consecutive_oversized
+        
         if self.logger:
             print(f"Generating PDF with {num_pages} pages:")
             print(f"  - A4: {num_a4}")
             print(f"  - A3: {num_a3}")
-            print(f"  - A2: {num_oversized}")
+            print(f"  - A2 (random): {num_random_oversized}")
+            print(f"  - A2 (consecutive): {num_consecutive_oversized}")
         
-        # Create page size list
+        # Create page size list with A4 and A3 pages
         page_sizes = []
         # Add A4 pages
         page_sizes.extend([A4] * num_a4)
         # Add A3 pages
         page_sizes.extend([A3] * num_a3)
-        # Add oversized pages
-        page_sizes.extend([A2] * num_oversized)
+        # Add randomly distributed oversized pages
+        page_sizes.extend([A2] * num_random_oversized)
         
-        # Shuffle page sizes to distribute them randomly
+        # Shuffle the page sizes to distribute them randomly
         random.shuffle(page_sizes)
+        
+        # Now insert consecutive ranges of oversized pages
+        if num_consecutive_oversized > 0:
+            # Determine how many consecutive ranges to create
+            # Default to ranges of 2-5 pages
+            avg_range_size = random.randint(2, 5)
+            num_ranges = max(1, num_consecutive_oversized // avg_range_size)
+            
+            # Adjust range size to use all consecutive oversized pages
+            avg_range_size = num_consecutive_oversized // num_ranges
+            remainder = num_consecutive_oversized % num_ranges
+            
+            # Generate the ranges
+            ranges = []
+            for i in range(num_ranges):
+                range_size = avg_range_size + (1 if i < remainder else 0)
+                ranges.append(range_size)
+            
+            # Insert the ranges at random positions in the document
+            for range_size in ranges:
+                # Choose a random position to insert the range
+                if len(page_sizes) > 0:
+                    insert_pos = random.randint(0, len(page_sizes))
+                else:
+                    insert_pos = 0
+                
+                # Insert consecutive A2 pages at the chosen position
+                page_sizes[insert_pos:insert_pos] = [A2] * range_size
         
         # Create the PDF
         c = canvas.Canvas(filepath)
@@ -117,7 +151,7 @@ class PDFGenerator:
         
         return filepath, page_dimensions
 
-    def generate_multiple_pdfs(self, count, pages_range=(10, 100), oversized_percentage=0, include_a3_ratio=0.2):
+    def generate_multiple_pdfs(self, count, pages_range=(10, 100), oversized_percentage=0, include_a3_ratio=0.2, consecutive_oversized_percentage=0):
         """
         Generate multiple PDFs with random page counts.
         
@@ -126,6 +160,7 @@ class PDFGenerator:
             pages_range: Tuple of (min_pages, max_pages)
             oversized_percentage: Percentage of pages that should be A2
             include_a3_ratio: Percentage of documents that should include A3 pages
+            consecutive_oversized_percentage: Percentage of oversized pages that should appear in consecutive ranges
             
         Returns:
             List of paths to generated PDFs
@@ -147,7 +182,8 @@ class PDFGenerator:
                 num_pages=num_pages,
                 filename=filename,
                 oversized_percentage=oversized_percentage,
-                include_a3=(i in docs_with_a3)
+                include_a3=(i in docs_with_a3),
+                consecutive_oversized_percentage=consecutive_oversized_percentage
             )
             
             generated_files.append(filepath)
@@ -155,8 +191,9 @@ class PDFGenerator:
         return generated_files
 
 
-# 3000 pages no oversizes
+# Example usage with consecutive oversized pages
 pdf = PDFGenerator()
 
-pdf.generate_pdf(3500, oversized_percentage=0.4)
+# Generate a PDF with 3500 pages, 40% oversized, and 30% of those in consecutive ranges
+pdf.generate_pdf(3500, oversized_percentage=0.4, consecutive_oversized_percentage=0.3)
 

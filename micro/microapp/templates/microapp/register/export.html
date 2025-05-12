@@ -3,200 +3,663 @@
     <div class="workflow-step-header">
         <h2>Export & Summary</h2>
         <div class="step-status">
-            <span class="status-badge pending">
-                <i class="fas fa-clock"></i>
-                Awaiting Distribution
+            <span class="status-badge completed">
+                <i class="fas fa-check-circle"></i>
+                Ready for Export
             </span>
         </div>
     </div>
     
     <div class="workflow-cards">
-        <!-- Export & Summary Card -->
+        <!-- Project Overview Card -->
         <div class="workflow-card primary-card">
             <div class="card-header">
                 <h3><i class="fas fa-file-export"></i> Project Summary & Export</h3>
             </div>
             <div class="card-content">
-                <div class="summary-overview">
-                    <div class="summary-stats">
-                        <div class="stat-card">
-                            <div class="stat-icon">
-                                <i class="fas fa-file-alt"></i>
-                            </div>
-                            <div class="stat-content">
-                                <span class="stat-value" id="summary-documents">0</span>
-                                <span class="stat-label">Documents</span>
-                            </div>
+                <!-- Project Header Card -->
+                <div class="project-header-card">
+                    <div class="project-title">
+                        <h3 id="project-archive-id">Loading...</h3>
+                        <div class="project-metadata">
+                            <span id="project-location">Location: Loading...</span>
+                            <span id="project-doc-type">Document Type: Loading...</span>
                         </div>
-                        <div class="stat-card">
-                            <div class="stat-icon">
-                                <i class="fas fa-film"></i>
-                            </div>
-                            <div class="stat-content">
-                                <span class="stat-value" id="summary-films">0</span>
-                                <span class="stat-label">Film Rolls</span>
-                            </div>
+                    </div>
+                    <div class="project-id-container">
+                        <span class="project-id-label">Project ID:</span>
+                        <span id="project-id" class="project-id">Loading...</span>
+                    </div>
+                </div>
+                
+                <!-- Main Summary Stats -->
+                <div class="summary-stats">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-file-alt"></i>
                         </div>
-                        <div class="stat-card">
-                            <div class="stat-icon">
-                                <i class="fas fa-clock"></i>
-                            </div>
-                            <div class="stat-content">
-                                <span class="stat-value" id="summary-duration">0:00</span>
-                                <span class="stat-label">Process Duration</span>
-                            </div>
+                        <div class="stat-content">
+                            <span class="stat-value" id="summary-documents">0</span>
+                            <span class="stat-label">Documents</span>
                         </div>
-                        <div class="stat-card">
-                            <div class="stat-icon">
-                                <i class="fas fa-hdd"></i>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-copy"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-value" id="summary-pages">0</span>
+                            <span class="stat-label">Total Pages</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-film"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-value" id="summary-films">0</span>
+                            <span class="stat-label">Film Rolls</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-hdd"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-value" id="summary-size">0 MB</span>
+                            <span class="stat-label">Total Size</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Document Analysis & Film Allocation Cards (2-column layout) -->
+                <div class="data-visualization-section">
+                    <!-- Left Column: Document Analysis Summary -->
+                    <div class="data-visualization-card analysis-overview-card">
+                        <h4><i class="fas fa-chart-bar"></i> Document Analysis Summary</h4>
+                        <div class="analysis-overview">
+                            <div class="analysis-metrics">
+                                <div class="metrics-section">
+                                    <h5>Project Overview</h5>
+                                    <div class="info-item">
+                                        <span class="info-label">Total Documents:</span>
+                                        <span class="info-value" id="analysis-doc-count">0</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Total Pages:</span>
+                                        <span class="info-value" id="analysis-page-count">0</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Workflow Type:</span>
+                                        <span class="info-value" id="analysis-workflow-type">--</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Analysis Date:</span>
+                                        <span class="info-value" id="analysis-completion-date">--</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="metrics-section">
+                                    <h5>Document Distribution</h5>
+                                    <div class="info-item">
+                                        <span class="info-label">Standard Documents:</span>
+                                        <span class="info-value" id="standard-doc-count">0</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">With Oversized Pages:</span>
+                                        <span class="info-value" id="docs-with-oversized-count">0</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Oversized Pages:</span>
+                                        <span class="info-value" id="oversized-page-count">0</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Reference Items:</span>
+                                        <span class="info-value" id="reference-items-count">0</span>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="stat-content">
-                                <span class="stat-value" id="summary-size">0 MB</span>
-                                <span class="stat-label">Total Size</span>
+                            
+                            <!-- Visualization Section -->
+                            <div class="visualization-container">
+                                <div class="page-distribution-section">
+                                    <h5>Page Type Distribution</h5>
+                                    <div class="page-distribution-chart">
+                                        <div class="distribution-bar-container wide-bar">
+                                            <div class="distribution-bar stacked">
+                                                <div class="distribution-bar-segment standard" id="standard-pages-segment"></div>
+                                                <div class="distribution-bar-segment oversized" id="oversized-pages-segment"></div>
+                                                <div class="distribution-bar-segment references" id="reference-pages-segment"></div>
+                                            </div>
+                                        </div>
+                                        <div class="distribution-legend">
+                                            <div class="legend-item">
+                                                <span class="legend-color standard"></span>
+                                                <span class="legend-label">Standard</span>
+                                                <span class="legend-value" id="standard-pages-percent">0%</span>
+                                            </div>
+                                            <div class="legend-item">
+                                                <span class="legend-color oversized"></span>
+                                                <span class="legend-label">Oversized</span>
+                                                <span class="legend-value" id="oversized-pages-percent">0%</span>
+                                            </div>
+                                            <div class="legend-item">
+                                                <span class="legend-color references"></span>
+                                                <span class="legend-label">References</span>
+                                                <span class="legend-value" id="reference-pages-percent">0%</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="completion-section">
+                                    <div class="completion-circle">
+                                        <svg viewBox="0 0 36 36" class="circular-chart">
+                                            <path class="circle-bg" d="M18 2.0845
+                                                a 15.9155 15.9155 0 0 1 0 31.831
+                                                a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                            <path id="completion-circle-path" class="circle" stroke-dasharray="0, 100" d="M18 2.0845
+                                                a 15.9155 15.9155 0 0 1 0 31.831
+                                                a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                            <text x="18" y="20.35" id="completion-percentage">0%</text>
+                                        </svg>
+                                    </div>
+                                    <div class="completion-label">Project Completion</div>
+                                </div>
+                            </div>
+                            
+                            <!-- Oversized Documents Detail -->
+                            <div class="oversized-detail-section">
+                                <h5>Oversized Documents Detail</h5>
+                                <div class="oversized-metrics">
+                                    <div class="info-item">
+                                        <span class="info-label">Document with Most Oversized:</span>
+                                        <span class="info-value" id="max-oversized-doc">None</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Avg. Oversizing %:</span>
+                                        <span class="info-value" id="avg-oversized-percent">0%</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Estimated Film Space:</span>
+                                        <span class="info-value" id="est-film-frames">0 frames</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                     
-                    <div class="workflow-summary">
-                        <h4>Workflow Summary</h4>
-                        <div class="workflow-timeline">
-                            <div class="timeline-item">
-                                <div class="timeline-icon completed">
-                                    <i class="fas fa-check"></i>
+                    <!-- Right Column: Film Allocation Summary -->
+                    <div class="data-visualization-card analysis-overview-card">
+                        <h4><i class="fas fa-film"></i> Film Allocation Summary</h4>
+                        <div class="analysis-overview">
+                            <div class="analysis-metrics">
+                                <div class="metrics-section">
+                                    <h5>Film Roll Distribution</h5>
+                                    <div class="info-item">
+                                        <span class="info-label">16mm Rolls:</span>
+                                        <span class="info-value" id="film-rolls-16mm">0</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">35mm Rolls:</span>
+                                        <span class="info-value" id="film-rolls-35mm">0</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Total Rolls:</span>
+                                        <span class="info-value" id="total-film-rolls">0</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Allocation Status:</span>
+                                        <span class="info-value status-tag" id="allocation-status">Not Started</span>
+                                    </div>
                                 </div>
-                                <div class="timeline-content">
-                                    <span class="timeline-title">Project Setup</span>
-                                    <span class="timeline-time">00:00:00</span>
-                                </div>
-                            </div>
-                            <div class="timeline-item">
-                                <div class="timeline-icon completed">
-                                    <i class="fas fa-check"></i>
-                                </div>
-                                <div class="timeline-content">
-                                    <span class="timeline-title">Document Analysis</span>
-                                    <span class="timeline-time">00:00:00</span>
-                                </div>
-                            </div>
-                            <div class="timeline-item">
-                                <div class="timeline-icon completed">
-                                    <i class="fas fa-check"></i>
-                                </div>
-                                <div class="timeline-content">
-                                    <span class="timeline-title">Workflow Determination</span>
-                                    <span class="timeline-time">00:00:00</span>
-                                </div>
-                            </div>
-                            <div class="timeline-item">
-                                <div class="timeline-icon completed">
-                                    <i class="fas fa-check"></i>
-                                </div>
-                                <div class="timeline-content">
-                                    <span class="timeline-title">Reference Sheet Generation</span>
-                                    <span class="timeline-time">00:00:00</span>
-                                </div>
-                            </div>
-                            <div class="timeline-item">
-                                <div class="timeline-icon completed">
-                                    <i class="fas fa-check"></i>
-                                </div>
-                                <div class="timeline-content">
-                                    <span class="timeline-title">Film Allocation</span>
-                                    <span class="timeline-time">00:00:00</span>
+                                
+                                <div class="metrics-section">
+                                    <h5>Capacity Metrics</h5>
+                                    <div class="info-item">
+                                        <span class="info-label">16mm Utilization:</span>
+                                        <span class="info-value" id="utilization-16mm">0%</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">35mm Utilization:</span>
+                                        <span class="info-value" id="utilization-35mm">0%</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Total Capacity:</span>
+                                        <span class="info-value" id="total-film-capacity">0 pages</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Remaining Capacity:</span>
+                                        <span class="info-value" id="remaining-capacity">0 pages</span>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="timeline-item">
-                                <div class="timeline-icon completed">
-                                    <i class="fas fa-check"></i>
+                            
+                            <!-- Visualization Section -->
+                            <div class="visualization-container">
+                                <div class="page-distribution-section">
+                                    <h5>Film Capacity Utilization</h5>
+                                    <!-- 16mm Film Utilization -->
+                                    <div class="film-utilization-item">
+                                        <div class="film-label">16mm Film</div>
+                                        <div class="distribution-bar-container wide-bar">
+                                            <div class="distribution-bar">
+                                                <div class="distribution-bar-segment standard" id="film-16mm-used"></div>
+                                            </div>
+                                        </div>
+                                        <div class="utilization-labels">
+                                            <span id="film-16mm-used-pages">0 pages used</span>
+                                            <span id="film-16mm-total-capacity">0 total capacity</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- 35mm Film Utilization -->
+                                    <div class="film-utilization-item">
+                                        <div class="film-label">35mm Film</div>
+                                        <div class="distribution-bar-container wide-bar">
+                                            <div class="distribution-bar">
+                                                <div class="distribution-bar-segment oversized" id="film-35mm-used"></div>
+                                            </div>
+                                        </div>
+                                        <div class="utilization-labels">
+                                            <span id="film-35mm-used-pages">0 pages used</span>
+                                            <span id="film-35mm-total-capacity">0 total capacity</span>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="timeline-content">
-                                    <span class="timeline-title">Index Generation</span>
-                                    <span class="timeline-time">00:00:00</span>
+                                
+                                <div class="completion-section">
+                                    <div class="completion-circle">
+                                        <svg viewBox="0 0 36 36" class="circular-chart">
+                                            <path class="circle-bg" d="M18 2.0845
+                                                a 15.9155 15.9155 0 0 1 0 31.831
+                                                a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                            <path id="overall-utilization-path" class="circle" stroke-dasharray="0, 100" d="M18 2.0845
+                                                a 15.9155 15.9155 0 0 1 0 31.831
+                                                a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                            <text x="18" y="20.35" id="overall-utilization-percent">0%</text>
+                                        </svg>
+                                    </div>
+                                    <div class="completion-label">Overall Utilization</div>
                                 </div>
                             </div>
-                            <div class="timeline-item">
-                                <div class="timeline-icon completed">
-                                    <i class="fas fa-check"></i>
-                                </div>
-                                <div class="timeline-content">
-                                    <span class="timeline-title">Film Numbering</span>
-                                    <span class="timeline-time">00:00:00</span>
-                                </div>
-                            </div>
-                            <div class="timeline-item">
-                                <div class="timeline-icon completed">
-                                    <i class="fas fa-check"></i>
-                                </div>
-                                <div class="timeline-content">
-                                    <span class="timeline-title">Document Distribution</span>
-                                    <span class="timeline-time">00:00:00</span>
+                            
+                            <!-- Document Allocation Detail -->
+                            <div class="oversized-detail-section">
+                                <h5>Document Allocation Details</h5>
+                                <div class="oversized-metrics">
+                                    <div class="info-item">
+                                        <span class="info-label">Documents on 16mm:</span>
+                                        <span class="info-value" id="docs-on-16mm">0</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Pages on 16mm:</span>
+                                        <span class="info-value" id="pages-on-16mm">0</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Documents on 35mm:</span>
+                                        <span class="info-value" id="docs-on-35mm">0</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Pages on 35mm:</span>
+                                        <span class="info-value" id="pages-on-35mm">0</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Split Documents:</span>
+                                        <span class="info-value" id="docs-with-split-allocation">0</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Allocation Date:</span>
+                                        <span class="info-value" id="allocation-date">--</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
                 
+                <!-- Film Number Assignment & Another Card (2-column layout) -->
+                <div class="data-visualization-section">
+                    <!-- Left Column: Film Number Assignment -->
+                    <div class="data-visualization-card analysis-overview-card">
+                        <h4><i class="fas fa-fingerprint"></i> Film Number Assignment</h4>
+                        <div class="analysis-overview">
+                            <div class="analysis-metrics" style="grid-template-columns: 1fr;">
+                                <!-- Only Film Number Summary, Assignment Info removed -->
+                                <div class="metrics-section">
+                                    <h5>Film Number Summary</h5>
+                                    <div class="info-item">
+                                        <span class="info-label">Total Film Numbers:</span>
+                                        <span class="info-value" id="total-film-numbers">0</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Series Start:</span>
+                                        <span class="info-value" id="film-number-series-start">--</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Series End:</span>
+                                        <span class="info-value" id="film-number-series-end">--</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Assignment Status:</span>
+                                        <span class="info-value status-tag completed" id="assignment-status">Completed</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Film Rolls Overview with reduced height -->
+                            <div class="film-rolls-overview">
+                                <h5>Film Rolls</h5>
+                                <div class="film-rolls-container" style="max-height: 160px;">
+                                    <!-- 16mm Film Rolls -->
+                                    <div class="film-type-section">
+                                        <div class="film-type-header">
+                                            <i class="fas fa-film"></i> 16mm Film Rolls
+                                        </div>
+                                        <div class="film-rolls-list" id="film-rolls-16mm-list">
+                                            <!-- JS will populate this -->
+                                            <div class="film-roll-placeholder">
+                                                <p>No 16mm film rolls available</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- 35mm Film Rolls -->
+                                    <div class="film-type-section">
+                                        <div class="film-type-header">
+                                            <i class="fas fa-film"></i> 35mm Film Rolls
+                                        </div>
+                                        <div class="film-rolls-list" id="film-rolls-35mm-list">
+                                            <!-- JS will populate this -->
+                                            <div class="film-roll-placeholder">
+                                                <p>No 35mm film rolls available</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="film-rolls-footer">
+                                    <p class="preview-note">
+                                        <i class="fas fa-info-circle"></i>
+                                        Download the Master Index for complete document-level details.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Right Column: Document Index Summary -->
+                    <div class="data-visualization-card analysis-overview-card">
+                        <h4><i class="fas fa-table"></i> Document Index Summary</h4>
+                        <div class="analysis-overview">
+                            <!-- Document Index Preview with enhanced scrollable container -->
+                            <div class="index-preview-section">
+                                <h5>Master Index Preview</h5>
+                                <div class="index-preview-container" style="max-height: 300px; overflow-y: auto; margin-bottom: 0;">
+                                    <table class="index-preview-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Document Name</th>
+                                                <th>Document ID</th>
+                                                <th>Frame Range</th>
+                                                <th>Sequence</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="index-preview-body">
+                                            <!-- Will be populated by JavaScript -->
+                                            <tr class="index-preview-placeholder">
+                                                <td colspan="4">No index data available</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="index-preview-footer">
+                                    <p class="preview-note">
+                                        <i class="fas fa-info-circle"></i>
+                                        Showing <span id="index-total-count">0</span> documents in project index.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Reference Sheets & Document Index (2-column layout) -->
+                <div class="data-visualization-section">
+                    <!-- Left Column: Reference Sheets Summary -->
+                    <div class="data-visualization-card analysis-overview-card">
+                        <h4><i class="fas fa-copy"></i> Reference Sheets Summary</h4>
+                        <div class="analysis-overview">
+                            <div class="metrics-section">
+                                <h5>Reference Overview</h5>
+                                <div class="info-item">
+                                    <span class="info-label">Total Sheets:</span>
+                                    <span class="info-value" id="reference-total-sheets">0</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Documents With References:</span>
+                                    <span class="info-value" id="reference-doc-count">0</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Reference Sheets List -->
+                            <div class="reference-sheets-section">
+                                <h5>Reference Sheets</h5>
+                                <div class="reference-sheets-container" style="max-height: 250px; overflow-y: auto; margin-bottom: 0;">
+                                    <table class="reference-sheets-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Document</th>
+                                                <th>Page</th>
+                                                <th>Sheet ID</th>
+                                                <th>Film Number</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="reference-sheets-body">
+                                            <!-- Will be populated by JavaScript -->
+                                            <tr class="reference-sheets-placeholder">
+                                                <td colspan="4">No reference sheets available</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="reference-sheets-footer">
+                                    <p class="preview-note">
+                                        <i class="fas fa-info-circle"></i>
+                                        <span id="reference-sheets-count">0</span> reference sheets generated for the project.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Right Column: Distribution Results -->
+                    <div class="data-visualization-card analysis-overview-card">
+                        <h4><i class="fas fa-random"></i> Distribution Results</h4>
+                        <div class="analysis-overview">
+                            <div class="analysis-metrics" style="grid-template-columns: 1fr 1fr;">
+                                <div class="metrics-section">
+                                    <h5>Document Distribution</h5>
+                                    <div class="info-item">
+                                        <span class="info-label">Standard Documents:</span>
+                                        <span class="info-value" id="distribution-standard-docs">0</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Oversized Documents:</span>
+                                        <span class="info-value" id="distribution-oversized-docs">0</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Documents with References:</span>
+                                        <span class="info-value" id="distribution-docs-with-refs">0</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Reference Sheets:</span>
+                                        <span class="info-value" id="distribution-reference-sheets">0</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="metrics-section">
+                                    <h5>Film Distribution</h5>
+                                    <div class="info-item">
+                                        <span class="info-label">16mm Documents:</span>
+                                        <span class="info-value" id="distribution-16mm-docs">0</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">35mm Documents:</span>
+                                        <span class="info-value" id="distribution-35mm-docs">0</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Processing Status:</span>
+                                        <span class="info-value status-tag" id="distribution-status">Not Started</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Completion Date:</span>
+                                        <span class="info-value" id="distribution-completion-date">--</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Distribution Details Section -->
+                            <div class="distribution-detail-section">
+                                <h5>Output Details</h5>
+                                <div class="output-location">
+                                    <div class="info-item">
+                                        <span class="info-label">Output Directory:</span>
+                                        <span class="info-value output-path" id="distribution-output-dir">Not available</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="distribution-metrics">
+                                    <div class="info-item">
+                                        <span class="info-label">Documents Processed:</span>
+                                        <span class="info-value" id="distribution-processed-docs">0</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Documents Copied:</span>
+                                        <span class="info-value" id="distribution-copied-docs">0</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="film-type-distribution">
+                                    <div class="distribution-bar-container wide-bar">
+                                        <div class="distribution-bar stacked">
+                                            <div class="distribution-bar-segment standard" id="distribution-16mm-segment"></div>
+                                            <div class="distribution-bar-segment oversized" id="distribution-35mm-segment"></div>
+                                        </div>
+                                    </div>
+                                    <div class="distribution-legend">
+                                        <div class="legend-item">
+                                            <span class="legend-color standard"></span>
+                                            <span class="legend-label">16mm Film</span>
+                                            <span class="legend-value" id="distribution-16mm-percent">0%</span>
+                                        </div>
+                                        <div class="legend-item">
+                                            <span class="legend-color oversized"></span>
+                                            <span class="legend-label">35mm Film</span>
+                                            <span class="legend-value" id="distribution-35mm-percent">0%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Export Section -->
                 <div class="export-section">
-                    <h4>Available Exports</h4>
-                    <button id="generate-exports" class="action-button primary" style="margin-bottom: 24px;">
+                    <h4><i class="fas fa-file-download"></i> Available Exports</h4>
+                    <button id="generate-exports" class="action-button primary">
                         <i class="fas fa-cogs"></i> Generate Exports
                     </button>
-                    <div id="export-progress" style="margin: 30px 0 0 0; display: none;">
-                        <div id="export-progress-bar" style="height: 18px; background: #e0e0e0; border-radius: 9px; overflow: hidden;">
-                            <div style="width:0%;height:100%;background:#34a853;transition:width 0.3s;" id="export-progress-bar-inner"></div>
+                    <div id="export-progress" style="display: none;">
+                        <div id="export-progress-bar">
+                            <div id="export-progress-bar-inner"></div>
                         </div>
-                        <div id="export-progress-text" style="margin-top: 6px; font-weight: 500;">0%</div>
+                        <div id="export-progress-text">0%</div>
                     </div>
+                    
+                    <!-- Output Location Card -->
+                    <div class="output-location-card" style="margin-top: 20px; display: none;" id="output-location">
+                        <div class="output-icon">
+                            <i class="fas fa-folder-open"></i>
+                        </div>
+                        <div class="output-details">
+                            <h4>Output Directory</h4>
+                            <p id="output-directory-path">Not available yet</p>
+                        </div>
+                        <button id="open-output-directory" class="action-button secondary">
+                            <i class="fas fa-external-link-alt"></i> Reveal in Explorer
+                        </button>
+                    </div>
+                    
                     <div id="available-exports" style="display: none;">
-                        <div class="export-files">
-                            <div class="export-file">
-                                <div class="file-icon">
-                                    <i class="fas fa-file-excel"></i>
+                        <h3>Project Exports</h3>
+                        <div id="export-status-note" style="display: none;" class="note-text">
+                            <!-- Populated by JS when restoring state -->
+                        </div>
+                        
+                        <div class="export-items-container">
+                            <div class="export-item">
+                                <div class="export-icon"><i class="fas fa-table"></i></div>
+                                <div class="export-info">
+                                    <div class="export-name">Document Index</div>
+                                    <div class="export-description">Complete listing with film numbers and frame ranges</div>
                                 </div>
-                                <div class="file-details">
-                                    <span class="file-name">Master Index (CSV)</span>
-                                    <span class="file-info">125 entries, 10 KB</span>
-                                </div>
-                                <button class="file-download" aria-label="Download Master Index CSV">
-                                    <i class="fas fa-download"></i> Download
-                                </button>
+                                <button class="view-export-btn" data-type="index">View</button>
                             </div>
-                            <div class="export-file">
-                                <div class="file-icon">
-                                    <i class="fas fa-file-pdf"></i>
+                            
+                            <div class="export-item">
+                                <div class="export-icon"><i class="fas fa-file-alt"></i></div>
+                                <div class="export-info">
+                                    <div class="export-name">Summary Report</div>
+                                    <div class="export-description">Project overview with key metrics</div>
                                 </div>
-                                <div class="file-details">
-                                    <span class="file-name">Project Report (PDF)</span>
-                                    <span class="file-info">250 KB</span>
-                                </div>
-                                <button class="file-download" aria-label="Download Project Report PDF">
-                                    <i class="fas fa-download"></i> Download
-                                </button>
+                                <button class="view-export-btn" data-type="summary">View</button>
                             </div>
-                            <div class="export-file">
-                                <div class="file-icon">
-                                    <i class="fas fa-file-code"></i>
+                            
+                            <div class="export-item">
+                                <div class="export-icon"><i class="fas fa-chart-bar"></i></div>
+                                <div class="export-info">
+                                    <div class="export-name">Analysis Data</div>
+                                    <div class="export-description">Document sizes and attributes analysis</div>
                                 </div>
-                                <div class="file-details">
-                                    <span class="file-name">Project Configuration (JSON)</span>
-                                    <span class="file-info">5 KB</span>
-                                </div>
-                                <button class="file-download" aria-label="Download Project Configuration JSON">
-                                    <i class="fas fa-download"></i> Download
-                                </button>
+                                <button class="view-export-btn" data-type="analysis">View</button>
                             </div>
-                            <div class="export-file">
-                                <div class="file-icon">
-                                    <i class="fas fa-file-image"></i>
+                            
+                            <div class="export-item">
+                                <div class="export-icon"><i class="fas fa-film"></i></div>
+                                <div class="export-info">
+                                    <div class="export-name">Film Allocation</div>
+                                    <div class="export-description">Film roll allocation details</div>
                                 </div>
-                                <div class="file-details">
-                                    <span class="file-name">Reference Sheet Images</span>
-                                    <span class="file-info">5 MB</span>
-                                </div>
-                                <button class="file-download" aria-label="Download Reference Sheet Images">
-                                    <i class="fas fa-download"></i> Download
-                                </button>
+                                <button class="view-export-btn" data-type="allocation">View</button>
                             </div>
+                            
+                            <div class="export-item">
+                                <div class="export-icon"><i class="fas fa-hashtag"></i></div>
+                                <div class="export-info">
+                                    <div class="export-name">Film Numbers</div>
+                                    <div class="export-description">Film number assignments and sequences</div>
+                                </div>
+                                <button class="view-export-btn" data-type="filmnumbers">View</button>
+                            </div>
+                            
+                            <div class="export-item">
+                                <div class="export-icon"><i class="fas fa-copy"></i></div>
+                                <div class="export-info">
+                                    <div class="export-name">Distribution</div>
+                                    <div class="export-description">Document distribution and file organization</div>
+                                </div>
+                                <button class="view-export-btn" data-type="distribution">View</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Remove the "Download All" button and replace with just the output location info -->
+                        <div id="output-location" style="display: none;" class="output-location-container">
+                            <div class="output-header">
+                                <h4>Output Location</h4>
+                                <button id="open-output-directory" class="primary-btn" disabled>Open Folder</button>
+                            </div>
+                            <div class="output-path" id="output-directory-path">Path not available</div>
                         </div>
                     </div>
                 </div>
@@ -214,23 +677,6 @@
                     <i class="fas fa-download"></i>
                     Download All
                 </button>
-            </div>
-        </div>
-        <!-- Output Data Panel -->
-        <div class="workflow-card data-panel">
-            <div class="card-header with-actions">
-                <h3><i class="fas fa-code"></i> Summary Data</h3>
-                <div class="card-actions">
-                    <button class="panel-action" id="expand-summary-data">
-                        <i class="fas fa-expand-alt"></i>
-                    </button>
-                    <button class="panel-action" id="copy-summary-data">
-                        <i class="fas fa-copy"></i>
-                    </button>
-                </div>
-            </div>
-            <div class="card-content">
-                <pre class="data-output">{}</pre>
             </div>
         </div>
     </div>

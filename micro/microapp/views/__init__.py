@@ -63,3 +63,9 @@ from .reference_views import (
     get_reference_sheet_pdf, insert_reference_sheets, get_document_ranges,
     generate_readable_descriptions, calculate_adjusted_ranges
 )
+
+# Import export views
+from .export_views import (
+    export_project_data, generate_exports, download_export_zip, 
+    download_specific_export, get_available_exports
+)

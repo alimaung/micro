@@ -70,7 +70,6 @@
 /* Card layouts */
 .workflow-cards {
     display: grid;
-    grid-template-columns: 1fr 350px;
     gap: 24px;
     margin-bottom: 24px;
 }

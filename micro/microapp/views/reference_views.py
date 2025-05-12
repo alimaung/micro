@@ -106,16 +106,23 @@ def generate_reference_sheets(request, project_id):
         # Initialize the reference manager
         film_number_manager = FilmNumberManager()
         reference_manager = ReferenceManager(film_number_manager=film_number_manager)
+                
+        # Log the frontend data
+        #logger.info(f"\033[32mProject data: {frontend_data.get('project_data')}\033[0m")
+        #logger.info(f"\033[34mAnalysis data: {frontend_data.get('analysis_data')}\033[0m")
+        #logger.info(f"\033[35mAllocation data: {frontend_data.get('allocation_data')}\033[0m")
+        #logger.info(f"\033[33mFilm number results: {frontend_data.get('film_number_results')}\033[0m")
+        
         
         # Generate reference sheets
         if use_frontend_data:
             # Use data from frontend
             reference_response = reference_manager.generate_reference_sheets_with_frontend_data(
                 project_id, 
-                frontend_data.get('projectData'),
-                frontend_data.get('analysisData'),
-                frontend_data.get('allocationData'),
-                frontend_data.get('filmNumberResults')
+                frontend_data.get('project_data'),
+                frontend_data.get('analysis_data'),
+                frontend_data.get('allocation_data'),
+                frontend_data.get('film_number_results')
             )
         else:
             # Use database approach

@@ -507,7 +507,7 @@ def process_film_number_allocation(task_id, project_id, project_data, analysis_d
             allocation_data=allocation_data,
             index_data=index_data
         )
-        logger.info(f"\033[34mAllocation data: {allocation_data}\033[0m")
+        #logger.info(f"\033[34mAllocation data: {allocation_data}\033[0m")
         # Update progress
         task['progress'] = 90
         task['lastUpdateTime'] = time.time()
@@ -520,7 +520,6 @@ def process_film_number_allocation(task_id, project_id, project_data, analysis_d
         ).order_by('film_number')
 
         rolls_35mm = Roll.objects.filter(
-            project=project,
             film_type='35mm',
             film_number__isnull=False
         ).order_by('film_number')
@@ -590,10 +589,54 @@ def process_film_number_allocation(task_id, project_id, project_data, analysis_d
             
 
         # Format 35mm rolls
+        formatted_rolls_35mm = []
         for roll in rolls_35mm:
-            segments = DocumentSegment.objects.filter(roll=roll).order_by('document_index')
-            formatted_segments = []
+            # Check if this roll has any segments for the current project
+            has_segments_for_project = DocumentSegment.objects.filter(
+                roll=roll,
+                document__project=project
+            ).exists()
             
+            # Skip rolls that don't have segments for this project
+            if not has_segments_for_project:
+                continue
+            
+            segments = DocumentSegment.objects.filter(
+                roll=roll,
+                document__project=project
+            ).order_by('document_index')
+            
+            # Find the original roll_id from the segments by matching documents in allocation data
+            # Similar to how it's done for 16mm rolls
+            first_segment = segments.first()
+            original_roll_id = None
+            
+            if first_segment:
+                # Look through segments to find matching document in allocation data for 35mm
+                if 'rolls_35mm' in allocation_results:
+                    for roll_data in allocation_results['rolls_35mm']:
+                        for seg in roll_data.get('document_segments', []):
+                            if seg.get('doc_id') == first_segment.document.doc_id:
+                                original_roll_id = roll_data.get('roll_id')
+                                break
+                        if original_roll_id:
+                            break
+                
+                # If not found in 35mm rolls, check doc_allocation_requests_35mm
+                if not original_roll_id and 'doc_allocation_requests_35mm' in allocation_results:
+                    # For 35mm allocation requests, try to use doc_id to infer the original roll
+                    for i, req in enumerate(allocation_results['doc_allocation_requests_35mm']):
+                        if req.get('doc_id') == first_segment.document.doc_id:
+                            # Use index + 1 as a roll ID if nothing else is available
+                            original_roll_id = i + 1
+                            break
+            
+            # If we still don't have an original_roll_id, use a safe default
+            if original_roll_id is None:
+                # Use roll_id from the database if it's not None, otherwise default to 1
+                original_roll_id = roll.roll_id if roll.roll_id is not None else 1
+            
+            formatted_segments = []
             for segment in segments:
                 formatted_segments.append({
                     'doc_id': segment.document.doc_id,
@@ -606,7 +649,7 @@ def process_film_number_allocation(task_id, project_id, project_data, analysis_d
                 })
 
             formatted_rolls_35mm.append({
-                'roll_id': str(roll.roll_id),  # Use original roll_id
+                'roll_id': original_roll_id,  # Use the found original roll_id, consistent with 16mm approach
                 'film_number': roll.film_number,
                 'capacity': roll.capacity,
                 'pages_used': roll.pages_used,

@@ -79,7 +79,7 @@ class ReferencePageAdmin(admin.ModelAdmin):
     readonly_fields = ('id',)
 
 class RollAdmin(admin.ModelAdmin):
-    list_display = ('roll_id', 'project', 'film_number', 'film_type', 'capacity', 'pages_used', 
+    list_display = ('id', 'roll_id', 'project', 'film_number', 'film_type', 'capacity', 'pages_used', 
                     'pages_remaining', 'status', 'has_split_documents', 'creation_date',
                     'is_partial', 'remaining_capacity', 'usable_capacity', 'film_number_source',
                     'source_temp_roll', 'created_temp_roll')
