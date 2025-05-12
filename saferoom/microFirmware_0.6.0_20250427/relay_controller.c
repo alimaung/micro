@@ -14,8 +14,8 @@ static system_config_t system_config = {
     .wifi_ssid = "MICRO-RELAY",
     .wifi_password = "microrelay",
     .wifi_mode = "ap",
-    .static_ip = 0xC0A80165,  // 192.168.1.101
-    .gateway = 0xC0A80101,    // 192.168.1.1
+    .static_ip = 0xC0A86465,  // 192.168.100.101
+    .gateway = 0xC0A86401,    // 192.168.100.1
     .subnet = 0xFFFFFF00      // 255.255.255.0
 };
 

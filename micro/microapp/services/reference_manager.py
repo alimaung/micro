@@ -1690,4 +1690,5 @@ class ReferenceManager:
         
         self.logger.info(f"[TRACE] Completed reference sheet generation with {detailed_response['statistics']['total_sheets']} sheets")
         self.logger.info(f"[TRACE] Exiting generate_reference_sheets_with_frontend_data")
+        print("\033[93m" + str(detailed_response) + "\033[0m")
         return detailed_response

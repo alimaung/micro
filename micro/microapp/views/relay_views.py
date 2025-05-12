@@ -8,13 +8,13 @@ from django.views.decorators.csrf import csrf_exempt
 import json
 import websocket
 
-def send_esp32_ws_command(command, esp32_host='192.168.1.101', port=81, timeout=3):
+def send_esp32_ws_command(command, esp32_host='192.168.100.101', port=81, timeout=3):
     """
     Send a command to the ESP32 via WebSocket and return the response.
     
     Args:
         command: The command to send (dict)
-        esp32_host: Host address of the ESP32 (default: 192.168.1.101)
+        esp32_host: Host address of the ESP32 (default: 192.168.100.101)
         port: WebSocket port (default: 81)
         timeout: Connection timeout in seconds (default: 3)
         

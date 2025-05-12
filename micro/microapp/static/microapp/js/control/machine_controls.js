@@ -18,7 +18,7 @@ const MachineControls = {
     triggerMachineToggle: function() {
         // Store the intended state
         const intendedState = !this.isMachineOn;
-        const action = intendedState ? 'machine_on' : 'machine_off';
+        const action = intendedState ? 'on' : 'off';
         
         // Get DOM elements
         const machineSwitch = document.getElementById('machine-switch');
@@ -45,7 +45,7 @@ const MachineControls = {
             },
             body: new URLSearchParams({
                 'action': action,
-                'com_port': ConnectionManager.getActiveRelayPort()
+                'relay': '8'  // Machine control relay
             })
         })
         .then(response => response.json())

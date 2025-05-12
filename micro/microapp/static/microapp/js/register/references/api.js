@@ -76,8 +76,8 @@ const ReferencesAPI = (function() {
                 
                 // Log detailed information about the response format
                 console.log('[ReferencesAPI] Response format details:');
-                console.log('- Has reference_sheets field:', 'reference_sheets' in result);
-                console.log('- Has referenceSheets field:', 'referenceSheets' in result);
+                console.log('- Has reference_sheets field:', 'reference_sheets' in result); // >>> Has reference_sheets and document_details
+                //console.log('- Has referenceSheets field:', 'referenceSheets' in result);
                 console.log('- Response keys:', Object.keys(result));
                 
                 // Save the result to localStorage for recovery
@@ -207,11 +207,11 @@ const ReferencesAPI = (function() {
                 const dataToSave = {
                     projectId: this.projectId,
                     project_id: this.projectId,
-                    referenceSheets: result.reference_sheets || result.referenceSheets || {},
                     reference_sheets: result.reference_sheets || result.referenceSheets || {},
                     status: result.status || 'success',
                     sheetsCreated: result.sheets_created || result.sheetsCreated || 0,
                     sheets_created: result.sheets_created || result.sheetsCreated || 0,
+                    documents_details: result.documents_details || {},
                     timestamp: new Date().toISOString()
                 };
 

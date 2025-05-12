@@ -1151,6 +1151,7 @@ class DistributionManager:
             
             # Get document details from reference data
             documents_details = reference_data.get('documents_details', {})
+            print(f"\033[92m{reference_data}\033[0m")
             if doc_id not in documents_details:
                 self.logger.error(f"No reference details found for {doc_id}")
                 return None
