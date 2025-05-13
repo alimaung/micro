@@ -12,7 +12,7 @@ import re
 from datetime import datetime
 
 # Django settings
-HOST = "127.0.0.1"
+HOST = "0.0.0.0"
 PORT = 8000
 DJANGO_URL = f"http://{HOST}:{PORT}"
 

@@ -101,6 +101,20 @@
     box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
 }
 
+.soft-control-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.soft-control-button.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
 /* PC Status Card */
 .pc-status {
     display: grid;
@@ -192,6 +206,10 @@
     color: var(--color-text-light);
 }
 
+.dark-mode .info-label {
+    color: var(--color-dark-text-light);
+}
+
 .info-value {
     font-size: 14px;
     font-weight: 500;
@@ -200,4 +218,31 @@
 
 .dark-mode .info-value {
     color: var(--color-dark-text);
+}
+
+/* PC Actions */
+.pc-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.ping-btn {
+    background-color: rgba(48, 209, 88, 0.1);
+    color: #30d158;
+    border-color: rgba(48, 209, 88, 0.3);
+}
+
+.ping-btn:hover {
+    background-color: rgba(48, 209, 88, 0.2);
+}
+
+.rdp-btn {
+    background-color: rgba(10, 132, 255, 0.1);
+    color: #0a84ff;
+    border-color: rgba(10, 132, 255, 0.3);
+}
+
+.rdp-btn:hover {
+    background-color: rgba(10, 132, 255, 0.2);
 }

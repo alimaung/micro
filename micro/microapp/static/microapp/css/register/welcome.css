@@ -1,9 +1,80 @@
 /* Hero section styles */
+:root {
+    /* Light mode variables */
+    --bg-color: #ffffff;
+    --text-color: #333333;
+    --text-secondary: #666666;
+    --card-bg: #ffffff;
+    --card-shadow: rgba(0, 0, 0, 0.05);
+    --hero-gradient: linear-gradient(135deg, #1a73e8 0%, #6c5ce7 100%);
+    --border-color: #e0e0e0;
+    --auto-color: #2ecc71;
+    --semi-color: #3498db;
+    --manual-color: #95a5a6;
+    --badge-bg: #2ecc71;
+    --badge-color: white;
+    --step-number-bg: #3498db;
+    --step-number-color: white;
+    --resume-bg: #f8f9fa;
+    --project-info-bg: #EBF4FF;
+    --project-info-border: #4299E1;
+}
+
+/* Dark mode variables */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg-color: #1a1a1a;
+        --text-color: #e0e0e0;
+        --text-secondary: #b0b0b0;
+        --card-bg: #2a2a2a;
+        --card-shadow: rgba(0, 0, 0, 0.2);
+        --hero-gradient: linear-gradient(135deg, #1a5bb8 0%, #5546b8 100%);
+        --border-color: #444444;
+        --auto-color: #25a55b;
+        --semi-color: #2980b9;
+        --manual-color: #7f8c8d;
+        --badge-bg: #25a55b;
+        --badge-color: #f0f0f0;
+        --step-number-bg: #2980b9;
+        --step-number-color: #f0f0f0;
+        --resume-bg: #2a2a2a;
+        --project-info-bg: #2c3e50;
+        --project-info-border: #3182CE;
+    }
+}
+
+/* Explicit dark mode class that can be toggled with JavaScript */
+.dark-mode {
+    --bg-color: #1a1a1a;
+    --text-color: #e0e0e0;
+    --text-secondary: #b0b0b0;
+    --card-bg: #2a2a2a;
+    --card-shadow: rgba(0, 0, 0, 0.2);
+    --hero-gradient: linear-gradient(135deg, #1a5bb8 0%, #5546b8 100%);
+    --border-color: #444444;
+    --auto-color: #25a55b;
+    --semi-color: #2980b9;
+    --manual-color: #7f8c8d;
+    --badge-bg: #25a55b;
+    --badge-color: #f0f0f0;
+    --step-number-bg: #2980b9;
+    --step-number-color: #f0f0f0;
+    --resume-bg: #2a2a2a;
+    --project-info-bg: #2c3e50;
+    --project-info-border: #3182CE;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
 .hero-section {
     position: relative;
     width: 100%;
     height: 340px;
-    background: linear-gradient(135deg, #1a73e8 0%, #6c5ce7 100%);
+    background: var(--hero-gradient);
     border-radius: 12px;
     margin-bottom: 3rem;
     overflow: hidden;
@@ -81,10 +152,10 @@
 
 .workflow-card {
     flex: 1;
-    background: white;
+    background: var(--card-bg);
     border-radius: 12px;
     padding: 2rem;
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 10px 20px var(--card-shadow);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     text-align: center;
     position: relative;
@@ -101,8 +172,7 @@
     order: 2; /* Place in middle for 3 items */
     transform: scale(1.05);
     z-index: 2;
-    border: 2px solid #2ecc71;
-    box-shadow: 0 15px 30px rgba(46, 204, 113, 0.15);
+    border: 2px solid var(--auto-color);
     padding: 2.5rem 2rem;
 }
 
@@ -133,16 +203,16 @@
     font-size: 1.5rem;
     font-weight: 600;
     margin-bottom: 1rem;
-    color: #333;
+    color: var(--text-color);
 }
 
 .auto-card h3 {
-    color: #2ecc71;
+    color: var(--auto-color);
 }
 
 .workflow-card p {
     font-size: 1rem;
-    color: #666;
+    color: var(--text-secondary);
     margin-bottom: 1.5rem;
 }
 
@@ -155,26 +225,26 @@
     margin-bottom: 0.5rem;
     padding-left: 1.5rem;
     position: relative;
-    color: #555;
+    color: var(--text-secondary);
 }
 
 .workflow-card .features li:before {
     content: "✓";
     position: absolute;
     left: 0;
-    color: var(--primary-color, #3498db);
+    color: var(--semi-color);
 }
 
 .auto-card .features li:before {
-    color: #2ecc71;
+    color: var(--auto-color);
 }
 
 .semi-card .features li:before {
-    color: #3498db;
+    color: var(--semi-color);
 }
 
 .manual-card .features li:before {
-    color: #95a5a6;
+    color: var(--manual-color);
 }
 
 /* Buttons */
@@ -195,8 +265,7 @@
 
 /* Auto Button with Animation */
 .auto-btn {
-    background: linear-gradient(135deg, #2ecc71, #1abc9c);
-    box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
+    background: linear-gradient(135deg, var(--auto-color), #1abc9c);
     position: relative;
     overflow: hidden;
 }
@@ -232,8 +301,7 @@
 }
 
 .semi-btn {
-    background: linear-gradient(135deg, #3498db, #2980b9);
-    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+    background: linear-gradient(135deg, var(--semi-color), #2980b9);
 }
 
 .semi-btn:hover {
@@ -242,8 +310,7 @@
 }
 
 .manual-btn {
-    background: linear-gradient(135deg, #95a5a6, #7f8c8d);
-    box-shadow: 0 4px 15px rgba(149, 165, 166, 0.3);
+    background: linear-gradient(135deg, var(--manual-color), #7f8c8d);
 }
 
 .manual-btn:hover {
@@ -256,8 +323,8 @@
     position: absolute;
     top: 0;
     right: 0;
-    background: #2ecc71;
-    color: white;
+    background: var(--badge-bg);
+    color: var(--badge-color);
     font-size: 0.8rem;
     font-weight: 600;
     padding: 0.5rem 1rem;
@@ -266,16 +333,16 @@
 
 /* Workflow steps section */
 .workflow-steps {
-    background-color: white;
+    background-color: var(--card-bg);
     border-radius: 12px;
     padding: 2rem;
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 10px 20px var(--card-shadow);
 }
 
 .workflow-steps h2 {
     font-size: 1.8rem;
     font-weight: 600;
-    color: #333;
+    color: var(--text-color);
     margin-bottom: 1.5rem;
     margin-top: 0.5rem;
     text-align: center;
@@ -294,8 +361,9 @@
     border-radius: 8px;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     border-radius: 6px;
-    border: 1px solid #e0e0e0;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 2px 4px var(--card-shadow);
+    background-color: var(--card-bg);
 }
 
 .step-number {
@@ -305,8 +373,8 @@
     width: 30px;
     height: 30px;
     border-radius: 50%;
-    background-color: var(--primary-color, #3498db);
-    color: white;
+    background-color: var(--step-number-bg);
+    color: var(--step-number-color);
     font-weight: 600;
     margin-right: 1rem;
     flex-shrink: 0;
@@ -315,14 +383,14 @@
 .step-content h4 {
     font-size: 1.1rem;
     font-weight: 600;
-    color: #333;
+    color: var(--text-color);
     margin-bottom: 0.5rem;
     margin-top: 0.5rem;
 }
 
 .step-content p {
     font-size: 0.9rem;
-    color: #666;
+    color: var(--text-secondary);
     line-height: 1.4;
     margin-bottom: 0.5rem;
 }
@@ -331,7 +399,7 @@
 .resume-project-section {
     margin-top: 3rem;
     margin-bottom: 1rem;
-    background-color: #f8f9fa;
+    background-color: var(--resume-bg);
     border-radius: 12px;
     padding: 2rem;
     text-align: center;
@@ -341,7 +409,7 @@
 .resume-project-section h3 {
     font-size: 1.5rem;
     font-weight: 600;
-    color: #333;
+    color: var(--text-color);
     margin-bottom: 1rem;
 }
 
@@ -403,4 +471,14 @@
     margin: 0 auto;
     padding: 20px;
     width: 100%;
+    color: var(--text-color);
+    background-color: var(--bg-color);
+}
+
+/* Add styles for the workflow description */
+.workflow-description {
+    text-align: center;
+    margin-bottom: 2rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
 }

@@ -9,11 +9,15 @@
 
 // WiFi credentials (now constants)
 const char* ssid = "4G-UFI-0E4";
-const char* password = "microrelay";
+const char* password = "1234567890";
+
+// Serial command buffer
+String serialCmd = "";
+bool serialCmdComplete = false;
 
 // Static network config for STA mode
-IPAddress staticIP(192,168,1,101);
-IPAddress gateway(192,168,1,1);
+IPAddress staticIP(192,168,100,101);
+IPAddress gateway(192,168,100,1);
 IPAddress subnet(255,255,255,0);
 
 // WebSocket server on port 81
@@ -106,11 +110,20 @@ void setup() {
   // WebSocket
   webSocket.begin();
   webSocket.onEvent(webSocketEvent);
+  
+  Serial.println("Micro Relay Firmware v0.5.9");
+  Serial.println("Available commands:");
+  Serial.println("  restart - Restart ESP32");
+  Serial.println("  wifi:ap - Switch to AP mode");
+  Serial.println("  wifi:sta - Switch to STA mode");
+  Serial.println("  wifi:reconnect - Reconnect to WiFi");
+  Serial.println("  wifi:status - Show WiFi connection status");
 }
 
 void loop() {
   webSocket.loop();
   handlePulseTask();
+  handleSerialCommands();
   // Optionally, broadcast status every 5s (not required if UI only updates on change)
 }
 
@@ -288,5 +301,150 @@ void doOTA(String url) {
   t_httpUpdate_return ret = httpUpdate.update(client, url);
   if (ret == HTTP_UPDATE_OK) {
     ESP.restart();
+  }
+}
+
+void handleSerialCommands() {
+  while (Serial.available()) {
+    char c = Serial.read();
+    if (c == '\n') {
+      serialCmdComplete = true;
+    } else {
+      serialCmd += c;
+    }
+  }
+  
+  if (serialCmdComplete) {
+    serialCmd.trim();
+    
+    if (serialCmd == "restart") {
+      Serial.println("Restarting ESP32...");
+      delay(500);
+      ESP.restart();
+    } 
+    else if (serialCmd == "wifi:ap") {
+      Serial.println("Switching to AP mode...");
+      WiFi.disconnect();
+      delay(500);
+      WiFi.mode(WIFI_AP);
+      WiFi.softAP(wifiSSID, wifiPassword);
+      Serial.print("AP started with SSID: ");
+      Serial.println(wifiSSID);
+      Serial.print("IP address: ");
+      Serial.println(WiFi.softAPIP());
+    }
+    else if (serialCmd == "wifi:sta") {
+      Serial.println("Switching to STA mode...");
+      WiFi.disconnect();
+      WiFi.mode(WIFI_STA);
+      WiFi.config(staticIP, gateway, subnet);
+      WiFi.begin(ssid, password);
+      Serial.println("Connecting to WiFi...");
+      int attempts = 0;
+      while (WiFi.status() != WL_CONNECTED && attempts < 20) {
+        delay(500);
+        Serial.print(".");
+        attempts++;
+      }
+      Serial.println();
+      
+      if (WiFi.status() == WL_CONNECTED) {
+        Serial.print("Connected to WiFi. IP: ");
+        Serial.println(WiFi.localIP());
+      } else {
+        Serial.println("Failed to connect to WiFi");
+      }
+    }
+    else if (serialCmd == "wifi:reconnect") {
+      Serial.println("Reconnecting to WiFi...");
+      WiFi.disconnect();
+      delay(500);
+      WiFi.begin(ssid, password);
+      int attempts = 0;
+      while (WiFi.status() != WL_CONNECTED && attempts < 20) {
+        delay(500);
+        Serial.print(".");
+        attempts++;
+      }
+      Serial.println();
+      
+      if (WiFi.status() == WL_CONNECTED) {
+        Serial.print("Connected to WiFi. IP: ");
+        Serial.println(WiFi.localIP());
+      } else {
+        Serial.println("Failed to connect to WiFi");
+      }
+    }
+    else if (serialCmd == "wifi:status") {
+      Serial.println("WiFi Status:");
+      
+      // WiFi mode
+      switch (WiFi.getMode()) {
+        case WIFI_OFF:
+          Serial.println("Mode: OFF");
+          break;
+        case WIFI_STA:
+          Serial.println("Mode: STA (Station)");
+          break;
+        case WIFI_AP:
+          Serial.println("Mode: AP (Access Point)");
+          break;
+        case WIFI_AP_STA:
+          Serial.println("Mode: AP+STA (Both)");
+          break;
+        default:
+          Serial.println("Mode: Unknown");
+      }
+      
+      // Connection status for STA mode
+      if (WiFi.getMode() == WIFI_STA || WiFi.getMode() == WIFI_AP_STA) {
+        Serial.print("STA SSID: ");
+        Serial.println(WiFi.SSID());
+        
+        Serial.print("Connection status: ");
+        switch (WiFi.status()) {
+          case WL_CONNECTED:
+            Serial.println("Connected");
+            Serial.print("IP address: ");
+            Serial.println(WiFi.localIP());
+            Serial.print("Signal strength (RSSI): ");
+            Serial.print(WiFi.RSSI());
+            Serial.println(" dBm");
+            break;
+          case WL_IDLE_STATUS:
+            Serial.println("Idle");
+            break;
+          case WL_CONNECT_FAILED:
+            Serial.println("Connection failed");
+            break;
+          case WL_DISCONNECTED:
+            Serial.println("Disconnected");
+            break;
+          case WL_NO_SSID_AVAIL:
+            Serial.println("SSID not available");
+            break;
+          default:
+            Serial.print("Other (");
+            Serial.print(WiFi.status());
+            Serial.println(")");
+        }
+      }
+      
+      // AP info if in AP mode
+      if (WiFi.getMode() == WIFI_AP || WiFi.getMode() == WIFI_AP_STA) {
+        Serial.print("AP SSID: ");
+        Serial.println(wifiSSID);
+        Serial.print("AP IP address: ");
+        Serial.println(WiFi.softAPIP());
+        Serial.print("Connected clients: ");
+        Serial.println(WiFi.softAPgetStationNum());
+      }
+    }
+    else {
+      Serial.println("Unknown command");
+    }
+    
+    serialCmd = "";
+    serialCmdComplete = false;
   }
 }

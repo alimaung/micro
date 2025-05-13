@@ -132,6 +132,10 @@
     margin-top: 2px;
 }
 
+.dark-mode .esp-stat-label {
+    color: var(--color-dark-text-light);
+}
+
 .mini-progress-bar {
     width: 100%;
     height: 4px;

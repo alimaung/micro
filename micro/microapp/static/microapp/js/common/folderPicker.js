@@ -19,6 +19,12 @@ const FolderPicker = {
     pathDisplay: null,
     driveList: null,
     drives: [],
+    driveNames: {}, // Added to store drive names
+    specialDriveColors: {
+        'microfilm-engineering': '#ff6666', // Red
+        'microfilm-archive': '#ffcc00',     // Yellow
+        'microfilm-transit': '#00ff00'      // Green
+    },
     mode: 'folders', // 'folders', 'files', or 'both'
     fileTypes: null,
     showAllFiles: false,
@@ -167,12 +173,12 @@ const FolderPicker = {
             const modeIndicatorHTML = `<span class="mode-indicator ${modeClass}">${modeIndicator}</span>`;
             
             if (openYDirectly) {
-                // Open Y: drive directly
-                this.currentPath = 'Y:\\';
+                // Open X: drive directly (changed from Y:)
+                this.currentPath = 'X:\\';
                 this.showFolderSelectionView();
                 this.fetchContents(this.currentPath, this.scanSubdirectories);
                 this.modal.querySelector('.modal-title').innerHTML = 
-                    `${title} (Y: Drive) ${modeIndicatorHTML}`;
+                    `${title} (X: Drive) ${modeIndicatorHTML}`;
             } else {
                 // Show drive selection view (which will also fetch drives)
                 this.showDriveSelectionView();
@@ -251,6 +257,12 @@ const FolderPicker = {
             }
 
             this.drives = data.drives;
+            
+            // Store drive names if provided by the server
+            if (data.driveNames && typeof data.driveNames === 'object') {
+                this.driveNames = data.driveNames;
+            }
+            
             this.renderDrives();
         })
         .catch(error => {
@@ -281,15 +293,49 @@ const FolderPicker = {
                 let icon = 'fas fa-hdd';
                 if (drive === 'C:\\') {
                     icon = 'fas fa-laptop';
-                } else if (drive === 'Y:\\') {
+                } else if (drive === 'Y:\\' || drive === 'X:\\') {
                     icon = 'fas fa-network-wired';
                 } else if (drive.charCodeAt(0) >= 69) { // E: and above often removable
                     icon = 'fab fa-usb';
                 }
                 
+                // Get drive name if available
+                const driveName = this.driveNames[drive] || '';
+                
+                // Apply special styling for specific drive names
+                if (driveName) {
+                    // First check by exact drive name
+                    if (driveName === "microfilm-engineering") {
+                        item.classList.add('special-drive');
+                        item.classList.add('drive-microfilm-engineering');
+                    } 
+                    else if (driveName === "microfilm-archive") {
+                        item.classList.add('special-drive');
+                        item.classList.add('drive-microfilm-archive');
+                    }
+                    else if (driveName === "microfilm-transit") {
+                        item.classList.add('special-drive');
+                        item.classList.add('drive-microfilm-transit');
+                    }
+                    // Then check by substring in case volume names have variations
+                    else {
+                        for (const [specialName, color] of Object.entries(this.specialDriveColors)) {
+                            if (driveName.toLowerCase().includes(specialName.toLowerCase())) {
+                                item.classList.add('special-drive');
+                                item.classList.add(`drive-${specialName.toLowerCase()}`);
+                                break;
+                            }
+                        }
+                    }
+                }
+                
+                // Add drive letter and name if available
                 item.innerHTML = `
                     <span class="drive-icon"><i class="${icon}"></i></span>
-                    <span class="drive-label">${drive}</span>
+                    <div class="drive-info">
+                        <span class="drive-letter">${drive}</span>
+                        ${driveName ? `<span class="drive-name">${driveName}</span>` : ''}
+                    </div>
                 `;
                 
                 item.addEventListener('click', () => {
@@ -308,7 +354,9 @@ const FolderPicker = {
      * @param {string} path - The path to fetch contents for
      * @param {boolean} scanSubdirectories - Whether to scan all subdirectories (for auto-detection)
      */
-    fetchContents: function(path, scanSubdirectories = false) {
+    fetchContents: function(path, scanSubdirectories) {
+        // Set default value for scanSubdirectories
+        scanSubdirectories = scanSubdirectories || false;
         // Always fetch both folders and files, regardless of mode
         let apiEndpoint = '/list-drive-contents/?path=' + encodeURIComponent(path);
         

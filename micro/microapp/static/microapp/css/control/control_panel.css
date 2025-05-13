@@ -29,6 +29,10 @@
     color: var(--color-text-light);
 }
 
+.dark-mode .info-label {
+    color: var(--color-text-dark);
+}
+
 .info-value {
     font-size: 14px;
     font-weight: 500;

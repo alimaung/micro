@@ -4,7 +4,7 @@ import time
 import sys
 import argparse
 import os
-from microfilm.logger import get_logger, LogLevel
+from logger import get_logger, LogLevel
 from pywinauto import Application
 from datetime import datetime, timedelta
 

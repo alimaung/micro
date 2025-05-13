@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Verify that all required modules are loaded
     if (!Utils || !NotificationManager || !ConnectionManager || !MachineControls || 
-        !RelayControls || !UIManager || !ChartManager) {
+        !RelayControls || !UIManager || !ChartManager || !ExternalSystemsManager) {
             console.error('ERROR: One or more required modules are not loaded!');
             
             // Check each module and log which ones are missing
@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!RelayControls) console.error('RelayControls module not loaded');
             if (!UIManager) console.error('UIManager module not loaded');
             if (!ChartManager) console.error('ChartManager module not loaded');
+            if (!ExternalSystemsManager) console.error('ExternalSystemsManager module not loaded');
             
             // Display error to user
             const controlContainer = document.querySelector('.control-container');
@@ -86,6 +87,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize charts
     ChartManager.initCharts();
     
+    // Initialize external systems monitoring
+    ExternalSystemsManager.init();
+    
     // Set up event listeners
     
     // Show relay controls
@@ -120,7 +124,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Start the hold timer
             let holdDuration = 0;
-            const requiredHoldTime = 3000; // 3 seconds for machine toggle
+            const requiredHoldTime = 2000; // 3 seconds for machine toggle
             
             // Create progress overlay if it doesn't exist yet
             progressOverlay = this.querySelector('.hold-progress');

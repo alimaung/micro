@@ -8,12 +8,28 @@
     <link rel="stylesheet" href="{% static 'microapp/css/register/register.css' %}">
     <link rel="stylesheet" href="{% static 'microapp/css/register/progress.css' %}">
     <link rel="stylesheet" href="{% static 'microapp/css/register/welcome.css' %}">
+    
+    <!-- Immediate dark mode initialization to prevent flash -->
+    <script>
+        // Check if dark mode is saved in localStorage
+        const savedDarkMode = localStorage.getItem('microfilmDarkMode');
+        
+        // Apply dark mode immediately if needed
+        if (savedDarkMode === 'true' || 
+            (savedDarkMode !== 'false' && 
+             window.matchMedia && 
+             window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark-mode');
+            document.body.classList.add('dark-mode');
+        }
+    </script>
+    
     <style>
         /* Custom styles for the resume project section */
         .resume-project-section {
-            background-color: #f8f9fa;
+            background-color: var(--resume-bg);
             border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px var(--card-shadow);
             padding: 25px;
             margin: 30px 0;
             text-align: center;
@@ -21,23 +37,24 @@
         }
         
         .resume-project-section h3 {
-            color: #2a4365;
+            color: var(--text-color);
             margin-bottom: 15px;
         }
         
         .resume-project-section p {
-            color: #4a5568;
+            color: var(--text-secondary);
             margin-bottom: 20px;
         }
         
         .project-info {
-            background-color: #EBF4FF;
+            background-color: var(--project-info-bg);
             padding: 10px 15px;
             border-radius: 6px;
-            border-left: 4px solid #4299E1;
+            border-left: 4px solid var(--project-info-border);
             margin-bottom: 20px;
             text-align: left;
             font-size: 0.95rem;
+            color: var(--text-color);
         }
         
         .resume-project-btn, .clear-project-btn {
@@ -51,9 +68,9 @@
         }
         
         .resume-project-btn {
-            background-color: #4299E1;
-            color: white;
-            border: 2px solid #4299E1;
+            background-color: var(--semi-color);
+            color: var(--badge-color);
+            border: 2px solid var(--semi-color);
         }
         
         .resume-project-btn:hover {
@@ -68,7 +85,7 @@
         }
         
         .clear-project-btn:hover {
-            background-color: #FED7D7;
+            background-color: rgba(229, 62, 62, 0.1);
         }
         
         @media (max-width: 768px) {
@@ -77,6 +94,11 @@
                 margin: 10px auto;
                 width: 80%;
             }
+        }
+        
+        /* Dark mode styles for the workflow description */
+        .workflow-description {
+            color: var(--text-secondary);
         }
     </style>
 {% endblock %}
@@ -239,157 +261,5 @@
 
 {% block extra_js %}
     <script src="{% static 'microapp/js/register/progress.js' %}"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('Welcome module initialized');
-            
-            // Set progress bar to show no progress (before any steps)
-            if (window.progressComponent && typeof window.progressComponent.updateProgress === 'function') {
-                window.progressComponent.updateProgress(-1); // -1 indicates welcome/pre-step state
-            }
-            
-            // Check if there's a saved project in localStorage
-            const savedState = loadWorkflowState();
-            const projectState = localStorage.getItem('microfilmProjectState') ? 
-                JSON.parse(localStorage.getItem('microfilmProjectState')) : null;
-            const resumeSection = document.getElementById('resume-section');
-            const resumeBtn = document.getElementById('resume-project-btn');
-            
-            // Show resume section if there's a saved project
-            if (savedState && savedState.currentStep) {
-                resumeSection.style.display = 'block';
-                
-                // Add project details to the resume section if available
-                if (projectState && projectState.projectInfo) {
-                    const projectInfoElem = document.createElement('p');
-                    projectInfoElem.classList.add('project-info');
-                    projectInfoElem.innerHTML = `Project: <strong>${projectState.projectInfo.archiveId || 'Unknown ID'}</strong>`;
-                    
-                    if (projectState.projectInfo.documentType) {
-                        projectInfoElem.innerHTML += ` | Type: <strong>${projectState.projectInfo.documentType}</strong>`;
-                    }
-                    
-                    // Insert after the existing paragraph
-                    const existingP = resumeSection.querySelector('p');
-                    if (existingP) {
-                        existingP.after(projectInfoElem);
-                    }
-                }
-                
-                // Add event listener for the resume button
-                resumeBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    
-                    // Determine the URL based on the saved step
-                    const stepNumber = parseInt(savedState.currentStep.split('-')[1]);
-                    let targetUrl = '';
-                    
-                    switch(stepNumber) {
-                        case 1: targetUrl = '/register/project/'; break;
-                        case 2: targetUrl = '/register/document/'; break;
-                        case 3: targetUrl = '/register/workflow/'; break;
-                        case 4: targetUrl = '/register/references/'; break;
-                        case 5: targetUrl = '/register/allocation/'; break;
-                        case 6: targetUrl = '/register/index/'; break;
-                        case 7: targetUrl = '/register/filmnumber/'; break;
-                        case 8: targetUrl = '/register/distribution/'; break;
-                        case 9: targetUrl = '/register/export/'; break;
-                        default: targetUrl = '/register/project/';
-                    }
-                    
-                    // Add workflow mode if available
-                    if (savedState.workflowMode) {
-                        targetUrl += `?mode=${savedState.workflowMode}`;
-                    }
-                    
-                    // Add project ID if available
-                    if (projectState && projectState.projectId) {
-                        // Add either ? or & depending on whether we already have parameters
-                        targetUrl += targetUrl.includes('?') ? '&' : '?';
-                        targetUrl += `id=${projectState.projectId}`;
-                    }
-                    
-                    // Add the step number for clarity
-                    targetUrl += targetUrl.includes('?') ? '&' : '?';
-                    targetUrl += `step=${stepNumber}`;
-                    
-                    // Navigate to the appropriate step
-                    window.location.href = targetUrl;
-                });
-            }
-            
-            // Add a Clear Project button if there's a saved project
-            if (savedState && savedState.currentStep) {
-                const clearBtn = document.createElement('a');
-                clearBtn.href = '#';
-                clearBtn.classList.add('clear-project-btn');
-                clearBtn.textContent = 'Start New Project';
-                
-                clearBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    
-                    if (confirm('This will clear your current project data. Are you sure?')) {
-                        
-                        // Clear both localStorage items
-                        localStorage.removeItem('microfilmWorkflowState');
-                        localStorage.removeItem('microfilmProjectState');
-                        localStorage.removeItem('microfilmFilmNumberResults');
-                        localStorage.removeItem('microfilmDistributionResults');
-                        localStorage.removeItem('microfilmIndexData');
-                        localStorage.removeItem('microfilmAnalysisData');
-                        localStorage.removeItem('microfilmAllocationData');
-                        localStorage.removeItem('microfilmReferenceSheets');
-
-                        // Refresh the page
-                        window.location.reload();
-                    }
-                });
-                
-                // Add after the resume button
-                resumeBtn.after(clearBtn);
-            }
-            
-            // Set up workflow mode buttons
-            const autoBtn = document.getElementById('auto-workflow');
-            const semiBtn = document.getElementById('semi-workflow');
-            const manualBtn = document.getElementById('manual-workflow');
-            
-            // Function to save the selected workflow mode to localStorage
-            function saveWorkflowMode(mode) {
-                // Clear existing project data to start fresh
-                localStorage.removeItem('microfilmWorkflowState');
-                localStorage.removeItem('microfilmProjectState');
-                
-                // Create a new workflow state
-                const state = { workflowMode: mode, lastModified: Date.now() };
-                localStorage.setItem('microfilmWorkflowState', JSON.stringify(state));
-                console.log(`Workflow mode saved: ${mode}`);
-            }
-            
-            // Add click handlers for the workflow mode buttons
-            if (autoBtn) {
-                autoBtn.addEventListener('click', function(e) {
-                    saveWorkflowMode('auto');
-                });
-            }
-            
-            if (semiBtn) {
-                semiBtn.addEventListener('click', function(e) {
-                    saveWorkflowMode('semi');
-                });
-            }
-            
-            if (manualBtn) {
-                manualBtn.addEventListener('click', function(e) {
-                    saveWorkflowMode('manual');
-                });
-            }
-        });
-        
-        // --- Local Storage State Management ---
-        function loadWorkflowState() {
-            const state = localStorage.getItem('microfilmWorkflowState');
-            return state ? JSON.parse(state) : null;
-        }
-    </script>
+    <script src="{% static 'microapp/js/register/welcome.js' %}"></script>
 {% endblock %} 
