@@ -29,6 +29,7 @@ const IndexCore = (function() {
             const urlParams = new URLSearchParams(window.location.search);
             state.projectId = urlParams.get('id');
             state.workflowType = urlParams.get('flow');
+            state.mode = urlParams.get('auto')
             
             console.log(`Initializing index module for project ${state.projectId} (${state.workflowType})`);
             

@@ -21,6 +21,7 @@ const FilmNumberCore = (function() {
         isAllocating: false,
         intervalId: null,
         workflowType: 'standard', // 'standard' or 'hybrid'
+        mode: 'auto', // Default mode
         projectData: null,
         indexData: {
             entries: [], // Array of complete entries with all fields
@@ -41,6 +42,15 @@ const FilmNumberCore = (function() {
             const urlParams = new URLSearchParams(window.location.search);
             state.projectId = urlParams.get('id');
             state.workflowType = urlParams.get('flow') || 'standard';
+            state.mode = urlParams.get('mode') || 'auto';
+            
+            // Update the progress component's mode indicator if available
+            if (window.progressComponent) {
+                console.log('Updating progress component mode to:', state.mode);
+                window.progressComponent.setWorkflowMode(state.mode);
+            } else {
+                console.warn('Progress component not available for mode update');
+            }
             
             // Load data from localStorage
             loadDataFromStorage();
