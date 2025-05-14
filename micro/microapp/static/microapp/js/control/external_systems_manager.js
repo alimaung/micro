@@ -56,11 +56,10 @@ const ExternalSystemsManager = {
         this.checkSMAStatus();
         this.checkExternalPCStatus();
         
-        // Start periodic updates
-        this.startPeriodicUpdates();
-        
         // Add PC control buttons if they don't exist
         this.addPCControlButtons();
+        
+        // Note: periodic updates are now disabled
     },
     
     /**
@@ -125,7 +124,32 @@ const ExternalSystemsManager = {
     },
     
     /**
+     * Update SMA status on demand (for refresh button)
+     */
+    updateSMAStatus: function() {
+        console.log('Manually updating SMA status...');
+        return new Promise((resolve, reject) => {
+            this.checkSMAStatus()
+                .then(() => resolve())
+                .catch(error => reject(error));
+        });
+    },
+    
+    /**
+     * Update PC status on demand (for refresh button)
+     */
+    updatePCStatus: function() {
+        console.log('Manually updating External PC status...');
+        return new Promise((resolve, reject) => {
+            this.checkExternalPCStatus()
+                .then(() => resolve())
+                .catch(error => reject(error));
+        });
+    },
+    
+    /**
      * Start periodic updates for both systems
+     * Note: This function is now deprecated and not called in init
      */
     startPeriodicUpdates: function() {
         // Clear any existing timers
@@ -143,40 +167,45 @@ const ExternalSystemsManager = {
     checkSMAStatus: function() {
         console.log('Checking SMA Software status...');
         
-        // In a real implementation, this would make an API call to check the SMA software
-        // For now, simulate with a fetch to a backend endpoint
-        fetch('/api/sma_status/', {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-            }
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
-        .then(data => {
-            // Update state with real data
-            this.isSMAConnected = data.status === 'running';
-            this.smaState = {
-                status: data.status,
-                uptime: data.uptime || '00:00:00',
-                currentFilm: data.current_film || 'None',
-                pagesProcessed: data.pages_processed || '0/0',
-                eta: data.eta || '00:00:00'
-            };
-            
-            // Update UI
-            this.updateSMAUI();
-        })
-        .catch(error => {
-            console.error('Error checking SMA status:', error);
-            
-            // If we can't connect, simulate with mock data
-            this.simulateSMAStatus();
+        // Return a promise for refresh button functionality
+        return new Promise((resolve, reject) => {
+            // In a real implementation, this would make an API call to check the SMA software
+            // For now, simulate with a fetch to a backend endpoint
+            fetch('/api/sma_status/', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Update state with real data
+                this.isSMAConnected = data.status === 'running';
+                this.smaState = {
+                    status: data.status,
+                    uptime: data.uptime || '00:00:00',
+                    currentFilm: data.current_film || 'None',
+                    pagesProcessed: data.pages_processed || '0/0',
+                    eta: data.eta || '00:00:00'
+                };
+                
+                // Update UI
+                this.updateSMAUI();
+                resolve();
+            })
+            .catch(error => {
+                console.error('Error checking SMA status:', error);
+                
+                // If we can't connect, simulate with mock data
+                this.simulateSMAStatus();
+                resolve(); // Still resolve as we handled the error with mock data
+            });
         });
     },
     
@@ -311,53 +340,58 @@ const ExternalSystemsManager = {
     checkExternalPCStatus: function() {
         console.log('Checking External PC status...');
         
-        // Use the fixed IP address from config
-        const ipToCheck = this.externalPCConfig.ip;
-        
-        // In a real implementation, this would make an API call to check the External PC
-        fetch('/api/external_pc_status/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-            },
-            body: JSON.stringify({
-                ip_address: ipToCheck
+        // Return a promise for refresh button functionality
+        return new Promise((resolve, reject) => {
+            // Use the fixed IP address from config
+            const ipToCheck = this.externalPCConfig.ip;
+            
+            // In a real implementation, this would make an API call to check the External PC
+            fetch('/api/external_pc_status/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({
+                    ip_address: ipToCheck
+                })
             })
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
-        .then(data => {
-            // Update state with real data
-            this.isExternalPCConnected = data.status === 'connected';
-            this.pcState = {
-                status: data.status,
-                hostname: data.hostname || 'Unknown',
-                ipAddress: data.ip_address || ipToCheck,
-                uptime: data.uptime || '0d 0h 0m',
-                os: data.os || 'Unknown',
-                cpuUsage: data.cpu_usage || 0,
-                memoryUsage: data.memory_usage || 0,
-                diskUsage: data.disk_usage || 0,
-                networkUsage: data.network_usage || 0,
-                pingTime: data.ping_time || 0
-            };
-            
-            // Update UI
-            this.updateExternalPCUI();
-            
-            // Update PC control buttons state
-            this.updatePCControlButtonsState();
-        })
-        .catch(error => {
-            console.error('Error checking External PC status:', error);
-            
-            // If we can't connect, simulate with mock data
-            this.simulateExternalPCStatus();
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Update state with real data
+                this.isExternalPCConnected = data.status === 'connected';
+                this.pcState = {
+                    status: data.status,
+                    hostname: data.hostname || 'Unknown',
+                    ipAddress: data.ip_address || ipToCheck,
+                    uptime: data.uptime || '0d 0h 0m',
+                    os: data.os || 'Unknown',
+                    cpuUsage: data.cpu_usage || 0,
+                    memoryUsage: data.memory_usage || 0,
+                    diskUsage: data.disk_usage || 0,
+                    networkUsage: data.network_usage || 0,
+                    pingTime: data.ping_time || 0
+                };
+                
+                // Update UI
+                this.updateExternalPCUI();
+                
+                // Update PC control buttons state
+                this.updatePCControlButtonsState();
+                resolve();
+            })
+            .catch(error => {
+                console.error('Error checking External PC status:', error);
+                
+                // If we can't connect, simulate with mock data
+                this.simulateExternalPCStatus();
+                resolve(); // Still resolve as we handled the error with mock data
+            });
         });
     },
     

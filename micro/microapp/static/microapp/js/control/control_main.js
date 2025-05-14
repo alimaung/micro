@@ -487,4 +487,71 @@ document.addEventListener('DOMContentLoaded', function() {
             // Add actual emergency stop functionality here
         });
     }
+
+    // Add event listeners for external systems refresh buttons
+    const smaRefreshButton = document.querySelector('.sma-refresh-button');
+    if (smaRefreshButton) {
+        smaRefreshButton.addEventListener('click', function() {
+            const icon = this.querySelector('i');
+            
+            // Add spinning animation to icon
+            if (icon) icon.classList.add('spinning');
+            
+            // Record start time
+            const startTime = performance.now();
+            
+            // Execute SMA update operation
+            ExternalSystemsManager.updateSMAStatus()
+                .then(() => {
+                    NotificationManager.showNotification('SMA software status updated', 'success');
+                })
+                .catch(error => {
+                    console.error('Error updating SMA status:', error);
+                    NotificationManager.showNotification('Failed to update SMA status', 'error');
+                })
+                .finally(() => {
+                    // Calculate elapsed time
+                    const elapsedTime = performance.now() - startTime;
+                    const remainingTime = Math.max(0, 1000 - elapsedTime);
+                    
+                    // Ensure minimum animation duration
+                    setTimeout(() => {
+                        if (icon) icon.classList.remove('spinning');
+                    }, remainingTime);
+                });
+        });
+    }
+
+    const pcRefreshButton = document.querySelector('.pc-refresh-button');
+    if (pcRefreshButton) {
+        pcRefreshButton.addEventListener('click', function() {
+            const icon = this.querySelector('i');
+            
+            // Add spinning animation to icon
+            if (icon) icon.classList.add('spinning');
+            
+            // Record start time
+            const startTime = performance.now();
+            
+            // Execute PC update operation
+            ExternalSystemsManager.updatePCStatus()
+                .then(() => {
+                    NotificationManager.showNotification('External PC status updated', 'success');
+                })
+                .catch(error => {
+                    console.error('Error updating PC status:', error);
+                    NotificationManager.showNotification('Failed to update External PC status', 'error');
+                })
+                .finally(() => {
+                    // Calculate elapsed time
+                    const elapsedTime = performance.now() - startTime;
+                    const remainingTime = Math.max(0, 1000 - elapsedTime);
+                    
+                    // Ensure minimum animation duration
+                    setTimeout(() => {
+                        if (icon) icon.classList.remove('spinning');
+                    }, remainingTime);
+                });
+        });
+    }
 }); 
