@@ -11,5 +11,6 @@
       "color": "terminal.ansiCyan"
     }
   },
-  "terminal.integrated.defaultProfile.windows": "powershell"
+  "terminal.integrated.defaultProfile.windows": "powershell",
+  "C_Cpp.errorSquiggles": "disabled"
 }
