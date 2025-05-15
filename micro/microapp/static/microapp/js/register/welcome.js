@@ -19,7 +19,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const resumeSection = document.getElementById('resume-section');
     const resumeBtn = document.getElementById('resume-project-btn');
     
-    if (resumeSection && savedState && savedState.currentStep) {
+    // Only show resume section if we have both workflow state and project data
+    if (resumeSection && savedState && savedState.currentStep && 
+        projectState && Object.keys(projectState).length > 0) {
         resumeSection.style.display = 'block';
         
         // Add project details to the resume section if available

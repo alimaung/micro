@@ -127,18 +127,58 @@ const RelayControls = {
         const relayIndicator = document.getElementById(`relay-indicator-${relayNum}`);
         if (!relayIndicator) return;
         
-        // Determine current state and target action
-        const isCurrentlyOn = relayIndicator.classList.contains('on');
-        const action = isCurrentlyOn ? 'off' : 'on';
-        
-        console.log(`Toggling relay ${relayNum} to ${action}`);
-        
         // Add loading state to the relay button
         const relayButton = relayIndicator.closest('.relay-toggle');
         if (relayButton) {
             relayButton.disabled = true;
             relayButton.classList.add('loading');
         }
+
+        // Special handling for relay 1 - always use pulse action
+        if (parseInt(relayNum) === 1) {
+            console.log("Pulsing relay 1");
+            Utils.sendRelayAction(
+                { 
+                    action: "pulse",
+                    relay: 1
+                },
+                '/control_relay/',
+                { 
+                    action: 'pulse',
+                    relay: 1, 
+                    com_port: ConnectionManager.getActiveRelayPort() 
+                }
+            )
+            .then((data) => {
+                // For relay 1, we always just do the pulse animation regardless of the response
+                // Flash the indicator briefly
+                this.setRelayIndicatorState(1, true);
+                setTimeout(() => {
+                    this.setRelayIndicatorState(1, false);
+                }, 500); // Flash for 500ms
+                
+                NotificationManager.showNotification('Relay 1 pulsed', 'success');
+            })
+            .catch((error) => {
+                NotificationManager.showNotification('Error pulsing relay', 'error');
+                console.error('Error pulsing relay:', error);
+            })
+            .finally(() => {
+                // Remove loading state
+                if (relayButton) {
+                    relayButton.disabled = false;
+                    relayButton.classList.remove('loading');
+                }
+            });
+            return;
+        }
+        
+        // Regular handling for other relays
+        // Determine current state and target action
+        const isCurrentlyOn = relayIndicator.classList.contains('on');
+        const action = isCurrentlyOn ? 'off' : 'on';
+        
+        console.log(`Toggling relay ${relayNum} to ${action}`);
         
         Utils.sendRelayAction(
             { 
@@ -251,11 +291,11 @@ const RelayControls = {
                 console.log("Relay states from WebSocket:", JSON.stringify(data.states));
                 this.updateRelayStatesUI(data.states);
                 
-                if (data.current_mode) {
-                    console.log("Current mode detected in response:", data.current_mode);
-                    UIManager.updateModeDisplay(data.current_mode);
-                } else {
-                    console.log("No current_mode found in relay response");
+                // Determine mode from relays 2,3,4 states
+                if (Array.isArray(data.states) && data.states.length >= 4) {
+                    // Dark mode if relays 2,3,4 are all ON
+                    const isDarkMode = data.states[1] && data.states[2] && data.states[3];
+                    UIManager.updateModeDisplay(isDarkMode ? 'dark' : 'light');
                 }
             } else {
                 console.error(`Error or missing data: ${data.message || 'Unknown error'}`);

@@ -58,12 +58,24 @@ const Utils = {
         
         // Update UI based on message type
         if (msg.type === 'relays') {
-            RelayControls.updateRelayStatesUI(msg.states);
+            // For relay states array, filter out relay 1 since it's pulse-only
+            if (msg.states && Array.isArray(msg.states)) {
+                const states = [...msg.states];
+                states[0] = false; // Force relay 1 to always show as off
+                RelayControls.updateRelayStatesUI(states);
+            } else {
+                RelayControls.updateRelayStatesUI(msg.states);
+            }
         } else if (msg.type === 'system') {
             this.updateESP32StatsUI(msg);
         } else if (msg.type === 'relay') {
             // Single relay state update
             if (msg.relay && msg.state !== undefined) {
+                // For relay 1, don't update the UI state but still allow the message for response matching
+                if (msg.relay === 1) {
+                    console.log("Received relay 1 pulse response");
+                    return;
+                }
                 RelayControls.setRelayIndicatorState(msg.relay, msg.state, false);
             }
         } else if (msg.type === 'pong') {
@@ -82,6 +94,12 @@ const Utils = {
      */
     sendRelayAction: function(actionObj, httpFallbackUrl, httpFallbackBody) {
         return new Promise((resolve, reject) => {
+            // Ensure relay 1 always uses pulse action
+            if (actionObj.relay === 1 || (httpFallbackBody && httpFallbackBody.relay === 1)) {
+                actionObj = { action: "pulse", relay: 1 };
+                httpFallbackBody = { action: "pulse", relay: 1, com_port: httpFallbackBody.com_port };
+            }
+
             if (this.wsAvailable && this.ws && this.ws.readyState === WebSocket.OPEN) {
                 // Set up a one-time message handler to capture the response
                 const messageHandler = (event) => {
@@ -141,6 +159,8 @@ const Utils = {
             (actionType === 'ping' && responseType === 'pong') ||
             // Other specific patterns
             (actionType === 'set' && responseType === 'relay') ||
+            // Pulse action should accept relay response
+            (actionType === 'pulse' && responseType === 'relay') ||
             (actionType === 'status' && responseType === 'relays') ||
             (actionType === 'dark' && responseType === 'status') ||
             (actionType === 'light' && responseType === 'status')

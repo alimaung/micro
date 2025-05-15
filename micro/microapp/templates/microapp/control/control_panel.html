@@ -136,14 +136,54 @@
     </div>
     
     <div class="relay-grid">
-        {% for i in '12345678' %}
-            <div class="relay-control">
-                <button class="relay-toggle" data-relay="{{ i }}">
-                    <span class="relay-indicator" id="relay-indicator-{{ i }}"></span>
-                    <span>Relay {{ i }}</span>
-                </button>
-            </div>
-        {% endfor %}
+        <div class="relay-control">
+            <button class="relay-toggle" data-relay="1">
+                <span class="relay-indicator" id="relay-indicator-1"></span>
+                <span>Monitor</span>
+            </button>
+        </div>
+        <div class="relay-control">
+            <button class="relay-toggle" data-relay="2">
+                <span class="relay-indicator" id="relay-indicator-2"></span>
+                <span>Darklight R</span>
+            </button>
+        </div>
+        <div class="relay-control">
+            <button class="relay-toggle" data-relay="3">
+                <span class="relay-indicator" id="relay-indicator-3"></span>
+                <span>Darklight L</span>
+            </button>
+        </div>
+        <div class="relay-control">
+            <button class="relay-toggle" data-relay="4">
+                <span class="relay-indicator" id="relay-indicator-4"></span>
+                <span>Door Light</span>
+            </button>
+        </div>
+        <div class="relay-control">
+            <button class="relay-toggle" data-relay="5">
+                <span class="relay-indicator" id="relay-indicator-5"></span>
+                <span>Room Light</span>
+            </button>
+        </div>
+        <div class="relay-control">
+            <button class="relay-toggle" data-relay="6" style="pointer-events: none; opacity: 0.5; cursor: not-allowed;">
+                <span class="relay-indicator" id="relay-indicator-6"></span>
+                <span>Not Assigned</span>
+            </button>
+        </div>
+        <div class="relay-control">
+            <button class="relay-toggle" data-relay="7" style="pointer-events: none; opacity: 0.5; cursor: not-allowed;">
+                <span class="relay-indicator" id="relay-indicator-7"></span>
+                <span>Not Assigned</span>
+            </button>
+        </div>
+        <div class="relay-control">
+            <button class="relay-toggle" data-relay="8">
+                <span class="relay-indicator" id="relay-indicator-8"></span>
+                <span>Machine</span>
+            </button>
+        </div>
     </div>
     
     <div class="esp32-status">

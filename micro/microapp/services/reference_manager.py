@@ -9,12 +9,15 @@ import os
 import logging
 from pathlib import Path
 import PyPDF2
-from reportlab.lib.pagesizes import letter
+from reportlab.lib.pagesizes import letter, A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Table, TableStyle
 from django.db import transaction
 from io import BytesIO
 import datetime
+import random
+from reportlab.lib import colors
+from reportlab.lib.units import mm
 
 from django.conf import settings
 from microapp.models import (
@@ -143,13 +146,12 @@ class ReferenceManager:
                 # Create reference sheet
                 try:
                     reference_sheet = self.create_reference_sheet(
-                        document_name=doc_id,
                         film_number=film_number_35mm,
-                        archive_id=project.archive_id,
                         blip=range_blip,
-                        doc_type=project.doc_type,
                         human_ranges=human_range,
-                        barcode=doc_id
+                        barcode=doc_id,
+                        archive_id=project.archive_id,
+                        doc_type=project.doc_type
                     )
                     
                     # Generate path for reference sheet
@@ -191,19 +193,18 @@ class ReferenceManager:
         
         return reference_sheets
         
-    def create_reference_sheet(self, document_name, film_number, archive_id, blip, 
-                              doc_type, human_ranges, barcode):
+    def create_reference_sheet(self, film_number, blip, human_ranges, barcode,
+                              archive_id, doc_type):
         """
         Create a single reference sheet with the given metadata.
         
         Args:
-            document_name: Name of the document
             film_number: Film number from 35mm roll
-            archive_id: Archive ID from project
             blip: 35mm blip for the oversized content
-            doc_type: Document type from project
             human_ranges: Human-readable page ranges string
             barcode: Document barcode/ID
+            archive_id: Archive ID from project
+            doc_type: Document type from project
             
         Returns:
             bytes: The PDF content as bytes
@@ -214,68 +215,230 @@ class ReferenceManager:
         # Create a BytesIO buffer to store the PDF
         buffer = BytesIO()
         
-        # Create the PDF document
+        # Create the PDF document with A4 size
         doc = SimpleDocTemplate(
             buffer,
-            pagesize=letter,
-            rightMargin=72,
-            leftMargin=72,
-            topMargin=72,
-            bottomMargin=72
+            pagesize=A4,
+            rightMargin=20*mm,
+            leftMargin=20*mm,
+            topMargin=10*mm,
+            bottomMargin=20*mm
         )
         
         # Create styles
         styles = getSampleStyleSheet()
+        
+        # Larger title style for all three title lines
         title_style = ParagraphStyle(
             'TitleStyle',
             parent=styles['Heading1'],
-            fontSize=16,
+            fontSize=36,
             alignment=1,  # Center
-            spaceAfter=20
+            spaceAfter=20,
+            fontName='Helvetica-Bold'
         )
-        field_style = ParagraphStyle(
-            'FieldStyle',
+        
+        # Create a style for standard values (single line)
+        value_style = ParagraphStyle(
+            'ValueStyle',
             parent=styles['Normal'],
-            fontSize=12,
-            leading=18,
-            spaceAfter=10
+            fontSize=17,
+            fontName='Helvetica-Bold',
+            alignment=2,  # Right alignment (0=left, 1=center, 2=right)
+            leading=17,   # Same as font size for single-line text
+        )
+        
+        # Create a style specifically for multi-line values (like document type)
+        multiline_style = ParagraphStyle(
+            'MultilineStyle',
+            parent=styles['Normal'],
+            fontSize=17,
+            fontName='Helvetica-Bold',
+            alignment=2,  # Right alignment
+            leading=19,   # Increased leading for multi-line text
+        )
+        
+        # Create a style for labels
+        label_style = ParagraphStyle(
+            'LabelStyle',
+            parent=styles['Normal'],
+            fontSize=16,
+            fontName='Helvetica',
+            alignment=0,  # Left alignment
+            leading=17,   # Match with value_style
         )
         
         # Create the content
         elements = []
         
-        # Add title
-        elements.append(Paragraph("REFERENCE SHEET - OVERSIZED DOCUMENT", title_style))
-        elements.append(Spacer(1, 20))
+        # Define image directory path using Django settings
+        img_dir = os.path.join(settings.BASE_DIR, 'microapp', 'static', 'microapp', 'img', 'references')
+        self.logger.debug(f"Using image directory: {img_dir}")
         
-        # Add document information
-        elements.append(Paragraph(f"<b>Document:</b> {document_name}", field_style))
-        elements.append(Paragraph(f"<b>Film Number:</b> {film_number}", field_style))
-        elements.append(Paragraph(f"<b>Archive ID:</b> {archive_id}", field_style))
-        elements.append(Paragraph(f"<b>Blip:</b> {blip}", field_style))
-        elements.append(Paragraph(f"<b>Document Type:</b> {doc_type}", field_style))
+        # Add the banner image at the top
+        try:
+            banner_path = os.path.join(img_dir, "banner.png")
+            if os.path.exists(banner_path):
+                elements.append(Spacer(1, 25*mm))
+                banner = Image(banner_path)
+                banner.drawHeight = 25*mm  # 25mm height
+                banner.drawWidth = (817 / 190) * banner.drawHeight  # Maintain aspect ratio
+                elements.append(banner)
+                elements.append(Spacer(1, 20*mm))
+        except Exception as e:
+            self.logger.warning(f"Could not load banner image: {str(e)}")
+            # Still add space even if banner fails to load
+            elements.append(Spacer(1, 55*mm))
         
-        self.logger.debug(f"Blip for {document_name}: {blip}")
+        # Add the title
+        elements.append(Paragraph("Referenzblatt", title_style))
+        elements.append(Paragraph("für Vorlagen", title_style))
+        elements.append(Paragraph("> DIN A3", title_style))
         
-        # Use original label and add the human-readable format directly
-        elements.append(Paragraph(f"<b>Oversized Pages:</b> {human_ranges}", field_style))
+        # Wrap labels in Paragraph objects for consistent alignment
+        film_label = Paragraph("Filmnummer:", label_style)
+        blip_label = Paragraph("Blipindex:", label_style)
+        pages_label = Paragraph("Blätter:", label_style)
+        barcode_label = Paragraph("Barcode:", label_style)
+        archive_label = Paragraph("Auftragsnummer:", label_style)
+        doctype_label = Paragraph("Dokumententtyp:", label_style)
         
-        elements.append(Paragraph(f"<b>Barcode:</b> {barcode}", field_style))
+        # Wrap values in Paragraph objects for proper wrapping
+        # Use standard style for most values
+        film_number_p = Paragraph(film_number, value_style)
+        blip_p = Paragraph(blip, value_style)
+        human_ranges_p = Paragraph(human_ranges, value_style)
+        barcode_p = Paragraph(barcode, value_style)
+        archive_id_p = Paragraph(archive_id, value_style)
         
-        # Add note
-        elements.append(Spacer(1, 20))
-        elements.append(Paragraph(
-            "This reference sheet points to oversized content stored on 35mm microfilm. "
-            "Use the blip information above to locate the content.", field_style))
+        # Use multiline style for document type which might be long
+        doc_type_p = Paragraph(doc_type, multiline_style)
         
-        # Build the PDF
-        doc.build(elements)
+        # Add metadata in a proper two-column layout with wrapped text
+        data = [
+            [film_label, film_number_p],
+            [blip_label, blip_p],
+            [pages_label, human_ranges_p],
+            [barcode_label, barcode_p],
+            [archive_label, archive_id_p],
+            [doctype_label, doc_type_p]
+        ]
+        
+        # Create a table for the metadata with two columns (converted to mm)
+        inner_table = Table(data, colWidths=[65*mm, 85*mm])
+        
+        # Style the inner table
+        inner_style = TableStyle([
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),  # Top align all cells for better label-value alignment
+            ('FONTSIZE', (0, 0), (0, -1), 16),  # Font size for labels
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 4*mm),  # Bottom Padding
+            ('TOPPADDING', (0, 0), (-1, -1), 3*mm),  # Top Padding
+            ('LEFTPADDING', (0, 0), (-1, -1), 6*mm),  # Left Padding
+            ('RIGHTPADDING', (0, 0), (-1, -1), 14*mm),  # Right Padding
+            ('GRID', (0, 0), (-1, -1), 0.25, colors.transparent),  # Internal grid (invisible)
+        ])
+        
+        inner_table.setStyle(inner_style)
+        
+        # Create an outer table that contains the inner table
+        # This adds the padding between content and border
+        outer_data = [[inner_table]]
+        table = Table(outer_data, colWidths=[150*mm])  # Adjusted for A4 width
+        
+        # Style the outer table with the border and padding
+        table_style = TableStyle([
+            ('BOX', (0, 0), (-1, -1), 4, colors.black),  # Border thickness
+            ('LEFTPADDING', (0, 0), (-1, -1), 5*mm),  # Padding between border and content
+            ('RIGHTPADDING', (0, 0), (-1, -1), 5*mm),  # Padding between border and content
+            ('TOPPADDING', (0, 0), (-1, -1), 5*mm),  # Padding between border and content
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 5*mm),  # Padding between border and content
+        ])
+        
+        table.setStyle(table_style)
+        
+        # Add more space before the table
+        elements.append(Spacer(1, 25*mm))
+        elements.append(table)
+        
+        # Define background image function
+        def add_background(canvas, doc):
+            """Add a background image to the canvas with 10% opacity"""
+            try:
+                # Background images with their dimensions [width, height]
+                background_images = {
+                    "bg0.jpg": [2250, 1500],
+                    "bg1.jpg": [1024, 683],
+                    "bg2.jpg": [1200, 857],
+                    "bg3.webp": [970, 654],
+                    "bg4.jpeg": [2048, 1421],
+                    "bg5.jpg": [3638, 2004],
+                    "bg6.jpg": [796, 480],
+                    "bg7.jpg": [4096, 2734],
+                    "bg8.jpg": [500, 470],
+                    "bg9.jpg": [685, 404],
+                    "bg10.jpg": [1297, 766],
+                    "bg11.jpg": [264, 191],
+                    "bg12.jpg": [2560, 1707],
+                    "bg13.jpg": [1000, 1000],
+                    "bg14.jpg": [480, 300],
+                    "bg15.jpg": [404, 266],
+                    "bg16.jpg": [500, 470],
+                    "bg17.jpg": [800, 1421],
+                    "bg18.jpg": [799, 571],
+                    "bg19.jpg": [800, 578],
+                    "bg20.jpg": [702, 394],
+                    "bg21.jpg": [291, 173]
+                }
+                
+                # Choose a random background image
+                bg, img_dimensions = random.choice(list(background_images.items()))
+                bg_path = os.path.join(img_dir, bg)
+                
+                if os.path.exists(bg_path):
+                    # Save the canvas state
+                    canvas.saveState()
+                    
+                    # Set low opacity (10%)
+                    canvas.setFillAlpha(0.1)
+                    
+                    # Get page dimensions
+                    page_width, page_height = A4
+                    
+                    # Original image dimensions
+                    img_width, img_height = img_dimensions
+                    
+                    # Calculate scaling factors to maintain aspect ratio
+                    width_ratio = page_width / img_width
+                    height_ratio = page_height / img_height
+                    
+                    # Use the larger ratio to ensure the image covers the entire page
+                    # This will maintain aspect ratio but may clip parts of the image
+                    scale_factor = max(width_ratio, height_ratio)
+                    
+                    # Calculate new dimensions
+                    new_width = img_width * scale_factor
+                    new_height = img_height * scale_factor
+                    
+                    # Calculate positioning to center the image
+                    x_offset = (page_width - new_width) / 2
+                    y_offset = (page_height - new_height) / 2
+                    
+                    # Draw the background image with proper scaling
+                    canvas.drawImage(bg_path, x_offset, y_offset, width=new_width, height=new_height)
+                    
+                    # Restore the canvas state
+                    canvas.restoreState()
+            except Exception as e:
+                self.logger.warning(f"Could not add background image: {str(e)}")
+        
+        # Build the PDF with the background image
+        doc.build(elements, onFirstPage=add_background, onLaterPages=add_background)
         
         # Get the PDF content
         pdf_content = buffer.getvalue()
         buffer.close()
         
-        self.logger.info(f"Created reference sheet for document {document_name}, range {human_ranges}")
+        self.logger.info(f"Created reference sheet for document {barcode}, range {human_ranges}")
         
         return pdf_content
     
@@ -1245,13 +1408,12 @@ class ReferenceManager:
             # Create reference sheet
             try:
                 reference_sheet = self.create_reference_sheet(
-                    document_name=doc_id,
                     film_number=film_number_35mm,
-                    archive_id=project.archive_id,
                     blip=range_blip,
-                    doc_type=project.doc_type,
                     human_ranges=human_range,
-                    barcode=doc_id
+                    barcode=doc_id,
+                    archive_id=project.archive_id,
+                    doc_type=project.doc_type
                 )
                 
                 # Generate path for reference sheet
@@ -1601,13 +1763,12 @@ class ReferenceManager:
                 try:
                     self.logger.info(f"[TRACE] Creating reference sheet for {doc_id}, range {range_start}-{range_end}, blip={range_blip}")
                     reference_sheet = self.create_reference_sheet(
-                        document_name=doc_id,
                         film_number=film_number_35mm,
-                        archive_id=archive_id,
                         blip=range_blip,
-                        doc_type=doc_type,
                         human_ranges=human_range,
-                        barcode=doc_id
+                        barcode=doc_id,
+                        archive_id=archive_id,
+                        doc_type=doc_type
                     )
                     
                     # Generate path for reference sheet

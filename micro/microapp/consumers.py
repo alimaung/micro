@@ -7,7 +7,7 @@ class RelayConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         await self.accept()
         # Open persistent ESP32 connection
-        self.esp32_ws = await websockets.connect('ws://192.168.100.101:81')
+        self.esp32_ws = await websockets.connect('ws://192.168.1.101:81')
         self.esp32_connected = True
 
     async def disconnect(self, close_code):

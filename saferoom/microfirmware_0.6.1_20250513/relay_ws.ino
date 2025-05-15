@@ -8,16 +8,16 @@
 #include <HTTPUpdate.h>
 
 // WiFi credentials (now constants)
-const char* ssid = "4G-UFI-0E4";
-const char* password = "1234567890";
+const char* ssid = "gigacube-B9B1";
+const char* password = "charleshenry1904";
 
 // Serial command buffer
 String serialCmd = "";
 bool serialCmdComplete = false;
 
 // Static network config for STA mode
-IPAddress staticIP(192,168,100,101);
-IPAddress gateway(192,168,100,1);
+IPAddress staticIP(192,168,1,101);
+IPAddress gateway(192,168,1,1);
 IPAddress subnet(255,255,255,0);
 
 // WebSocket server on port 81
