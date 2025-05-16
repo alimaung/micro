@@ -58,8 +58,8 @@ class TestScenarioGenerator:
             
             remaining_pages -= pages
             
-            # Use 10-digit padded number for filename, increment class counter to avoid duplicates
-            padded_number = f"{self.next_barcode:010d}"
+            # Use 16-digit padded number for filename, increment class counter to avoid duplicates
+            padded_number = f"{self.next_barcode:016d}"
             self.next_barcode += 1
             
             doc_spec = {
@@ -91,8 +91,12 @@ class TestScenarioGenerator:
         # Create DataFrame
         df = pd.DataFrame(data)
         
-        # Create Excel file
-        excel_filename = f"{project_name}_comlist.xlsx"
+        # Extract archive ID (RRDXXX-YYYY) from project name
+        archive_id_parts = project_name.split('_')
+        archive_id = archive_id_parts[0]
+        
+        # Create Excel file with only the archive ID
+        excel_filename = f"{archive_id}_comlist.xlsx"
         excel_path = os.path.join(project_dir, excel_filename)
         
         # Use ExcelWriter with string format for both columns
@@ -110,8 +114,8 @@ class TestScenarioGenerator:
         return excel_path
 
     def generate_scenario_rrd001(self):
-        """RRD001-2025_OU_Full-NoTemp-Normal: ~2700-2800 pages, no temp roll"""
-        project_name = "RRD001-2025_OU_Full-NoTemp-Normal"
+        """RRD901-2099_OU_Full-NoTemp-Normal: ~2700-2800 pages, no temp roll"""
+        project_name = "RRD901-2099_OU_Full-NoTemp-Normal"
         project_dir, pdf_dir = self.create_project_dir(project_name)
         pdf_gen = PDFGenerator(output_dir=pdf_dir)
         
@@ -132,8 +136,8 @@ class TestScenarioGenerator:
         self.create_comlist(project_name, docs, project_dir)
 
     def generate_scenario_rrd002(self):
-        """RRD002-2025_OU_Partial-NoTemp-Normal: ~2400-2500 pages"""
-        project_name = "RRD002-2025_OU_Partial-NoTemp-Normal"
+        """RRD902-2099_OU_Partial-NoTemp-Normal: ~2400-2500 pages"""
+        project_name = "RRD902-2099_OU_Partial-NoTemp-Normal"
         project_dir, pdf_dir = self.create_project_dir(project_name)
         pdf_gen = PDFGenerator(output_dir=pdf_dir)
         
@@ -154,8 +158,8 @@ class TestScenarioGenerator:
         self.create_comlist(project_name, docs, project_dir)
 
     def generate_scenario_rrd003(self):
-        """RRD003-2025_OU_Partial-NoTemp-Oversized: ~2500 pages with oversized"""
-        project_name = "RRD003-2025_OU_Partial-NoTemp-Oversized"
+        """RRD903-2099_OU_Partial-NoTemp-Oversized: ~2500 pages with oversized"""
+        project_name = "RRD903-2099_OU_Partial-NoTemp-Oversized"
         project_dir, pdf_dir = self.create_project_dir(project_name)
         pdf_gen = PDFGenerator(output_dir=pdf_dir)
         
@@ -177,8 +181,8 @@ class TestScenarioGenerator:
         self.create_comlist(project_name, docs, project_dir)
 
     def generate_scenario_rrd004(self):
-        """RRD004-2025_OU_Full-Temp-Normal: ~3100 pages, designed to use temp roll"""
-        project_name = "RRD004-2025_OU_Full-Temp-Normal"
+        """RRD904-2099_OU_Full-Temp-Normal: ~3100 pages, designed to use temp roll"""
+        project_name = "RRD904-2099_OU_Full-Temp-Normal"
         project_dir, pdf_dir = self.create_project_dir(project_name)
         pdf_gen = PDFGenerator(output_dir=pdf_dir)
         
@@ -199,12 +203,72 @@ class TestScenarioGenerator:
         # Create comlist Excel file (in the main project directory, not in PDF folder)
         self.create_comlist(project_name, docs, project_dir)
 
+    def generate_scenario_rrd905(self):
+        """RRD905-2099_Split-Doc: one document with 3500 pages, no oversizes"""
+        project_name = "RRD905-2099_Split-Doc"
+        project_dir, pdf_dir = self.create_project_dir(project_name)
+        pdf_gen = PDFGenerator(output_dir=pdf_dir)
+        
+        # Create a single document with 3500 pages
+        total_pages = 3500
+        num_docs = 1
+        
+        docs = self.generate_document_specs(num_docs, total_pages)
+        
+        for doc in docs:
+            pdf_gen.generate_pdf(
+                num_pages=doc['pages'],
+                filename=doc['filename'],
+                oversized_percentage=0,
+                include_a3=doc['has_a3']
+            )
+        
+        # Create comlist Excel file
+        self.create_comlist(project_name, docs, project_dir)
+
+    def generate_scenario_rrd906(self):
+        """RRD906-2099_Split-Docs: one document with 3500 pages and 10 regular documents"""
+        project_name = "RRD906-2099_Split-Docs"
+        project_dir, pdf_dir = self.create_project_dir(project_name)
+        pdf_gen = PDFGenerator(output_dir=pdf_dir)
+        
+        # First create the large document with 3500 pages
+        large_doc = {
+            'pages': 3500,
+            'has_a3': False,
+            'has_oversized': False,
+            'filename': f'{self.next_barcode:016d}.pdf',
+            'barcode': f'{self.next_barcode:016d}'
+        }
+        self.next_barcode += 1
+        
+        # Then create 10 regular documents (with ~100 pages each)
+        total_regular_pages = 10 * 100
+        num_regular_docs = 10
+        regular_docs = self.generate_document_specs(num_regular_docs, total_regular_pages)
+        
+        # Combine all documents
+        all_docs = [large_doc] + regular_docs
+        
+        for doc in all_docs:
+            pdf_gen.generate_pdf(
+                num_pages=doc['pages'],
+                filename=doc['filename'],
+                oversized_percentage=0,
+                include_a3=doc.get('has_a3', False)
+            )
+        
+        # Create comlist Excel file
+        self.create_comlist(project_name, all_docs, project_dir)
+
     def generate_all_scenarios(self):
         """Generate all test scenarios."""
         self.generate_scenario_rrd001()
         self.generate_scenario_rrd002()
         self.generate_scenario_rrd003()
-        self.generate_scenario_rrd004()  # Add the new scenario
+        self.generate_scenario_rrd004()
+        self.generate_scenario_rrd905()
+        self.generate_scenario_rrd906()
         # Add more scenarios as needed
 
 if __name__ == "__main__":
