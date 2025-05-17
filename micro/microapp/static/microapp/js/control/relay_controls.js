@@ -9,6 +9,7 @@ const RelayControls = {
     isLightMode: true,
     relayStates: {},
     pendingRelayStates: {},
+    buttonStates: {},
     
     /**
      * Toggle relay operation mode (light/dark)
@@ -214,10 +215,16 @@ const RelayControls = {
                             MachineControls.checkMachinePowerState();
                         }, 1000);
                     }
+                    
+                    // Check for dark/light mode after toggling
+                    this.detectAndUpdateCurrentMode();
                 } else {
                     // Fallback to just updating this relay
                     const newState = action === 'on';
                     this.setRelayIndicatorState(relayNum, newState, false);
+                    
+                    // Check for dark/light mode after toggling
+                    this.detectAndUpdateCurrentMode();
                 }
                 
                 NotificationManager.showNotification(`Relay ${relayNum} turned ${action.toUpperCase()}`, 'success');
@@ -295,8 +302,33 @@ const RelayControls = {
                 if (Array.isArray(data.states) && data.states.length >= 4) {
                     // Dark mode if relays 2,3,4 are all ON
                     const isDarkMode = data.states[1] && data.states[2] && data.states[3];
+                    this.isLightMode = !isDarkMode;
                     UIManager.updateModeDisplay(isDarkMode ? 'dark' : 'light');
                 }
+            // NEW: Handle button events
+            } else if (data.type === 'buttons') {
+                console.log("Received button event data:", data);
+                // Store button states
+                if (Array.isArray(data.pressed)) {
+                    this.buttonStates = data.pressed;
+                    console.log("Button states updated:", this.buttonStates);
+                }
+                
+                // Update relay states if provided
+                if (Array.isArray(data.states)) {
+                    this.updateRelayStatesUI(data.states);
+                    
+                    // Determine mode from relays 2,3,4 states
+                    if (data.states.length >= 4) {
+                        // Dark mode if relays 2,3,4 are all ON
+                        const isDarkMode = data.states[1] && data.states[2] && data.states[3];
+                        this.isLightMode = !isDarkMode;
+                        UIManager.updateModeDisplay(isDarkMode ? 'dark' : 'light');
+                    }
+                }
+                
+                // Notify user that buttons were physically pressed
+                NotificationManager.showNotification("Relays updated via physical buttons", "info");
             } else {
                 console.error(`Error or missing data: ${data.message || 'Unknown error'}`);
             }
@@ -350,6 +382,51 @@ const RelayControls = {
                         MachineControls.checkMachinePowerState();
                     }, 1000);
                 }
+            }
+        }
+        
+        // After updating all relay states, check if the mode has changed
+        this.detectAndUpdateCurrentMode();
+    },
+    
+    /**
+     * Detect the current mode (light/dark) based on relay states and update the UI
+     */
+    detectAndUpdateCurrentMode: function() {
+        // Relays 2, 3, and 4 all ON = Dark mode; any of them OFF = Light mode
+        const relay2 = this.relayStates['2'] === true;
+        const relay3 = this.relayStates['3'] === true;
+        const relay4 = this.relayStates['4'] === true;
+        
+        // Check using indicator states as fallback if relayStates object is not populated
+        if (relay2 === undefined || relay3 === undefined || relay4 === undefined) {
+            const relay2Indicator = document.getElementById('relay-indicator-2');
+            const relay3Indicator = document.getElementById('relay-indicator-3');
+            const relay4Indicator = document.getElementById('relay-indicator-4');
+            
+            if (relay2Indicator && relay3Indicator && relay4Indicator) {
+                const relay2On = relay2Indicator.classList.contains('on');
+                const relay3On = relay3Indicator.classList.contains('on');
+                const relay4On = relay4Indicator.classList.contains('on');
+                
+                const isDarkMode = relay2On && relay3On && relay4On;
+                
+                // Only update if mode has changed
+                if (this.isLightMode === isDarkMode) {
+                    console.log(`Mode change detected through UI indicators: ${isDarkMode ? 'dark' : 'light'} mode`);
+                    this.isLightMode = !isDarkMode;
+                    UIManager.updateModeDisplay(isDarkMode ? 'dark' : 'light');
+                }
+            }
+        } else {
+            // Use stored relay states
+            const isDarkMode = relay2 && relay3 && relay4;
+            
+            // Only update if mode has changed
+            if (this.isLightMode === isDarkMode) {
+                console.log(`Mode change detected through relay states: ${isDarkMode ? 'dark' : 'light'} mode`);
+                this.isLightMode = !isDarkMode;
+                UIManager.updateModeDisplay(isDarkMode ? 'dark' : 'light');
             }
         }
     },
@@ -454,5 +531,51 @@ const RelayControls = {
             relayIndicator.classList.remove('on');
             relayIndicator.style.backgroundColor = '#ff453a';
         }
+        
+        // Check if this relay change affects the mode (for relays 2,3,4)
+        if (relayId >= 2 && relayId <= 4) {
+            // Delay to allow multiple sequential relay updates to complete
+            setTimeout(() => {
+                this.detectAndUpdateCurrentMode();
+            }, 50);
+        }
+    },
+    
+    /**
+     * Get button states from the ESP32
+     */
+    getButtonStates: function() {
+        if (!ConnectionManager.isRelayConnected) return;
+        
+        console.log("Requesting button states...");
+        
+        Utils.sendRelayAction(
+            { action: 'get_buttons' },
+            '/control_relay/',
+            { 
+                action: 'get_buttons',
+                com_port: ConnectionManager.getActiveRelayPort() 
+            }
+        )
+        .then((data) => {
+            if (data.type === 'buttons') {
+                console.log("Received button states:", data);
+                // Store button states
+                if (Array.isArray(data.pressed)) {
+                    this.buttonStates = data.pressed;
+                    console.log("Button states updated:", this.buttonStates);
+                }
+                
+                // Update relay states if provided
+                if (Array.isArray(data.states)) {
+                    this.updateRelayStatesUI(data.states);
+                }
+            } else {
+                console.error("Invalid response for button states:", data);
+            }
+        })
+        .catch((error) => {
+            console.error('Error getting button states:', error);
+        });
     }
 }; 
