@@ -141,7 +141,7 @@ void setup() {
   
   // Wait for connection with timeout
   int wifiAttempts = 0;
-  while (WiFi.status() != WL_CONNECTED && wifiAttempts < 20) {
+  while (WiFi.status() != WL_CONNECTED && wifiAttempts < 50) {
     delay(500);
     Serial.print(".");
     wifiAttempts++;

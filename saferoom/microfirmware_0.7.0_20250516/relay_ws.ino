@@ -8,12 +8,10 @@
 #include <HTTPUpdate.h>
 
 // WiFi credentials (now constants)
+/* const char* ssid = "MICRO-RELAY";
+const char* password = "microrelay"; */
 const char* ssid = "gigacube-B9B1";
 const char* password = "charleshenry1904";
-
-// Serial command buffer
-String serialCmd = "";
-bool serialCmdComplete = false;
 
 // Static network config for STA mode
 IPAddress staticIP(192,168,1,101);
@@ -23,7 +21,7 @@ IPAddress subnet(255,255,255,0);
 // WebSocket server on port 81
 WebSocketsServer webSocket = WebSocketsServer(81);
 
-// Relay pins for ESP32-S3-N16R8 (left side)
+// Relay/LED pins for ESP32-S3-N16R8 (left side)
 const int relayPins[] = {1, 2, 42, 41, 36, 35, 38, 37};
 const int numRelays = 8;
 bool relayStates[numRelays] = {false, false, false, false, false, false, false, false};
@@ -65,7 +63,7 @@ Preferences prefs;
 String wifiMode = "ap"; // "sta" or "ap"
 String wifiSSID = "MICRO-RELAY";
 String wifiPassword = "microrelay";
-int relayPinConfig[numRelays] = {1, 2, 42, 41, 36, 35, 38, 37};
+int relayPinConfig[numRelays] = {1, 2, 42, 41, 40, 39, 38, 37};
 int pulseDurationConfig = 500;
 
 void loadConfig() {
@@ -89,7 +87,7 @@ void saveConfig() {
 void applyPinConfig() {
   for (int i = 0; i < numRelays; i++) {
     pinMode(relayPinConfig[i], OUTPUT);
-    digitalWrite(relayPinConfig[i], HIGH);
+    digitalWrite(relayPinConfig[i], HIGH);  // Initialize relays to OFF (HIGH for relay modules)
   }
 }
 
@@ -97,7 +95,7 @@ void setup() {
   Serial.begin(115200);
   delay(500); // Wait for serial to initialize
   Serial.println("\n\n====================");
-  Serial.println("Micro Relay Firmware v0.6.0");
+  Serial.println("Micro Relay Tester Firmware v0.7.0");
   Serial.println("ESP32-S3-N16R8 Edition - Starting...");
   
   Serial.println("Loading config...");
@@ -108,7 +106,7 @@ void setup() {
   // Use relayPinConfig for pin setup
   for (int i = 0; i < numRelays; i++) {
     pinMode(relayPinConfig[i], OUTPUT);
-    digitalWrite(relayPinConfig[i], HIGH);
+    digitalWrite(relayPinConfig[i], HIGH);  // Initialize relays to OFF (HIGH for relay modules)
     Serial.printf("Relay %d on pin %d initialized\n", i+1, relayPinConfig[i]);
   }
   
@@ -143,7 +141,7 @@ void setup() {
   
   // Wait for connection with timeout
   int wifiAttempts = 0;
-  while (WiFi.status() != WL_CONNECTED && wifiAttempts < 20) {
+  while (WiFi.status() != WL_CONNECTED && wifiAttempts < 50) {
     delay(500);
     Serial.print(".");
     wifiAttempts++;
@@ -163,25 +161,20 @@ void setup() {
   webSocket.onEvent(webSocketEvent);
   
   Serial.println("Setup complete!");
-  Serial.println("Micro Relay Firmware v0.6.0");
+  Serial.println("Micro Relay Tester Firmware v0.7.0");
   Serial.println("ESP32-S3-N16R8 Edition - Ready");
   Serial.println("====================");
-  Serial.println("Available commands:");
-  Serial.println("  restart - Restart ESP32");
-  Serial.println("  wifi:ap - Switch to AP mode");
-  Serial.println("  wifi:sta - Switch to STA mode");
-  Serial.println("  wifi:reconnect - Reconnect to WiFi");
-  Serial.println("  wifi:status - Show WiFi connection status");
 }
 
 void loop() {
   webSocket.loop();
   handlePulseTask();
   handleButtonInputs(); // Check physical buttons
-  handleSerialCommands();
 }
 
 void handleButtonInputs() {
+  bool anyButtonPressed = false;
+  
   // Check each button for state changes
   for (int i = 0; i < numButtons; i++) {
     // Read the button state (LOW when pressed with pull-up resistor)
@@ -201,6 +194,8 @@ void handleButtonInputs() {
         
         // Toggle relay when button is pressed (LOW with pull-up)
         if (buttonState[i] == LOW) {
+          anyButtonPressed = true;
+          
           // Special handling for relay 1 (pulse mode)
           if (i == 0) {
             // If relay 1 is already on, turn it off
@@ -224,6 +219,11 @@ void handleButtonInputs() {
     
     // Save the current reading for next comparison
     lastButtonState[i] = reading;
+  }
+  
+  // If any button was pressed, broadcast all relay states to keep UI in sync
+  if (anyButtonPressed) {
+    broadcastButtonEvent();
   }
 }
 
@@ -256,6 +256,9 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
       sendSystemStats(num);
     } else if (action == "ping") {
       sendPong(num);
+    } else if (action == "get_buttons") {
+      // New command to get button states
+      sendButtonStates(num);
     } else if (action == "config") {
       handleConfig(num, doc["params"].as<JsonObject>());
     } else {
@@ -268,7 +271,7 @@ void setRelay(int idx, bool state) {
   // Print what we're doing
   Serial.printf("Setting relay %d to %s\n", idx + 1, state ? "ON" : "OFF");
   
-  // For production relays, we use active LOW
+  // For relays, we use active LOW (relay activates when pin is LOW)
   digitalWrite(relayPinConfig[idx], state ? LOW : HIGH);
   relayStates[idx] = state;
 }
@@ -328,7 +331,7 @@ void sendSystemStats(uint8_t num) {
   doc["ram_kb"] = freeHeapBytes / 1024.0;
   doc["voltage_v"] = mainVoltage;
   doc["uptime_s"] = (millis() - bootTime) / 1000;
-  doc["board"] = "ESP32-S3-N16R8";
+  doc["board"] = "ESP32-S3-N16R8 Tester";
   String msg;
   serializeJson(doc, msg);
   webSocket.sendTXT(num, msg);
@@ -412,147 +415,47 @@ void doOTA(String url) {
   }
 }
 
-void handleSerialCommands() {
-  while (Serial.available()) {
-    char c = Serial.read();
-    if (c == '\n') {
-      serialCmdComplete = true;
-    } else {
-      serialCmd += c;
-    }
+// Broadcast a button event to inform UI that a button was physically pressed
+void broadcastButtonEvent() {
+  StaticJsonDocument<192> doc;
+  doc["type"] = "buttons";
+  
+  // Add all relay states to message
+  JsonArray statesArray = doc.createNestedArray("states");
+  for (int i = 0; i < numRelays; i++) {
+    statesArray.add(relayStates[i]);
   }
   
-  if (serialCmdComplete) {
-    serialCmd.trim();
-    
-    if (serialCmd == "restart") {
-      Serial.println("Restarting ESP32...");
-      delay(500);
-      ESP.restart();
-    } 
-    else if (serialCmd == "wifi:ap") {
-      Serial.println("Switching to AP mode...");
-      WiFi.disconnect();
-      delay(500);
-      WiFi.mode(WIFI_AP);
-      WiFi.softAP(wifiSSID, wifiPassword);
-      Serial.print("AP started with SSID: ");
-      Serial.println(wifiSSID);
-      Serial.print("IP address: ");
-      Serial.println(WiFi.softAPIP());
-    }
-    else if (serialCmd == "wifi:sta") {
-      Serial.println("Switching to STA mode...");
-      WiFi.disconnect();
-      WiFi.mode(WIFI_STA);
-      WiFi.config(staticIP, gateway, subnet);
-      WiFi.begin(ssid, password);
-      Serial.println("Connecting to WiFi...");
-      int attempts = 0;
-      while (WiFi.status() != WL_CONNECTED && attempts < 20) {
-        delay(500);
-        Serial.print(".");
-        attempts++;
-      }
-      Serial.println();
-      
-      if (WiFi.status() == WL_CONNECTED) {
-        Serial.print("Connected to WiFi. IP: ");
-        Serial.println(WiFi.localIP());
-      } else {
-        Serial.println("Failed to connect to WiFi");
-      }
-    }
-    else if (serialCmd == "wifi:reconnect") {
-      Serial.println("Reconnecting to WiFi...");
-      WiFi.disconnect();
-      delay(500);
-      WiFi.begin(ssid, password);
-      int attempts = 0;
-      while (WiFi.status() != WL_CONNECTED && attempts < 20) {
-        delay(500);
-        Serial.print(".");
-        attempts++;
-      }
-      Serial.println();
-      
-      if (WiFi.status() == WL_CONNECTED) {
-        Serial.print("Connected to WiFi. IP: ");
-        Serial.println(WiFi.localIP());
-      } else {
-        Serial.println("Failed to connect to WiFi");
-      }
-    }
-    else if (serialCmd == "wifi:status") {
-      Serial.println("WiFi Status:");
-      
-      // WiFi mode
-      switch (WiFi.getMode()) {
-        case WIFI_OFF:
-          Serial.println("Mode: OFF");
-          break;
-        case WIFI_STA:
-          Serial.println("Mode: STA (Station)");
-          break;
-        case WIFI_AP:
-          Serial.println("Mode: AP (Access Point)");
-          break;
-        case WIFI_AP_STA:
-          Serial.println("Mode: AP+STA (Both)");
-          break;
-        default:
-          Serial.println("Mode: Unknown");
-      }
-      
-      // Connection status for STA mode
-      if (WiFi.getMode() == WIFI_STA || WiFi.getMode() == WIFI_AP_STA) {
-        Serial.print("STA SSID: ");
-        Serial.println(WiFi.SSID());
-        
-        Serial.print("Connection status: ");
-        switch (WiFi.status()) {
-          case WL_CONNECTED:
-            Serial.println("Connected");
-            Serial.print("IP address: ");
-            Serial.println(WiFi.localIP());
-            Serial.print("Signal strength (RSSI): ");
-            Serial.print(WiFi.RSSI());
-            Serial.println(" dBm");
-            break;
-          case WL_IDLE_STATUS:
-            Serial.println("Idle");
-            break;
-          case WL_CONNECT_FAILED:
-            Serial.println("Connection failed");
-            break;
-          case WL_DISCONNECTED:
-            Serial.println("Disconnected");
-            break;
-          case WL_NO_SSID_AVAIL:
-            Serial.println("SSID not available");
-            break;
-          default:
-            Serial.print("Other (");
-            Serial.print(WiFi.status());
-            Serial.println(")");
-        }
-      }
-      
-      // AP info if in AP mode
-      if (WiFi.getMode() == WIFI_AP || WiFi.getMode() == WIFI_AP_STA) {
-        Serial.print("AP SSID: ");
-        Serial.println(wifiSSID);
-        Serial.print("AP IP address: ");
-        Serial.println(WiFi.softAPIP());
-        Serial.print("Connected clients: ");
-        Serial.println(WiFi.softAPgetStationNum());
-      }
-    }
-    else {
-      Serial.println("Unknown command");
-    }
-    
-    serialCmd = "";
-    serialCmdComplete = false;
+  // Send which buttons are currently being pressed (LOW)
+  JsonArray buttonsArray = doc.createNestedArray("pressed");
+  for (int i = 0; i < numButtons; i++) {
+    buttonsArray.add(buttonState[i] == LOW);
   }
+  
+  String msg;
+  serializeJson(doc, msg);
+  webSocket.broadcastTXT(msg);
+  Serial.println("Broadcasting button event with relay states");
+}
+
+// New function to send button states
+void sendButtonStates(uint8_t num) {
+  StaticJsonDocument<192> doc;
+  doc["type"] = "buttons";
+  
+  // Add all relay states to message
+  JsonArray statesArray = doc.createNestedArray("states");
+  for (int i = 0; i < numRelays; i++) {
+    statesArray.add(relayStates[i]);
+  }
+  
+  // Send which buttons are currently being pressed (LOW)
+  JsonArray buttonsArray = doc.createNestedArray("pressed");
+  for (int i = 0; i < numButtons; i++) {
+    buttonsArray.add(buttonState[i] == LOW);
+  }
+  
+  String msg;
+  serializeJson(doc, msg);
+  webSocket.sendTXT(num, msg);
 }
