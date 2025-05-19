@@ -1215,9 +1215,10 @@ class DistributionManager:
             
             doc_details = documents_details[doc_id]
             reference_paths = doc_details.get('file_paths', [])
+            ranges = doc_details.get('ranges', [])
             
-            if not reference_paths:
-                self.logger.error(f"No reference sheet paths found for {doc_id}")
+            if not reference_paths or not ranges:
+                self.logger.error(f"No reference sheet paths or ranges found for {doc_id}")
                 return None
             
             # Output path for processed document
@@ -1228,17 +1229,34 @@ class DistributionManager:
                 oversized_reader = PyPDF2.PdfReader(file)
                 writer = PyPDF2.PdfWriter()
                 
-                # For 35mm, we need to insert each reference sheet before its corresponding oversized page
+                # Track current position in oversized pages document
+                current_oversized_page = 0
+                
+                # For 35mm, we need to insert each reference sheet before its corresponding oversized pages
                 for i, ref_path in enumerate(reference_paths):
+                    if i >= len(ranges):
+                        self.logger.warning(f"Missing range information for reference sheet {i+1} in {doc_id}")
+                        continue
+                        
+                    # Get the range of oversized pages for this reference sheet
+                    page_range = ranges[i]
+                    start_page, end_page = page_range
+                    pages_in_range = end_page - start_page + 1
+                    
                     # Add reference sheet
                     with open(ref_path, 'rb') as ref_file:
                         ref_reader = PyPDF2.PdfReader(ref_file)
                         for page in ref_reader.pages:
                             writer.add_page(page)
                     
-                    # Add corresponding oversized page if available
-                    if i < len(oversized_reader.pages):
-                        writer.add_page(oversized_reader.pages[i])
+                    # Add all corresponding oversized pages for this range
+                    for j in range(pages_in_range):
+                        if current_oversized_page < len(oversized_reader.pages):
+                            writer.add_page(oversized_reader.pages[current_oversized_page])
+                            current_oversized_page += 1
+                        else:
+                            self.logger.warning(f"Ran out of oversized pages while processing {doc_id}")
+                            break
                 
                 # Save the processed document
                 with open(output_path, 'wb') as out_file:

@@ -372,7 +372,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Check for SMA51 Machine on COM3
         checkMachinePort();
         
-        // Check for Saferoom Relay on COM7 or COM23
+        // Check for Saferoom Relay on COM9 or COM23
         checkRelayPort();
         
         // Update overall system status (without redundant UI updates)
@@ -490,7 +490,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Function to check if Saferoom Relay port is available (COM7 or COM23)
+    // Function to check if Saferoom Relay port is available (COM9 or COM23)
     function checkRelayPort() {
         console.log("Checking for Saferoom Relay on COM23...");
         
@@ -559,8 +559,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 console.log("Saferoom Relay connected on COM23");
             } else {
-                // Try COM7 instead
-                console.log("COM23 not available, checking COM7...");
+                // Try COM9 instead
+                console.log("COM23 not available, checking COM9...");
                 
                 fetch('/check_port/', {
                     method: 'POST',
@@ -569,13 +569,13 @@ document.addEventListener('DOMContentLoaded', function() {
                         'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
                     },
                     body: new URLSearchParams({
-                        'port': 'COM7'
+                        'port': 'COM9'
                     })
                 })
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === 'success') {
-                        // COM7 is available
+                        // COM9 is available
                         isRelayConnected = true;
                         
                         // Update relay port info with the returned device info
@@ -589,8 +589,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         } else {
                             // Fallback to default values only if we don't already have data
                             if (lastRelayDeviceData.port === 'N/A') {
-                                updateRelayInfo('COM7');
-                                lastRelayDeviceData.port = 'COM7';
+                                updateRelayInfo('COM9');
+                                lastRelayDeviceData.port = 'COM9';
                             }
                         }
                         
@@ -603,18 +603,18 @@ document.addEventListener('DOMContentLoaded', function() {
                         
                         if (!wasConnected && currentTime - lastRelayNotificationTime > NOTIFICATION_THROTTLE_MS) {
                             // Only notify if we weren't connected before and enough time has passed
-                            showNotification("Relay connected on COM7", "success");
+                            showNotification("Relay connected on COM9", "success");
                             lastRelayNotificationTime = currentTime;
-                        } else if (wasConnected && previousPort !== 'COM7' && previousPort !== 'N/A' && 
+                        } else if (wasConnected && previousPort !== 'COM9' && previousPort !== 'N/A' && 
                                   currentTime - lastRelayNotificationTime > NOTIFICATION_THROTTLE_MS) {
                             // Notify of port change only if enough time has passed
-                            showNotification("Relay connected on COM7", "info");
+                            showNotification("Relay connected on COM9", "info");
                             lastRelayNotificationTime = currentTime;
                         }
                         
-                        console.log("Saferoom Relay connected on COM7");
+                        console.log("Saferoom Relay connected on COM9");
                     } else {
-                        // Neither COM23 nor COM7 is available
+                        // Neither COM23 nor COM9 is available
                         isRelayConnected = false;
                         
                         // Update relay connection UI
@@ -647,7 +647,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 })
                 .catch(error => {
-                    console.error('Error checking COM7:', error);
+                    console.error('Error checking COM9:', error);
                     isRelayConnected = false;
                     
                     // Update relay connection UI

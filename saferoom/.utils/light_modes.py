@@ -9,7 +9,7 @@ import time
 from relay_control import get_controller
 
 # Default configuration
-DEFAULT_PORT = "COM7"
+DEFAULT_PORT = "COM9"
 DEFAULT_RESET_DELAY = 0.0
 
 def set_dark_mode(controller):
