@@ -8,9 +8,8 @@ class RelayConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         await self.accept()
         
-        # Create message queues and locks
+        # Create message queues
         self.response_queues = {}
-        self.ws_lock = asyncio.Lock()
         
         # Open persistent ESP32 connection
         self.esp32_ws = await websockets.connect('ws://192.168.1.101:81')
@@ -100,10 +99,12 @@ class RelayConsumer(AsyncWebsocketConsumer):
         self.response_queues[msg_id] = future
         
         try:
-            # Acquire the lock before sending
-            async with self.ws_lock:
-                # Send the command
-                await self.esp32_ws.send(json.dumps(data))
+            # Add message ID to outgoing request
+            data_with_id = data.copy() if isinstance(data, dict) else {"action": "unknown"}
+            data_with_id["msg_id"] = msg_id
+            
+            # Send the command
+            await self.esp32_ws.send(json.dumps(data_with_id))
             
             # Wait for response with timeout
             response = await asyncio.wait_for(future, timeout=5.0)
@@ -122,9 +123,8 @@ class RelayConsumer(AsyncWebsocketConsumer):
             while True:
                 if hasattr(self, 'esp32_ws') and self.esp32_connected:
                     try:
-                        # Wait for message from ESP32 (with a lock to prevent concurrent access)
-                        async with self.ws_lock:
-                            message = await asyncio.wait_for(self.esp32_ws.recv(), timeout=0.5)
+                        # Wait for message from ESP32
+                        message = await asyncio.wait_for(self.esp32_ws.recv(), timeout=0.5)
                         
                         # Process the received message
                         try:
@@ -132,14 +132,24 @@ class RelayConsumer(AsyncWebsocketConsumer):
                             msg_data = json.loads(message)
                             msg_type = msg_data.get('type', 'unknown')
                             
-                            # Check if this is a response for a pending request
-                            if len(self.response_queues) > 0:
+                            # Check if this message has a response ID
+                            msg_id = msg_data.get('msg_id')
+                            if msg_id and msg_id in self.response_queues:
+                                # This is a response to a specific request
+                                future = self.response_queues[msg_id]
+                                if not future.done():
+                                    future.set_result(message)
+                                    print(f"Set result for request {msg_id}")
+                                    continue
+                            
+                            # If no msg_id match, try the old way for backward compatibility
+                            elif len(self.response_queues) > 0:
                                 # Use the first waiting request (FIFO)
                                 first_key = next(iter(self.response_queues))
                                 future = self.response_queues[first_key]
                                 if not future.done():
                                     future.set_result(message)
-                                    print(f"Set result for request {first_key}")
+                                    print(f"Set result for first request {first_key}")
                                     continue
                             
                             # If we get here, this is an unsolicited message (like a button press)

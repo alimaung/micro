@@ -18,14 +18,16 @@ class ConfigManager:
     MOTOR_SHUTTER = 0  # Verschluss motor
     MOTOR_FILM = 1     # Film motor
     
-    def __init__(self, config_path=None):
+    def __init__(self, config_path=None, verbose=True):
         """
         Initialize the configuration manager
         
         Args:
             config_path: Path to the config file. If None, will look in standard locations.
+            verbose: Whether to log detailed information. Set to False for JSON output.
         """
         self.config = configparser.ConfigParser()
+        self.verbose = verbose
         
         # Find config file if not specified
         if config_path is None:
@@ -43,11 +45,13 @@ class ConfigManager:
         
         # Load config from file
         if config_path and os.path.exists(config_path):
-            logger.info("CONFIG", f"Loading configuration from: {config_path}")
+            if self.verbose:
+                logger.info("CONFIG", f"Loading configuration from: {config_path}")
             self.config.read(config_path)
             self.config_path = config_path
         else:
-            logger.warn("CONFIG", "No configuration file found, using defaults")
+            if self.verbose:
+                logger.warn("CONFIG", "No configuration file found, using defaults")
             self.config_path = None
             
             # Set default values
@@ -100,7 +104,8 @@ class ConfigManager:
         """Get system configuration values"""
         # Check if SYSTEM section exists
         if 'SYSTEM' not in self.config:
-            logger.warn("CONFIG", "No SYSTEM section found in config, using defaults")
+            if self.verbose:
+                logger.warn("CONFIG", "No SYSTEM section found in config, using defaults")
             return {
                 'film_speed': 4000,
                 'steps_per_rotation': 1600,
@@ -128,7 +133,8 @@ class ConfigManager:
             raise TypeError("motor_control must be an instance of MotorControl")
         
         # Apply shutter motor configuration
-        logger.info("CONFIG", "Applying shutter motor configuration...")
+        if self.verbose:
+            logger.info("CONFIG", "Applying shutter motor configuration...")
         shutter_config = self.get_shutter_config()
         motor_control.set_motor_resolution(self.MOTOR_SHUTTER, shutter_config['microsteps'])
         motor_control.set_max_acceleration(self.MOTOR_SHUTTER, shutter_config['acceleration'])
@@ -141,14 +147,16 @@ class ConfigManager:
         )
         
         # Apply film motor configuration
-        logger.info("CONFIG", "Applying film motor configuration...")
+        if self.verbose:
+            logger.info("CONFIG", "Applying film motor configuration...")
         film_config = self.get_film_config()
         motor_control.set_motor_resolution(self.MOTOR_FILM, film_config['microsteps'])
         motor_control.set_max_acceleration(self.MOTOR_FILM, film_config['acceleration'])
         motor_control.set_max_current(self.MOTOR_FILM, film_config['drive_current'])
         motor_control.set_standby_current(self.MOTOR_FILM, film_config['hold_current'])
         
-        logger.info("CONFIG", "Motor configuration applied successfully")
+        if self.verbose:
+            logger.info("CONFIG", "Motor configuration applied successfully")
         return True
         
     def save_config(self, path=None):
@@ -162,7 +170,8 @@ class ConfigManager:
         if not save_path:
             save_path = os.path.join(os.path.dirname(__file__), '..', 'config', 'trinamic.ini')
             
-        logger.info("CONFIG", f"Saving configuration to: {save_path}")
+        if self.verbose:
+            logger.info("CONFIG", f"Saving configuration to: {save_path}")
         
         # Ensure directory exists
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
@@ -171,3 +180,16 @@ class ConfigManager:
             self.config.write(config_file)
         
         return save_path 
+    
+    def to_dict(self):
+        """
+        Convert configuration to a dictionary suitable for JSON serialization
+        
+        Returns:
+            dict: Configuration as a dictionary
+        """
+        return {
+            'shutter': self.get_shutter_config(),
+            'film': self.get_film_config(),
+            'system': self.get_system_config()
+        } 

@@ -105,8 +105,14 @@ class MotorControl:
         """Check if the motor is currently running"""
         logger.debug("MOTOR", f"Checking if motor {motor} is running (CMD=6, TYPE=3, MOTOR={motor}, VALUE=0)")
         result = self.controller.send_command(6, 3, motor, 0)
-        is_running = result != 0
-        logger.debug("MOTOR", f"Motor {motor} running status: {is_running} (result={result})")
+        
+        # Extract the bytes that indicate motion (bytes 6-7 in the response)
+        # When stopped: result is 109 or other low value with bytes 6-7 = 00 00
+        # When running: result is ~138379 with bytes 6-7 containing non-zero values
+        motion_status = (result >> 8) & 0xFFFF  # Get bytes 6-7
+        is_running = motion_status != 0
+        
+        logger.debug("MOTOR", f"Motor {motor} running status: {is_running} (result={result}, motion_status={motion_status})")
         return is_running
     
     def reset_controller(self):
@@ -131,4 +137,43 @@ class MotorControl:
             time.sleep(0.5)
             
         logger.debug("MOTOR", f"Home move completed (timeout={time.time() - start_time > 2})")
-        return True 
+        return True
+
+    # ===== JSON-friendly methods =====
+    
+    def is_motor_running_json(self, motor):
+        """Check if motor is running and return JSON-friendly result"""
+        is_running = self.is_motor_running(motor)
+        return {
+            "running": is_running,
+            "motor": motor,
+            "success": True
+        }
+
+    def move_to_home_position_json(self, motor):
+        """Move motor to home position and return JSON-friendly result"""
+        result = self.move_to_home_position(motor)
+        return {
+            "success": result,
+            "motor": motor,
+            "at_home": result
+        }
+        
+    def move_motor_json(self, motor, steps, direction=1):
+        """Move motor and return JSON-friendly result"""
+        result = self.move_motor(motor, steps, direction)
+        return {
+            "success": True if result else False,
+            "motor": motor,
+            "steps": steps,
+            "direction": direction
+        }
+        
+    def stop_motor_json(self, motor):
+        """Stop motor and return JSON-friendly result"""
+        result = self.stop_motor(motor)
+        return {
+            "success": True if result else False,
+            "motor": motor,
+            "stopped": True
+        } 

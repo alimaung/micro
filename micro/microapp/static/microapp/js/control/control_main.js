@@ -72,6 +72,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize device info fields to empty/N/A
     RelayControls.clearRelayInfo();
     MachineControls.clearMachineInfo();
+    
+    // Initialize relay controls with event listeners
+    RelayControls.init();
 
     // Hide machine stats card initially
     if (elements.machineStatsCard) {

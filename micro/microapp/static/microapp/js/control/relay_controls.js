@@ -12,6 +12,22 @@ const RelayControls = {
     buttonStates: {},
     
     /**
+     * Initialize relay controls including event listeners
+     */
+    init: function() {
+        // Add spacebar hotkey to switch back to light mode when in dark mode
+        document.addEventListener('keydown', (event) => {
+            // Check if spacebar is pressed and we're in dark mode
+            if (event.key === ' ' && !this.isLightMode) {
+                // Toggle back to light mode
+                this.toggleRelayMode();
+                // Prevent page scrolling
+                event.preventDefault();
+            }
+        });
+    },
+    
+    /**
      * Toggle relay operation mode (light/dark)
      */
     // Replace toggleRelayMode function

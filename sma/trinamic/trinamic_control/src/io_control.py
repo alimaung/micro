@@ -190,3 +190,59 @@ class IOControl:
         except Exception as e:
             logger.error("IO", f"Error determining machine state: {e}")
             return MachineState.UNKNOWN
+            
+    # ===== JSON-friendly methods =====
+    
+    def vacuum_on_json(self):
+        """Turn on vacuum and return JSON-friendly result"""
+        result = self.vacuum_on()
+        return {
+            "success": True if result else False,
+            "vacuum": "on",
+            "result": result
+        }
+    
+    def vacuum_off_json(self):
+        """Turn off vacuum and return JSON-friendly result"""
+        result = self.vacuum_off()
+        return {
+            "success": True if result else False,
+            "vacuum": "off",
+            "result": result
+        }
+    
+    def is_vacuum_ok_json(self):
+        """Check vacuum status and return JSON-friendly result"""
+        status = self.is_vacuum_ok()
+        return {
+            "success": True,
+            "vacuum_ok": status,
+            "vacuum_status": "OK" if status else "Not OK"
+        }
+    
+    def magnet_on_json(self):
+        """Turn on magnet and return JSON-friendly result"""
+        result = self.magnet_on()
+        return {
+            "success": True if result else False,
+            "magnet": "on",
+            "result": result
+        }
+    
+    def magnet_off_json(self):
+        """Turn off magnet and return JSON-friendly result"""
+        result = self.magnet_off()
+        return {
+            "success": True if result else False, 
+            "magnet": "off",
+            "result": result
+        }
+        
+    def get_machine_state_json(self):
+        """Get machine state and return JSON-friendly result"""
+        state = self.get_machine_state()
+        return {
+            "success": state != MachineState.UNKNOWN,
+            "state": state,
+            "lid_closed": state == MachineState.ON
+        }

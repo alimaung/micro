@@ -1,0 +1,8 @@
+VERSCHLUSS - python motor_control_cli.py --port COM3 --motor 0 --set-resolution 4 --set-speed 640 --set-current 80 --move 3200 --direction 1 --set-standby-current 10
+VERSCHLUSS-HOME - python motor_control_cli.py --port COM3 --motor 0 --direction 1 --home
+FILM - python motor_control_cli.py --port COM3 --motor 1 --set-resolution 4 --set-speed 540 --set-current 120 --move 2796 --direction 1 --set-standby-current 10 --set-acceleration 600 
+VACUUM-ON - python .\io_control_cli.py --vacuum-on
+VACUUM-OFF - python .\io_control_cli.py --vacuum-off 
+MAGNET-on python .\io_control_cli.py --magnet-on 
+MAGNET-off python .\io_control_cli.py --magnet-off 
+VACCUM-CHECK python .\io_control_cli.py --check-vacuum
