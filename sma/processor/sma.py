@@ -25,8 +25,8 @@ def load_configuration(args):
     """Load configuration parameters."""
     # Map template choice to template name
     template_map = {
-        '16': "Portrait - 16mm.TPL",
-        '35': "Landscape - 35mm.TPL"
+        '16': "16mm.TPL",
+        '35': "35mm.TPL"
     }
     
     # Create configuration dictionary
@@ -34,7 +34,7 @@ def load_configuration(args):
         'template_name': template_map[args.template],
         'ini_file_path': r"Y:\SMA\file-converter-64\docufileuc.ini",
         'folder_path': args.folder_path,
-        'app_path': r"Y:\SMA\file-converter-64\sma.exe",
+        'app_path': r"Y:\SMA\file-converter-64\file-sma.exe",
         'templates_dir': r"Y:\SMA\file-converter-64\TEMPLATES"
     }
     
