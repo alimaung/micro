@@ -70,10 +70,11 @@ const RelayControls = {
                 }                    
                 // Toggle UI States manually
                 if (targetMode === 'dark') {
-                    // For dark mode: turn on relays 2, 3, 4
+                    // For dark mode: turn on relays 2, 3, 4 and turn off relay 5 (room light)
                     this.setRelayIndicatorState(2, true);
                     this.setRelayIndicatorState(3, true);
                     this.setRelayIndicatorState(4, true);
+                    this.setRelayIndicatorState(5, false); // Room light OFF in dark mode
                     
                     // Flash relay 1 briefly
                     this.setRelayIndicatorState(1, true);
@@ -81,10 +82,11 @@ const RelayControls = {
                         this.setRelayIndicatorState(1, false);
                     }, 500); // Flash for 500ms
                 } else if (targetMode === 'light') {
-                    // For light mode: turn off relays 2, 3, 4
+                    // For light mode: turn off relays 2, 3, 4 and turn on relay 5 (room light)
                     this.setRelayIndicatorState(2, false);
                     this.setRelayIndicatorState(3, false);
                     this.setRelayIndicatorState(4, false);
+                    this.setRelayIndicatorState(5, true); // Room light ON in light mode
                     
                     // Flash relay 1 briefly
                     this.setRelayIndicatorState(1, true);
@@ -314,10 +316,10 @@ const RelayControls = {
                 console.log("Relay states from WebSocket:", JSON.stringify(data.states));
                 this.updateRelayStatesUI(data.states);
                 
-                // Determine mode from relays 2,3,4 states
-                if (Array.isArray(data.states) && data.states.length >= 4) {
-                    // Dark mode if relays 2,3,4 are all ON
-                    const isDarkMode = data.states[1] && data.states[2] && data.states[3];
+                // Determine mode from relays 2,3,4,5 states
+                if (Array.isArray(data.states) && data.states.length >= 5) {
+                    // Dark mode if relays 2,3,4 are all ON and relay 5 is OFF
+                    const isDarkMode = data.states[1] && data.states[2] && data.states[3] && !data.states[4];
                     this.isLightMode = !isDarkMode;
                     UIManager.updateModeDisplay(isDarkMode ? 'dark' : 'light');
                 }
@@ -334,10 +336,10 @@ const RelayControls = {
                 if (Array.isArray(data.states)) {
                     this.updateRelayStatesUI(data.states);
                     
-                    // Determine mode from relays 2,3,4 states
-                    if (data.states.length >= 4) {
-                        // Dark mode if relays 2,3,4 are all ON
-                        const isDarkMode = data.states[1] && data.states[2] && data.states[3];
+                    // Determine mode from relays 2,3,4,5 states
+                    if (data.states.length >= 5) {
+                        // Dark mode if relays 2,3,4 are all ON and relay 5 is OFF
+                        const isDarkMode = data.states[1] && data.states[2] && data.states[3] && !data.states[4];
                         this.isLightMode = !isDarkMode;
                         UIManager.updateModeDisplay(isDarkMode ? 'dark' : 'light');
                     }
@@ -409,23 +411,26 @@ const RelayControls = {
      * Detect the current mode (light/dark) based on relay states and update the UI
      */
     detectAndUpdateCurrentMode: function() {
-        // Relays 2, 3, and 4 all ON = Dark mode; any of them OFF = Light mode
+        // Relays 2, 3, and 4 all ON and relay 5 OFF = Dark mode
         const relay2 = this.relayStates['2'] === true;
         const relay3 = this.relayStates['3'] === true;
         const relay4 = this.relayStates['4'] === true;
+        const relay5 = this.relayStates['5'] === false; // Relay 5 (room light) should be OFF in dark mode
         
         // Check using indicator states as fallback if relayStates object is not populated
-        if (relay2 === undefined || relay3 === undefined || relay4 === undefined) {
+        if (relay2 === undefined || relay3 === undefined || relay4 === undefined || relay5 === undefined) {
             const relay2Indicator = document.getElementById('relay-indicator-2');
             const relay3Indicator = document.getElementById('relay-indicator-3');
             const relay4Indicator = document.getElementById('relay-indicator-4');
+            const relay5Indicator = document.getElementById('relay-indicator-5');
             
-            if (relay2Indicator && relay3Indicator && relay4Indicator) {
+            if (relay2Indicator && relay3Indicator && relay4Indicator && relay5Indicator) {
                 const relay2On = relay2Indicator.classList.contains('on');
                 const relay3On = relay3Indicator.classList.contains('on');
                 const relay4On = relay4Indicator.classList.contains('on');
+                const relay5Off = !relay5Indicator.classList.contains('on'); // Relay 5 should be OFF in dark mode
                 
-                const isDarkMode = relay2On && relay3On && relay4On;
+                const isDarkMode = relay2On && relay3On && relay4On && relay5Off;
                 
                 // Only update if mode has changed
                 if (this.isLightMode === isDarkMode) {
@@ -436,7 +441,7 @@ const RelayControls = {
             }
         } else {
             // Use stored relay states
-            const isDarkMode = relay2 && relay3 && relay4;
+            const isDarkMode = relay2 && relay3 && relay4 && relay5;
             
             // Only update if mode has changed
             if (this.isLightMode === isDarkMode) {

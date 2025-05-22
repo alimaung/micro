@@ -51,12 +51,14 @@ class RelayConsumer(AsyncWebsocketConsumer):
                         {"action": "set", "relay": 2, "state": True},
                         {"action": "set", "relay": 3, "state": True},
                         {"action": "set", "relay": 4, "state": True},
+                        {"action": "set", "relay": 5, "state": False}, # Turn OFF room light in dark mode
                     ]
                 else:  # light
                     relay_commands += [
                         {"action": "set", "relay": 2, "state": False},
                         {"action": "set", "relay": 3, "state": False},
                         {"action": "set", "relay": 4, "state": False},
+                        {"action": "set", "relay": 5, "state": True}, # Turn ON room light in light mode
                     ]
 
                 # Send commands to ESP32
