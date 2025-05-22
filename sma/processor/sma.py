@@ -59,7 +59,7 @@ def update_template_file(template_path, log_dir, template_name, logger):
     """Edit TPL file with the log file path."""
     try:
         # Read the TPL file
-        with open(template_path, 'r', encoding='utf-8') as tpl_file:
+        with open(template_path, 'r', encoding='cp1252') as tpl_file:
             tpl_lines = tpl_file.readlines()
         
         # Replace the LOGFILEPATH
@@ -72,7 +72,7 @@ def update_template_file(template_path, log_dir, template_name, logger):
                 updated_lines.append(line)
         
         # Write the updated content back to the file
-        with open(template_path, 'w', encoding='utf-8') as tpl_file:
+        with open(template_path, 'w', encoding='cp1252') as tpl_file:
             tpl_file.writelines(updated_lines)
         
         logger.info(f"Updated LOGFILEPATH in {template_name} to {log_dir}")
@@ -1448,7 +1448,7 @@ def check_log_file(parent_folder, film_number, logger):
         
         # Try to open the file to check its contents
         try:
-            with open(film_log_path, 'r', encoding='utf-16') as log_file:
+            with open(film_log_path, 'r', encoding='cp1252') as log_file:
                 contents = log_file.read()
                 logger.info(f"Log file size: {len(contents)} bytes")
         except Exception as e:

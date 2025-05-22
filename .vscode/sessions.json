@@ -1,0 +1,88 @@
+{
+  "$schema": "https://cdn.statically.io/gh/nguyenngoclongdev/cdn/main/schema/v10/terminal-keeper.json",
+  "theme": "tribe",
+  "active": "default",
+  "activateOnStartup": true,
+  "keepExistingTerminals": false,
+  "sessions": {
+    "default": [
+      {
+        "name": "me ^^",
+        "autoExecuteCommands": true,
+        "icon": "account",
+        "color": "terminal.ansiBrightRed",
+        "commands": [
+          "cd C:\\ ; cd .\\Users\\user1\\Desktop"
+        ]
+      },
+      [
+        {
+          "name": "django",
+          "autoExecuteCommands": true,
+          "icon": "python",
+          "color": "terminal.ansiGreen",
+          "commands": [
+            "py .\\micro\\manage.py runserver 0.0.0.0:8000"
+          ]
+        },
+        {
+          "name": "caddy",
+          "autoExecuteCommands": true,
+          "icon": "arrow-swap",
+          "color": "terminal.ansiGreen",
+          "commands": [
+            "cd .\\.launch ; .\\caddy.exe run --config caddyfile"
+          ]
+        }
+      ],
+      [
+        {
+          "name": "sma-processor",
+          "autoExecuteCommands": true,
+          "icon": "lightbulb",
+          "color": "terminal.ansiBrightYellow",
+          "commands": [
+            "cd .\\sma\\processor"
+          ]
+        },
+        {
+          "name": "sma-trinamic",
+          "autoExecuteCommands": true,
+          "icon": "gear",
+          "color": "terminal.ansiBrightYellow",
+          "commands": [
+            "cd .\\sma\\trinamic"
+          ]
+        }
+      ],
+      [
+        {
+          "name": "utils",
+          "autoExecuteCommands": true,
+          "icon": "tools",
+          "color": "terminal.ansiBrightBlue",
+          "commands": [
+            "cd .\\.utils"
+          ]
+        },
+        {
+          "name": "launch",
+          "autoExecuteCommands": true,
+          "icon": "play",
+          "color": "terminal.ansiBrightBlue",
+          "commands": [
+            "cd .\\.launch"
+          ]
+        }
+      ]
+    ],
+    "saved-session": [
+      {
+        "name": "micro",
+        "commands": [
+          ""
+        ]
+      }
+    ]
+  }
+}
