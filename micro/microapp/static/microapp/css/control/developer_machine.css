@@ -69,6 +69,10 @@
     margin-bottom: 6px;
 }
 
+.dark-mode .dev-stat-label {
+    color: var(--color-dark-text-light);
+}
+
 .chemicals-level {
     background-color: var(--color-surface);
     border-radius: 8px;
@@ -162,6 +166,10 @@
     font-size: 12px;
     color: var(--color-text-light);
     margin-top: 2px;
+}
+
+.dark-mode .chemical-date {
+    color: var(--color-dark-text-light);
 }
 
 .temperature-chart-container {

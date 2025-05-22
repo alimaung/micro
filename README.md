@@ -59,7 +59,7 @@ The system supports two film types with different handling:
   - Capacity: ~2,900 pages per roll
   
 - **35mm Film**: Used specifically for oversized pages
-  - Capacity: ~110 pages per roll
+  - Capacity: ~690 pages per roll
   - Preserves readability of large format documents
   - Reference sheets on 16mm point to corresponding 35mm frames
 

@@ -40,7 +40,7 @@ window.TransferCore = class TransferCore {
                 folderStructure: null
             },
             destinationPath: '',
-            defaultDestination: 'Y:',
+            defaultDestination: 'X:',
             projectInfo: {
                 archiveId: '',
                 location: '',

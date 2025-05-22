@@ -101,6 +101,20 @@
     box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
 }
 
+.soft-control-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.soft-control-button.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
 /* PC Status Card */
 .pc-status {
     display: grid;
@@ -192,6 +206,10 @@
     color: var(--color-text-light);
 }
 
+.dark-mode .info-label {
+    color: var(--color-dark-text-light);
+}
+
 .info-value {
     font-size: 14px;
     font-weight: 500;
@@ -200,4 +218,89 @@
 
 .dark-mode .info-value {
     color: var(--color-dark-text);
+}
+
+/* PC Actions */
+.pc-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.ping-btn {
+    background-color: rgba(48, 209, 88, 0.1);
+    color: #30d158;
+    border-color: rgba(48, 209, 88, 0.3);
+}
+
+.ping-btn:hover {
+    background-color: rgba(48, 209, 88, 0.2);
+}
+
+.rdp-btn {
+    background-color: rgba(10, 132, 255, 0.1);
+    color: #0a84ff;
+    border-color: rgba(10, 132, 255, 0.3);
+}
+
+.rdp-btn:hover {
+    background-color: rgba(10, 132, 255, 0.2);
+}
+
+/* Refresh button styles for SMA and PC cards */
+.sma-refresh-button,
+.pc-refresh-button {
+    background-color: rgba(0, 0, 0, 0.1);
+    color: var(--color-text-light);
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 5;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-left: 10px;
+    vertical-align: middle;
+}
+
+.sma-refresh-button:hover,
+.pc-refresh-button:hover {
+    background-color: rgba(52, 199, 89, 0.2);
+    color: #30d158;
+    transform: rotate(180deg);
+}
+
+.dark-mode .sma-refresh-button,
+.dark-mode .pc-refresh-button {
+    background-color: rgba(255, 255, 255, 0.15);
+    color: var(--color-dark-text);
+}
+
+.dark-mode .sma-refresh-button:hover,
+.dark-mode .pc-refresh-button:hover {
+    background-color: rgba(52, 199, 89, 0.3);
+    color: #30d158;
+}
+
+.sma-refresh-button i,
+.pc-refresh-button i {
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sma-refresh-button i.spinning,
+.pc-refresh-button i.spinning {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }

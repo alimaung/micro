@@ -607,9 +607,36 @@ window.TransferUI = class TransferUI {
         if (progress.overallProgress !== undefined) {
             const percentage = Math.round(progress.overallProgress * 100);
             
-            // Update progress bar width
-            if (this.elements.transferProgress) {
-                this.elements.transferProgress.style.width = `${percentage}%`;
+            // Get a fresh reference to the progress bar element
+            const progressBar = document.getElementById('transfer-progress');
+            
+            // Update progress bar width with forced reflow and additional CSS properties
+            if (progressBar) {
+                console.log('Updating progress bar width to:', percentage + '%');
+                
+                // Check if parent container exists and has proper styling
+                const progressContainer = progressBar.parentElement;
+                if (progressContainer) {
+                    // Ensure parent container has proper styling
+                    progressContainer.style.overflow = 'hidden';
+                    progressContainer.style.position = 'relative';
+                }
+                
+                // Apply multiple CSS properties to ensure rendering
+                Object.assign(progressBar.style, {
+                    width: `${percentage}%`,
+                    transition: 'width 0.3s ease',
+                    display: 'block',
+                    willChange: 'width',
+                    position: 'absolute',
+                    height: '100%'
+                });
+                
+                // Force a DOM reflow to ensure the browser updates the visual
+                void progressBar.offsetWidth;
+                
+                // Update the cached reference
+                this.elements.transferProgress = progressBar;
             }
             
             // Update percentage text

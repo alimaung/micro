@@ -51,11 +51,20 @@
     position: relative;
 }
 
+.dark-mode .project-field {
+    border-bottom: 1px solid var(--color-dark-border);
+    color: var(--color-dark-text);
+}
+
 .field-label {
     font-size: 14px;
     font-weight: var(--font-weight-medium);
     color: var(--color-text-light);
     flex: 0 0 110px;
+}
+
+.dark-mode .field-label {
+    color: var(--color-dark-text);
 }
 
 .field-value-container {
@@ -91,13 +100,20 @@
 }
 
 .dark-mode .source-stats {
-    background-color: var(--color-dark-surface-alt);
+    background-color: #363636;
+    color: var(--color-dark-text);
+    border-color: var(--color-dark-border);
 }
 
 .stat-item {
     display: flex;
     align-items: center;
     gap: 8px;
+}
+
+.dark-mode .stat-label {
+    color: var(--color-text-dark);
+    font-size: 14px;
 }
 
 .stat-item i {

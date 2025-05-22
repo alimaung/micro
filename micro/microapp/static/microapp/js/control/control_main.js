@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Verify that all required modules are loaded
     if (!Utils || !NotificationManager || !ConnectionManager || !MachineControls || 
-        !RelayControls || !UIManager || !ChartManager) {
+        !RelayControls || !UIManager || !ChartManager || !ExternalSystemsManager) {
             console.error('ERROR: One or more required modules are not loaded!');
             
             // Check each module and log which ones are missing
@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!RelayControls) console.error('RelayControls module not loaded');
             if (!UIManager) console.error('UIManager module not loaded');
             if (!ChartManager) console.error('ChartManager module not loaded');
+            if (!ExternalSystemsManager) console.error('ExternalSystemsManager module not loaded');
             
             // Display error to user
             const controlContainer = document.querySelector('.control-container');
@@ -71,6 +72,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize device info fields to empty/N/A
     RelayControls.clearRelayInfo();
     MachineControls.clearMachineInfo();
+    
+    // Initialize relay controls with event listeners
+    RelayControls.init();
 
     // Hide machine stats card initially
     if (elements.machineStatsCard) {
@@ -85,6 +89,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize charts
     ChartManager.initCharts();
+    
+    // Initialize external systems monitoring
+    ExternalSystemsManager.init();
     
     // Set up event listeners
     
@@ -120,7 +127,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Start the hold timer
             let holdDuration = 0;
-            const requiredHoldTime = 3000; // 3 seconds for machine toggle
+            const requiredHoldTime = 2000; // 3 seconds for machine toggle
             
             // Create progress overlay if it doesn't exist yet
             progressOverlay = this.querySelector('.hold-progress');
@@ -481,6 +488,73 @@ document.addEventListener('DOMContentLoaded', function() {
         relayEmergencyStop.addEventListener('click', function() {
             NotificationManager.showNotification('Relay emergency stop button pressed', 'warning');
             // Add actual emergency stop functionality here
+        });
+    }
+
+    // Add event listeners for external systems refresh buttons
+    const smaRefreshButton = document.querySelector('.sma-refresh-button');
+    if (smaRefreshButton) {
+        smaRefreshButton.addEventListener('click', function() {
+            const icon = this.querySelector('i');
+            
+            // Add spinning animation to icon
+            if (icon) icon.classList.add('spinning');
+            
+            // Record start time
+            const startTime = performance.now();
+            
+            // Execute SMA update operation
+            ExternalSystemsManager.updateSMAStatus()
+                .then(() => {
+                    NotificationManager.showNotification('SMA software status updated', 'success');
+                })
+                .catch(error => {
+                    console.error('Error updating SMA status:', error);
+                    NotificationManager.showNotification('Failed to update SMA status', 'error');
+                })
+                .finally(() => {
+                    // Calculate elapsed time
+                    const elapsedTime = performance.now() - startTime;
+                    const remainingTime = Math.max(0, 1000 - elapsedTime);
+                    
+                    // Ensure minimum animation duration
+                    setTimeout(() => {
+                        if (icon) icon.classList.remove('spinning');
+                    }, remainingTime);
+                });
+        });
+    }
+
+    const pcRefreshButton = document.querySelector('.pc-refresh-button');
+    if (pcRefreshButton) {
+        pcRefreshButton.addEventListener('click', function() {
+            const icon = this.querySelector('i');
+            
+            // Add spinning animation to icon
+            if (icon) icon.classList.add('spinning');
+            
+            // Record start time
+            const startTime = performance.now();
+            
+            // Execute PC update operation
+            ExternalSystemsManager.updatePCStatus()
+                .then(() => {
+                    NotificationManager.showNotification('External PC status updated', 'success');
+                })
+                .catch(error => {
+                    console.error('Error updating PC status:', error);
+                    NotificationManager.showNotification('Failed to update External PC status', 'error');
+                })
+                .finally(() => {
+                    // Calculate elapsed time
+                    const elapsedTime = performance.now() - startTime;
+                    const remainingTime = Math.max(0, 1000 - elapsedTime);
+                    
+                    // Ensure minimum animation duration
+                    setTimeout(() => {
+                        if (icon) icon.classList.remove('spinning');
+                    }, remainingTime);
+                });
         });
     }
 }); 

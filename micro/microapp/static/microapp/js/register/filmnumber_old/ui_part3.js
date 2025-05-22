@@ -335,7 +335,7 @@ export function showToast(message, type = 'info') {
 function clearRollContainers() {}
 function updateAllocationSummary() {}
 const CAPACITY_16MM = 2900;
-const CAPACITY_35MM = 110;
+const CAPACITY_35MM = 690;
 function getDomElements() {
     return {};
 } 

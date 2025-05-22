@@ -156,7 +156,7 @@ class Roll(models.Model):
     """Represents a roll of microfilm with its capacity and contents."""
     # Basic roll information
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='rolls')
-    roll_id = models.PositiveIntegerField(unique=True, blank=True, null=True)  # Not primary key
+    roll_id = models.PositiveIntegerField(blank=True, null=True)  # Not primary key
     film_number = models.CharField(max_length=50, blank=True, null=True, help_text="Film number assigned to this roll")
     film_type = models.CharField(max_length=10, choices=FilmType.choices, help_text="Type of film (16mm or 35mm)")
     

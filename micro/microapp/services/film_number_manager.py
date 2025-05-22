@@ -21,7 +21,7 @@ from microapp.models import (
 
 # Constants for roll capacities and padding
 CAPACITY_16MM = 2900
-CAPACITY_35MM = 110
+CAPACITY_35MM = 690
 TEMP_ROLL_PADDING_16MM = 100
 TEMP_ROLL_PADDING_35MM = 100
 TEMP_ROLL_MIN_USABLE_PAGES = 150

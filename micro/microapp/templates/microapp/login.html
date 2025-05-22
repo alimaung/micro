@@ -14,7 +14,7 @@
     <div class="login-brand-panel">
         <div class="brand-content">
             <div class="logo-container">
-                <img src="{% static 'microapp/img/logo.png' %}" alt="Microfilm Processing System" class="logo">
+                <img src="{% static 'microapp/img/app-logo.png' %}" alt="Microfilm Processing System" class="logo">
             </div>
             <h1>Microfilm Processing System</h1>
             <p class="tagline">Document preservation and archival management</p>
@@ -42,22 +42,6 @@
 
     <!-- Right Panel (Login Form) -->
     <div class="login-form-panel">
-        <div class="theme-toggle">
-            <button id="theme-toggle-btn" aria-label="Toggle dark mode">
-                <i class="fas fa-moon"></i>
-                <i class="fas fa-sun"></i>
-            </button>
-        </div>
-        
-        <div class="language-selector">
-            <select id="language-select">
-                <option value="en">English</option>
-                <option value="es">Español</option>
-                <option value="fr">Français</option>
-                <option value="de">Deutsch</option>
-            </select>
-        </div>
-        
         <div class="form-container">
             <div class="form-header">
                 <h2>Welcome Back</h2>
@@ -191,12 +175,6 @@
         <div class="spinner-large"></div>
         <p>Logging in...</p>
     </div>
-</div>
-
-<!-- CSRF Token Protection Message (for demo) -->
-<div class="security-badge">
-    <i class="fas fa-shield-alt"></i>
-    <span>CSRF Protected</span>
 </div>
 
 {% endblock %}

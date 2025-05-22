@@ -45,8 +45,8 @@
     --overlay-color: rgba(0, 0, 0, 0.2);
 }
 
-/* Dark Mode Colors */
-[data-theme="dark"] {
+/* Dark Mode Colors - using .dark-mode class to match main.js */
+.dark-mode {
     --primary-color: #3d8bfd;
     --primary-dark: #2978f5;
     --primary-light: #1a3a6c;
@@ -107,6 +107,7 @@ a:hover {
     display: flex;
     min-height: 100vh;
     background-color: var(--bg-color);
+    margin-top: 24px;
 }
 
 /* Brand Panel (Left Side) */
@@ -121,6 +122,7 @@ a:hover {
     color: white;
     background: var(--brand-panel-bg);
     overflow: hidden;
+    border-radius: 12px 0 0 12px;
 }
 
 .overlay {
@@ -131,12 +133,12 @@ a:hover {
     height: 100%;
     background: var(--overlay-color);
     z-index: 1;
+    border-radius: 12px 0 0 12px;
 }
 
 .brand-content {
     position: relative;
     z-index: 2;
-    max-width: 500px;
 }
 
 .logo-container {
@@ -144,7 +146,7 @@ a:hover {
 }
 
 .logo {
-    width: 120px;
+    width: 160px;
     height: auto;
 }
 
@@ -189,6 +191,16 @@ a:hover {
     background-color: var(--form-panel-bg);
     box-shadow: var(--shadow-lg);
     z-index: 2;
+    border-radius: 0 12px 12px 0;
+}
+
+/* Update theme toggle to match main.js */
+body:not(.dark-mode) .fa-sun {
+    display: none;
+}
+
+body.dark-mode .fa-moon {
+    display: none;
 }
 
 .theme-toggle {
@@ -215,14 +227,6 @@ a:hover {
 .theme-toggle button:hover {
     background-color: var(--bg-light);
     color: var(--primary-color);
-}
-
-[data-theme="light"] .fa-sun {
-    display: none;
-}
-
-[data-theme="dark"] .fa-moon {
-    display: none;
 }
 
 .language-selector {
@@ -331,7 +335,7 @@ a:hover {
 
 .toggle-password {
     position: absolute;
-    right: 1rem;
+    right: 3rem;
     top: 50%;
     transform: translateY(-50%);
     background: none;
@@ -727,7 +731,7 @@ a:hover {
     background-color: var(--primary-dark);
 }
 
-/* Loading Overlay */
+/* Loading Overlay - update for dark mode */
 .loading-overlay {
     position: fixed;
     top: 0;
@@ -749,7 +753,7 @@ a:hover {
     visibility: visible;
 }
 
-[data-theme="dark"] .loading-overlay {
+.dark-mode .loading-overlay {
     background-color: rgba(0, 0, 0, 0.8);
 }
 

@@ -2,6 +2,7 @@ from django.urls import path, include
 from . import views
 from django.views.i18n import JavaScriptCatalog
 from . import api
+from .views import external_systems_views
 
 
 urlpatterns = [
@@ -156,4 +157,11 @@ urlpatterns = [
     path('api/export/<int:project_id>/file/<str:export_type>/', views.download_specific_export, name='download_specific_export'),
     path('api/export/<int:project_id>/list/', views.get_available_exports, name='get_available_exports'),
     path('api/export/<int:project_id>/reveal-in-explorer/', views.reveal_in_explorer, name='reveal_in_explorer'),
+    
+    # External Systems API Endpoints
+    path('api/sma_status/', external_systems_views.sma_status, name='sma_status'),
+    path('api/sma_reconnect/', external_systems_views.sma_reconnect, name='sma_reconnect'),
+    path('api/external_pc_status/', external_systems_views.external_pc_status, name='external_pc_status'),
+    path('api/external_pc_ping/', external_systems_views.external_pc_ping, name='external_pc_ping'),
+    path('api/external_pc_rdp/', external_systems_views.external_pc_rdp, name='external_pc_rdp'),
 ]

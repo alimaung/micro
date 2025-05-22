@@ -135,12 +135,12 @@ def generate_reference_sheets(request, project_id):
             sheets_created = reference_response['statistics']['total_sheets']
             documents_details = reference_response.get('documents_details', {})
             timestamp = reference_response.get('timestamp')
-        else:
-            # Legacy response format (just the reference_sheets dictionary)
-            reference_sheets = reference_response
-            sheets_created = sum(len(sheets) for sheets in reference_sheets.values())
-            documents_details = {}
-            timestamp = datetime.datetime.now().isoformat()
+        #else:
+        #    # Legacy response format (just the reference_sheets dictionary)
+        #    reference_sheets = reference_response
+        #    sheets_created = sum(len(sheets) for sheets in reference_sheets.values())
+        #    documents_details = {}
+        #    timestamp = datetime.datetime.now().isoformat()
         
         # Enhanced response with more details
         response = {
@@ -153,7 +153,9 @@ def generate_reference_sheets(request, project_id):
         
         # Include additional details if available
         if documents_details:
+            print("\033[35mdocuments_details: {}\033[0m".format(documents_details))
             response["documents_details"] = documents_details
+            print("\033[31mAdded document details\033[0m")
         
         return JsonResponse(response)
         

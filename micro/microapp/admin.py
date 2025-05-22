@@ -15,7 +15,7 @@ class ProjectAdmin(admin.ModelAdmin):
                     'index_path', 'data_dir', 'film_allocation_complete', 'distribution_complete')
     search_fields = ('archive_id', 'location', 'project_folder_name')
     list_filter = ('processing_complete', 'has_pdf_folder', 'has_oversized', 'location')
-    readonly_fields = ('id',)
+    readonly_fields = ('id', 'created_at', 'updated_at')
     fieldsets = (
         ('Identification', {
             'fields': ('id', 'archive_id', 'location', 'doc_type', 'owner')
@@ -44,7 +44,7 @@ class DocumentAdmin(admin.ModelAdmin):
                     'created_at', 'updated_at')
     search_fields = ('doc_id', 'project__archive_id')
     list_filter = ('has_oversized', 'is_split')
-    readonly_fields = ('id',)
+    readonly_fields = ('id', 'created_at', 'updated_at')
     fieldsets = (
         ('Identification', {
             'fields': ('id', 'doc_id', 'project', 'com_id', 'path')
@@ -85,7 +85,7 @@ class RollAdmin(admin.ModelAdmin):
                     'source_temp_roll', 'created_temp_roll')
     search_fields = ('film_number', 'project__archive_id')
     list_filter = ('film_type', 'status', 'is_partial', 'has_split_documents')
-    readonly_fields = ('roll_id',)
+    readonly_fields = ('roll_id', 'creation_date')
     fieldsets = (
         ('Identification', {
             'fields': ('roll_id', 'project', 'film_number', 'film_type')
@@ -109,7 +109,7 @@ class TempRollAdmin(admin.ModelAdmin):
                     'status', 'creation_date', 'source_roll', 'used_by_roll')
     search_fields = ('temp_roll_id', 'film_type')
     list_filter = ('film_type', 'status')
-    readonly_fields = ('temp_roll_id',)
+    readonly_fields = ('temp_roll_id', 'creation_date')
     fieldsets = (
         ('Identification', {
             'fields': ('temp_roll_id', 'film_type')
@@ -131,7 +131,7 @@ class DocumentSegmentAdmin(admin.ModelAdmin):
                     'blip', 'blipend', 'created_at')
     search_fields = ('document__doc_id', 'roll__film_number')
     list_filter = ('has_oversized',)
-    readonly_fields = ('id',)
+    readonly_fields = ('id', 'created_at')
     fieldsets = (
         ('Identification', {
             'fields': ('id', 'document', 'roll', 'document_index')
@@ -170,7 +170,7 @@ class FilmAllocationAdmin(admin.ModelAdmin):
                    'total_partial_rolls_35mm', 'total_split_documents_35mm',
                    'creation_date', 'updated_at')
     search_fields = ('project__archive_id',)
-    readonly_fields = ('id',)
+    readonly_fields = ('id', 'creation_date', 'updated_at')
     fieldsets = (
         ('Project', {
             'fields': ('id', 'project')
@@ -201,7 +201,7 @@ class DistributionResultAdmin(admin.ModelAdmin):
                    'completed_at', 'status')
     search_fields = ('project__archive_id',)
     list_filter = ('status',)
-    readonly_fields = ('id',)
+    readonly_fields = ('id', 'completed_at')
     fieldsets = (
         ('Project', {
             'fields': ('id', 'project', 'output_dir')
@@ -227,7 +227,7 @@ class ReferenceSheetAdmin(admin.ModelAdmin):
                    'path', 'blip_35mm', 'film_number_35mm', 'human_range', 'created_at')
     search_fields = ('document__doc_id', 'film_number_35mm')
     list_filter = ('created_at',)
-    readonly_fields = ('id',)
+    readonly_fields = ('id', 'created_at')
     fieldsets = (
         ('Document Information', {
             'fields': ('id', 'document', 'document_range')
@@ -262,7 +262,7 @@ class ProcessedDocumentAdmin(admin.ModelAdmin):
                    'processed_at', 'copied_to_output', 'output_path')
     search_fields = ('document__doc_id', 'path')
     list_filter = ('processing_type', 'copied_to_output')
-    readonly_fields = ('id',)
+    readonly_fields = ('id', 'processed_at')
     fieldsets = (
         ('Document Information', {
             'fields': ('id', 'document', 'processing_type', 'path')

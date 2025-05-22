@@ -4,9 +4,6 @@
  */
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize dark mode based on system preference
-    initTheme();
-    
     // Set up form validation and submission
     setupFormValidation();
     
@@ -19,35 +16,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Set up modal and toast events
     setupNotifications();
 });
-
-/**
- * Initialize theme based on saved preference or system setting
- */
-function initTheme() {
-    const themeToggleBtn = document.getElementById('theme-toggle-btn');
-    const storedTheme = localStorage.getItem('theme');
-    const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    
-    // Set initial theme
-    if (storedTheme) {
-        document.documentElement.setAttribute('data-theme', storedTheme);
-    } else if (prefersDarkMode) {
-        document.documentElement.setAttribute('data-theme', 'dark');
-    } else {
-        document.documentElement.setAttribute('data-theme', 'light');
-    }
-    
-    // Add event listener for theme toggle
-    if (themeToggleBtn) {
-        themeToggleBtn.addEventListener('click', function() {
-            const currentTheme = document.documentElement.getAttribute('data-theme');
-            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-            
-            document.documentElement.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
-        });
-    }
-}
 
 /**
  * Set up form validation and submission

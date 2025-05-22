@@ -195,5 +195,5 @@ class PDFGenerator:
 pdf = PDFGenerator()
 
 # Generate a PDF with 3500 pages, 40% oversized, and 30% of those in consecutive ranges
-pdf.generate_pdf(3500, oversized_percentage=0.4, consecutive_oversized_percentage=0.3)
+pdf.generate_pdf(1, oversized_percentage=0.0, consecutive_oversized_percentage=0.0)
 

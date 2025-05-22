@@ -305,6 +305,10 @@
     margin-top: 2px;
 }
 
+.dark-mode .machine-stat-label {
+    color: var(--color-dark-text-light);
+}
+
 /* Placeholder styles for the machine stat values */
 .machine-stat-value.placeholder {
     color: #999;

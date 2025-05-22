@@ -1,21 +1,21 @@
 {
   "sourceData": {
-    "path": "Y:\\RRD003-2002_DW_INVOICE",
-    "folderName": "RRD003-2002_DW_INVOICE",
-    "fileCount": 21,
-    "totalSize": 1607468,
-    "totalSizeFormatted": "1.5 MB"
+    "path": "X:\\RRD015-2024_OU_FPA-FPD-MVA",
+    "folderName": "RRD015-2024_OU_FPA-FPD-MVA",
+    "fileCount": 225,
+    "totalSize": 5762159678,
+    "totalSizeFormatted": "5.4 GB"
   },
-  "destinationPath": "Y:\\RRD003-2002_DW_INVOICE\\",
+  "destinationPath": "Y:\\RRD015-2024_OU_FPA-FPD-MVA\\",
   "projectInfo": {
-    "archiveId": "RRD003-2002",
-    "location": "DW",
-    "documentType": "INVOICE",
-    "pdfPath": "Y:\\RRD003-2002_DW_INVOICE\\B1_MixedSingleRoll",
-    "comlistPath": "Y:\\RRD003-2002_DW_INVOICE\\comlist.xlsx",
+    "archiveId": "RRD015-2024",
+    "location": "OU",
+    "documentType": "FPA-FPD-MVA",
+    "pdfPath": "X:\\RRD015-2024_OU_FPA-FPD-MVA\\PDFs zu RRD015-2024",
+    "comlistPath": "X:\\RRD015-2024_OU_FPA-FPD-MVA\\RRD015-2024_FPA_FPD_COM_List.xlsx",
     "isValid": true
   },
-  "projectId": "45",
+  "projectId": 37,
   "uiState": {
     "autoParseEnabled": true,
     "autoSelectPathEnabled": true,
@@ -23,5 +23,5 @@
     "autoFindComlistEnabled": true,
     "createSubfolderEnabled": true
   },
-  "isValidated": 45
+  "isValidated": 37
 }

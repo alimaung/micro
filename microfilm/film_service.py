@@ -21,7 +21,7 @@ class FilmService:
     
     # Constants for film capacity
     CAPACITY_16MM = 2900  # Pages per 16mm film roll
-    CAPACITY_35MM = 110   # Pages per 35mm film roll
+    CAPACITY_35MM = 690   # Pages per 35mm film roll
     
     # Constants for partial roll padding
     PADDING_16MM = 150     # Padding for 16mm partial rolls

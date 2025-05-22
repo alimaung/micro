@@ -1,3 +1,3 @@
 @echo off
-python run_micro.py
+"Y:\Python313\python.exe" run_micro.py
 pause 

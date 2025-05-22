@@ -29,8 +29,17 @@ ALLOWED_HOSTS = [
     'micro.film',
     'localhost',
     '127.0.0.1',
+    '192.168.1.96',
+    '192.168.1.111',
 ]
 
+CSRF_TRUSTED_ORIGINS = [
+    'https://micro.film',
+    'http://localhost',
+    'http://127.0.0.1',
+    'http://192.168.1.96',
+    'http://192.168.1.111',
+]
 
 # Application definition
 

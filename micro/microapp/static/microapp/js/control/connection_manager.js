@@ -117,7 +117,7 @@ const ConnectionManager = {
         // Check for SMA51 Machine on COM3
         this.checkMachinePort();
         
-        // Check for Saferoom Relay on COM7 or COM18
+        // Check for Saferoom Relay on COM9 or COM23
         this.checkRelayPort();
         
         // Update overall system status (without redundant UI updates)
@@ -241,10 +241,10 @@ const ConnectionManager = {
     },
 
     /**
-     * Check if Saferoom Relay port is available (COM7 or COM18)
+     * Check if Saferoom Relay port is available (COM9 or COM23)
      */
     checkRelayPort: function() {
-        console.log("Checking for Saferoom Relay on COM18...");
+        console.log("Checking for Saferoom Relay on COM23...");
         
         // Store previous states before any changes
         const wasConnected = this.isRelayConnected;
@@ -257,7 +257,7 @@ const ConnectionManager = {
             modeToggle.classList.add('checking');
         }
         
-        // First try COM7
+        // First try COM9
         fetch('/check_port/', {
             method: 'POST',
             headers: {
@@ -265,13 +265,13 @@ const ConnectionManager = {
                 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
             },
             body: new URLSearchParams({
-                'port': 'COM7'
+                'port': 'COM9'
             })
         })
         .then(response => response.json())
         .then(data => {
             if (data.status === 'success') {
-                // COM7 is available
+                // COM9 is available
                 this.isRelayConnected = true;
                 
                 // Update relay port info with the returned device info
@@ -285,8 +285,8 @@ const ConnectionManager = {
                 } else {
                     // Fallback to default values only if we don't already have data
                     if (this.lastRelayDeviceData.port === 'N/A') {
-                        RelayControls.updateRelayInfo('COM7');
-                        this.lastRelayDeviceData.port = 'COM7';
+                        RelayControls.updateRelayInfo('COM9');
+                        this.lastRelayDeviceData.port = 'COM9';
                     }
                 }
                 
@@ -295,13 +295,13 @@ const ConnectionManager = {
                 
                 // Show notification if state changed from disconnected to connected
                 if (!wasConnected) {
-                    NotificationManager.showNotification("Relay connected on COM7", "success");
+                    NotificationManager.showNotification("Relay connected on COM9", "success");
                 } else {
                     // Show notification even if it was already connected
-                    NotificationManager.showNotification("Relay connection confirmed on COM7", "success");
+                    NotificationManager.showNotification("Relay connection confirmed on COM9", "success");
                 }
                 
-                console.log("Saferoom Relay connected on COM7");
+                console.log("Saferoom Relay connected on COM9");
                 
                 // Enable the mode toggle
                 if (modeToggle) {
@@ -312,20 +312,20 @@ const ConnectionManager = {
                 // Fetch initial relay states and ESP32 status now that we're connected
                 Utils.updateESP32Stats();
             } else {
-                // Try COM18 instead
-                console.log("COM7 not available, checking COM18...");
+                // Try COM23 instead
+                console.log("COM9 not available, checking COM23...");
                 this.tryBackupRelayPort();
             }
         })
         .catch(error => {
-            console.error('Error checking relay port COM7:', error);
-            // Try COM18 as backup
+            console.error('Error checking relay port COM9:', error);
+            // Try COM23 as backup
             this.tryBackupRelayPort();
         });
     },
 
     /**
-     * Try connecting to backup relay port (COM18)
+     * Try connecting to backup relay port (COM23)
      */
     tryBackupRelayPort: function() {
         fetch('/check_port/', {
@@ -335,7 +335,7 @@ const ConnectionManager = {
                 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
             },
             body: new URLSearchParams({
-                'port': 'COM18'
+                'port': 'COM23'
             })
         })
         .then(response => response.json())
@@ -348,7 +348,7 @@ const ConnectionManager = {
             }
             
             if (data.status === 'success') {
-                // COM18 is available
+                // COM23 is available
                 this.isRelayConnected = true;
                 
                 // Update relay port info
@@ -356,22 +356,22 @@ const ConnectionManager = {
                     RelayControls.updateRelayInfoFromData(data.device_info);
                     this.lastRelayDeviceData = { ...data.device_info };
                 } else {
-                    RelayControls.updateRelayInfo('COM18');
-                    this.lastRelayDeviceData.port = 'COM18';
+                    RelayControls.updateRelayInfo('COM23');
+                    this.lastRelayDeviceData.port = 'COM23';
                 }
                 
                 // Update relay connection UI
                 UIManager.updateRelayConnectionUI(true);
                 
                 // Show success notification
-                NotificationManager.showNotification("Relay connected on COM18", "success");
+                NotificationManager.showNotification("Relay connected on COM23", "success");
                 
-                console.log("Saferoom Relay connected on COM18");
+                console.log("Saferoom Relay connected on COM23");
                 
                 // Fetch initial relay states and ESP32 status
                 Utils.updateESP32Stats();
             } else {
-                // Neither COM7 nor COM18 is available
+                // Neither COM9 nor COM23 is available
                 this.isRelayConnected = false;
                 
                 // Update UI to show disconnected state
@@ -384,7 +384,7 @@ const ConnectionManager = {
             }
         })
         .catch(error => {
-            console.error('Error checking relay port COM18:', error);
+            console.error('Error checking relay port COM23:', error);
             
             // Enable the mode toggle button
             const modeToggle = document.getElementById('mode-toggle');
@@ -413,7 +413,7 @@ const ConnectionManager = {
         if (relayPort && this.isRelayConnected && relayPort.textContent !== 'N/A') {
             return relayPort.textContent;
         }
-        return 'COM7'; // Default fallback to COM18
+        return 'COM9'; // Default fallback to COM23
     },
 
     /**

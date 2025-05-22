@@ -292,6 +292,12 @@
     flex: 1;
 }
 
+.dark-mode .form-input {
+    background-color: #1e1e1e;
+    border-color: #2d2d2d;
+    color: #666;
+}
+
 /* Toggle switches */
 .option-toggles {
     display: grid;
@@ -394,6 +400,12 @@ input:checked + .slider:before {
     background-color: #f5f5f5;
     color: var(--color-text);
     border: 1px solid var(--color-border);
+}
+
+.dark-mode .browse-button.secondary {
+    background-color: #363636;
+    color: var(--color-dark-text);
+    border-color: var(--color-dark-border);
 }
 
 .browse-button.secondary:hover {
@@ -607,6 +619,11 @@ input:checked + .slider:before {
     overflow: hidden;
 }
 
+.dark-mode .transfer-log-section {
+    border-color: var(--color-dark-border);
+    background-color: var(--color-dark-surface);
+}
+
 .log-header {
     display: flex;
     align-items: center;
@@ -614,6 +631,12 @@ input:checked + .slider:before {
     padding: 12px;
     background-color: #f5f5f5;
     cursor: pointer;
+}
+
+.dark-mode .log-header {
+    background-color: #2d2d2d;
+    color: var(--color-dark-text);
+    border-color: var(--color-dark-border);
 }
 
 .log-header i {
@@ -839,6 +862,10 @@ input:checked + .slider:before {
     flex: 0 0 110px;
 }
 
+.dark-mode .field-label {
+    color: var(--color-dark-text);
+}
+
 .field-value-container {
     display: flex;
     align-items: center;
@@ -857,6 +884,10 @@ input:checked + .slider:before {
     flex: 1;
     text-align: right;
     padding-right: 0;
+}
+
+.dark-mode .field-value {
+    color: var(--color-dark-text);
 }
 
 .field-edit {
@@ -878,6 +909,10 @@ input:checked + .slider:before {
 .icon-button {
     flex-shrink: 0;
     margin-left: 4px;
+}
+
+.dark-mode .icon-button {
+    color: var(--color-dark-text);
 }
 
 /* Field validation error styles - ensure it's below the border */

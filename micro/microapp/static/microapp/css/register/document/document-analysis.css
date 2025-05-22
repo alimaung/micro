@@ -188,4 +188,86 @@
     .reference-list-item {
         padding: 10px;
     }
+}
+
+/* Dark Mode Styles */
+.dark-mode .reference-sheets {
+    background-color: #1a1a1a;
+    border-color: #2d2d2d;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.dark-mode .reference-header h4 {
+    color: #e0e0e0;
+}
+
+.dark-mode .reference-header h4 i {
+    color: #60a5fa;
+}
+
+.dark-mode .reference-info p {
+    color: #a0a0a0;
+}
+
+.dark-mode .reference-stats {
+    background-color: #1e293b;
+}
+
+.dark-mode .reference-stat-label {
+    color: #94a3b8;
+}
+
+.dark-mode .reference-stat-value {
+    color: #60a5fa;
+}
+
+.dark-mode .reference-list-container {
+    border-color: #2d2d2d;
+}
+
+.dark-mode .reference-list-header {
+    background-color: #1e293b;
+    color: #e2e8f0;
+    border-bottom-color: #2d2d2d;
+}
+
+.dark-mode .reference-list-item {
+    background-color: #1a1a1a;
+    border-bottom-color: #2d2d2d;
+}
+
+.dark-mode .reference-list-item:hover {
+    background-color: #2d2d2d;
+}
+
+.dark-mode .reference-list-item .ref-doc-name {
+    color: #e2e8f0;
+}
+
+.dark-mode .reference-list-item .ref-doc-ranges,
+.dark-mode .reference-list-item .ref-doc-pages {
+    color: #94a3b8;
+}
+
+.dark-mode .reference-list-item .ref-doc-readable {
+    color: #60a5fa;
+}
+
+.dark-mode .empty-list-message {
+    color: #94a3b8;
+}
+
+.dark-mode .action-button.highlight {
+    background-color: #3b82f6;
+    border-color: #3b82f6;
+    color: white;
+}
+
+.dark-mode .action-button.highlight:hover:not(:disabled) {
+    background-color: #2563eb;
+}
+
+.dark-mode .action-button.highlight:disabled {
+    background-color: #475569;
+    border-color: #475569;
 } 

@@ -8,7 +8,7 @@
 #include <HTTPUpdate.h>
 
 // WiFi credentials (now constants)
-const char* ssid = "MICRO-RELAY";
+const char* ssid = "4G-UFI-0E4";
 const char* password = "microrelay";
 
 // Static network config for STA mode

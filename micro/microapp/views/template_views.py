@@ -3,7 +3,7 @@ Template rendering views for the microapp.
 These views are simple and mainly return rendered templates with minimal logic.
 """
 
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import HttpResponseRedirect
 from django.utils import translation
 from django.conf import settings
@@ -72,6 +72,11 @@ def handoff(request):
 
 def explore(request):
     """Explore page view with simple statistics."""
+    # Check if user is authenticated
+    if not request.user.is_authenticated:
+        # Redirect to admin login page with next parameter set to explore
+        return redirect(f'/admin/login/?next=/explore/')
+    
     # Get counts for each entity
     total_projects = Project.objects.filter(owner=request.user).count()
     total_rolls = 0  # Will be updated when Roll model is created

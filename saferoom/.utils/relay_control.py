@@ -139,10 +139,10 @@ if __name__ == "__main__":
 
 # Examples of usage:
 # To turn on relay 1:
-#   python serial_relay_control.py --port COM7 --command on --relay 1
+#   python serial_relay_control.py --port COM9 --command on --relay 1
 #
 # To turn off relay 2:
-#   python serial_relay_control.py --port COM7 --command off --relay 2
+#   python serial_relay_control.py --port COM9 --command off --relay 2
 #
 # For faster operation (keeps connection open between runs):
-#   python serial_relay_control.py --port COM7 --command status --persistent
+#   python serial_relay_control.py --port COM9 --command status --persistent
