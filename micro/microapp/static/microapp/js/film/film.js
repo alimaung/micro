@@ -552,92 +552,28 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function initializeCharts() {
-        // Temperature chart data
-        const tempCtx = document.getElementById('temperature-chart').getContext('2d');
-        const tempData = {
-            labels: Array.from({length: 30}, (_, i) => `-${29-i}m`),
-            datasets: [{
-                label: 'Temperature °C',
-                data: generateMockTemperatureData(),
-                borderColor: 'rgba(255, 99, 132, 1)',
-                backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                tension: 0.4,
-                fill: true
-            }]
-        };
-        
-        // Processing chart data
-        const procCtx = document.getElementById('processing-chart').getContext('2d');
-        const procData = {
-            labels: Array.from({length: 30}, (_, i) => `-${29-i}m`),
-            datasets: [{
-                label: 'Docs/Second',
-                data: generateMockProcessingData(),
-                borderColor: 'rgba(54, 162, 235, 1)',
-                backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                tension: 0.4,
-                fill: true
-            }]
-        };
-        
-        // Chart options
-        const chartOptions = {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
+        // Initialize Chart.js chart for filming statistics
+        const ctx = document.getElementById('filmingChart');
+        if (ctx) {
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Completed', 'In Progress', 'Pending'],
+                    datasets: [{
+                        data: [0, 0, 0],
+                        backgroundColor: ['#4CAF50', '#2196F3', '#FFC107']
+                    }]
                 },
-                tooltip: {
-                    mode: 'index',
-                    intersect: false
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: false,
-                    ticks: {
-                        font: {
-                            size: 10
-                        }
-                    }
-                },
-                x: {
-                    ticks: {
-                        maxRotation: 0,
-                        autoSkip: true,
-                        maxTicksLimit: 6,
-                        font: {
-                            size: 10
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
                         }
                     }
                 }
-            }
-        };
-        
-        // Create charts
-        new Chart(tempCtx, {
-            type: 'line',
-            data: tempData,
-            options: chartOptions
-        });
-        
-        new Chart(procCtx, {
-            type: 'line',
-            data: procData,
-            options: chartOptions
-        });
-    }
-    
-    function generateMockTemperatureData() {
-        // Generate realistic temperature data around 28°C
-        const baseTemp = 28;
-        return Array.from({length: 30}, () => baseTemp + (Math.random() * 1.2 - 0.6));
-    }
-    
-    function generateMockProcessingData() {
-        // Generate realistic processing rate data around 3 docs/sec
-        const baseRate = 3;
-        return Array.from({length: 30}, () => baseRate + (Math.random() * 1.6 - 0.8));
+            });
+        }
     }
 });

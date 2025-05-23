@@ -60,7 +60,11 @@ def register_export(request):
 
 def film(request):
     """Film page view."""
-    return render(request, 'microapp/film.html')
+    return render(request, 'microapp/film/film.html')
+
+def develop(request):
+    """Develop page view."""
+    return render(request, 'microapp/develop/develop.html')
 
 def control(request):
     """Control page view."""
@@ -100,10 +104,6 @@ def login(request):
     """Login page view."""
     return render(request, 'microapp/login.html')
 
-def language(request):
-    """Language selection page view."""
-    return render(request, 'microapp/language.html')
-
 # Inactive views (old versions)
 def oldcontrol(request):
     """Deprecated control page view."""
@@ -120,6 +120,10 @@ def oldtransfer(request):
 def oldexplore(request):
     """Deprecated explore page view."""
     return render(request, 'microapp/explore_old.html')
+
+def oldfilm(request):
+    """Deprecated film page view."""
+    return render(request, 'microapp/film_old.html')
 
 # Language toggle function
 def toggle_language(request):

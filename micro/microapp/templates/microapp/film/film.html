@@ -1,0 +1,278 @@
+{% extends 'microapp/base.html' %}
+
+{% block title %}Film Controller - Microfilm Processing System{% endblock %}
+
+{% load static %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'microapp/css/film/film.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="film-container">
+        <!-- Header Section -->
+        <div class="film-header">
+            <div class="header-content">
+                <h1>Microfilm Controller</h1>
+                <p class="subtitle">Control and monitor the filming process for registered projects</p>
+            </div>
+            <div class="quick-stats">
+                <div class="stat-item">
+                    <span class="stat-value" id="total-projects">0</span>
+                    <span class="stat-label">Total Projects</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="ready-filming">0</span>
+                    <span class="stat-label">Ready for Filming</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="total-pages">0</span>
+                    <span class="stat-label">Total Pages</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Project Selection Section -->
+        <div class="project-selection-card">
+            <div class="card-header">
+                <h2>Select Project to Film</h2>
+                <div class="mode-selector">
+                    <span class="mode-label">Film Type:</span>
+                    <div class="toggle-container">
+                        <input type="radio" id="film-16mm" name="film-type" value="16" checked>
+                        <label for="film-16mm">16mm</label>
+                        <input type="radio" id="film-35mm" name="film-type" value="35">
+                        <label for="film-35mm">35mm</label>
+                    </div>
+                </div>
+            </div>
+            <div class="search-filter">
+                <div class="search-box">
+                    <input type="text" id="project-search" placeholder="Search projects...">
+                    <button id="search-button">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+                <div class="filter-options">
+                    <select id="project-status-filter">
+                        <option value="all">All Statuses</option>
+                        <option value="ready" selected>Ready to Film</option>
+                        <option value="in-progress">In Progress</option>
+                        <option value="completed">Completed</option>
+                    </select>
+                    <select id="project-type-filter">
+                        <option value="all">All Types</option>
+                        <option value="document">Document</option>
+                        <option value="book">Book</option>
+                        <option value="archive">Archive</option>
+                        <option value="newspaper">Newspaper</option>
+                    </select>
+                </div>
+            </div>
+            <div class="projects-list">
+                <div class="list-header">
+                    <span class="project-name">Project Name</span>
+                    <span class="project-id">Project ID</span>
+                    <span class="project-location">Location</span>
+                    <span class="project-pages">Pages</span>
+                    <span class="project-type">Type</span>
+                    <span class="project-status">Status</span>
+                </div>
+                <div id="project-list" class="list-body">
+                    <!-- Projects will be loaded dynamically -->
+                    <div class="loading-state">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Loading projects...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="project-actions">
+                <button id="start-filming" class="primary-button">
+                    <i class="fas fa-film"></i> Start Filming Process
+                </button>
+            </div>
+        </div>
+
+        <!-- Filming Process Section (initially hidden) -->
+        <div id="filming-process-section" class="filming-process-card" style="display: none;">
+            <div class="card-header">
+                <h2>Filming Process: <span id="filming-project-name">Project Name</span></h2>
+                <span class="film-number">Film #: <span id="film-number">F-16-0001</span></span>
+            </div>
+            
+            <!-- Progress Indicators -->
+            <div class="progress-indicators">
+                <div class="progress-step" data-step="initialization">
+                    <div class="step-icon">
+                        <i class="fas fa-power-off"></i>
+                    </div>
+                    <div class="step-label">
+                        Initialization
+                    </div>
+                    <div class="step-connector"></div>
+                </div>
+                <div class="progress-step" data-step="preparation">
+                    <div class="step-icon">
+                        <i class="fas fa-cog"></i>
+                    </div>
+                    <div class="step-label">
+                        Preparation
+                    </div>
+                    <div class="step-connector"></div>
+                </div>
+                <div class="progress-step" data-step="filming">
+                    <div class="step-icon">
+                        <i class="fas fa-camera"></i>
+                    </div>
+                    <div class="step-label">
+                        Filming
+                    </div>
+                    <div class="step-connector"></div>
+                </div>
+                <div class="progress-step" data-step="finalization">
+                    <div class="step-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="step-label">
+                        Finalization
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Current Activity Section -->
+            <div class="current-activity">
+                <h3>Current Activity: <span id="current-activity-label">Processing Documents</span></h3>
+                <div class="activity-details">
+                    <div class="activity-info">
+                        <div class="info-item">
+                            <span class="info-label">Processed:</span>
+                            <span class="info-value" id="processed-docs">0</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Total:</span>
+                            <span class="info-value" id="total-docs">0</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Progress:</span>
+                            <span class="info-value progress-text">0%</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">ETA:</span>
+                            <span class="info-value eta-text">Calculating...</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Status:</span>
+                            <span class="info-value filming-status pending">Pending</span>
+                        </div>
+                    </div>
+                    <div class="activity-progress">
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-fill" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Real-time Log Section -->
+            <div class="log-section">
+                <div class="log-header">
+                    <h3>Process Log</h3>
+                    <button id="expand-log" class="icon-button">
+                        <i class="fas fa-expand-alt"></i>
+                    </button>
+                </div>
+                <div class="log-container">
+                    <div class="log-content">
+                        <!-- Log entries will be added dynamically -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Controls Section -->
+            <div class="filming-controls">
+                <button id="pause-filming" class="control-button warning-button" disabled>
+                    <i class="fas fa-pause"></i> Pause Filming
+                </button>
+                <button id="resume-filming" class="control-button success-button" disabled>
+                    <i class="fas fa-play"></i> Resume Filming
+                </button>
+                <button id="cancel-filming" class="control-button danger-button" disabled>
+                    <i class="fas fa-stop"></i> Cancel Filming
+                </button>
+            </div>
+        </div>
+        
+        <!-- Machine Status Section -->
+        <div class="machine-status-card">
+            <div class="card-header">
+                <h2>Filming Machine Status</h2>
+                <span class="status-indicator online">
+                    <i class="fas fa-plug"></i> Connected
+                </span>
+            </div>
+            <div class="machine-details">
+                <div class="machine-info-panel">
+                    <div class="machine-info-item">
+                        <span class="info-icon"><i class="fas fa-thermometer-half"></i></span>
+                        <div class="info-content">
+                            <span class="info-label">System Temperature</span>
+                            <span class="info-value">28.4°C <span class="status-normal">Normal</span></span>
+                        </div>
+                    </div>
+                    <div class="machine-info-item">
+                        <span class="info-icon"><i class="fas fa-tachometer-alt"></i></span>
+                        <div class="info-content">
+                            <span class="info-label">Processing Speed</span>
+                            <span class="info-value">3.2 docs/sec <span class="status-normal">Normal</span></span>
+                        </div>
+                    </div>
+                    <div class="machine-info-item">
+                        <span class="info-icon"><i class="fas fa-film"></i></span>
+                        <div class="info-content">
+                            <span class="info-label">Film Remaining</span>
+                            <span class="info-value">65% <span class="status-normal">Normal</span></span>
+                        </div>
+                    </div>
+                    <div class="machine-info-item">
+                        <span class="info-icon"><i class="fas fa-memory"></i></span>
+                        <div class="info-content">
+                            <span class="info-label">Buffer Status</span>
+                            <span class="info-value">32% <span class="status-normal">Normal</span></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="machine-stats">
+                    <div class="machine-stat">
+                        <canvas id="filmingChart" class="stat-chart"></canvas>
+                        <span class="stat-title">Filming Statistics</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recently Completed Section -->
+        <div class="recent-films-card">
+            <div class="card-header">
+                <h2>Recently Completed Films</h2>
+                <button class="view-all-button">
+                    <i class="fas fa-list"></i> View All
+                </button>
+            </div>
+            <div class="recent-films-grid">
+                <!-- Recent films will be loaded dynamically -->
+                <div class="loading-state">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Loading recent films...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container for notifications -->
+    <div id="toast-container"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{% static 'microapp/js/common/database-service.js' %}"></script>
+<script src="{% static 'microapp/js/film.js' %}"></script>
+{% endblock %} 

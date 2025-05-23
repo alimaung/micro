@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+import uuid
 
 class FilmType(models.TextChoices):
     """Type of film used for microfilming."""
@@ -443,7 +444,7 @@ class ReadablePageDescription(models.Model):
         unique_together = ['document', 'range_index']
     
     def __str__(self):
-        return f"{self.document.doc_id}: {self.description} (index {self.range_index})"
+        return f"{self.document.doc_id}: Range {self.range_index} - {self.description}"
 
 
 class AdjustedRange(models.Model):
@@ -496,3 +497,78 @@ class ProcessedDocument(models.Model):
         if self.start_page and self.end_page:
             return f"{self.document.doc_id} ({self.processing_type}): pages {self.start_page}-{self.end_page}"
         return f"{self.document.doc_id} ({self.processing_type})"
+
+class FilmingSession(models.Model):
+    """Tracks SMA filming sessions with progress and status."""
+    SESSION_STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('running', 'Running'),
+        ('paused', 'Paused'),
+        ('completed', 'Completed'),
+        ('cancelled', 'Cancelled'),
+        ('error', 'Error'),
+    ]
+    
+    # Session identification
+    session_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    
+    # Relationships
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='filming_sessions')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='filming_sessions')
+    
+    # Film configuration
+    template = models.CharField(max_length=10, choices=FilmType.choices, help_text="Film template (16mm or 35mm)")
+    film_number = models.CharField(max_length=50, help_text="Film number for this session")
+    
+    # Session parameters
+    project_path = models.CharField(max_length=500, help_text="Path to project folder")
+    output_dir = models.CharField(max_length=500, help_text="Output directory path")
+    
+    # Progress tracking
+    status = models.CharField(max_length=20, choices=SESSION_STATUS_CHOICES, default='pending')
+    total_documents = models.IntegerField(default=0, help_text="Total documents to process")
+    processed_documents = models.IntegerField(default=0, help_text="Documents processed so far")
+    progress_percent = models.FloatField(default=0.0, help_text="Progress percentage (0-100)")
+    
+    # Timing information
+    started_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    duration = models.DurationField(null=True, blank=True, help_text="Total session duration")
+    estimated_remaining = models.DurationField(null=True, blank=True, help_text="Estimated remaining time")
+    
+    # Error handling
+    error_message = models.TextField(blank=True, null=True, help_text="Error message if session failed")
+    
+    # Metadata
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['session_id']),
+            models.Index(fields=['status']),
+            models.Index(fields=['project', 'status']),
+        ]
+    
+    def __str__(self):
+        return f"Filming Session {self.session_id} - {self.project.archive_id} ({self.status})"
+    
+    @property
+    def is_active(self):
+        """Check if the session is currently active (running or paused)."""
+        return self.status in ['running', 'paused']
+    
+    @property
+    def is_completed(self):
+        """Check if the session has completed successfully."""
+        return self.status == 'completed'
+    
+    def update_progress(self, processed_docs, total_docs=None):
+        """Update session progress."""
+        if total_docs:
+            self.total_documents = total_docs
+        self.processed_documents = processed_docs
+        if self.total_documents > 0:
+            self.progress_percent = (self.processed_documents / self.total_documents) * 100
+        self.save(update_fields=['processed_documents', 'total_documents', 'progress_percent', 'updated_at'])

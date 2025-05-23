@@ -4,12 +4,10 @@ __pycache__/
 *.pyo
 *.pyd
 recovery-codes.txt
-
 # .env
 .env
-
 # TODO stuff
 todo.log
 TODO.md.bak
 DONE.md.bak
-
+serviceAccountKey.json

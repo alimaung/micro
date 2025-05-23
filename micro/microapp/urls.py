@@ -23,6 +23,7 @@ urlpatterns = [
     path('register/export/', views.register_export, name='register_export'),
     
     path('film/', views.film, name='film'),
+    path('develop/', views.develop, name='develop'),
     path('control/', views.control, name='control'),
     path('handoff/', views.handoff, name='handoff'),
     path('explore/', views.explore, name='explore'),
@@ -31,10 +32,11 @@ urlpatterns = [
     path('login/', views.login, name='login'),
     
     # Inactive TemplateURLs
-    path('oldregister/', views.oldregister, name='oldregister'),
-    path('oldcontrol/', views.oldcontrol, name='oldcontrol'),
-    path('oldtransfer/', views.oldtransfer, name='oldtransfer'),
-    path('oldexplore/', views.oldexplore, name='oldexplore'),
+    path('registerold/', views.oldregister, name='oldregister'),
+    path('controlold/', views.oldcontrol, name='oldcontrol'),
+    path('transferold/', views.oldtransfer, name='oldtransfer'),
+    path('exploreold/', views.oldexplore, name='oldexplore'),
+    path('filmold/', views.oldfilm, name='oldfilm'),
     
     # API Endpoints
     path('control_relay/', views.control_relay, name='control_relay'),
@@ -164,4 +166,37 @@ urlpatterns = [
     path('api/external_pc_status/', external_systems_views.external_pc_status, name='external_pc_status'),
     path('api/external_pc_ping/', external_systems_views.external_pc_ping, name='external_pc_ping'),
     path('api/external_pc_rdp/', external_systems_views.external_pc_rdp, name='external_pc_rdp'),
+    
+    # API Endpoints for Transfer
+    path('api/transfer/', views.transfer_files, name='transfer_files'),
+    path('api/transfer/progress/<str:task_id>/', views.transfer_progress, name='transfer_progress'),
+    
+    # API Endpoints for Export
+    path('api/export/project-data/', views.export_project_data, name='export_project_data'),
+    path('api/export/generate/', views.generate_exports, name='generate_exports'),
+    path('api/export/download/', views.download_export_zip, name='download_export_zip'),
+    path('api/export/download/<str:export_type>/', views.download_specific_export, name='download_specific_export'),
+    path('api/export/available/', views.get_available_exports, name='get_available_exports'),
+    
+    # SMA API Endpoints
+    path('api/sma/start/', views.start_filming, name='start_filming'),
+    path('api/sma/control/', views.control_filming, name='control_filming'),
+    path('api/sma/status/<str:session_id>/', views.filming_status, name='filming_status'),
+    path('api/sma/logs/<str:session_id>/', views.filming_logs, name='filming_logs'),
+    path('api/sma/progress/<str:session_id>/', views.filming_progress, name='filming_progress'),
+    path('api/sma/active-sessions/', views.active_sessions, name='active_sessions'),
+    path('api/sma/machine-status/', views.machine_status, name='machine_status'),
+    path('api/sma/test-connection/', views.test_sma_connection, name='test_sma_connection'),
+    
+    # Notification API Endpoints
+    path('api/notifications/', views.get_notifications, name='get_notifications'),
+    path('api/notifications/send/', views.send_notification, name='send_notification'),
+    path('api/notifications/<str:notification_id>/read/', views.mark_notification_read, name='mark_notification_read'),
+    path('api/notifications/mark-all-read/', views.mark_all_read, name='mark_all_read'),
+    path('api/notifications/unread-count/', views.get_unread_count, name='get_unread_count'),
+    path('api/notifications/<str:notification_id>/delete/', views.delete_notification, name='delete_notification'),
+    path('api/notifications/firebase/', views.send_firebase_notification, name='send_firebase_notification'),
+    path('api/notifications/websocket/', views.send_websocket_notification, name='send_websocket_notification'),
+    path('api/notifications/settings/', views.notification_settings, name='notification_settings'),
+    path('api/notifications/settings/update/', views.update_notification_settings, name='update_notification_settings'),
 ]

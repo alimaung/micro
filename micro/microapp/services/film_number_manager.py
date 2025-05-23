@@ -509,15 +509,15 @@ class FilmNumberManager:
                 roll.source_temp_roll = temp_roll_obj
                 roll.film_number_source = "temp_roll"
                 
-                # IMPORTANT FIX: Set the roll's capacity to the temp roll's capacity
-                # instead of using the default full roll capacity
-                roll.capacity = temp_roll_obj.capacity
-                self.logger.info(f"\033[31mSetting roll capacity to temp roll capacity: {temp_roll_obj.capacity}\033[0m")
+                # IMPORTANT FIX: Set the roll's capacity to the temp roll's usable capacity
+                # instead of using the total capacity
+                roll.capacity = temp_roll_obj.usable_capacity
+                self.logger.info(f"\033[31mSetting roll capacity to temp roll usable capacity: {temp_roll_obj.usable_capacity}\033[0m")
                 
                 # Calculate remaining capacity
-                remaining_capacity = temp_roll_obj.capacity - roll.pages_used
+                remaining_capacity = temp_roll_obj.usable_capacity - roll.pages_used
                 roll.pages_remaining = remaining_capacity
-                self.logger.info(f"\033[31mTemp roll capacity: {temp_roll_obj.capacity}, Used: {roll.pages_used}, Remaining: {remaining_capacity}\033[0m")
+                self.logger.info(f"\033[31mTemp roll usable capacity: {temp_roll_obj.usable_capacity}, Used: {roll.pages_used}, Remaining: {remaining_capacity}\033[0m")
                 
                 # Save roll
                 roll.save()
@@ -537,7 +537,7 @@ class FilmNumberManager:
                 
                 if usable_remainder >= TEMP_ROLL_MIN_USABLE_PAGES:
                     # Create new temp roll
-                    self.logger.info(f"\033[31mCreating new temp roll from remainder with {remaining_capacity} capacity and {usable_remainder} usable capacity\033[0m")
+                    self.logger.info(f"\033[31mCreating new temp roll from remainder with {remaining_capacity} usable capacity and {usable_remainder} usable capacity\033[0m")
                     new_temp_roll = self._create_temp_roll_from_remainder(
                         temp_roll_obj,
                         remaining_capacity,

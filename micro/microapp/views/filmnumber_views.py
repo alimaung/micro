@@ -578,12 +578,63 @@ def process_film_number_allocation(task_id, project_id, project_data, analysis_d
                     'blipend': segment.blipend
                 })
 
+            # Add temp roll information
+            temp_roll_info = {}
+            capacity_breakdown = {
+                'used': roll.pages_used,
+                'total': roll.capacity,
+                'remaining': roll.pages_remaining
+            }
+            
+            if roll.source_temp_roll:
+                temp_roll_info['source_temp_roll'] = {
+                    'id': roll.source_temp_roll.pk,
+                    'capacity': roll.source_temp_roll.capacity,
+                    'usable_capacity': roll.source_temp_roll.usable_capacity,
+                    'status': roll.source_temp_roll.status
+                }
+                # For USE case: used pages (green), remaining usable (blue)
+                capacity_breakdown['temp_type'] = 'used'
+                capacity_breakdown['temp_remaining'] = roll.pages_remaining
+            
+            if roll.created_temp_roll:
+                temp_roll_info['created_temp_roll'] = {
+                    'id': roll.created_temp_roll.pk,
+                    'capacity': roll.created_temp_roll.capacity,
+                    'usable_capacity': roll.created_temp_roll.usable_capacity,
+                    'status': roll.created_temp_roll.status
+                }
+                # For CREATE case: used pages (green), temp roll capacity (yellow)
+                capacity_breakdown['temp_type'] = 'created'
+                capacity_breakdown['temp_capacity'] = roll.created_temp_roll.capacity
+            
+            # Check for UNWIND case (unusable leftover space)
+            has_unwind = False
+            if roll.is_partial and roll.pages_remaining > 0 and not roll.created_temp_roll:
+                # Calculate if there would be unusable space
+                from microapp.services.film_number_manager import TEMP_ROLL_PADDING_16MM, TEMP_ROLL_PADDING_35MM, TEMP_ROLL_MIN_USABLE_PAGES
+                
+                padding = TEMP_ROLL_PADDING_16MM if roll.film_type == 'film_16mm' else TEMP_ROLL_PADDING_35MM
+                usable_remainder = roll.pages_remaining - padding
+                
+                if roll.pages_remaining > 0 and usable_remainder < TEMP_ROLL_MIN_USABLE_PAGES:
+                    has_unwind = True
+                    temp_roll_info['has_unwind'] = True
+                    temp_roll_info['unwind_capacity'] = roll.pages_remaining
+                    # For UNWIND case: used pages (green), unusable remainder (red)
+                    capacity_breakdown['temp_type'] = 'unwind'
+                    capacity_breakdown['unwind_capacity'] = roll.pages_remaining
+
             formatted_rolls_16mm.append({
                 'roll_id': original_roll_id,  # Use the found original roll_id
                 'film_number': roll.film_number,
                 'capacity': roll.capacity,
                 'pages_used': roll.pages_used,
                 'pages_remaining': roll.pages_remaining,
+                'film_number_source': roll.film_number_source,  # "temp_roll" or "new"
+                'is_partial': roll.is_partial,
+                'temp_roll_info': temp_roll_info,
+                'capacity_breakdown': capacity_breakdown,
                 'document_segments': formatted_segments
             })
             

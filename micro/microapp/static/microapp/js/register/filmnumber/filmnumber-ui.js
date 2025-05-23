@@ -145,6 +145,50 @@ const FilmNumberUI = (function() {
         filmNumberEl.innerHTML = `<strong>Film #:</strong> ${roll.film_number || 'Pending'}`;
         cardHeader.appendChild(filmNumberEl);
         
+        // Add temp roll status badge if temp roll info is available
+        if (roll.temp_roll_info || roll.film_number_source) {
+            const tempRollBadge = document.createElement('div');
+            tempRollBadge.className = 'temp-roll-badge';
+            
+            let badgeContent = '';
+            let badgeClass = '';
+            
+            // Check if roll has unusable leftover space (UNWIND)
+            if (roll.temp_roll_info && roll.temp_roll_info.has_unwind) {
+                const unwindCapacity = roll.temp_roll_info.unwind_capacity;
+                badgeContent = `UNWIND ${unwindCapacity}p`;
+                badgeClass = 'temp-roll-unwind';
+            }
+            // Check if roll used a temp roll
+            else if (roll.temp_roll_info && roll.temp_roll_info.source_temp_roll) {
+                const tempRollId = roll.temp_roll_info.source_temp_roll.id;
+                badgeContent = `USE T${tempRollId}`;
+                badgeClass = 'temp-roll-used';
+            }
+            // Check if roll created a temp roll
+            else if (roll.temp_roll_info && roll.temp_roll_info.created_temp_roll) {
+                const tempRollId = roll.temp_roll_info.created_temp_roll.id;
+                badgeContent = `CREATE T${tempRollId}`;
+                badgeClass = 'temp-roll-created';
+            }
+            // Check if it's a new roll (only show if no temp roll operations)
+            else if ((roll.film_number_source === 'new' || !roll.film_number_source) && 
+                     (!roll.temp_roll_info || 
+                      (!roll.temp_roll_info.source_temp_roll && 
+                       !roll.temp_roll_info.created_temp_roll && 
+                       !roll.temp_roll_info.has_unwind))) {
+                badgeContent = 'NEW';
+                badgeClass = 'temp-roll-new';
+            }
+            
+            if (badgeContent) {
+                tempRollBadge.className = `temp-roll-badge ${badgeClass}`;
+                tempRollBadge.textContent = badgeContent;
+                tempRollBadge.title = getTempRollTooltip(roll);
+                cardHeader.appendChild(tempRollBadge);
+            }
+        }
+        
         // Add roll ID and type
         const rollInfoEl = document.createElement('div');
         rollInfoEl.className = 'roll-info';
@@ -153,19 +197,17 @@ const FilmNumberUI = (function() {
         
         rollCard.appendChild(cardHeader);
         
-        // Create usage statistics
+        // Create usage statistics with multi-colored bar
         const usageStats = document.createElement('div');
         usageStats.className = 'usage-stats';
         
-        // Calculate utilization
-        const utilization = Math.round((roll.pages_used / roll.capacity) * 100);
+        // Create multi-colored usage bar based on capacity breakdown
+        const usageBarHtml = createMultiColoredUsageBar(roll);
         
         usageStats.innerHTML = `
-            <div class="usage-bar">
-                <div class="usage-fill" style="width: ${utilization}%"></div>
-            </div>
+            ${usageBarHtml}
             <div class="usage-text">
-                <span>${roll.pages_used} pages used / ${roll.capacity} capacity (${utilization}%)</span>
+                <span>${roll.pages_used} pages used / ${roll.capacity} capacity (${Math.round((roll.pages_used / roll.capacity) * 100)}%)</span>
             </div>
         `;
         
@@ -254,6 +296,92 @@ const FilmNumberUI = (function() {
         }
         
         return rollCard;
+    }
+
+    /**
+     * Create multi-colored usage bar based on temp roll status
+     */
+    function createMultiColoredUsageBar(roll) {
+        if (!roll.capacity_breakdown) {
+            // Fallback to simple green bar
+            const utilization = Math.round((roll.pages_used / roll.capacity) * 100);
+            return `
+                <div class="usage-bar">
+                    <div class="usage-fill" style="width: ${utilization}%"></div>
+                </div>
+            `;
+        }
+        
+        const breakdown = roll.capacity_breakdown;
+        const usedPercent = (breakdown.used / breakdown.total) * 100;
+        
+        let barHtml = '<div class="usage-bar multi-colored">';
+        
+        // Always add the used portion (green)
+        barHtml += `<div class="usage-fill used" style="width: ${usedPercent}%"></div>`;
+        
+        // Add temp portion based on type
+        if (breakdown.temp_type) {
+            let tempPercent = 0;
+            let tempClass = '';
+            
+            switch (breakdown.temp_type) {
+                case 'used':
+                    // USE case: remaining usable space (blue)
+                    tempPercent = (breakdown.temp_remaining / breakdown.total) * 100;
+                    tempClass = 'temp-used';
+                    break;
+                    
+                case 'created':
+                    // CREATE case: temp roll capacity (yellow)
+                    tempPercent = (breakdown.temp_capacity / breakdown.total) * 100;
+                    tempClass = 'temp-created';
+                    break;
+                    
+                case 'unwind':
+                    // UNWIND case: unusable remainder (red)
+                    tempPercent = (breakdown.unwind_capacity / breakdown.total) * 100;
+                    tempClass = 'temp-unwind';
+                    break;
+            }
+            
+            if (tempPercent > 0) {
+                barHtml += `<div class="usage-fill ${tempClass}" style="width: ${tempPercent}%"></div>`;
+            }
+        }
+        
+        barHtml += '</div>';
+        return barHtml;
+    }
+
+    /**
+     * Get tooltip text for temp roll badge
+     */
+    function getTempRollTooltip(roll) {
+        if (!roll.temp_roll_info && !roll.film_number_source) {
+            return 'New roll with new film number';
+        }
+        
+        if (roll.temp_roll_info && roll.temp_roll_info.has_unwind) {
+            const unwindCapacity = roll.temp_roll_info.unwind_capacity;
+            return `Unusable leftover space: ${unwindCapacity} pages (requires complete unwind)`;
+        }
+        
+        if (roll.temp_roll_info && roll.temp_roll_info.source_temp_roll) {
+            const tempRoll = roll.temp_roll_info.source_temp_roll;
+            return `Uses temp roll T${tempRoll.id} (${tempRoll.usable_capacity} usable capacity)`;
+        }
+        
+        if (roll.temp_roll_info && roll.temp_roll_info.created_temp_roll) {
+            const tempRoll = roll.temp_roll_info.created_temp_roll;
+            return `Created temp roll T${tempRoll.id} (${tempRoll.usable_capacity} usable capacity)`;
+        }
+        
+        if (roll.film_number_source === 'new') {
+            return 'New roll with new film number';
+        }
+        
+        return 'Film number allocation information';
     }
 
     /**

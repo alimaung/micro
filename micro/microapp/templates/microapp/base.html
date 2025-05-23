@@ -33,6 +33,7 @@
             <a href="{% url 'register' %}" {% if request.path == '/register/' %}class="active"{% endif %}>Register</a>
             <a href="{% url 'film' %}" {% if request.path == '/film/' %}class="active"{% endif %}>Film</a>
             <a href="{% url 'control' %}" {% if request.path == '/control/' %}class="active"{% endif %}>Control</a>
+            <a href="{% url 'develop' %}" {% if request.path == '/develop/' %}class="active"{% endif %}>Develop</a>
             <a href="{% url 'handoff' %}" {% if request.path == '/handoff/' %}class="active"{% endif %}>Handoff</a>
             <a href="{% url 'explore' %}" {% if request.path == '/explore/' %}class="active"{% endif %}>Explore</a>
             <a href="{% url 'report' %}" {% if request.path == '/report/' %}class="active"{% endif %}>Report</a>

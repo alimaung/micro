@@ -7,8 +7,8 @@ This allows existing URL patterns to continue working without modifications.
 from .template_views import (
     home, transfer, register, register_project, register_document, register_workflow,
     register_references, register_allocation, register_index, register_filmnumber,
-    register_distribution, register_export, film, control, handoff, explore, report,
-    settings_view, login, oldcontrol, oldregister, oldtransfer, oldexplore, language,
+    register_distribution, register_export, film, develop, control, handoff, explore, report,
+    settings_view, login, oldcontrol, oldregister, oldtransfer, oldexplore, oldfilm,
     toggle_language
 )
 
@@ -68,4 +68,17 @@ from .reference_views import (
 from .export_views import (
     export_project_data, generate_exports, download_export_zip, 
     download_specific_export, get_available_exports
+)
+
+# Import SMA views
+from .sma_views import (
+    start_filming, control_filming, filming_status, filming_logs, 
+    filming_progress, active_sessions, machine_status, test_sma_connection
+)
+
+# Import notification views
+from .notification_views import (
+    send_notification, get_notifications, mark_notification_read, mark_all_read,
+    get_unread_count, delete_notification, send_firebase_notification,
+    send_websocket_notification, notification_settings, update_notification_settings
 )

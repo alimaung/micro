@@ -1,22 +1,27 @@
 Directory,Path,Date,Files,Pages,Oversize,Rolls
 
+----------------- DONE -----------------
 RRD058-2021_OU_Nacharbeitspl�ne,X:/RRD058-2021_OU_Nacharbeitspl�ne,2025-05-21 12:21,130,1160,0,0.40
-
-
 RRD116-2021_OU_Setlisten,X:/RRD116-2021_OU_Setlisten,2025-05-21 12:24,555,1440,0,0.50
 RRD202-2018_DW_Archivvereinbarungen,X:/RRD202-2018_DW_Archivvereinbarungen,2025-05-21 12:06,343,1828,0,0.63
 RRD089-2024_OU_Badanalysen,X:/RRD089-2024_OU_Badanalysen,2025-05-21 12:22,240,1909,0,0.66
 RRD105-2021_OU_Serialnummernlisten eines DP,X:/RRD105-2021_OU_Serialnummernlisten eines DP,2025-05-21 12:24,294,2159,0,0.74
 RRD018-2025_OU_(PILS),X:/RRD018-2025_OU_(PILS),2025-05-21 12:20,1762,3552,0,1.22
+RRD262-2018_DW_Gate Review Checklist_COM_fortlaufend,X:/RRD262-2018_DW_Gate Review Checklist_COM_fortlaufend,2025-05-21 12:04,26,133,1,0.05
+RRD120-2021_OU_Skizzenpl�ne,X:/RRD120-2021_OU_Skizzenpl�ne,2025-05-21 12:24,347,1169,1,0.40
 RRD260-2018_DW_Feldrequest,X:/RRD260-2018_DW_Feldrequest,2025-05-21 12:05,157,5138,0,1.77
+
+
+----------------- PROCESSING -----------------
+RRD004-2023_OU_Verlagerungsantr�ge,X:/RRD004-2023_OU_Verlagerungsantr�ge,2025-05-21 12:18,33,2004,9,0.69
+
+
+----------------- STANDARD -----------------
 RRD007-2022_DW_TAD,X:/RRD007-2022_DW_TAD,2025-05-21 12:19,267,14357,0,4.95
 RRD093-2023_OU_Sonderuntersuchungen,X:/RRD093-2023_OU_Sonderuntersuchungen,2025-05-21 12:24,1267,27754,0,9.57
 
 
-
-RRD262-2018_DW_Gate Review Checklist_COM_fortlaufend,X:/RRD262-2018_DW_Gate Review Checklist_COM_fortlaufend,2025-05-21 12:04,26,133,1,0.05
-RRD120-2021_OU_Skizzenpl�ne,X:/RRD120-2021_OU_Skizzenpl�ne,2025-05-21 12:24,347,1169,1,0.40
-RRD004-2023_OU_Verlagerungsantr�ge,X:/RRD004-2023_OU_Verlagerungsantr�ge,2025-05-21 12:18,33,2004,9,0.69
+----------------- HYBRID -----------------
 RRD115-2021_OU_Pr�fpl�ne,X:/RRD115-2021_OU_Pr�fpl�ne,2025-05-21 12:24,671,2321,602,0.80
 RRD106-2024_OU_Pr�ferakte,X:/RRD106-2024_OU_Pr�ferakte,2025-05-21 12:24,333,2816,6,0.97
 RRD077-2021_OU_Abschlussberichte,X:/RRD077-2021_OU_Abschlussberichte,2025-05-21 12:22,104,4394,6,1.52
