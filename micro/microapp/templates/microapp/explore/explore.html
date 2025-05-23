@@ -104,6 +104,32 @@
                                 <option value="remote-storage">Remote Storage</option>
                             </select>
                         </div>
+                        <div class="filter-row">
+                            <label for="project-status">Status:</label>
+                            <select id="project-status">
+                                <option value="">All Statuses</option>
+                                <option value="draft">Draft</option>
+                                <option value="processing">Processing</option>
+                                <option value="allocated">Film Allocated</option>
+                                <option value="complete">Complete</option>
+                            </select>
+                        </div>
+                        <div class="filter-row">
+                            <label for="has-oversized">Has Oversized:</label>
+                            <select id="has-oversized">
+                                <option value="">All</option>
+                                <option value="true">Yes</option>
+                                <option value="false">No</option>
+                            </select>
+                        </div>
+                        <div class="filter-row">
+                            <label for="processing-complete">Processing Complete:</label>
+                            <select id="processing-complete">
+                                <option value="">All</option>
+                                <option value="true">Yes</option>
+                                <option value="false">No</option>
+                            </select>
+                        </div>
                     </div>
                     
                     <div id="rolls-filters" class="entity-filters">
@@ -274,6 +300,21 @@
                     </div>
                 </div>
                 
+                <!-- Batch operations section -->
+                <div id="batch-operations" class="batch-operations">
+                    <div class="batch-header">
+                        <span>Selected: <span id="batch-counter">0</span></span>
+                    </div>
+                    <div class="batch-actions">
+                        <button id="batch-update-status" class="batch-action" disabled>
+                            <i class="fas fa-edit"></i> Update Status
+                        </button>
+                        <button id="batch-delete" class="batch-action" disabled>
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </div>
+                </div>
+                
                 <div class="results-options">
                     <div class="page-controls">
                         <span>Show</span>
@@ -292,6 +333,8 @@
                             <option value="id">ID</option>
                             <option value="created">Date Created</option>
                             <option value="name">Name</option>
+                            <option value="status">Status</option>
+                            <option value="pages">Total Pages</option>
                         </select>
                         <select id="sort-order">
                             <option value="asc">Ascending</option>
@@ -306,11 +349,15 @@
                         <table class="results-table">
                             <thead>
                                 <tr>
+                                    <th>
+                                        <input type="checkbox" id="select-all-projects" class="batch-checkbox">
+                                    </th>
                                     <th>ID</th>
                                     <th>Archive ID</th>
                                     <th>Location</th>
                                     <th>Document Type</th>
                                     <th>Total Pages</th>
+                                    <th>Status</th>
                                     <th>Date Created</th>
                                     <th>Actions</th>
                                 </tr>
@@ -318,7 +365,7 @@
                             <tbody id="results-body">
                                 <!-- This will be populated by JavaScript -->
                                 <tr class="empty-row">
-                                    <td colspan="7">No data available. Apply filters to see results.</td>
+                                    <td colspan="9">No data available. Apply filters to see results.</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -378,6 +425,7 @@
                                     <option value="doc_type">Document Type</option>
                                     <option value="location">Location</option>
                                     <option value="creation_date">Creation Date</option>
+                                    <option value="status">Status</option>
                                 </select>
                             </div>
                             <div class="viz-control">
@@ -461,6 +509,10 @@
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="{% static 'microapp/js/common/database-service.js' %}"></script>
-<script src="{% static 'microapp/js/explore/explore_details.js' %}"></script>
-<script src="{% static 'microapp/js/explore/explore.js' %}"></script>
+
+<!-- Project module -->
+<script src="{% static 'microapp/js/explore/models/project/project-list.js' %}"></script>
+<script src="{% static 'microapp/js/explore/models/project/project-details.js' %}"></script>
+<script src="{% static 'microapp/js/explore/models/project/project-edit.js' %}"></script>
+<script src="{% static 'microapp/js/explore/models/project/project-export.js' %}"></script>
 {% endblock %} 
