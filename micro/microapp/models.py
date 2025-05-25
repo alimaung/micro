@@ -171,6 +171,10 @@ class Roll(models.Model):
     has_split_documents = models.BooleanField(default=False, help_text="Whether any documents are split across rolls")
     creation_date = models.DateTimeField(auto_now_add=True)
     
+    # Output directory path
+    output_directory = models.CharField(max_length=500, blank=True, null=True, 
+                                       help_text="Path to the roll's output directory where documents are distributed")
+    
     # Partial roll information
     is_partial = models.BooleanField(default=False, help_text="Whether this is a partial roll")
     remaining_capacity = models.IntegerField(default=0, help_text="Remaining capacity when roll becomes partial")

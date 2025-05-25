@@ -281,14 +281,15 @@
     overflow-y: auto;
 }
 
+/* Project item layout */
 .project-item {
-    display: grid;
-    grid-template-columns: 2fr 1fr 1fr 0.7fr 1fr 1fr 0.8fr;
-    padding: 12px 16px;
-    font-size: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
     border-bottom: 1px solid var(--color-border);
-    transition: background-color 0.2s ease;
     cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .dark-mode .project-item {
@@ -304,15 +305,24 @@
 }
 
 .dark-mode .project-item:hover {
-    background-color: rgba(255, 255, 255, 0.05);
+    background-color: rgba(var(--color-primary-rgb), 0.1);
 }
 
 .project-item.selected {
     background-color: rgba(var(--color-primary-rgb), 0.1);
+    border-color: var(--color-primary);
 }
 
 .dark-mode .project-item.selected {
     background-color: rgba(var(--color-primary-rgb), 0.15);
+}
+
+.project-info {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr;
+    gap: 16px;
+    align-items: center;
+    flex: 1;
 }
 
 .project-name {
@@ -324,163 +334,198 @@
     color: var(--color-dark-text);
 }
 
-.project-id, .project-date, .project-pages, .project-type {
-    color: var(--color-text);
+.project-id, .project-location, .project-pages, .project-type {
+    color: var(--color-text-light);
+    font-size: 14px;
 }
 
 .dark-mode .project-id, 
-.dark-mode .project-date, 
+.dark-mode .project-location, 
 .dark-mode .project-pages, 
 .dark-mode .project-type {
     color: var(--color-dark-text-light);
 }
 
-/* Status badges */
-.status-badge {
-    display: inline-block;
-    padding: 4px 8px;
-    border-radius: 12px;
-    font-size: 12px;
-    font-weight: 500;
-}
-
-.status-badge.ready {
-    background-color: #d1e7dd;
-    color: #0a5239;
-}
-
-.status-badge.in-progress {
-    background-color: #cfe2ff;
-    color: #084298;
-}
-
-.status-badge.completed {
-    background-color: #e2e3e5;
-    color: #41464b;
-}
-
-.dark-mode .status-badge.ready {
-    background-color: rgba(10, 82, 57, 0.3);
-    color: #6ce9b9;
-}
-
-.dark-mode .status-badge.in-progress {
-    background-color: rgba(8, 66, 152, 0.3);
-    color: #8cb8ff;
-}
-
-.dark-mode .status-badge.completed {
-    background-color: rgba(65, 70, 75, 0.3);
-    color: #c2c5ca;
-}
-
-/* Action buttons */
-.action-button {
-    padding: 6px 10px;
-    border-radius: 4px;
-    font-size: 12px;
-    border: 1px solid var(--color-border);
-    background-color: var(--color-background);
-    color: var(--color-text);
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.dark-mode .action-button {
-    background-color: var(--color-dark-surface);
-    color: var(--color-dark-text);
-    border-color: var(--color-dark-border);
-}
-
-.action-button:hover {
-    background-color: var(--color-surface);
-    transform: translateY(-1px);
-}
-
-.dark-mode .action-button:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-}
-
-.select-button {
-    color: var(--color-primary);
-    border-color: var(--color-primary);
-}
-
-.resume-button {
-    color: #0a5239;
-    border-color: #d1e7dd;
-    background-color: #d1e7dd;
-}
-
-.dark-mode .resume-button {
-    color: #6ce9b9;
-    border-color: rgba(10, 82, 57, 0.3);
-    background-color: rgba(10, 82, 57, 0.3);
-}
-
-.view-button {
-    color: #41464b;
-    border-color: #e2e3e5;
-    background-color: #e2e3e5;
-}
-
-.dark-mode .view-button {
-    color: #c2c5ca;
-    border-color: rgba(65, 70, 75, 0.3);
-    background-color: rgba(65, 70, 75, 0.3);
-}
-
-/* Project actions */
 .project-actions {
     display: flex;
-    justify-content: flex-end;
-    gap: 15px;
-}
-
-.primary-button, 
-.secondary-button {
-    padding: 12px 20px;
-    border-radius: 6px;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
     gap: 8px;
-    transition: all 0.3s ease;
+    margin-left: 16px;
 }
 
-.primary-button {
+/* Loading, Error, and Empty States */
+.loading-state,
+.error-state,
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    text-align: center;
+    color: var(--color-text-light);
+}
+
+.dark-mode .loading-state,
+.dark-mode .error-state,
+.dark-mode .empty-state {
+    color: var(--color-dark-text-light);
+}
+
+.loading-state i,
+.error-state i,
+.empty-state i {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.6;
+}
+
+.loading-state i {
+    color: var(--color-primary);
+    animation: spin 1s linear infinite;
+}
+
+.error-state i {
+    color: var(--color-danger);
+}
+
+.empty-state i {
+    color: var(--color-text-light);
+}
+
+.loading-state p,
+.error-state p,
+.empty-state p {
+    font-size: 16px;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.empty-state small {
+    font-size: 14px;
+    opacity: 0.8;
+}
+
+.retry-button {
+    margin-top: 16px;
+    padding: 8px 16px;
     background-color: var(--color-primary);
     color: white;
     border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s ease;
 }
 
-.primary-button:hover {
+.retry-button:hover {
     background-color: var(--color-primary-dark);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-.secondary-button {
+.retry-button i {
+    margin-right: 8px;
+    font-size: 14px;
+}
+
+/* Status badges */
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.status-badge.ready {
+    background-color: rgba(76, 175, 80, 0.1);
+    color: #4CAF50;
+}
+
+.status-badge.in-progress {
+    background-color: rgba(33, 150, 243, 0.1);
+    color: #2196F3;
+}
+
+.status-badge.completed {
+    background-color: rgba(156, 39, 176, 0.1);
+    color: #9C27B0;
+}
+
+.status-badge.pending {
+    background-color: rgba(255, 193, 7, 0.1);
+    color: #FFC107;
+}
+
+.dark-mode .status-badge.ready {
+    background-color: rgba(76, 175, 80, 0.2);
+    color: #81C784;
+}
+
+.dark-mode .status-badge.in-progress {
+    background-color: rgba(33, 150, 243, 0.2);
+    color: #64B5F6;
+}
+
+.dark-mode .status-badge.completed {
+    background-color: rgba(156, 39, 176, 0.2);
+    color: #BA68C8;
+}
+
+.dark-mode .status-badge.pending {
+    background-color: rgba(255, 193, 7, 0.2);
+    color: #FFD54F;
+}
+
+/* Action buttons */
+.select-button,
+.resume-button,
+.view-button {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.select-button {
+    background-color: var(--color-success);
+    color: white;
+}
+
+.select-button:hover {
+    background-color: var(--color-success-dark);
+}
+
+.resume-button {
+    background-color: var(--color-primary);
+    color: white;
+}
+
+.resume-button:hover {
+    background-color: var(--color-primary-dark);
+}
+
+.view-button {
     background-color: var(--color-surface);
     color: var(--color-text);
     border: 1px solid var(--color-border);
 }
 
-.secondary-button:hover {
-    background-color: var(--color-background);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+.view-button:hover {
+    background-color: var(--color-border);
 }
 
-.dark-mode .secondary-button {
+.dark-mode .view-button {
     background-color: rgba(255, 255, 255, 0.05);
     color: var(--color-dark-text);
     border-color: var(--color-dark-border);
 }
 
-.dark-mode .secondary-button:hover {
+.dark-mode .view-button:hover {
     background-color: rgba(255, 255, 255, 0.1);
 }
 
@@ -1296,29 +1341,70 @@
 @media (max-width: 576px) {
     .list-header,
     .project-item {
-        grid-template-columns: 1fr auto;
+        font-size: 12px;
     }
     
     .project-id,
-    .project-date {
+    .project-location {
         display: none;
     }
     
     .progress-indicators {
-        margin-left: -24px;
-        margin-right: -24px;
-        padding-left: 24px;
-        padding-right: 24px;
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .step-connector {
+        display: none;
     }
     
     .project-actions {
-        flex-direction: column;
+        margin-top: 8px;
+        justify-content: flex-end;
     }
     
     .primary-button,
     .secondary-button {
-        width: 100%;
-        justify-content: center;
+        padding: 10px 16px;
+        font-size: 12px;
+    }
+    
+    /* Additional responsive styles for project list */
+    .project-info {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    
+    .project-item {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .project-actions {
+        margin-left: 0;
+        margin-top: 12px;
+        justify-content: flex-end;
+    }
+}
+
+/* Additional responsive adjustments for project list */
+@media (max-width: 992px) {
+    .project-info {
+        grid-template-columns: 2fr 1fr 1fr 1fr;
+    }
+    
+    .project-type {
+        display: none;
+    }
+}
+
+@media (max-width: 768px) {
+    .project-info {
+        grid-template-columns: 2fr 1fr 1fr;
+    }
+    
+    .project-location {
+        display: none;
     }
 }
 

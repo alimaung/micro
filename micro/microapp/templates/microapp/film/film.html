@@ -8,6 +8,7 @@
 {% endblock %}
 
 {% block content %}
+    {% csrf_token %}
     <div class="film-container">
         <!-- Header Section -->
         <div class="film-header">
@@ -274,5 +275,5 @@
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="{% static 'microapp/js/common/database-service.js' %}"></script>
-<script src="{% static 'microapp/js/film.js' %}"></script>
+<script src="{% static 'microapp/js/film/film.js' %}"></script>
 {% endblock %} 
