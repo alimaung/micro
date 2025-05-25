@@ -31,7 +31,13 @@ from .transfer_views import (
 
 from .project_views import (
     create_project, list_projects, get_project, update_project, delete_project,
-    get_database_stats
+    get_database_stats, get_document_types, get_locations, get_project_history,
+    get_project_rolls, get_project_documents, export_projects_excel, export_projects_pdf
+)
+
+from .roll_views import (
+    create_roll, list_rolls, get_roll, update_roll, delete_roll,
+    export_rolls_excel, export_rolls_pdf
 )
 
 from .document_views import (

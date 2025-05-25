@@ -77,6 +77,14 @@ urlpatterns = [
     path('api/projects/<int:project_id>/update/', views.update_project, name='update_project'),
     path('api/projects/<int:project_id>/delete/', views.delete_project, name='delete_project'),
     path('api/statistics/', views.get_database_stats, name='get_database_stats'),
+    
+    # Document types and locations endpoints
+    path('api/projects/document-types/', views.get_document_types, name='get_document_types'),
+    path('api/projects/locations/', views.get_locations, name='get_locations'),
+    
+    # Project history endpoint
+    path('api/projects/<int:project_id>/history/', views.get_project_history, name='get_project_history'),
+    
     path('api/documents/analyze', views.analyze_documents, name='analyze_documents'),
     
     # New API endpoints for document analysis
@@ -110,12 +118,33 @@ urlpatterns = [
     path('api/documents/blip/<str:blip>/', api.lookup_blip, name='api_lookup_blip'),
     path('api/projects/<int:project_id>/bulk-import-documents/', api.bulk_import_documents, name='api_bulk_import_documents'),
     path('api/projects/<int:project_id>/documents/<str:doc_id>/split/', api.split_document, name='api_split_document'),
+    path('api/documents/<str:doc_id>/segments/', api.get_document_segments, name='api_get_document_segments'),
+    
+    # New Document API endpoints
+    path('api/documents/', api.get_documents_list, name='api_get_documents_list'),
+    path('api/documents/<int:document_id>/', api.get_document_by_id, name='api_get_document_by_id'),
+    path('api/documents/create/', api.create_document, name='api_create_document'),
+    path('api/documents/<int:document_id>/update/', api.update_document, name='api_update_document'),
+    path('api/documents/<int:document_id>/delete/', api.delete_document, name='api_delete_document'),
+    path('api/documents/search/', api.search_documents, name='api_search_documents'),
+    path('api/documents/export/', api.export_documents, name='api_export_documents'),
+    path('api/documents/batch-import/', api.batch_import_documents, name='api_batch_import_documents'),
+    path('api/documents/batch-update/', api.batch_update_documents, name='api_batch_update_documents'),
+    path('api/documents/batch-delete/', api.batch_delete_documents, name='api_batch_delete_documents'),
     
     # Roll endpoints
     path('api/projects/<int:project_id>/rolls/', api.get_rolls, name='api_get_rolls'),
+    path('api/projects/<int:project_id>/documents/', api.get_documents, name='api_get_documents'),
     path('api/rolls/<int:roll_id>/', api.get_roll, name='api_get_roll'),
-    path('api/rolls/<int:roll_id>/mark-scanned/', api.mark_roll_scanned, name='api_mark_roll_scanned'),
-    path('api/rolls/merge/', api.merge_rolls, name='api_merge_rolls'),
+    path('api/rolls/<int:roll_id>/documents/', api.get_roll_documents, name='api_get_roll_documents'),
+    
+    # Temp Roll endpoints
+    path('api/temp-rolls/', api.get_temp_rolls, name='api_get_temp_rolls'),
+    path('api/temp-rolls/<int:temp_roll_id>/', api.get_temp_roll, name='api_get_temp_roll'),
+    path('api/temp-rolls/create/', api.create_temp_roll, name='api_create_temp_roll'),
+    path('api/temp-rolls/<int:temp_roll_id>/update/', api.update_temp_roll, name='api_update_temp_roll'),
+    path('api/temp-rolls/<int:temp_roll_id>/delete/', api.delete_temp_roll, name='api_delete_temp_roll'),
+    path('api/temp-rolls/export/', api.export_temp_rolls, name='api_export_temp_rolls'),
     
     # Film number endpoints
     path('api/projects/<int:project_id>/allocate-film-numbers/', api.allocate_film_numbers, name='api_allocate_film_numbers'),
@@ -160,6 +189,10 @@ urlpatterns = [
     path('api/export/<int:project_id>/list/', views.get_available_exports, name='get_available_exports'),
     path('api/export/<int:project_id>/reveal-in-explorer/', views.reveal_in_explorer, name='reveal_in_explorer'),
     
+    # New project export endpoints
+    path('api/projects/export/excel/', views.export_projects_excel, name='export_projects_excel'),
+    path('api/projects/export/pdf/', views.export_projects_pdf, name='export_projects_pdf'),
+    
     # External Systems API Endpoints
     path('api/sma_status/', external_systems_views.sma_status, name='sma_status'),
     path('api/sma_reconnect/', external_systems_views.sma_reconnect, name='sma_reconnect'),
@@ -199,4 +232,25 @@ urlpatterns = [
     path('api/notifications/websocket/', views.send_websocket_notification, name='send_websocket_notification'),
     path('api/notifications/settings/', views.notification_settings, name='notification_settings'),
     path('api/notifications/settings/update/', views.update_notification_settings, name='update_notification_settings'),
+    
+    # Project API endpoints
+    path('api/projects/', views.list_projects, name='list_projects'),
+    path('api/projects/create/', views.create_project, name='create_project'),
+    path('api/projects/<int:project_id>/', views.get_project, name='get_project'),
+    path('api/projects/<int:project_id>/update/', views.update_project, name='update_project'),
+    path('api/projects/<int:project_id>/delete/', views.delete_project, name='delete_project'),
+    path('api/projects/<int:project_id>/history/', views.get_project_history, name='get_project_history'),
+    path('api/projects/<int:project_id>/rolls/', views.get_project_rolls, name='get_project_rolls'),
+    path('api/projects/<int:project_id>/documents/', views.get_project_documents, name='get_project_documents'),
+    path('api/projects/export/excel/', views.export_projects_excel, name='export_projects_excel'),
+    path('api/projects/export/pdf/', views.export_projects_pdf, name='export_projects_pdf'),
+    
+    # Roll API endpoints
+    path('api/rolls/', views.list_rolls, name='list_rolls'),
+    path('api/rolls/create/', views.create_roll, name='create_roll'),
+    path('api/rolls/<int:roll_id>/', views.get_roll, name='get_roll'),
+    path('api/rolls/<int:roll_id>/update/', views.update_roll, name='update_roll'),
+    path('api/rolls/<int:roll_id>/delete/', views.delete_roll, name='delete_roll'),
+    path('api/rolls/export/excel/', views.export_rolls_excel, name='export_rolls_excel'),
+    path('api/rolls/export/pdf/', views.export_rolls_pdf, name='export_rolls_pdf'),
 ]

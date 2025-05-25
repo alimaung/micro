@@ -1,0 +1,302 @@
+<!-- Document-specific content views -->
+
+<!-- Table view (default) -->
+<div id="documents-table-view" class="result-view entity-content active" data-entity="documents" style="display: none;">
+    <div class="results-table-wrapper">
+        <table class="results-table">
+            <thead>
+                <tr>
+                    <th>
+                        <input type="checkbox" id="select-all-documents" class="batch-checkbox">
+                    </th>
+                    <th class="sortable" data-sort="id">
+                        Document ID <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="name">
+                        Document Name <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="file_type">
+                        File Type <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="status">
+                        Status <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="pages">
+                        Pages <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="has_oversized">
+                        Oversized <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="file_size">
+                        File Size <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="project_id">
+                        Project <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="roll_id">
+                        Roll <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="creation_date">
+                        Created <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="documents-results-body">
+                <!-- Document rows will be populated by JavaScript -->
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Pagination -->
+    <div class="pagination-container">
+        <div class="pagination-info">
+            <span id="documents-pagination-info">Showing 0-0 of 0 documents</span>
+        </div>
+        <div class="pagination-controls">
+            <button id="documents-prev-page" class="pagination-btn" disabled>
+                <i class="fas fa-chevron-left"></i> Previous
+            </button>
+            <div id="documents-page-numbers" class="page-numbers">
+                <!-- Page numbers will be populated by JavaScript -->
+            </div>
+            <button id="documents-next-page" class="pagination-btn" disabled>
+                Next <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Card view -->
+<div id="documents-cards-view" class="result-view entity-content" data-entity="documents" style="display: none;">
+    <div id="documents-results-cards" class="cards-container">
+        <!-- Document cards will be populated by JavaScript -->
+    </div>
+    
+    <!-- Pagination for cards view -->
+    <div class="pagination-container">
+        <div class="pagination-info">
+            <span id="documents-cards-pagination-info">Showing 0-0 of 0 documents</span>
+        </div>
+        <div class="pagination-controls">
+            <button id="documents-cards-prev-page" class="pagination-btn" disabled>
+                <i class="fas fa-chevron-left"></i> Previous
+            </button>
+            <div id="documents-cards-page-numbers" class="page-numbers">
+                <!-- Page numbers will be populated by JavaScript -->
+            </div>
+            <button id="documents-cards-next-page" class="pagination-btn" disabled>
+                Next <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Empty state -->
+<div id="document-empty" class="empty-state" style="display: none;">
+    <div class="empty-state-content">
+        <i class="fas fa-file-alt empty-state-icon"></i>
+        <h3 class="empty-state-title">No Documents Found</h3>
+        <p class="empty-state-message">No documents match your current filters.</p>
+        <button class="btn btn-primary" onclick="documentManager.clearFilters()">
+            <i class="fas fa-filter"></i> Clear Filters
+        </button>
+    </div>
+</div>
+
+<!-- Create/Edit Document Modal -->
+<div id="document-create-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="document-modal-title">Create Document</h2>
+            <button class="close-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="document-form">
+                <div class="form-grid">
+                    <div class="form-section">
+                        <h3>Basic Information</h3>
+                        <div class="form-group">
+                            <label for="document-name">Document Name *</label>
+                            <input type="text" id="document-name" name="name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="document-path">File Path *</label>
+                            <input type="text" id="document-path" name="path" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="document-type">File Type</label>
+                            <select id="document-type" name="file_type">
+                                <option value="">Select Type</option>
+                                <option value="PDF">PDF</option>
+                                <option value="TIFF">TIFF</option>
+                                <option value="JPG">JPG</option>
+                                <option value="PNG">PNG</option>
+                                <option value="DOC">DOC</option>
+                                <option value="DOCX">DOCX</option>
+                                <option value="TXT">TXT</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="document-status">Status</label>
+                            <select id="document-status" name="status">
+                                <option value="draft">Draft</option>
+                                <option value="pending">Pending</option>
+                                <option value="processed">Processed</option>
+                                <option value="error">Error</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-section">
+                        <h3>Document Properties</h3>
+                        <div class="form-group">
+                            <label for="document-pages">Number of Pages</label>
+                            <input type="number" id="document-pages" name="pages" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="document-project-id">Project ID</label>
+                            <input type="text" id="document-project-id" name="project_id">
+                        </div>
+                        <div class="form-group">
+                            <label for="document-roll-id">Roll ID</label>
+                            <input type="text" id="document-roll-id" name="roll_id">
+                        </div>
+                        <div class="checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="document-oversized" name="has_oversized">
+                                Has Oversized Pages
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary close-modal">Cancel</button>
+            <button type="button" id="save-document-btn" class="btn btn-primary">
+                <i class="fas fa-save"></i> Save Document
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Export Documents Modal -->
+<div id="document-export-modal" class="modal" style="display: none;">
+    <div class="modal-content export-modal-content">
+        <div class="modal-header">
+            <h2>Export Documents</h2>
+            <button class="close-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="export-options">
+                <div class="export-section">
+                    <h3>Export Format</h3>
+                    <div class="format-options">
+                        <div class="format-option">
+                            <input type="radio" name="export-format" value="csv" id="export-csv" checked>
+                            <label for="export-csv" class="format-icon">
+                                <i class="fas fa-file-csv"></i>
+                                <span>CSV</span>
+                            </label>
+                        </div>
+                        <div class="format-option">
+                            <input type="radio" name="export-format" value="excel" id="export-excel">
+                            <label for="export-excel" class="format-icon">
+                                <i class="fas fa-file-excel"></i>
+                                <span>Excel</span>
+                            </label>
+                        </div>
+                        <div class="format-option">
+                            <input type="radio" name="export-format" value="pdf" id="export-pdf">
+                            <label for="export-pdf" class="format-icon">
+                                <i class="fas fa-file-pdf"></i>
+                                <span>PDF</span>
+                            </label>
+                        </div>
+                        <div class="format-option">
+                            <input type="radio" name="export-format" value="json" id="export-json">
+                            <label for="export-json" class="format-icon">
+                                <i class="fas fa-file-code"></i>
+                                <span>JSON</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="export-section">
+                    <h3>Fields to Export</h3>
+                    <div class="field-selection-buttons">
+                        <button type="button" class="select-all-btn">Select All</button>
+                        <button type="button" class="deselect-all-btn">Deselect All</button>
+                    </div>
+                    <div class="checkbox-grid">
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="export-fields" value="id" checked>
+                            Document ID
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="export-fields" value="name" checked>
+                            Document Name
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="export-fields" value="path" checked>
+                            File Path
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="export-fields" value="file_type" checked>
+                            File Type
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="export-fields" value="status" checked>
+                            Status
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="export-fields" value="pages" checked>
+                            Pages
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="export-fields" value="has_oversized" checked>
+                            Has Oversized
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="export-fields" value="file_size" checked>
+                            File Size
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="export-fields" value="project_id" checked>
+                            Project ID
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="export-fields" value="roll_id" checked>
+                            Roll ID
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="export-fields" value="creation_date" checked>
+                            Creation Date
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="export-fields" value="last_modified" checked>
+                            Last Modified
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary close-modal">Cancel</button>
+            <button type="button" id="export-document-data-btn" class="btn btn-primary">
+                <i class="fas fa-download"></i> Export Documents
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Visualization view -->
+<div id="documents-visualization-view" class="result-view entity-content" data-entity="documents" style="display: none;">
+    <div class="coming-soon-message">
+        <i class="fas fa-file-alt"></i>
+        <h3>Document Management</h3>
+        <p>Document management functionality is coming soon!</p>
+    </div>
+</div> 

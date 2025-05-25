@@ -1,16 +1,16 @@
 /**
- * project-export.js - Project export functionality
- * Handles exporting project data in various formats
+ * roll-export.js - Roll export functionality
+ * Handles exporting roll data in various formats
  */
 
-class ProjectExport {
+class RollExport {
     constructor() {
         this.dbService = new DatabaseService();
         this.modal = null;
     }
 
     /**
-     * Initialize the project export module
+     * Initialize the roll export module
      */
     initialize() {
         // Create export modal if it doesn't exist
@@ -25,17 +25,17 @@ class ProjectExport {
      */
     createExportModal() {
         // Check if modal already exists
-        if (document.getElementById('export-project-modal')) {
-            this.modal = document.getElementById('export-project-modal');
+        if (document.getElementById('export-roll-modal')) {
+            this.modal = document.getElementById('export-roll-modal');
             return;
         }
         
         // Create modal element
         const modalHtml = `
-            <div id="export-project-modal" class="export-modal">
+            <div id="export-roll-modal" class="export-modal">
                 <div class="export-modal-content">
                     <div class="export-modal-header">
-                        <h2 id="export-modal-title">Export Projects</h2>
+                        <h2 id="export-modal-title">Export Rolls</h2>
                         <button class="close-modal">&times;</button>
                     </div>
                     <div class="export-modal-body">
@@ -45,15 +45,15 @@ class ProjectExport {
                                 <div class="radio-group">
                                     <label class="radio-label">
                                         <input type="radio" name="export-scope" value="selected" checked>
-                                        <span>Selected Projects (<span id="selected-count">0</span>)</span>
+                                        <span>Selected Rolls (<span id="selected-count">0</span>)</span>
                                     </label>
                                     <label class="radio-label">
                                         <input type="radio" name="export-scope" value="filtered">
-                                        <span>All Filtered Projects (<span id="filtered-count">0</span>)</span>
+                                        <span>All Filtered Rolls (<span id="filtered-count">0</span>)</span>
                                     </label>
                                     <label class="radio-label">
                                         <input type="radio" name="export-scope" value="all">
-                                        <span>All Projects</span>
+                                        <span>All Rolls</span>
                                     </label>
                                 </div>
                             </div>
@@ -101,75 +101,71 @@ class ProjectExport {
                                 <div class="checkbox-grid">
                                     <label class="checkbox-label">
                                         <input type="checkbox" name="export-fields" value="id" checked>
-                                        <span>Project ID</span>
+                                        <span>Roll ID</span>
                                     </label>
                                     <label class="checkbox-label">
-                                        <input type="checkbox" name="export-fields" value="archive_id" checked>
-                                        <span>Archive ID</span>
+                                        <input type="checkbox" name="export-fields" value="roll_id" checked>
+                                        <span>Roll Number</span>
                                     </label>
                                     <label class="checkbox-label">
-                                        <input type="checkbox" name="export-fields" value="location" checked>
-                                        <span>Location</span>
+                                        <input type="checkbox" name="export-fields" value="project_archive_id" checked>
+                                        <span>Project Archive ID</span>
                                     </label>
                                     <label class="checkbox-label">
-                                        <input type="checkbox" name="export-fields" value="doc_type" checked>
-                                        <span>Document Type</span>
+                                        <input type="checkbox" name="export-fields" value="film_number" checked>
+                                        <span>Film Number</span>
                                     </label>
                                     <label class="checkbox-label">
-                                        <input type="checkbox" name="export-fields" value="project_path">
-                                        <span>Project Path</span>
+                                        <input type="checkbox" name="export-fields" value="film_type" checked>
+                                        <span>Film Type</span>
                                     </label>
                                     <label class="checkbox-label">
-                                        <input type="checkbox" name="export-fields" value="project_folder_name">
-                                        <span>Folder Name</span>
+                                        <input type="checkbox" name="export-fields" value="capacity" checked>
+                                        <span>Capacity</span>
                                     </label>
                                     <label class="checkbox-label">
-                                        <input type="checkbox" name="export-fields" value="pdf_folder_path">
-                                        <span>PDF Folder Path</span>
+                                        <input type="checkbox" name="export-fields" value="pages_used" checked>
+                                        <span>Pages Used</span>
                                     </label>
                                     <label class="checkbox-label">
-                                        <input type="checkbox" name="export-fields" value="has_pdf_folder" checked>
-                                        <span>Has PDF Folder</span>
+                                        <input type="checkbox" name="export-fields" value="pages_remaining" checked>
+                                        <span>Pages Remaining</span>
                                     </label>
                                     <label class="checkbox-label">
-                                        <input type="checkbox" name="export-fields" value="has_oversized" checked>
-                                        <span>Has Oversized</span>
+                                        <input type="checkbox" name="export-fields" value="utilization" checked>
+                                        <span>Utilization %</span>
                                     </label>
                                     <label class="checkbox-label">
-                                        <input type="checkbox" name="export-fields" value="documents_with_oversized">
-                                        <span>Oversized Documents</span>
+                                        <input type="checkbox" name="export-fields" value="status" checked>
+                                        <span>Status</span>
                                     </label>
                                     <label class="checkbox-label">
-                                        <input type="checkbox" name="export-fields" value="total_oversized">
-                                        <span>Total Oversized</span>
+                                        <input type="checkbox" name="export-fields" value="has_split_documents">
+                                        <span>Has Split Documents</span>
                                     </label>
                                     <label class="checkbox-label">
-                                        <input type="checkbox" name="export-fields" value="total_pages" checked>
-                                        <span>Total Pages</span>
+                                        <input type="checkbox" name="export-fields" value="is_partial">
+                                        <span>Is Partial</span>
                                     </label>
                                     <label class="checkbox-label">
-                                        <input type="checkbox" name="export-fields" value="total_pages_with_refs">
-                                        <span>Pages with References</span>
+                                        <input type="checkbox" name="export-fields" value="is_full">
+                                        <span>Is Full</span>
                                     </label>
                                     <label class="checkbox-label">
-                                        <input type="checkbox" name="export-fields" value="processing_complete" checked>
-                                        <span>Processing Complete</span>
+                                        <input type="checkbox" name="export-fields" value="remaining_capacity">
+                                        <span>Remaining Capacity</span>
                                     </label>
                                     <label class="checkbox-label">
-                                        <input type="checkbox" name="export-fields" value="film_allocation_complete" checked>
-                                        <span>Film Allocation Complete</span>
+                                        <input type="checkbox" name="export-fields" value="usable_capacity">
+                                        <span>Usable Capacity</span>
                                     </label>
                                     <label class="checkbox-label">
-                                        <input type="checkbox" name="export-fields" value="distribution_complete">
-                                        <span>Distribution Complete</span>
+                                        <input type="checkbox" name="export-fields" value="film_number_source">
+                                        <span>Film Number Source</span>
                                     </label>
                                     <label class="checkbox-label">
-                                        <input type="checkbox" name="export-fields" value="date_created" checked>
-                                        <span>Date Created</span>
-                                    </label>
-                                    <label class="checkbox-label">
-                                        <input type="checkbox" name="export-fields" value="updated_at">
-                                        <span>Last Updated</span>
+                                        <input type="checkbox" name="export-fields" value="creation_date" checked>
+                                        <span>Creation Date</span>
                                     </label>
                                 </div>
                             </div>
@@ -270,16 +266,13 @@ class ProjectExport {
         document.body.appendChild(modalWrapper.firstElementChild);
         
         // Get modal element
-        this.modal = document.getElementById('export-project-modal');
+        this.modal = document.getElementById('export-roll-modal');
     }
 
     /**
      * Set up event listeners for the export modal
      */
     setupEventListeners() {
-        // Note: Export button click events are handled by project-list.js
-        // to ensure proper access to selected projects
-        
         // Close modal buttons
         this.modal.querySelectorAll('.close-modal').forEach(button => {
             button.addEventListener('click', () => {
@@ -325,10 +318,10 @@ class ProjectExport {
     /**
      * Open the export modal with a specific format pre-selected
      * @param {string} format - Export format (csv, excel, pdf, json)
-     * @param {Set<string>} selectedProjects - Set of selected project IDs
-     * @param {number} filteredCount - Number of projects in filtered view
+     * @param {Set<string>} selectedRolls - Set of selected roll IDs
+     * @param {number} filteredCount - Number of rolls in filtered view
      */
-    openExportModal(format, selectedProjects = new Set(), filteredCount = 0) {
+    openExportModal(format, selectedRolls = new Set(), filteredCount = 0) {
         // Update selected format
         const formatRadio = this.modal.querySelector(`input[name="export-format"][value="${format}"]`);
         if (formatRadio) {
@@ -336,7 +329,7 @@ class ProjectExport {
         }
         
         // Update counts
-        const selectedCount = selectedProjects instanceof Set ? selectedProjects.size : 0;
+        const selectedCount = selectedRolls instanceof Set ? selectedRolls.size : 0;
         
         document.getElementById('selected-count').textContent = selectedCount;
         document.getElementById('filtered-count').textContent = filteredCount;
@@ -347,7 +340,7 @@ class ProjectExport {
         const allOption = this.modal.querySelector('input[name="export-scope"][value="all"]');
         
         if (selectedCount === 0) {
-            // No projects selected, disable selected option and default to filtered
+            // No rolls selected, disable selected option and default to filtered
             selectedOption.disabled = true;
             selectedOption.parentElement.style.opacity = '0.5';
             
@@ -357,7 +350,7 @@ class ProjectExport {
                 allOption.checked = true;
             }
         } else {
-            // Projects are selected, enable selected option and default to it
+            // Rolls are selected, enable selected option and default to it
             selectedOption.disabled = false;
             selectedOption.parentElement.style.opacity = '1';
             selectedOption.checked = true;
@@ -410,37 +403,18 @@ class ProjectExport {
         // Get format-specific options
         const options = this.getFormatOptions(format);
         
-        // Debug logging
-        console.log('Export scope:', scope);
-        console.log('Export format:', format);
-        console.log('Selected fields:', fields);
-        console.log('Format options:', options);
-        
-        // Get project IDs based on scope
-        let projectIds = [];
+        // Get roll IDs based on scope
+        let rollIds = [];
         let useFilters = false;
         
         if (scope === 'selected') {
-            // Get selected project IDs from the project list
-            if (window.exploreMain?.projectList?.selectedProjects) {
-                projectIds = Array.from(window.exploreMain.projectList.selectedProjects);
-                console.log('Got selected projects from projectList:', projectIds);
-            } else {
-                // Fallback: dispatch event to get selected projects
-                const selectedProjectsEvent = new CustomEvent('getSelectedProjects', {
-                    detail: { callback: (selectedProjects) => {
-                        projectIds = Array.from(selectedProjects);
-                        console.log('Got selected projects from event:', projectIds);
-                    }}
-                });
-                document.dispatchEvent(selectedProjectsEvent);
+            // Get selected roll IDs from the roll list
+            if (window.exploreMain?.rollList?.selectedRolls) {
+                rollIds = Array.from(window.exploreMain.rollList.selectedRolls);
             }
         } else if (scope === 'filtered') {
             // Use current filters
             useFilters = true;
-            console.log('Using filtered projects with filters:', window.exploreMain?.projectList?.filters);
-        } else {
-            console.log('Using all projects');
         }
         
         // Show loading state
@@ -453,13 +427,13 @@ class ProjectExport {
             let data;
             
             if (format === 'csv') {
-                data = await this.exportAsCSV(projectIds, fields, options, useFilters);
+                data = await this.exportAsCSV(rollIds, fields, options, useFilters);
             } else if (format === 'excel') {
-                data = await this.exportAsExcel(projectIds, fields, options, useFilters);
+                data = await this.exportAsExcel(rollIds, fields, options, useFilters);
             } else if (format === 'pdf') {
-                data = await this.exportAsPDF(projectIds, fields, options, useFilters);
+                data = await this.exportAsPDF(rollIds, fields, options, useFilters);
             } else if (format === 'json') {
-                data = await this.exportAsJSON(projectIds, fields, options, useFilters);
+                data = await this.exportAsJSON(rollIds, fields, options, useFilters);
             }
             
             // Create a download link
@@ -483,8 +457,8 @@ class ProjectExport {
                 exportBtn.disabled = false;
             }, 100);
         } catch (error) {
-            console.error(`Error exporting projects as ${format}:`, error);
-            alert(`Error exporting projects: ${error.message || 'Unknown error'}`);
+            console.error(`Error exporting rolls as ${format}:`, error);
+            alert(`Error exporting rolls: ${error.message || 'Unknown error'}`);
             
             // Reset button
             exportBtn.textContent = originalBtnText;
@@ -493,11 +467,11 @@ class ProjectExport {
     }
 
     /**
-     * Export projects as CSV
+     * Export rolls as CSV
      */
-    async exportAsCSV(projectIds, fields, options, useFilters) {
-        // Get project data
-        const projects = await this.getProjectData(projectIds, useFilters);
+    async exportAsCSV(rollIds, fields, options, useFilters) {
+        // Get roll data
+        const rolls = await this.getRollData(rollIds, useFilters);
         
         // Create CSV content
         let csvContent = '';
@@ -509,9 +483,9 @@ class ProjectExport {
         }
         
         // Add data rows
-        projects.forEach((project, index) => {
+        rolls.forEach((roll, index) => {
             const row = fields.map(field => {
-                let value = project[field];
+                let value = roll[field];
                 
                 // Handle null, undefined, and boolean values
                 if (value === null || value === undefined) {
@@ -535,22 +509,22 @@ class ProjectExport {
     }
 
     /**
-     * Export projects as Excel
+     * Export rolls as Excel
      */
-    async exportAsExcel(projectIds, fields, options, useFilters) {
-        // Get project data
-        const projects = await this.getProjectData(projectIds, useFilters);
+    async exportAsExcel(rollIds, fields, options, useFilters) {
+        // Get roll data
+        const rolls = await this.getRollData(rollIds, useFilters);
         
         // Create workbook data
         const workbookData = {
-            projects: projects,
+            rolls: rolls,
             fields: fields,
             fieldNames: fields.map(field => this.getFieldDisplayName(field)),
             options: options
         };
         
         // Send to backend for Excel generation
-        const response = await fetch('/api/projects/export/excel/', {
+        const response = await fetch('/api/rolls/export/excel/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -567,22 +541,22 @@ class ProjectExport {
     }
 
     /**
-     * Export projects as PDF
+     * Export rolls as PDF
      */
-    async exportAsPDF(projectIds, fields, options, useFilters) {
-        // Get project data
-        const projects = await this.getProjectData(projectIds, useFilters);
+    async exportAsPDF(rollIds, fields, options, useFilters) {
+        // Get roll data
+        const rolls = await this.getRollData(rollIds, useFilters);
         
         // Create PDF data
         const pdfData = {
-            projects: projects,
+            rolls: rolls,
             fields: fields,
             fieldNames: fields.map(field => this.getFieldDisplayName(field)),
             options: options
         };
         
         // Send to backend for PDF generation
-        const response = await fetch('/api/projects/export/pdf/', {
+        const response = await fetch('/api/rolls/export/pdf/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -599,28 +573,28 @@ class ProjectExport {
     }
 
     /**
-     * Export projects as JSON
+     * Export rolls as JSON
      */
-    async exportAsJSON(projectIds, fields, options, useFilters) {
-        // Get project data
-        const projects = await this.getProjectData(projectIds, useFilters);
+    async exportAsJSON(rollIds, fields, options, useFilters) {
+        // Get roll data
+        const rolls = await this.getRollData(rollIds, useFilters);
         
-        // Filter projects to only include selected fields
-        const filteredProjects = projects.map(project => {
-            const filteredProject = {};
+        // Filter rolls to only include selected fields
+        const filteredRolls = rolls.map(roll => {
+            const filteredRoll = {};
             fields.forEach(field => {
-                filteredProject[field] = project[field];
+                filteredRoll[field] = roll[field];
             });
-            return filteredProject;
+            return filteredRoll;
         });
         
         // Create JSON object
         const jsonData = {
-            projects: filteredProjects,
+            rolls: filteredRolls,
             ...(options.includeMetadata && {
                 metadata: {
                     exportDate: new Date().toISOString(),
-                    totalProjects: filteredProjects.length,
+                    totalRolls: filteredRolls.length,
                     fields: fields,
                     exportedBy: 'Microfilm Management System'
                 }
@@ -636,36 +610,50 @@ class ProjectExport {
     }
 
     /**
-     * Get project data for export
+     * Get roll data for export
      */
-    async getProjectData(projectIds, useFilters) {
+    async getRollData(rollIds, useFilters) {
         if (useFilters) {
-            // Get all projects with current filters
-            const currentFilters = window.exploreMain?.projectList?.filters || {};
-            const response = await this.dbService.listProjects({
+            // Get all rolls with current filters
+            const currentFilters = window.exploreMain?.rollList?.filters || {};
+            const response = await this.dbService.listRolls({
                 ...currentFilters,
                 page_size: 10000 // Get all results
             });
             return response.results;
-        } else if (projectIds.length > 0) {
-            // Get specific projects
-            const projects = [];
-            for (const id of projectIds) {
+        } else if (rollIds.length > 0) {
+            // Get specific rolls
+            const rolls = [];
+            for (const id of rollIds) {
                 try {
-                    const response = await this.dbService.getProject(id);
+                    const response = await this.dbService.getRoll(id);
                     
-                    // Extract the actual project data from the response
-                    if (response.status === 'success' && response.project) {
-                        projects.push(response.project);
+                    // Handle different response structures
+                    let roll;
+                    if (response.roll) {
+                        // Response has a 'roll' property
+                        roll = response.roll;
+                    } else if (response.id || response.roll_id) {
+                        // Response is the roll object directly
+                        roll = response;
+                    } else if (response.status === 'success' && response.roll) {
+                        // Legacy response structure
+                        roll = response.roll;
+                    }
+                    
+                    if (roll) {
+                        rolls.push(roll);
+                    } else {
+                        console.warn(`Invalid roll data structure for roll ${id}:`, response);
                     }
                 } catch (error) {
-                    console.warn(`Could not fetch project ${id}:`, error);
+                    console.warn(`Could not fetch roll ${id}:`, error);
                 }
             }
-            return projects;
+            return rolls;
         } else {
-            // Get all projects
-            const response = await this.dbService.listProjects({ page_size: 10000 });
+            // Get all rolls
+            const response = await this.dbService.listRolls({ page_size: 10000 });
             return response.results;
         }
     }
@@ -715,15 +703,15 @@ class ProjectExport {
         
         switch (format) {
             case 'csv':
-                return `projects_export_${date}_${time}.csv`;
+                return `rolls_export_${date}_${time}.csv`;
             case 'excel':
-                return `projects_export_${date}_${time}.xlsx`;
+                return `rolls_export_${date}_${time}.xlsx`;
             case 'pdf':
-                return `projects_export_${date}_${time}.pdf`;
+                return `rolls_export_${date}_${time}.pdf`;
             case 'json':
-                return `projects_export_${date}_${time}.json`;
+                return `rolls_export_${date}_${time}.json`;
             default:
-                return `projects_export_${date}_${time}`;
+                return `rolls_export_${date}_${time}`;
         }
     }
 
@@ -732,24 +720,24 @@ class ProjectExport {
      */
     getFieldDisplayName(field) {
         const fieldNames = {
-            'id': 'Project ID',
-            'archive_id': 'Archive ID',
-            'location': 'Location',
-            'doc_type': 'Document Type',
-            'project_path': 'Project Path',
-            'project_folder_name': 'Folder Name',
-            'pdf_folder_path': 'PDF Folder Path',
-            'has_pdf_folder': 'Has PDF Folder',
-            'has_oversized': 'Has Oversized',
-            'documents_with_oversized': 'Oversized Documents',
-            'total_oversized': 'Total Oversized',
-            'total_pages': 'Total Pages',
-            'total_pages_with_refs': 'Pages with References',
-            'processing_complete': 'Processing Complete',
-            'film_allocation_complete': 'Film Allocation Complete',
-            'distribution_complete': 'Distribution Complete',
-            'date_created': 'Date Created',
-            'updated_at': 'Last Updated'
+            'id': 'Roll ID',
+            'roll_id': 'Roll Number',
+            'project_id': 'Project ID',
+            'project_archive_id': 'Project Archive ID',
+            'film_number': 'Film Number',
+            'film_type': 'Film Type',
+            'capacity': 'Capacity',
+            'pages_used': 'Pages Used',
+            'pages_remaining': 'Pages Remaining',
+            'utilization': 'Utilization %',
+            'status': 'Status',
+            'has_split_documents': 'Has Split Documents',
+            'is_partial': 'Is Partial',
+            'is_full': 'Is Full',
+            'remaining_capacity': 'Remaining Capacity',
+            'usable_capacity': 'Usable Capacity',
+            'film_number_source': 'Film Number Source',
+            'creation_date': 'Creation Date'
         };
         return fieldNames[field] || field;
     }
@@ -770,4 +758,4 @@ class ProjectExport {
 }
 
 // Export the class for use in the main module
-window.ProjectExport = ProjectExport;
+window.RollExport = RollExport; 

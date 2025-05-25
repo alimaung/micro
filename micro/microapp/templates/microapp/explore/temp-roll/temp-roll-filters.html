@@ -1,0 +1,41 @@
+<!-- Temp Roll Filters -->
+<div id="temp-roll-filters" class="entity-filters" style="display: none;">
+    <div class="filter-row">
+        <label for="temp-roll-film-type-filter">Film Type:</label>
+        <select id="temp-roll-film-type-filter">
+            <option value="">All Types</option>
+            <option value="16mm">16mm</option>
+            <option value="35mm">35mm</option>
+            <option value="105mm">105mm</option>
+        </select>
+    </div>
+    
+    <div class="filter-row">
+        <label for="temp-roll-status-filter">Status:</label>
+        <select id="temp-roll-status-filter">
+            <option value="">All Statuses</option>
+            <option value="available">Available</option>
+            <option value="used">Used</option>
+            <option value="damaged">Damaged</option>
+        </select>
+    </div>
+    
+    <div class="filter-row">
+        <label for="temp-roll-capacity-filter">Min Capacity:</label>
+        <input type="number" id="temp-roll-capacity-filter" placeholder="Minimum pages" min="0">
+    </div>
+    
+    <div class="filter-row">
+        <label for="temp-roll-search">Search:</label>
+        <input type="text" id="temp-roll-search" placeholder="Search temp rolls...">
+    </div>
+    
+    <div class="filter-actions">
+        <button id="apply-temp-roll-filters" class="primary-button">
+            <i class="fas fa-filter"></i> Apply
+        </button>
+        <button id="clear-temp-roll-filters" class="secondary-button">
+            <i class="fas fa-times"></i> Clear
+        </button>
+    </div>
+</div> 

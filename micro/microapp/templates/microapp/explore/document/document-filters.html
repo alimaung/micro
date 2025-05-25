@@ -1,0 +1,68 @@
+<!-- Document-specific filters -->
+<div id="documents-filters" class="entity-filters" data-entity="documents" style="display: none;">
+    <div class="filter-row">
+        <label for="document-search">Search:</label>
+        <input type="text" id="document-search" placeholder="Search documents...">
+    </div>
+    <div class="filter-row">
+        <label for="file-type">File Type:</label>
+        <select id="file-type">
+            <option value="">All Types</option>
+            <option value="PDF">PDF</option>
+            <option value="TIFF">TIFF</option>
+            <option value="JPG">JPG</option>
+            <option value="PNG">PNG</option>
+            <option value="DOC">DOC</option>
+            <option value="DOCX">DOCX</option>
+            <option value="TXT">TXT</option>
+        </select>
+    </div>
+    <div class="filter-row">
+        <label for="document-status">Status:</label>
+        <select id="document-status">
+            <option value="">All Statuses</option>
+            <option value="draft">Draft</option>
+            <option value="pending">Pending</option>
+            <option value="processed">Processed</option>
+            <option value="error">Error</option>
+        </select>
+    </div>
+    <div class="filter-row">
+        <label for="oversized">Size:</label>
+        <select id="oversized">
+            <option value="">All Sizes</option>
+            <option value="1">Oversized</option>
+            <option value="0">Standard</option>
+        </select>
+    </div>
+    <div class="filter-row">
+        <label for="document-project">Project:</label>
+        <select id="document-project">
+            <option value="">All Projects</option>
+            <!-- Will be populated by JavaScript -->
+        </select>
+    </div>
+    <div class="filter-row">
+        <label for="document-roll">Roll:</label>
+        <select id="document-roll">
+            <option value="">All Rolls</option>
+            <!-- Will be populated by JavaScript -->
+        </select>
+    </div>
+    <div class="filter-row">
+        <label for="min-pages">Min Pages:</label>
+        <input type="number" id="min-pages" placeholder="0" min="0">
+    </div>
+    <div class="filter-row">
+        <label for="max-pages">Max Pages:</label>
+        <input type="number" id="max-pages" placeholder="1000" min="0">
+    </div>
+    <div class="filter-actions">
+        <button type="button" id="apply-document-filters" class="btn btn-primary">
+            <i class="fas fa-filter"></i> Apply Filters
+        </button>
+        <button type="button" id="clear-document-filters" class="btn btn-secondary">
+            <i class="fas fa-times"></i> Clear Filters
+        </button>
+    </div>
+</div> 
