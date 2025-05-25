@@ -132,7 +132,7 @@ class DistributionManager:
                     continue
                 
                 # Create roll directory
-                roll_dir = self._create_roll_directory(output_dir, roll.film_number)
+                roll_dir = self._create_roll_directory(output_dir, roll.film_number, roll, project)
                 if not roll_dir:
                     error_count += 1
                     continue
@@ -299,7 +299,7 @@ class DistributionManager:
                     continue
                 
                 # Create roll directory
-                roll_dir = self._create_roll_directory(output_dir, roll.film_number)
+                roll_dir = self._create_roll_directory(output_dir, roll.film_number, roll, project)
                 if not roll_dir:
                     continue
                 
@@ -392,7 +392,7 @@ class DistributionManager:
                     continue
                 
                 # Create roll directory
-                roll_dir = self._create_roll_directory(output_dir, roll.film_number)
+                roll_dir = self._create_roll_directory(output_dir, roll.film_number, roll, project)
                 if not roll_dir:
                     continue
                 
@@ -514,14 +514,78 @@ class DistributionManager:
             self.log_distribution(project, 'ERROR', f"Failed to create output directory: {str(e)}")
             return None
     
-    def _create_roll_directory(self, output_dir, film_number):
-        """Create a directory for a film roll."""
+    def _create_roll_directory(self, output_dir, film_number, roll=None, project=None):
+        """
+        Create a directory for a film roll and optionally save the path to the roll.
+        
+        Args:
+            output_dir: Path to the main output directory
+            film_number: Film number to use as directory name
+            roll: Optional Roll object to update with directory path
+            project: Optional Project object to find Roll by film_number if roll not provided
+            
+        Returns:
+            Path to the created roll directory, or None if creation failed
+        """
         roll_dir = output_dir / film_number
         try:
             roll_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Save the directory path to the roll if provided
+            if roll:
+                roll.output_directory = str(roll_dir)
+                roll.save(update_fields=['output_directory'])
+                self.log_distribution(
+                    roll.project, 'INFO', 
+                    f"Set output directory for roll {roll.film_number}: {roll_dir}",
+                    roll=roll
+                )
+            elif project:
+                # Try to find and update the roll in the database
+                self._update_roll_output_directory(project, film_number, roll_dir)
+            
             return roll_dir
         except Exception as e:
             self.logger.error(f"Failed to create roll directory for {film_number}: {str(e)}")
+            return None
+    
+    def _update_roll_output_directory(self, project, film_number, roll_dir):
+        """
+        Find and update a Roll object's output directory based on film number.
+        
+        Args:
+            project: Project object
+            film_number: Film number to search for
+            roll_dir: Path object for the roll directory
+            
+        Returns:
+            Roll object if found and updated, None otherwise
+        """
+        try:
+            # Find the roll by film number and project
+            roll = Roll.objects.filter(
+                project=project,
+                film_number=film_number
+            ).first()
+            
+            if roll:
+                roll.output_directory = str(roll_dir)
+                roll.save(update_fields=['output_directory'])
+                self.log_distribution(
+                    project, 'INFO', 
+                    f"Updated output directory for roll {film_number}: {roll_dir}",
+                    roll=roll
+                )
+                return roll
+            else:
+                self.log_distribution(
+                    project, 'WARNING', 
+                    f"Roll with film number {film_number} not found in database"
+                )
+                return None
+                
+        except Exception as e:
+            self.logger.error(f"Error updating roll output directory for {film_number}: {str(e)}")
             return None
     
     def _copy_document(self, document, segment, destination_dir):
@@ -729,7 +793,7 @@ class DistributionManager:
                         continue
                     
                     # Create output roll directory
-                    roll_dir = self._create_roll_directory(output_dir, film_number)
+                    roll_dir = self._create_roll_directory(output_dir, film_number, None, project)
                     if not roll_dir:
                         continue
                     
@@ -857,7 +921,7 @@ class DistributionManager:
                         continue
                     
                     # Create roll directory
-                    roll_dir = self._create_roll_directory(output_dir, film_number)
+                    roll_dir = self._create_roll_directory(output_dir, film_number, None, project)
                     if not roll_dir:
                         continue
                     

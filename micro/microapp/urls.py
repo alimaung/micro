@@ -112,7 +112,7 @@ urlpatterns = [
     path('api/projects/<int:project_id>/documents/<str:doc_id>/split/', api.split_document, name='api_split_document'),
     
     # Roll endpoints
-    path('api/projects/<int:project_id>/rolls/', api.get_rolls, name='api_get_rolls'),
+    # path('api/projects/<int:project_id>/rolls/', api.get_rolls, name='api_get_rolls'),  # Conflicts with views.get_project_rolls
     path('api/rolls/<int:roll_id>/', api.get_roll, name='api_get_roll'),
     path('api/rolls/<int:roll_id>/mark-scanned/', api.mark_roll_scanned, name='api_mark_roll_scanned'),
     path('api/rolls/merge/', api.merge_rolls, name='api_merge_rolls'),
@@ -199,4 +199,9 @@ urlpatterns = [
     path('api/notifications/websocket/', views.send_websocket_notification, name='send_websocket_notification'),
     path('api/notifications/settings/', views.notification_settings, name='notification_settings'),
     path('api/notifications/settings/update/', views.update_notification_settings, name='update_notification_settings'),
+    
+    # Roll API Endpoints
+    path('api/projects/<int:project_id>/rolls/', views.get_project_rolls, name='get_project_rolls'),
+    path('api/rolls/<int:roll_id>/', views.get_roll_details, name='get_roll_details'),
+    path('api/rolls/<int:roll_id>/filming-status/', views.update_roll_filming_status, name='update_roll_filming_status'),
 ]

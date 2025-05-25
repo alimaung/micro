@@ -82,8 +82,8 @@ class RollAdmin(admin.ModelAdmin):
     list_display = ('id', 'roll_id', 'project', 'film_number', 'film_type', 'capacity', 'pages_used', 
                     'pages_remaining', 'status', 'has_split_documents', 'creation_date',
                     'is_partial', 'remaining_capacity', 'usable_capacity', 'film_number_source',
-                    'source_temp_roll', 'created_temp_roll')
-    search_fields = ('film_number', 'project__archive_id')
+                    'source_temp_roll', 'created_temp_roll', 'output_directory')
+    search_fields = ('film_number', 'project__archive_id', 'output_directory')
     list_filter = ('film_type', 'status', 'is_partial', 'has_split_documents')
     readonly_fields = ('roll_id', 'creation_date')
     fieldsets = (
@@ -95,6 +95,9 @@ class RollAdmin(admin.ModelAdmin):
         }),
         ('Status', {
             'fields': ('status', 'has_split_documents', 'is_partial', 'remaining_capacity')
+        }),
+        ('Output', {
+            'fields': ('output_directory',)
         }),
         ('Source Tracking', {
             'fields': ('film_number_source', 'source_temp_roll', 'created_temp_roll')

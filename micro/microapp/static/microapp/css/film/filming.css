@@ -1,0 +1,453 @@
+/* Filming Process and Progress Styles */
+
+/* Progress indicators section */
+.progress-indicators {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--film-spacing-xl);
+    padding: var(--film-spacing-lg);
+    background-color: var(--film-surface);
+    border-radius: var(--film-border-radius);
+    border: 1px solid var(--film-border);
+    position: relative;
+}
+
+.progress-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    flex: 1;
+    z-index: 2;
+}
+
+.step-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background-color: var(--film-border);
+    color: var(--film-text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    margin-bottom: var(--film-spacing-sm);
+    transition: var(--film-transition);
+    border: 3px solid var(--film-border);
+}
+
+.step-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--film-text-light);
+    text-align: center;
+    transition: var(--film-transition);
+}
+
+.step-connector {
+    position: absolute;
+    top: 24px;
+    left: 50%;
+    width: 100%;
+    height: 3px;
+    background-color: var(--film-border);
+    z-index: 1;
+    transition: var(--film-transition);
+}
+
+.progress-step:last-child .step-connector {
+    display: none;
+}
+
+/* Progress step states */
+.progress-step.active .step-icon {
+    background-color: var(--film-primary);
+    color: white;
+    border-color: var(--film-primary);
+    animation: pulse 2s infinite;
+}
+
+.progress-step.active .step-label {
+    color: var(--film-primary);
+    font-weight: 600;
+}
+
+.progress-step.completed .step-icon {
+    background-color: var(--film-success);
+    color: white;
+    border-color: var(--film-success);
+}
+
+.progress-step.completed .step-label {
+    color: var(--film-success);
+    font-weight: 600;
+}
+
+.progress-step.completed .step-connector {
+    background-color: var(--film-success);
+}
+
+/* Current activity section */
+.current-activity {
+    background-color: var(--film-surface);
+    border-radius: var(--film-border-radius);
+    padding: var(--film-spacing-lg);
+    margin-bottom: var(--film-spacing-xl);
+    border: 1px solid var(--film-border);
+}
+
+.current-activity h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--film-text);
+    margin-bottom: var(--film-spacing-md);
+    display: flex;
+    align-items: center;
+    gap: var(--film-spacing-sm);
+}
+
+.current-activity h3::before {
+    content: '⚡';
+    font-size: 20px;
+}
+
+.activity-details {
+    display: flex;
+    flex-direction: column;
+    gap: var(--film-spacing-md);
+}
+
+.activity-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: var(--film-spacing-md);
+}
+
+.activity-info .info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--film-spacing-sm) var(--film-spacing-md);
+    background-color: var(--film-background);
+    border-radius: var(--film-border-radius);
+    border: 1px solid var(--film-border);
+}
+
+.activity-info .info-label {
+    font-size: 14px;
+    color: var(--film-text-light);
+    font-weight: 500;
+}
+
+.activity-info .info-value {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--film-text);
+}
+
+.progress-text {
+    color: var(--film-primary) !important;
+}
+
+.eta-text {
+    color: var(--film-warning) !important;
+}
+
+/* Activity progress bar */
+.activity-progress {
+    margin-top: var(--film-spacing-md);
+}
+
+.progress-bar-container {
+    height: 12px;
+    background-color: var(--film-border);
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--film-primary), var(--film-primary-light));
+    border-radius: 6px;
+    transition: width 0.5s ease;
+    position: relative;
+}
+
+.progress-bar-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.3),
+        transparent
+    );
+    animation: shimmer 2s infinite;
+}
+
+/* Log section */
+.log-section {
+    background-color: var(--film-surface);
+    border-radius: var(--film-border-radius);
+    border: 1px solid var(--film-border);
+    margin-bottom: var(--film-spacing-xl);
+    overflow: hidden;
+}
+
+.log-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--film-spacing-md) var(--film-spacing-lg);
+    background-color: var(--film-background);
+    border-bottom: 1px solid var(--film-border);
+}
+
+.log-header h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--film-text);
+    margin: 0;
+}
+
+.icon-button {
+    padding: var(--film-spacing-xs);
+    background-color: transparent;
+    border: none;
+    color: var(--film-text-light);
+    cursor: pointer;
+    border-radius: var(--film-border-radius);
+    transition: var(--film-transition);
+}
+
+.icon-button:hover {
+    background-color: var(--film-border);
+    color: var(--film-text);
+}
+
+.log-container {
+    height: 200px;
+    overflow-y: auto;
+    background-color: #1a1a1a;
+    color: #e5e5e5;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.log-content {
+    padding: var(--film-spacing-md);
+}
+
+.log-entry {
+    margin-bottom: var(--film-spacing-xs);
+    padding: var(--film-spacing-xs) 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.log-entry:last-child {
+    border-bottom: none;
+}
+
+.log-timestamp {
+    color: #888;
+    margin-right: var(--film-spacing-sm);
+}
+
+.log-level {
+    font-weight: 600;
+    margin-right: var(--film-spacing-sm);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 11px;
+}
+
+.log-level.info {
+    background-color: #3b82f6;
+    color: white;
+}
+
+.log-level.success {
+    background-color: #10b981;
+    color: white;
+}
+
+.log-level.warning {
+    background-color: #f59e0b;
+    color: white;
+}
+
+.log-level.error {
+    background-color: #ef4444;
+    color: white;
+}
+
+.log-message {
+    color: #e5e5e5;
+}
+
+/* Filming controls */
+.filming-controls {
+    display: flex;
+    justify-content: center;
+    gap: var(--film-spacing-md);
+    padding: var(--film-spacing-lg);
+    background-color: var(--film-surface);
+    border-radius: var(--film-border-radius);
+    border: 1px solid var(--film-border);
+}
+
+.control-button {
+    padding: var(--film-spacing-md) var(--film-spacing-lg);
+    border: none;
+    border-radius: var(--film-border-radius);
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--film-transition);
+    display: flex;
+    align-items: center;
+    gap: var(--film-spacing-sm);
+    min-width: 140px;
+    justify-content: center;
+}
+
+.control-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.warning-button {
+    background-color: var(--film-warning);
+    color: white;
+}
+
+.warning-button:hover:not(:disabled) {
+    background-color: var(--film-warning-dark);
+    transform: translateY(-1px);
+}
+
+.success-button {
+    background-color: var(--film-success);
+    color: white;
+}
+
+.success-button:hover:not(:disabled) {
+    background-color: var(--film-success-dark);
+    transform: translateY(-1px);
+}
+
+.danger-button {
+    background-color: var(--film-danger);
+    color: white;
+}
+
+.danger-button:hover:not(:disabled) {
+    background-color: var(--film-danger-dark);
+    transform: translateY(-1px);
+}
+
+/* Responsive design for filming */
+@media (max-width: 992px) {
+    .progress-indicators {
+        padding: var(--film-spacing-md);
+    }
+    
+    .step-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+    }
+    
+    .step-connector {
+        top: 20px;
+    }
+    
+    .activity-info {
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    }
+    
+    .filming-controls {
+        flex-wrap: wrap;
+    }
+    
+    .control-button {
+        min-width: 120px;
+    }
+}
+
+@media (max-width: 768px) {
+    .progress-indicators {
+        flex-direction: column;
+        gap: var(--film-spacing-md);
+    }
+    
+    .progress-step {
+        flex-direction: row;
+        width: 100%;
+        justify-content: flex-start;
+        gap: var(--film-spacing-md);
+    }
+    
+    .step-connector {
+        display: none;
+    }
+    
+    .step-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 16px;
+        margin-bottom: 0;
+    }
+    
+    .step-label {
+        text-align: left;
+        margin: 0;
+    }
+    
+    .activity-info {
+        grid-template-columns: 1fr;
+    }
+    
+    .filming-controls {
+        flex-direction: column;
+    }
+    
+    .control-button {
+        width: 100%;
+        min-width: auto;
+    }
+    
+    .log-container {
+        height: 150px;
+    }
+}
+
+@media (max-width: 576px) {
+    .current-activity,
+    .log-section,
+    .filming-controls {
+        padding: var(--film-spacing-md);
+    }
+    
+    .log-header {
+        padding: var(--film-spacing-sm) var(--film-spacing-md);
+    }
+    
+    .log-container {
+        height: 120px;
+        font-size: 12px;
+    }
+    
+    .control-button {
+        padding: var(--film-spacing-md);
+        font-size: 15px;
+    }
+} 

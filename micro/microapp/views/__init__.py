@@ -82,3 +82,8 @@ from .notification_views import (
     get_unread_count, delete_notification, send_firebase_notification,
     send_websocket_notification, notification_settings, update_notification_settings
 )
+
+# Import roll views
+from .roll_views import (
+    get_project_rolls, update_roll_filming_status, get_roll_details
+)

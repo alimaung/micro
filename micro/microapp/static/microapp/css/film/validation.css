@@ -1,0 +1,353 @@
+/* Validation Card and Pre-Filming Checklist Styles */
+
+/* Validation content layout */
+.validation-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--film-spacing-xl);
+}
+
+/* Roll summary section */
+.roll-summary {
+    background-color: var(--film-surface);
+    border-radius: var(--film-border-radius);
+    padding: var(--film-spacing-lg);
+    border: 1px solid var(--film-border);
+}
+
+.roll-summary h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--film-text);
+    margin-bottom: var(--film-spacing-md);
+    display: flex;
+    align-items: center;
+    gap: var(--film-spacing-sm);
+}
+
+.roll-summary h3::before {
+    content: '📋';
+    font-size: 20px;
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--film-spacing-md);
+}
+
+.summary-item {
+    display: flex;
+    flex-direction: column;
+    padding: var(--film-spacing-md);
+    background-color: var(--film-background);
+    border-radius: var(--film-border-radius);
+    border: 1px solid var(--film-border);
+}
+
+.summary-label {
+    font-size: 12px;
+    color: var(--film-text-light);
+    margin-bottom: var(--film-spacing-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+.summary-value {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--film-text);
+    word-break: break-all;
+}
+
+.summary-value.success {
+    color: var(--film-success);
+}
+
+.summary-value.warning {
+    color: var(--film-warning);
+}
+
+.summary-value.error {
+    color: var(--film-danger);
+}
+
+.summary-value.temp-roll {
+    color: var(--film-warning);
+    font-weight: 600;
+    background-color: rgba(245, 158, 11, 0.1);
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--film-warning);
+}
+
+.summary-value.new-roll {
+    color: var(--film-success);
+    font-weight: 500;
+}
+
+/* Validation checklist */
+.validation-checklist {
+    background-color: var(--film-surface);
+    border-radius: var(--film-border-radius);
+    padding: var(--film-spacing-lg);
+    border: 1px solid var(--film-border);
+}
+
+.validation-checklist h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--film-text);
+    margin-bottom: var(--film-spacing-md);
+    display: flex;
+    align-items: center;
+    gap: var(--film-spacing-sm);
+}
+
+.validation-checklist h3::before {
+    content: '✅';
+    font-size: 20px;
+}
+
+.checklist-items {
+    display: flex;
+    flex-direction: column;
+    gap: var(--film-spacing-md);
+}
+
+.checklist-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+    border: 2px solid var(--color-border);
+    border-radius: 8px;
+    background: var(--color-card-bg);
+    transition: all var(--transition-fast);
+    cursor: pointer;
+}
+
+.checklist-item:hover {
+    border-color: var(--color-primary);
+    background: var(--color-hover-bg);
+}
+
+.checklist-item.checked {
+    border-color: var(--color-success);
+    background: var(--color-success-bg);
+}
+
+.checklist-item input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    margin: 0;
+    cursor: pointer;
+}
+
+.checklist-item label {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    margin: 0;
+}
+
+.checklist-item label i {
+    color: var(--color-primary);
+    width: 20px;
+    text-align: center;
+}
+
+.checklist-item.checked label i {
+    color: var(--color-success);
+}
+
+.checklist-details {
+    margin-top: 8px;
+    margin-left: 32px;
+    font-size: 14px;
+    color: var(--color-text-secondary);
+    font-style: italic;
+}
+
+/* Validation actions */
+.validation-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--film-spacing-md);
+    padding-top: var(--film-spacing-lg);
+    border-top: 1px solid var(--film-border);
+}
+
+.primary-button,
+.secondary-button {
+    padding: var(--film-spacing-md) var(--film-spacing-lg);
+    border-radius: var(--film-border-radius);
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--film-transition);
+    display: flex;
+    align-items: center;
+    gap: var(--film-spacing-sm);
+    border: none;
+    min-width: 160px;
+    justify-content: center;
+}
+
+.primary-button {
+    background-color: var(--film-primary);
+    color: white;
+}
+
+.primary-button:hover:not(:disabled) {
+    background-color: var(--film-primary-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px var(--film-shadow);
+}
+
+.primary-button:disabled {
+    background-color: var(--film-text-muted);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.secondary-button {
+    background-color: var(--film-surface);
+    color: var(--film-text);
+    border: 1px solid var(--film-border);
+}
+
+.secondary-button:hover {
+    background-color: var(--film-border);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px var(--film-shadow);
+}
+
+/* Template type indicator */
+#template-type {
+    font-weight: 600;
+    color: var(--film-primary);
+}
+
+/* Validation status indicators */
+.validation-status-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--film-spacing-xs);
+    font-size: 14px;
+    font-weight: 500;
+    padding: var(--film-spacing-xs) var(--film-spacing-sm);
+    border-radius: var(--film-border-radius);
+}
+
+.validation-status-indicator.valid {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: var(--film-success);
+}
+
+.validation-status-indicator.invalid {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: var(--film-danger);
+}
+
+.validation-status-indicator.pending {
+    background-color: rgba(245, 158, 11, 0.1);
+    color: var(--film-warning);
+}
+
+/* Progress indicator for validation */
+.validation-progress {
+    margin-top: var(--film-spacing-lg);
+    padding: var(--film-spacing-md);
+    background-color: var(--film-surface);
+    border-radius: var(--film-border-radius);
+    border: 1px solid var(--film-border);
+}
+
+.validation-progress-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--film-spacing-sm);
+    font-size: 14px;
+    color: var(--film-text-light);
+}
+
+.validation-progress-bar {
+    height: 8px;
+    background-color: var(--film-border);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.validation-progress-fill {
+    height: 100%;
+    background-color: var(--film-success);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+/* Responsive design for validation */
+@media (max-width: 768px) {
+    .validation-content {
+        gap: var(--film-spacing-lg);
+    }
+    
+    .summary-grid {
+        grid-template-columns: 1fr;
+        gap: var(--film-spacing-sm);
+    }
+    
+    .validation-actions {
+        flex-direction: column-reverse;
+    }
+    
+    .primary-button,
+    .secondary-button {
+        width: 100%;
+        min-width: auto;
+    }
+    
+    .checklist-item {
+        padding: var(--film-spacing-sm);
+    }
+    
+    .checklist-item label {
+        font-size: 15px;
+    }
+}
+
+@media (max-width: 576px) {
+    .roll-summary,
+    .validation-checklist {
+        padding: var(--film-spacing-md);
+    }
+    
+    .summary-item {
+        padding: var(--film-spacing-sm);
+    }
+    
+    .checklist-item {
+        gap: var(--film-spacing-sm);
+    }
+    
+    .checklist-item input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+    }
+    
+    .checklist-item label {
+        font-size: 14px;
+        gap: var(--film-spacing-sm);
+    }
+    
+    .checklist-item label i {
+        font-size: 16px;
+        min-width: 18px;
+    }
+} 

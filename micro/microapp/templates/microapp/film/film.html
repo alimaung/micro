@@ -4,7 +4,12 @@
 
 {% load static %}
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'microapp/css/film/film.css' %}">
+    <link rel="stylesheet" href="{% static 'microapp/css/film/base.css' %}">
+    <link rel="stylesheet" href="{% static 'microapp/css/film/cards.css' %}">
+    <link rel="stylesheet" href="{% static 'microapp/css/film/rolls.css' %}">
+    <link rel="stylesheet" href="{% static 'microapp/css/film/validation.css' %}">
+    <link rel="stylesheet" href="{% static 'microapp/css/film/filming.css' %}">
+    <link rel="stylesheet" href="{% static 'microapp/css/film/completion.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -14,7 +19,7 @@
         <div class="film-header">
             <div class="header-content">
                 <h1>Microfilm Controller</h1>
-                <p class="subtitle">Control and monitor the filming process for registered projects</p>
+                <p class="subtitle">Roll-by-roll filming process for registered projects</p>
             </div>
             <div class="quick-stats">
                 <div class="stat-item">
@@ -22,30 +27,25 @@
                     <span class="stat-label">Total Projects</span>
                 </div>
                 <div class="stat-item">
-                    <span class="stat-value" id="ready-filming">0</span>
-                    <span class="stat-label">Ready for Filming</span>
+                    <span class="stat-value" id="ready-rolls">0</span>
+                    <span class="stat-label">Ready Rolls</span>
                 </div>
                 <div class="stat-item">
-                    <span class="stat-value" id="total-pages">0</span>
-                    <span class="stat-label">Total Pages</span>
+                    <span class="stat-value" id="completed-rolls">0</span>
+                    <span class="stat-label">Completed Rolls</span>
                 </div>
             </div>
         </div>
 
-        <!-- Project Selection Section -->
-        <div class="project-selection-card">
+        <!-- Card 1: Project Selection -->
+        <div class="filming-card" id="project-selection-card">
             <div class="card-header">
-                <h2>Select Project to Film</h2>
-                <div class="mode-selector">
-                    <span class="mode-label">Film Type:</span>
-                    <div class="toggle-container">
-                        <input type="radio" id="film-16mm" name="film-type" value="16" checked>
-                        <label for="film-16mm">16mm</label>
-                        <input type="radio" id="film-35mm" name="film-type" value="35">
-                        <label for="film-35mm">35mm</label>
-                    </div>
+                <h2><span class="step-number">1</span> Select Project</h2>
+                <div class="card-status">
+                    <span class="status-indicator" id="project-status">Select a project to begin</span>
                 </div>
             </div>
+            
             <div class="search-filter">
                 <div class="search-box">
                     <input type="text" id="project-search" placeholder="Search projects...">
@@ -56,27 +56,21 @@
                 <div class="filter-options">
                     <select id="project-status-filter">
                         <option value="all">All Statuses</option>
-                        <option value="ready" selected>Ready to Film</option>
+                        <option value="ready" selected>Ready for Filming</option>
                         <option value="in-progress">In Progress</option>
                         <option value="completed">Completed</option>
                     </select>
-                    <select id="project-type-filter">
-                        <option value="all">All Types</option>
-                        <option value="document">Document</option>
-                        <option value="book">Book</option>
-                        <option value="archive">Archive</option>
-                        <option value="newspaper">Newspaper</option>
-                    </select>
                 </div>
             </div>
+            
             <div class="projects-list">
                 <div class="list-header">
                     <span class="project-name">Project Name</span>
-                    <span class="project-id">Project ID</span>
+                    <span class="project-id">Archive ID</span>
                     <span class="project-location">Location</span>
-                    <span class="project-pages">Pages</span>
-                    <span class="project-type">Type</span>
+                    <span class="project-rolls">Rolls</span>
                     <span class="project-status">Status</span>
+                    <span class="project-actions">Actions</span>
                 </div>
                 <div id="project-list" class="list-body">
                     <!-- Projects will be loaded dynamically -->
@@ -86,18 +80,155 @@
                     </div>
                 </div>
             </div>
-            <div class="project-actions">
-                <button id="start-filming" class="primary-button">
-                    <i class="fas fa-film"></i> Start Filming Process
+            
+            <div class="project-selection-actions">
+                <button id="select-project-btn" class="primary-button" disabled>
+                    <i class="fas fa-arrow-right"></i> Select Project & Continue
                 </button>
             </div>
         </div>
 
-        <!-- Filming Process Section (initially hidden) -->
-        <div id="filming-process-section" class="filming-process-card" style="display: none;">
+        <!-- Card 2: Roll Selection (initially hidden) -->
+        <div class="filming-card" id="roll-selection-card" style="display: none;">
             <div class="card-header">
-                <h2>Filming Process: <span id="filming-project-name">Project Name</span></h2>
-                <span class="film-number">Film #: <span id="film-number">F-16-0001</span></span>
+                <h2><span class="step-number">2</span> Select Roll to Film</h2>
+                <div class="card-status">
+                    <span class="status-indicator" id="roll-status">Choose a roll from the project</span>
+                </div>
+            </div>
+            
+            <div class="project-info">
+                <div class="info-item">
+                    <span class="info-label">Project:</span>
+                    <span class="info-value" id="selected-project-name">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Archive ID:</span>
+                    <span class="info-value" id="selected-project-id">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Location:</span>
+                    <span class="info-value" id="selected-project-location">-</span>
+                </div>
+            </div>
+            
+            <div class="rolls-grid" id="rolls-grid">
+                <!-- Rolls will be loaded dynamically -->
+                <div class="loading-state">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Loading rolls...</p>
+                </div>
+            </div>
+            
+            <div class="roll-selection-actions">
+                <button id="back-to-projects-btn" class="secondary-button">
+                    <i class="fas fa-arrow-left"></i> Back to Projects
+                </button>
+                <button id="select-roll-btn" class="primary-button" disabled>
+                    <i class="fas fa-arrow-right"></i> Select Roll & Continue
+                </button>
+            </div>
+        </div>
+
+        <!-- Card 3: Pre-Filming Validation (initially hidden) -->
+        <div class="filming-card" id="validation-card" style="display: none;">
+            <div class="card-header">
+                <h2><span class="step-number">3</span> Pre-Filming Validation</h2>
+                <div class="card-status">
+                    <span class="status-indicator" id="validation-status">Validate settings and insert film</span>
+                </div>
+            </div>
+            
+            <div class="validation-content">
+                <div class="roll-summary">
+                    <h3>Selected Roll Summary</h3>
+                    <div class="summary-grid">
+                        <div class="summary-item">
+                            <span class="summary-label">Film Number:</span>
+                            <span class="summary-value" id="validation-film-number">-</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Film Type:</span>
+                            <span class="summary-value" id="validation-film-type">-</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Roll Source:</span>
+                            <span class="summary-value" id="validation-roll-source">-</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Documents:</span>
+                            <span class="summary-value" id="validation-document-count">-</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Pages:</span>
+                            <span class="summary-value" id="validation-page-count">-</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Output Directory:</span>
+                            <span class="summary-value" id="validation-output-dir">-</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Directory Status:</span>
+                            <span class="summary-value" id="validation-dir-status">-</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="validation-checklist">
+                    <h3>Pre-Filming Checklist</h3>
+                    <div class="checklist-items">
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check-camera-head">
+                            <label for="check-camera-head">
+                                <i class="fas fa-camera"></i>
+                                <span id="camera-head-instruction">Use 16mm camera head</span>
+                            </label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check-temp-roll">
+                            <label for="check-temp-roll">
+                                <i class="fas fa-film"></i>
+                                <span id="temp-roll-instruction">Insert new 16mm film roll</span>
+                            </label>
+                            <div class="checklist-details" id="temp-roll-details">
+                                New roll with 2900 pages capacity
+                            </div>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check-film-inserted">
+                            <label for="check-film-inserted">
+                                <i class="fas fa-check-circle"></i>
+                                Film roll inserted and properly aligned
+                            </label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check-machine-ready">
+                            <label for="check-machine-ready">
+                                <i class="fas fa-wifi"></i>
+                                SMA machine ready and connected
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="validation-actions">
+                    <button id="cancel-validation" class="secondary-button">
+                        <i class="fas fa-arrow-left"></i> Back to Roll Selection
+                    </button>
+                    <button id="start-filming" class="primary-button" disabled>
+                        <i class="fas fa-play"></i> Start Filming Process
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 4: Filming Process (initially hidden) -->
+        <div class="filming-card" id="filming-process-card" style="display: none;">
+            <div class="card-header">
+                <h2><span class="step-number">4</span> Filming in Progress</h2>
+                <div class="card-status">
+                    <span class="status-indicator filming" id="filming-status">Processing documents...</span>
+                </div>
             </div>
             
             <!-- Progress Indicators -->
@@ -106,36 +237,28 @@
                     <div class="step-icon">
                         <i class="fas fa-power-off"></i>
                     </div>
-                    <div class="step-label">
-                        Initialization
-                    </div>
+                    <div class="step-label">Initialization</div>
                     <div class="step-connector"></div>
                 </div>
                 <div class="progress-step" data-step="preparation">
                     <div class="step-icon">
                         <i class="fas fa-cog"></i>
                     </div>
-                    <div class="step-label">
-                        Preparation
-                    </div>
+                    <div class="step-label">Preparation</div>
                     <div class="step-connector"></div>
                 </div>
                 <div class="progress-step" data-step="filming">
                     <div class="step-icon">
                         <i class="fas fa-camera"></i>
                     </div>
-                    <div class="step-label">
-                        Filming
-                    </div>
+                    <div class="step-label">Filming</div>
                     <div class="step-connector"></div>
                 </div>
                 <div class="progress-step" data-step="finalization">
                     <div class="step-icon">
                         <i class="fas fa-check-circle"></i>
                     </div>
-                    <div class="step-label">
-                        Finalization
-                    </div>
+                    <div class="step-label">Finalization</div>
                 </div>
             </div>
             
@@ -159,10 +282,6 @@
                         <div class="info-item">
                             <span class="info-label">ETA:</span>
                             <span class="info-value eta-text">Calculating...</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">Status:</span>
-                            <span class="info-value filming-status pending">Pending</span>
                         </div>
                     </div>
                     <div class="activity-progress">
@@ -201,68 +320,47 @@
                 </button>
             </div>
         </div>
-        
-        <!-- Machine Status Section -->
-        <div class="machine-status-card">
+
+        <!-- Card 5: Completion (initially hidden) -->
+        <div class="filming-card" id="completion-card" style="display: none;">
             <div class="card-header">
-                <h2>Filming Machine Status</h2>
-                <span class="status-indicator online">
-                    <i class="fas fa-plug"></i> Connected
-                </span>
-            </div>
-            <div class="machine-details">
-                <div class="machine-info-panel">
-                    <div class="machine-info-item">
-                        <span class="info-icon"><i class="fas fa-thermometer-half"></i></span>
-                        <div class="info-content">
-                            <span class="info-label">System Temperature</span>
-                            <span class="info-value">28.4°C <span class="status-normal">Normal</span></span>
-                        </div>
-                    </div>
-                    <div class="machine-info-item">
-                        <span class="info-icon"><i class="fas fa-tachometer-alt"></i></span>
-                        <div class="info-content">
-                            <span class="info-label">Processing Speed</span>
-                            <span class="info-value">3.2 docs/sec <span class="status-normal">Normal</span></span>
-                        </div>
-                    </div>
-                    <div class="machine-info-item">
-                        <span class="info-icon"><i class="fas fa-film"></i></span>
-                        <div class="info-content">
-                            <span class="info-label">Film Remaining</span>
-                            <span class="info-value">65% <span class="status-normal">Normal</span></span>
-                        </div>
-                    </div>
-                    <div class="machine-info-item">
-                        <span class="info-icon"><i class="fas fa-memory"></i></span>
-                        <div class="info-content">
-                            <span class="info-label">Buffer Status</span>
-                            <span class="info-value">32% <span class="status-normal">Normal</span></span>
-                        </div>
-                    </div>
-                </div>
-                <div class="machine-stats">
-                    <div class="machine-stat">
-                        <canvas id="filmingChart" class="stat-chart"></canvas>
-                        <span class="stat-title">Filming Statistics</span>
-                    </div>
+                <h2><span class="step-number">5</span> Filming Complete</h2>
+                <div class="card-status">
+                    <span class="status-indicator success" id="completion-status">Roll filming completed successfully</span>
                 </div>
             </div>
-        </div>
-        
-        <!-- Recently Completed Section -->
-        <div class="recent-films-card">
-            <div class="card-header">
-                <h2>Recently Completed Films</h2>
-                <button class="view-all-button">
-                    <i class="fas fa-list"></i> View All
-                </button>
-            </div>
-            <div class="recent-films-grid">
-                <!-- Recent films will be loaded dynamically -->
-                <div class="loading-state">
-                    <i class="fas fa-spinner fa-spin"></i>
-                    <p>Loading recent films...</p>
+            
+            <div class="completion-content">
+                <div class="completion-summary">
+                    <div class="completion-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <h3>Roll <span id="completed-film-number">-</span> Filming Complete</h3>
+                    <p>The filming process has been completed successfully. Please remove the physical film and prepare for the next roll.</p>
+                </div>
+                
+                <div class="completion-stats">
+                    <div class="stat-item">
+                        <span class="stat-value" id="completion-documents">0</span>
+                        <span class="stat-label">Documents Processed</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value" id="completion-pages">0</span>
+                        <span class="stat-label">Pages Filmed</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value" id="completion-duration">0:00</span>
+                        <span class="stat-label">Duration</span>
+                    </div>
+                </div>
+                
+                <div class="completion-actions">
+                    <button id="film-another-roll" class="primary-button">
+                        <i class="fas fa-plus"></i> Film Another Roll
+                    </button>
+                    <button id="finish-session" class="secondary-button">
+                        <i class="fas fa-check"></i> Finish Session
+                    </button>
                 </div>
             </div>
         </div>
@@ -273,7 +371,6 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="{% static 'microapp/js/common/database-service.js' %}"></script>
 <script src="{% static 'microapp/js/film/film.js' %}"></script>
 {% endblock %} 

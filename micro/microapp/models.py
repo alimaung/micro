@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 import uuid
+from pathlib import Path
 
 class FilmType(models.TextChoices):
     """Type of film used for microfilming."""
@@ -175,6 +176,22 @@ class Roll(models.Model):
     output_directory = models.CharField(max_length=500, blank=True, null=True, 
                                        help_text="Path to the roll's output directory where documents are distributed")
     
+    # Filming status tracking
+    filming_status = models.CharField(max_length=20, choices=[
+        ('ready', 'Ready to Film'),
+        ('filming', 'Currently Filming'),
+        ('completed', 'Filming Completed'),
+        ('error', 'Filming Error'),
+    ], default='ready', help_text="Current filming status of this roll")
+    filming_session_id = models.CharField(max_length=100, blank=True, null=True, 
+                                         help_text="ID of the current/last filming session")
+    filming_started_at = models.DateTimeField(blank=True, null=True, 
+                                             help_text="When filming started for this roll")
+    filming_completed_at = models.DateTimeField(blank=True, null=True, 
+                                               help_text="When filming was completed for this roll")
+    filming_progress_percent = models.FloatField(default=0.0, 
+                                                help_text="Filming progress percentage (0-100)")
+    
     # Partial roll information
     is_partial = models.BooleanField(default=False, help_text="Whether this is a partial roll")
     remaining_capacity = models.IntegerField(default=0, help_text="Remaining capacity when roll becomes partial")
@@ -210,7 +227,18 @@ class Roll(models.Model):
             raise ValueError("Cannot generate blip without a film number")
         
         return f"{self.film_number}-{doc_index:04d}.{frame_start:05d}"
-
+    
+    @property
+    def has_output_directory(self):
+        """Check if the roll has an output directory set."""
+        return bool(self.output_directory)
+    
+    @property
+    def output_directory_exists(self):
+        """Check if the output directory exists on the filesystem."""
+        if not self.output_directory:
+            return False
+        return Path(self.output_directory).exists()
 
 class TempRoll(models.Model):
     """Represents a temporary roll with remaining capacity that can be used for future allocations."""

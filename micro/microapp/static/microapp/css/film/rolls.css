@@ -1,0 +1,331 @@
+/* Roll Selection and Roll-specific Styles */
+
+/* Rolls grid layout */
+.rolls-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: var(--film-spacing-lg);
+    margin-bottom: var(--film-spacing-lg);
+}
+
+/* Roll card styling */
+.roll-card {
+    background-color: var(--film-surface);
+    border: 2px solid var(--film-border);
+    border-radius: var(--film-border-radius-lg);
+    padding: var(--film-spacing-lg);
+    cursor: pointer;
+    transition: var(--film-transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.roll-card:hover {
+    border-color: var(--film-primary);
+    box-shadow: 0 4px 12px var(--film-shadow);
+    transform: translateY(-2px);
+}
+
+.roll-card.selected {
+    border-color: var(--film-primary);
+    background-color: rgba(37, 99, 235, 0.05);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.roll-card.not-ready {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.roll-card.not-ready:hover {
+    transform: none;
+    border-color: var(--film-border);
+    box-shadow: none;
+}
+
+.roll-card.filming {
+    border-color: var(--film-primary);
+    background-color: rgba(37, 99, 235, 0.1);
+}
+
+.roll-card.completed {
+    border-color: var(--film-success);
+    background-color: rgba(16, 185, 129, 0.05);
+}
+
+/* Roll header */
+.roll-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--film-spacing-md);
+}
+
+.roll-title {
+    flex: 1;
+}
+
+.roll-film-number {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--film-text);
+    margin-bottom: var(--film-spacing-xs);
+}
+
+.roll-film-type {
+    font-size: 14px;
+    color: var(--film-text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.roll-status-badge {
+    padding: var(--film-spacing-xs) var(--film-spacing-sm);
+    border-radius: var(--film-border-radius);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.roll-status-badge.ready {
+    background-color: var(--film-success);
+    color: white;
+}
+
+.roll-status-badge.filming {
+    background-color: var(--film-primary);
+    color: white;
+    animation: pulse 2s infinite;
+}
+
+.roll-status-badge.completed {
+    background-color: var(--film-success);
+    color: white;
+}
+
+.roll-status-badge.not-ready {
+    background-color: var(--film-warning);
+    color: white;
+}
+
+/* Roll details */
+.roll-details {
+    margin-bottom: var(--film-spacing-md);
+}
+
+.roll-detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--film-spacing-xs);
+    font-size: 14px;
+}
+
+.roll-detail-label {
+    color: var(--film-text-light);
+}
+
+.roll-detail-value {
+    color: var(--film-text);
+    font-weight: 500;
+}
+
+/* Roll progress bar */
+.roll-progress {
+    margin-bottom: var(--film-spacing-md);
+}
+
+.roll-progress-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--film-spacing-xs);
+    font-size: 12px;
+    color: var(--film-text-light);
+}
+
+.roll-progress-bar {
+    height: 6px;
+    background-color: var(--film-border);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.roll-progress-fill {
+    height: 100%;
+    background-color: var(--film-primary);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+.roll-progress-fill.completed {
+    background-color: var(--film-success);
+}
+
+/* Roll actions */
+.roll-actions {
+    display: flex;
+    gap: var(--film-spacing-sm);
+}
+
+.roll-select-button {
+    flex: 1;
+    padding: var(--film-spacing-sm) var(--film-spacing-md);
+    background-color: var(--film-primary);
+    color: white;
+    border: none;
+    border-radius: var(--film-border-radius);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--film-transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--film-spacing-xs);
+}
+
+.roll-select-button:hover {
+    background-color: var(--film-primary-dark);
+}
+
+.roll-select-button:disabled {
+    background-color: var(--film-text-muted);
+    cursor: not-allowed;
+}
+
+.roll-info-button {
+    padding: var(--film-spacing-sm);
+    background-color: var(--film-surface);
+    color: var(--film-text-light);
+    border: 1px solid var(--film-border);
+    border-radius: var(--film-border-radius);
+    cursor: pointer;
+    transition: var(--film-transition);
+}
+
+.roll-info-button:hover {
+    background-color: var(--film-border);
+    color: var(--film-text);
+}
+
+/* Directory status indicator */
+.directory-status {
+    display: flex;
+    align-items: center;
+    gap: var(--film-spacing-xs);
+    font-size: 12px;
+    margin-top: var(--film-spacing-xs);
+}
+
+.directory-status.exists {
+    color: var(--film-success);
+}
+
+.directory-status.missing {
+    color: var(--film-danger);
+}
+
+.directory-status i {
+    font-size: 10px;
+}
+
+/* Filming progress indicator for active rolls */
+.filming-progress-indicator {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background-color: var(--film-border);
+    overflow: hidden;
+}
+
+.filming-progress-fill {
+    height: 100%;
+    background-color: var(--film-primary);
+    transition: width 0.3s ease;
+    position: relative;
+}
+
+.filming-progress-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.3),
+        transparent
+    );
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+/* Roll empty state */
+.rolls-empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--film-text-light);
+}
+
+.rolls-empty-state i {
+    font-size: 48px;
+    margin-bottom: var(--film-spacing-md);
+    opacity: 0.6;
+}
+
+.rolls-empty-state h3 {
+    font-size: 18px;
+    margin-bottom: var(--film-spacing-sm);
+    color: var(--film-text);
+}
+
+.rolls-empty-state p {
+    font-size: 14px;
+    margin-bottom: var(--film-spacing-md);
+}
+
+/* Responsive design for rolls */
+@media (max-width: 768px) {
+    .rolls-grid {
+        grid-template-columns: 1fr;
+        gap: var(--film-spacing-md);
+    }
+    
+    .roll-card {
+        padding: var(--film-spacing-md);
+    }
+    
+    .roll-header {
+        flex-direction: column;
+        gap: var(--film-spacing-sm);
+    }
+    
+    .roll-actions {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 576px) {
+    .roll-film-number {
+        font-size: 16px;
+    }
+    
+    .roll-detail-item {
+        font-size: 13px;
+    }
+    
+    .roll-select-button {
+        padding: var(--film-spacing-md);
+        font-size: 16px;
+    }
+} 
