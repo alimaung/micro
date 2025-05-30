@@ -11,11 +11,13 @@ class FilmType(models.TextChoices):
 class Project(models.Model):
     # Core project identification
     archive_id = models.CharField(max_length=20, help_text="Format: RRDxxx-yyyy")
+    name = models.CharField(max_length=255, blank=True, null=True, help_text="Project name")
     location = models.CharField(max_length=10, help_text="Location code (e.g., OU, DW)")
     doc_type = models.CharField(max_length=50, blank=True, null=True)
     
     # Path information
     project_path = models.CharField(max_length=500)
+    folder_path = models.CharField(max_length=500, blank=True, null=True, help_text="Main folder path for the project")
     project_folder_name = models.CharField(max_length=255)
     pdf_folder_path = models.CharField(max_length=500, blank=True, null=True)
     comlist_path = models.CharField(max_length=500, blank=True, null=True)
@@ -57,7 +59,7 @@ class Project(models.Model):
         ordering = ['-created_at']
     
     def __str__(self):
-        return f"{self.archive_id} ({self.location})"
+        return f"{self.name or self.archive_id} ({self.location})"
     
     @property
     def location_code(self):
@@ -159,6 +161,7 @@ class Roll(models.Model):
     # Basic roll information
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='rolls')
     roll_id = models.PositiveIntegerField(blank=True, null=True)  # Not primary key
+    roll_number = models.CharField(max_length=50, blank=True, null=True, help_text="Roll number for this roll")
     film_number = models.CharField(max_length=50, blank=True, null=True, help_text="Film number assigned to this roll")
     film_type = models.CharField(max_length=10, choices=FilmType.choices, help_text="Type of film (16mm or 35mm)")
     
@@ -168,9 +171,10 @@ class Roll(models.Model):
     pages_remaining = models.IntegerField(default=0, help_text="Number of pages remaining on this roll")
     
     # Status and metadata
-    status = models.CharField(max_length=20, default="active", help_text="Status of the roll (active, used, etc.)")
+    status = models.CharField(max_length=20, default="active", help_text="Status of the roll (active, used, filmed, etc.)")
     has_split_documents = models.BooleanField(default=False, help_text="Whether any documents are split across rolls")
     creation_date = models.DateTimeField(auto_now_add=True)
+    filmed_at = models.DateTimeField(blank=True, null=True, help_text="When this roll was filmed")
     
     # Output directory path
     output_directory = models.CharField(max_length=500, blank=True, null=True, 
@@ -192,6 +196,20 @@ class Roll(models.Model):
     filming_progress_percent = models.FloatField(default=0.0, 
                                                 help_text="Filming progress percentage (0-100)")
     
+    # Development status tracking
+    development_status = models.CharField(max_length=20, choices=[
+        ('pending', 'Pending Development'),
+        ('developing', 'Currently Developing'),
+        ('completed', 'Development Completed'),
+        ('failed', 'Development Failed'),
+    ], default='pending', help_text="Current development status of this roll")
+    development_started_at = models.DateTimeField(blank=True, null=True, 
+                                                 help_text="When development started for this roll")
+    development_completed_at = models.DateTimeField(blank=True, null=True, 
+                                                   help_text="When development was completed for this roll")
+    development_progress_percent = models.FloatField(default=0.0, 
+                                                    help_text="Development progress percentage (0-100)")
+    
     # Partial roll information
     is_partial = models.BooleanField(default=False, help_text="Whether this is a partial roll")
     remaining_capacity = models.IntegerField(default=0, help_text="Remaining capacity when roll becomes partial")
@@ -209,7 +227,7 @@ class Roll(models.Model):
         ordering = ['project', 'film_type', 'roll_id']
     
     def __str__(self):
-        return f"Roll {self.roll_id}: {self.film_number or 'No film number'} ({self.film_type})"
+        return f"Roll {self.roll_number or self.roll_id}: {self.film_number or 'No film number'} ({self.film_type})"
     
     @property
     def is_full(self):
@@ -538,26 +556,33 @@ class FilmingSession(models.Model):
         ('paused', 'Paused'),
         ('completed', 'Completed'),
         ('cancelled', 'Cancelled'),
-        ('error', 'Error'),
+        ('failed', 'Failed'),
+        ('terminated', 'Terminated'),
+    ]
+    
+    WORKFLOW_STATE_CHOICES = [
+        ('initialization', 'Initialization'),
+        ('monitoring', 'Independent Monitoring'),
+        ('advanced_finish', 'Advanced Finish'),
+        ('completed', 'Completed'),
     ]
     
     # Session identification
-    session_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    session_id = models.CharField(max_length=100, unique=True, help_text="Unique session identifier")
     
     # Relationships
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='filming_sessions')
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='filming_sessions')
+    roll = models.ForeignKey(Roll, on_delete=models.CASCADE, related_name='filming_sessions', null=True, blank=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='filming_sessions', null=True, blank=True)
     
     # Film configuration
-    template = models.CharField(max_length=10, choices=FilmType.choices, help_text="Film template (16mm or 35mm)")
-    film_number = models.CharField(max_length=50, help_text="Film number for this session")
+    film_type = models.CharField(max_length=10, choices=FilmType.choices, default=FilmType.FILM_16MM, help_text="Film type (16mm or 35mm)")
     
-    # Session parameters
-    project_path = models.CharField(max_length=500, help_text="Path to project folder")
-    output_dir = models.CharField(max_length=500, help_text="Output directory path")
+    # Session status and workflow
+    status = models.CharField(max_length=20, choices=SESSION_STATUS_CHOICES, default='pending')
+    workflow_state = models.CharField(max_length=20, choices=WORKFLOW_STATE_CHOICES, default='initialization')
     
     # Progress tracking
-    status = models.CharField(max_length=20, choices=SESSION_STATUS_CHOICES, default='pending')
     total_documents = models.IntegerField(default=0, help_text="Total documents to process")
     processed_documents = models.IntegerField(default=0, help_text="Documents processed so far")
     progress_percent = models.FloatField(default=0.0, help_text="Progress percentage (0-100)")
@@ -566,9 +591,9 @@ class FilmingSession(models.Model):
     started_at = models.DateTimeField(null=True, blank=True)
     completed_at = models.DateTimeField(null=True, blank=True)
     duration = models.DurationField(null=True, blank=True, help_text="Total session duration")
-    estimated_remaining = models.DurationField(null=True, blank=True, help_text="Estimated remaining time")
     
-    # Error handling
+    # Recovery and error handling
+    recovery_mode = models.BooleanField(default=False, help_text="Whether this session is in recovery mode")
     error_message = models.TextField(blank=True, null=True, help_text="Error message if session failed")
     
     # Metadata
@@ -581,6 +606,7 @@ class FilmingSession(models.Model):
             models.Index(fields=['session_id']),
             models.Index(fields=['status']),
             models.Index(fields=['project', 'status']),
+            models.Index(fields=['workflow_state']),
         ]
     
     def __str__(self):
@@ -604,3 +630,218 @@ class FilmingSession(models.Model):
         if self.total_documents > 0:
             self.progress_percent = (self.processed_documents / self.total_documents) * 100
         self.save(update_fields=['processed_documents', 'total_documents', 'progress_percent', 'updated_at'])
+
+
+class FilmingSessionLog(models.Model):
+    """Stores log entries for filming sessions."""
+    LOG_LEVEL_CHOICES = [
+        ('debug', 'Debug'),
+        ('info', 'Info'),
+        ('warning', 'Warning'),
+        ('error', 'Error'),
+        ('critical', 'Critical'),
+    ]
+    
+    # Relationships
+    session = models.ForeignKey(FilmingSession, on_delete=models.CASCADE, related_name='logs')
+    
+    # Log information
+    level = models.CharField(max_length=10, choices=LOG_LEVEL_CHOICES, default='info')
+    message = models.TextField(help_text="Log message content")
+    workflow_state = models.CharField(max_length=20, blank=True, null=True, help_text="Workflow state when log was created")
+    
+    # Metadata
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['session', '-created_at']),
+            models.Index(fields=['level']),
+        ]
+    
+    def __str__(self):
+        return f"{self.session.session_id} [{self.level}]: {self.message[:50]}..."
+
+
+class DevelopmentSession(models.Model):
+    """Tracks film development sessions."""
+    DEVELOPMENT_STATUS_CHOICES = [
+        ('pending', 'Pending Development'),
+        ('developing', 'Currently Developing'),
+        ('completed', 'Development Completed'),
+        ('failed', 'Development Failed'),
+    ]
+    
+    # Session identification
+    session_id = models.CharField(max_length=100, unique=True, help_text="Unique development session identifier")
+    
+    # Relationships
+    roll = models.ForeignKey(Roll, on_delete=models.CASCADE, related_name='development_sessions')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='development_sessions', null=True, blank=True)
+    
+    # Development status
+    status = models.CharField(max_length=20, choices=DEVELOPMENT_STATUS_CHOICES, default='pending')
+    
+    # Timing information (30 minute development cycle)
+    development_duration_minutes = models.IntegerField(default=30, help_text="Development duration in minutes")
+    started_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    estimated_completion = models.DateTimeField(null=True, blank=True)
+    
+    # Progress tracking
+    progress_percent = models.FloatField(default=0.0, help_text="Development progress percentage (0-100)")
+    
+    # Chemical usage tracking
+    chemical_usage_area = models.FloatField(default=0.0, help_text="Film area processed in m²")
+    
+    # Metadata
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['session_id']),
+            models.Index(fields=['status']),
+            models.Index(fields=['roll']),
+        ]
+    
+    def __str__(self):
+        return f"Development Session {self.session_id} - Roll {self.roll.film_number} ({self.status})"
+    
+    @property
+    def is_active(self):
+        """Check if the development session is currently active."""
+        return self.status == 'developing'
+    
+    @property
+    def is_completed(self):
+        """Check if the development session has completed successfully."""
+        return self.status == 'completed'
+    
+    def calculate_chemical_usage(self):
+        """Calculate chemical usage based on actual pages used plus leader/trailer."""
+        # Total frames = actual pages used + 100 for leader/trailer
+        total_frames = self.roll.pages_used + 100
+        
+        # Each frame is 1cm wide
+        film_length_cm = total_frames * 1.0  # 1cm per frame
+        film_length_m = film_length_cm / 100.0  # Convert to meters
+        
+        if self.roll.film_type == FilmType.FILM_16MM:
+            # 16mm film height is 16mm = 1.6cm
+            film_height_m = 0.016  # 16mm in meters
+        else:  # 35mm
+            # 35mm film height is 35mm = 3.5cm  
+            film_height_m = 0.035  # 35mm in meters
+        
+        # Calculate area: length × height
+        self.chemical_usage_area = film_length_m * film_height_m
+        return self.chemical_usage_area
+
+
+class ChemicalBatch(models.Model):
+    """Tracks chemical batches used in development."""
+    CHEMICAL_TYPES = [
+        ('developer', 'Developer'),
+        ('fixer', 'Fixer'),
+        ('cleaner1', 'Cleaner 1'),
+        ('cleaner2', 'Cleaner 2'),
+    ]
+    
+    # Chemical information
+    chemical_type = models.CharField(max_length=20, choices=CHEMICAL_TYPES)
+    batch_id = models.CharField(max_length=50, help_text="Batch identifier")
+    
+    # Capacity and usage (based on chemical_monitor.py logic)
+    max_area = models.FloatField(default=10.0, help_text="Maximum film area this batch can process (m²)")
+    used_area = models.FloatField(default=0.0, help_text="Film area already processed (m²)")
+    
+    # Roll tracking
+    used_16mm_rolls = models.IntegerField(default=0, help_text="Number of 16mm rolls processed")
+    used_35mm_rolls = models.IntegerField(default=0, help_text="Number of 35mm rolls processed")
+    
+    # Status and dates
+    is_active = models.BooleanField(default=True, help_text="Whether this batch is currently active")
+    created_at = models.DateTimeField(auto_now_add=True)
+    replaced_at = models.DateTimeField(null=True, blank=True, help_text="When this batch was replaced")
+    
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['chemical_type', 'is_active']),
+            models.Index(fields=['is_active']),
+        ]
+    
+    def __str__(self):
+        return f"{self.get_chemical_type_display()} Batch {self.batch_id}"
+    
+    @property
+    def remaining_capacity(self):
+        """Calculate remaining capacity in m²."""
+        return max(0, self.max_area - self.used_area)
+    
+    @property
+    def capacity_percent(self):
+        """Calculate remaining capacity as percentage."""
+        return (self.remaining_capacity / self.max_area) * 100 if self.max_area > 0 else 0
+    
+    @property
+    def is_critical(self):
+        """Check if chemical level is critical (< 40% remaining)."""
+        return self.capacity_percent < 40
+    
+    @property
+    def is_low(self):
+        """Check if chemical level is low (< 80% remaining)."""
+        return self.capacity_percent < 80
+    
+    def add_roll_usage(self, film_type, area_used):
+        """Add usage for a film roll with actual area used."""
+        if film_type == FilmType.FILM_16MM:
+            self.used_16mm_rolls += 1
+        else:  # 35mm
+            self.used_35mm_rolls += 1
+        
+        # Add the actual area used
+        self.used_area += area_used
+        
+        # Cap at maximum
+        self.used_area = min(self.used_area, self.max_area)
+        self.save()
+    
+    def can_process_roll(self, area_needed):
+        """Check if this batch can process a roll requiring the given area."""
+        return (self.used_area + area_needed) <= self.max_area
+
+
+class DevelopmentLog(models.Model):
+    """Stores log entries for development sessions."""
+    LOG_LEVEL_CHOICES = [
+        ('debug', 'Debug'),
+        ('info', 'Info'),
+        ('warning', 'Warning'),
+        ('error', 'Error'),
+        ('critical', 'Critical'),
+    ]
+    
+    # Relationships
+    session = models.ForeignKey(DevelopmentSession, on_delete=models.CASCADE, related_name='logs')
+    
+    # Log information
+    level = models.CharField(max_length=10, choices=LOG_LEVEL_CHOICES, default='info')
+    message = models.TextField(help_text="Log message content")
+    
+    # Metadata
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['session', '-created_at']),
+            models.Index(fields=['level']),
+        ]
+    
+    def __str__(self):
+        return f"{self.session.session_id} [{self.level}]: {self.message[:50]}..."

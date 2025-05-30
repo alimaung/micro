@@ -1,0 +1,257 @@
+External Python dependencies found by directory:
+==================================================
+
+.origin/
+--------
+  PyPDF2
+  colorama
+  logger
+  reportlab
+  tqdm
+  xlwings
+
+.utils/
+-------
+  PIL
+  PyPDF2
+  app
+  fade
+  figlet
+  fitz
+  flask
+  img2pdf
+  keyboard
+  numpy
+  openpyxl
+  pandas
+  pdfgenerator
+  psutil
+  pypdf
+  reportlab
+  tabulate
+  tqdm
+  werkzeug
+  win32api
+  win32con
+  wol_sniffer
+
+micro/
+------
+  PyPDF2
+  advanced_finish
+  allocation_views
+  asgiref
+  channels
+  colorama
+  distribution_views
+  django
+  document_manager
+  document_views
+  export_views
+  filesystem_views
+  film_number_manager
+  filmnumber_views
+  firebase_admin
+  index_views
+  logger
+  machine_test
+  machine_views
+  micro
+  microapp
+  models
+  notification_views
+  post_processing
+  progress_monitor
+  project_manager
+  project_views
+  psutil
+  pyautogui
+  pywinauto
+  reference_views
+  relay_views
+  reportlab
+  roll_manager
+  roll_views
+  screeninfo
+  serial
+  services
+  sma
+  sma_config
+  sma_controller
+  sma_exceptions
+  sma_processor
+  sma_utils
+  sma_views
+  sma_workflow
+  template_views
+  tqdm
+  transfer_views
+  ui_automation
+  views
+  websocket
+  websockets
+  win32api
+  win32con
+  xlwings
+
+microfilm/
+----------
+  PyPDF2
+  colorama
+  distribution_service
+  document_service
+  exceptions
+  export_service
+  film_number_service
+  film_service
+  index_service
+  logger
+  models
+  project_service
+  reference_service
+  reportlab
+  tqdm
+  xlwings
+
+remote_execution/
+-----------------
+  flask
+  orchestrator
+  requests
+
+saferoom/
+---------
+  relay_control
+  serial
+
+sma/
+----
+  advanced_finish
+  asgiref
+  channels
+  colorama
+  django
+  firebase_admin
+  logger
+  matplotlib
+  motor_control
+  numpy
+  pandas
+  post_processing
+  progress_monitor
+  psutil
+  pyautogui
+  pywinauto
+  scipy
+  screeninfo
+  serial
+  sma
+  sma_config
+  sma_controller
+  sma_exceptions
+  sma_utils
+  sma_workflow
+  src
+  tqdm
+  trinamic
+  trinamic_controller
+  ui_automation
+  win32api
+  win32con
+  win32gui
+  win32process
+
+Summary - All unique dependencies:
+===================================
+PIL
+PyPDF2
+advanced_finish
+allocation_views
+app
+asgiref
+channels
+colorama
+distribution_service
+distribution_views
+django
+document_manager
+document_service
+document_views
+exceptions
+export_service
+export_views
+fade
+figlet
+filesystem_views
+film_number_manager
+film_number_service
+film_service
+filmnumber_views
+firebase_admin
+fitz
+flask
+img2pdf
+index_service
+index_views
+keyboard
+logger
+machine_test
+machine_views
+matplotlib
+micro
+microapp
+models
+motor_control
+notification_views
+numpy
+openpyxl
+orchestrator
+pandas
+pdfgenerator
+post_processing
+progress_monitor
+project_manager
+project_service
+project_views
+psutil
+pyautogui
+pypdf
+pywinauto
+reference_service
+reference_views
+relay_control
+relay_views
+reportlab
+requests
+roll_manager
+roll_views
+scipy
+screeninfo
+serial
+services
+sma
+sma_config
+sma_controller
+sma_exceptions
+sma_processor
+sma_utils
+sma_views
+sma_workflow
+src
+tabulate
+template_views
+tqdm
+transfer_views
+trinamic
+trinamic_controller
+ui_automation
+views
+websocket
+websockets
+werkzeug
+win32api
+win32con
+win32gui
+win32process
+wol_sniffer
+xlwings

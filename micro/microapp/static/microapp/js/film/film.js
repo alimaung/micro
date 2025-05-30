@@ -2,51 +2,283 @@ document.addEventListener('DOMContentLoaded', function() {
     // Main state variables
     let currentStep = 'initialization';
     let isFilmingActive = false;
-    let mockInterval = null;
-    let mockProgress = 30; // Starting at 30%
-    let totalDocuments = 423;
-    let processedDocuments = 127;
+    let currentSessionId = null;
+    let websocketClient = null;
     let allProjects = []; // Store all loaded projects
     let filteredProjects = []; // Store filtered projects
+    let currentProjectId = null;
+    let currentRollId = null;
+    let sessionStartTime = null;
     
     // Initialize the application
     initializeApp();
     
     async function initializeApp() {
-        // Initialize event handlers
-        initializeEventHandlers();
+        console.log('🎬 Initializing SMA Filming Interface...');
         
-        // Load projects from API
-        await loadProjects();
+        // Check for active sessions FIRST before showing any UI
+        const activeSessions = await checkForActiveSessions();
         
-        // Initialize interface
-        updateProgressIndicators();
+        if (activeSessions && activeSessions.length > 0) {
+            console.log('🔄 Found active session, restoring automatically...');
+            // Automatically restore the active session
+            await restoreActiveSession(activeSessions[0]);
+        } else {
+            console.log('📋 No active sessions found, showing project selection...');
+            // Normal initialization - show project selection
+            await loadProjects();
+            showCard('project-selection-card');
+        }
+        
+    // Initialize event handlers
+    initializeEventHandlers();
+        
+        // Initialize WebSocket connection
+        initializeWebSocket();
+    
+    // Initialize interface
         updateQuickStats();
         
-        // Disable start filming button initially
-        document.getElementById('start-filming').disabled = true;
+        // Disable start filming button initially (if in normal mode)
+        const startFilmingButton = document.getElementById('start-filming');
+        if (startFilmingButton && !isFilmingActive) {
+            startFilmingButton.disabled = true;
+        }
         
         // Handle dark mode for stat-items
-        handleDarkMode();
-        
-        // Observe body class changes for dark mode toggle
-        const observer = new MutationObserver((mutations) => {
-            mutations.forEach((mutation) => {
-                if (mutation.attributeName === 'class') {
-                    handleDarkMode();
-                }
-            });
+    handleDarkMode();
+    
+    // Observe body class changes for dark mode toggle
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.attributeName === 'class') {
+                handleDarkMode();
+            }
         });
+    });
+    
+    observer.observe(document.body, { attributes: true });
         
-        observer.observe(document.body, { attributes: true });
+        // Add navigation warning for active sessions
+        setupNavigationWarning();
+        
+        // Test log entry to verify log system is working
+        setTimeout(() => {
+            addLogEntry('SMA Filming Interface initialized successfully', 'info');
+            console.log('Test log entry added');
+        }, 1000);
     }
     
-    // Load projects from the API
+    // Setup navigation warning to prevent accidental page leaving during filming
+    function setupNavigationWarning() {
+        window.addEventListener('beforeunload', function(e) {
+            if (isFilmingActive && currentSessionId) {
+                const message = 'You have an active filming session. Are you sure you want to leave? The session will continue running in the background.';
+                e.preventDefault();
+                e.returnValue = message;
+                return message;
+            }
+        });
+    }
+    
+    // Initialize WebSocket connection for real-time updates
+    function initializeWebSocket() {
+        if (typeof WebSocketClient !== 'undefined') {
+            websocketClient = new WebSocketClient();
+            websocketClient.connect();
+            
+            // Set up WebSocket event handlers
+            websocketClient.onMessage = handleWebSocketMessage;
+            websocketClient.onConnect = () => {
+                console.log('WebSocket connected for filming interface');
+            };
+            websocketClient.onDisconnect = () => {
+                console.log('WebSocket disconnected');
+            };
+        }
+    }
+    
+    // Handle WebSocket messages for real-time updates
+    function handleWebSocketMessage(event) {
+        console.log('🔌 WebSocket message received (raw):', event); // Debug logging
+        
+        // Parse the JSON data from the MessageEvent
+        let data;
+        try {
+            data = JSON.parse(event.data);
+            console.log('🔌 Parsed WebSocket data:', data);
+        } catch (error) {
+            console.error('❌ Failed to parse WebSocket message:', error, event.data);
+            return;
+        }
+        
+        if (data.type === 'connection_established') {
+            console.log('WebSocket connection established:', data.message);
+            return;
+        }
+        
+        if (data.type === 'session_joined') {
+            console.log('Joined session:', data.session_id);
+            return;
+        }
+        
+        if (data.type === 'pong') {
+            console.log('WebSocket pong received');
+            return;
+        }
+        
+        // Handle SMA-specific messages
+        console.log('🔍 Checking session ID:', {
+            messageSessionId: data.session_id,
+            currentSessionId: currentSessionId,
+            messageType: data.type
+        });
+        
+        // For log messages, be more permissive during debugging
+        if (data.type === 'sma_log') {
+            console.log('📝 Processing sma_log message (bypassing session filter):', data);
+            // Handle log entries from SMA process
+            const logData = data.log || data.data;
+            if (logData) {
+                const message = logData.message || 'Unknown log message';
+                const level = logData.level || 'info';
+                const source = logData.source || 'sma';
+                
+                console.log('📝 Extracted log data:', { message, level, source });
+                
+                // Add source prefix for SMA logs
+                const displayMessage = source === 'sma_stdout' ? `[SMA] ${message}` : message;
+                console.log('📝 Adding log entry:', displayMessage);
+                addLogEntry(displayMessage, level);
+                
+                // Show important logs as notifications
+                if (level === 'error' || level === 'critical') {
+                    showNotification('error', 'SMA Error', message, 8000);
+                } else if (level === 'warning') {
+                    showNotification('warning', 'SMA Warning', message, 5000);
+                }
+            } else {
+                console.warn('❌ sma_log message missing log data:', data);
+            }
+            return; // Early return after handling log
+        }
+        
+        // For other messages, check session ID
+        if (!data.session_id || data.session_id !== currentSessionId) {
+            console.log('⏭️ Ignoring message for different session');
+            return; // Ignore messages for other sessions
+        }
+        
+        switch (data.type) {
+            case 'sma_progress':
+                updateProgressFromWebSocket(data.progress || data.data);
+                break;
+            case 'sma_workflow_state':
+                updateWorkflowState(data.new_state);
+                break;
+            case 'sma_status':
+                updateWorkflowState(data.status.workflow_state);
+                break;
+            case 'sma_error':
+                // Handle SMA error messages
+                const errorData = data.error || data.data;
+                if (errorData) {
+                    const errorMessage = errorData.message || 'SMA process error occurred';
+                    addLogEntry(`[ERROR] ${errorMessage}`, 'error');
+                    showNotification('error', 'SMA Process Error', errorMessage, 10000);
+                    
+                    // Update workflow state to error
+                    updateWorkflowState('error');
+                    
+                    // Show error modal for critical errors or initialization failures
+                    if (errorData.critical || errorData.phase === 'initialization' || 
+                        errorMessage.toLowerCase().includes('initialization') ||
+                        errorMessage.toLowerCase().includes('failed to start') ||
+                        errorMessage.toLowerCase().includes('connection') ||
+                        errorMessage.toLowerCase().includes('timeout')) {
+                        
+                        showErrorModal(errorMessage, errorData);
+                    }
+                }
+                break;
+            case 'sma_completed':
+                // Handle SMA completion messages
+                const completionData = data.completion || data.data;
+                if (completionData) {
+                    const completionMessage = completionData.message || 'SMA process completed successfully';
+                    addLogEntry(`[COMPLETED] ${completionMessage}`, 'success');
+                    showNotification('success', 'SMA Process Complete', completionMessage, 8000);
+                    
+                    // Update workflow state to completed
+                    updateWorkflowState('completed');
+                }
+                break;
+            case 'session_complete':
+                handleSessionComplete(data);
+                break;
+            case 'session_error':
+                handleSessionError(data);
+                break;
+        }
+    }
+    
+    // Check for active sessions on page load
+    async function checkForActiveSessions() {
+        try {
+            const response = await fetch('/api/sma/active-sessions/', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
+                }
+            });
+            
+            if (!response.ok) {
+                console.warn('Failed to check for active sessions:', response.status);
+                return [];
+            }
+            
+            const data = await response.json();
+            
+            if (data.success && data.active_sessions) {
+                // Filter sessions for current user and prioritize running sessions
+                const userSessions = data.active_sessions.filter(session => {
+                    // For now, we'll show all sessions since we don't have user context in frontend
+                    // In production, you might want to add user filtering on backend
+                    return true;
+                });
+                
+                // Prioritize running/paused sessions over completed ones
+                const runningSessions = userSessions.filter(session => 
+                    ['running', 'paused'].includes(session.status) && session.is_process_active
+                );
+                
+                const completedSessions = userSessions.filter(session => 
+                    session.status === 'completed'
+                );
+                
+                // Return running sessions first, then recent completed sessions
+                const prioritizedSessions = [...runningSessions, ...completedSessions.slice(0, 1)];
+                
+                console.log(`Found ${runningSessions.length} running and ${completedSessions.length} completed sessions`);
+                return prioritizedSessions;
+            }
+            
+            return [];
+            
+        } catch (error) {
+            console.error('Error checking for active sessions:', error);
+            return [];
+        }
+    }
+    
+    // Load projects from the SMA API
     async function loadProjects() {
         try {
             showLoadingState();
             
-            const response = await fetch('/api/projects/', {
+            // Use SMA-specific projects endpoint
+            const response = await fetch('/api/sma/projects/', {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -60,18 +292,15 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const data = await response.json();
             
-            // Handle the response format from views.list_projects
-            if (data.status === 'success') {
-                allProjects = data.results || [];
+            // Handle the response format from SMA service
+            if (data.success) {
+                allProjects = data.projects || [];
             } else {
-                throw new Error(data.message || 'Failed to load projects');
+                throw new Error(data.error || 'Failed to load projects');
             }
             
-            // Filter projects that are ready for filming
-            filteredProjects = allProjects.filter(project => {
-                // Projects are ready for filming if they have documents and are not already completed
-                return !project.film_allocation_complete && (project.total_pages > 0 || project.has_oversized);
-            });
+            // Projects are already filtered by SMA service for filming readiness
+            filteredProjects = allProjects;
             
             displayProjects(filteredProjects);
             hideLoadingState();
@@ -79,6 +308,7 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (error) {
             console.error('Error loading projects:', error);
             showErrorState('Failed to load projects. Please try again.');
+            showNotification('error', 'Load Error', `Failed to load projects: ${error.message}`);
         }
     }
     
@@ -96,19 +326,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="empty-state">
                     <i class="fas fa-folder-open"></i>
                     <p>No projects available for filming</p>
-                    <small>Projects need to have documents processed before they can be filmed.</small>
+                    <small>Projects need to be processed and have available rolls for SMA filming.</small>
                 </div>
             `;
             return;
         }
         
         projectList.innerHTML = projects.map(project => {
-            const status = getProjectFilmingStatus(project);
+            const status = project.filming_status || 'ready';
             const statusClass = getStatusClass(status);
-            const projectName = project.project_folder_name || project.archive_id;
+            const projectName = project.name || project.archive_id;
             const archiveId = project.archive_id;
             const location = project.location || 'Unknown';
-            const rollCount = 1; // For now, assume 1 roll per project - this could be calculated from actual roll data
+            const rollCount = project.available_rolls || 0;
             
             return `
                 <div class="project-item" data-id="${project.id}" data-archive-id="${project.archive_id}">
@@ -120,7 +350,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <span class="status-badge ${statusClass}">${status}</span>
                     </span>
                     <span class="project-actions">
-                        ${status === 'Completed' ? `
+                        ${status === 'completed' ? `
                             <button class="view-button" title="View details">
                                 <i class="fas fa-eye"></i> View
                             </button>
@@ -298,7 +528,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Search filter
             const matchesSearch = !searchTerm || 
                 (project.archive_id && project.archive_id.toLowerCase().includes(searchTerm)) ||
-                (project.project_folder_name && project.project_folder_name.toLowerCase().includes(searchTerm)) ||
+                (project.name && project.name.toLowerCase().includes(searchTerm)) ||
                 (project.location && project.location.toLowerCase().includes(searchTerm));
             
             // Status filter
@@ -361,9 +591,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const cancelButton = document.getElementById('cancel-filming');
         const expandLogButton = document.getElementById('expand-log');
         
-        if (pauseButton) pauseButton.addEventListener('click', togglePauseFilming);
-        if (resumeButton) resumeButton.addEventListener('click', togglePauseFilming);
-        if (cancelButton) cancelButton.addEventListener('click', cancelFilming);
+        if (pauseButton) pauseButton.addEventListener('click', pauseSession);
+        if (resumeButton) resumeButton.addEventListener('click', resumeSession);
+        if (cancelButton) cancelButton.addEventListener('click', cancelSession);
         if (expandLogButton) expandLogButton.addEventListener('click', toggleExpandLog);
         
         // Filter and search - check if they exist
@@ -383,8 +613,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const selectProjectBtn = document.getElementById('select-project-btn');
         if (selectProjectBtn) {
             selectProjectBtn.addEventListener('click', function() {
-                const selectedProject = document.querySelector('.project-item.selected');
-                if (selectedProject) {
+        const selectedProject = document.querySelector('.project-item.selected');
+        if (selectedProject) {
                     proceedWithSelectedProject(selectedProject);
                 }
             });
@@ -425,14 +655,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (e.target !== checkbox) {
                         checkbox.checked = !checkbox.checked;
                         updateValidationStatus();
-                    }
-                });
             }
+        });
+    }
         });
         
         // Validation actions
         const cancelValidationButton = document.getElementById('cancel-validation');
-        const startFilmingValidationButton = document.getElementById('start-filming');
         
         if (cancelValidationButton) {
             cancelValidationButton.addEventListener('click', function() {
@@ -476,255 +705,218 @@ document.addEventListener('DOMContentLoaded', function() {
         hideCard('validation-card');
         showCard('filming-process-card');
         
-        // Get selected roll information
+        // Get selected project and roll information
+        const selectedProject = document.querySelector('.project-item.selected');
         const selectedRoll = document.querySelector('.roll-card.selected');
-        if (!selectedRoll && !isRecovery) {
-            showToast('error', 'No Roll Selected', 'Please select a roll to film');
+        
+        if (!selectedProject || !selectedRoll) {
+            showNotification('error', 'Selection Required', 'Please select a project and roll');
             return;
         }
         
-        // Reset progress to initial state
-        if (!isRecovery) {
-            currentStep = 'initialization';
-            mockProgress = 0;
-            processedDocuments = 0;
-            
-            // Get document count from selected roll
-            if (selectedRoll) {
-                const documentCount = selectedRoll.querySelector('.roll-detail-value').textContent;
-                totalDocuments = parseInt(documentCount) || 100;
-            }
-            
-            // Reset progress indicators
-            document.querySelectorAll('.progress-step').forEach(step => {
-                step.classList.remove('completed', 'active');
-                if (step.getAttribute('data-step') === 'initialization') {
-                    step.classList.add('active');
-                }
-            });
-            
-            // Add initial log entries
-            addLogEntry('Initializing SMA application...');
-            
-            // Start the mock filming process
-            setTimeout(() => {
-                addLogEntry('Application started successfully');
-                advanceToNextStep(); // Advance to preparation
-                
-                setTimeout(() => {
-                    addLogEntry('Selecting template: Portrait - 16mm.TPL');
-                    advanceToNextStep(); // Advance to filming
-                    
-                    setTimeout(() => {
-                        startMockFilmingProgress();
-                    }, 1000);
-                }, 1000);
-            }, 1500);
-        } else {
-            // Recovery mode - start from the current state
-            currentStep = 'filming';
-            mockProgress = 30; // Start at 30%
-            processedDocuments = Math.floor(totalDocuments * 0.3);
-            
-            // Set progress indicators for recovery
-            document.querySelectorAll('.progress-step').forEach(step => {
-                step.classList.remove('completed', 'active');
-                
-                const stepName = step.getAttribute('data-step');
-                if (stepName === 'initialization' || stepName === 'preparation') {
-                    step.classList.add('completed');
-                } else if (stepName === 'filming') {
-                    step.classList.add('active');
-                }
-            });
-            
-            // Add recovery log entries
-            addLogEntry('Recovery mode initiated');
-            addLogEntry('Reconnecting to SMA application...');
-            
-            setTimeout(() => {
-                addLogEntry('Successfully recovered filming session');
-                addLogEntry(`Current progress: ${mockProgress}% (${processedDocuments}/${totalDocuments})`);
-                startMockFilmingProgress();
-            }, 1500);
-        }
+        currentProjectId = selectedProject.getAttribute('data-id');
+        currentRollId = selectedRoll.getAttribute('data-roll-id');
         
-        // Update counters
-        updateDocumentCounters();
-        
-        // Update interface
-        updateProgressIndicators();
-        updateActivityLabel();
-        
-        // Update filming status
-        const filmingStatus = document.getElementById('filming-status');
-        if (filmingStatus) {
-            filmingStatus.textContent = 'Processing documents...';
-            filmingStatus.className = 'status-indicator filming';
-        }
-        
-        // Set active filming state
-        isFilmingActive = true;
-        
-        // Update button states
-        updateControlButtons();
-        
-        // Show toast notification
-        showToast('info', 'Filming Started', 'Roll filming process has begun');
+        // Start real SMA filming session
+        startSMAFilmingSession(isRecovery);
     }
     
-    function startMockFilmingProgress() {
-        // Clear any existing interval
-        if (mockInterval) {
-            clearInterval(mockInterval);
-        }
-        
-        // Update progress bar and log entries periodically
-        mockInterval = setInterval(() => {
-            if (mockProgress < 100) {
-                // Increase progress
-                mockProgress += 0.5;
-                processedDocuments = Math.floor((mockProgress / 100) * totalDocuments);
+    // Start real SMA filming session
+    async function startSMAFilmingSession(isRecovery = false) {
+        try {
+            // Get film type from validation card
+            const filmType = document.getElementById('validation-film-type').textContent || '16mm';
+            
+            // Prepare request data
+            const requestData = {
+                project_id: parseInt(currentProjectId),
+                roll_id: parseInt(currentRollId),
+                film_type: filmType,
+                recovery: isRecovery
+            };
+            
+            // Add initial log entry
+            addLogEntry('Starting SMA filming session...', 'info');
+            
+            // Call SMA filming API
+            const response = await fetch('/api/sma/filming/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
+                },
+                body: JSON.stringify(requestData)
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Session started successfully
+                currentSessionId = data.session_id;
+                sessionStartTime = new Date();
+                isFilmingActive = true;
+                
+                // Update session info
+                document.getElementById('current-session-id').textContent = currentSessionId;
+                document.getElementById('session-start-time').textContent = sessionStartTime.toLocaleTimeString();
+                
+                // Subscribe to WebSocket updates for this session
+                if (websocketClient) {
+                    websocketClient.subscribeToSession(currentSessionId);
+                }
                 
                 // Update UI
-                updateProgressBar();
-                updateDocumentCounters();
+                updateControlButtons();
+                addLogEntry(`Session ${currentSessionId} started successfully`, 'info');
+                addLogEntry(`Project: ${data.project_name || 'Unknown'}, Roll: ${data.roll_number || 'Unknown'}`, 'info');
                 
-                // Add log entry every 5%
-                if (mockProgress % 5 < 0.5) {
-                    addLogEntry(`Progress: ${mockProgress.toFixed(1)}% (${processedDocuments}/${totalDocuments}) - ETA: ${calculateMockETA()}`);
-                }
+                // Start session monitoring
+                startSessionMonitoring();
                 
-                // Update processing rate
-                const processingRateElement = document.getElementById('processing-rate');
-                if (processingRateElement) {
-                    processingRateElement.textContent = `${(Math.random() * 1.5 + 2.5).toFixed(1)} docs/sec`;
-                }
+                showNotification('success', 'Session Started', `Filming session ${currentSessionId} started`);
+                
             } else {
-                // Filming complete
-                clearInterval(mockInterval);
-                mockInterval = null;
-                
-                // Move to end symbols step
-                addLogEntry('Document processing complete');
-                advanceToNextStep(); // End symbols
+                // Handle errors
+                if (data.existing_session) {
+                    // Show recovery options
+                    showRecoveryModal(data.session_id);
+                } else {
+                    throw new Error(data.error || 'Failed to start filming session');
+                }
             }
-        }, 500);
+            
+        } catch (error) {
+            console.error('Error starting filming session:', error);
+            addLogEntry(`Error starting session: ${error.message}`, 'error');
+            
+            // Reset UI state
+            isFilmingActive = false;
+        updateControlButtons();
+        
+            // Show error modal for initialization failures
+            showErrorModal(error.message, { error: error.message, phase: 'initialization' });
+        }
     }
     
-    function advanceToNextStep() {
-        // Get the current and next steps
+    // Start monitoring the filming session
+    function startSessionMonitoring() {
+        // Update session duration every second
+        setInterval(() => {
+            if (sessionStartTime && isFilmingActive) {
+                const duration = new Date() - sessionStartTime;
+                const hours = Math.floor(duration / 3600000);
+                const minutes = Math.floor((duration % 3600000) / 60000);
+                const seconds = Math.floor((duration % 60000) / 1000);
+                
+                const durationStr = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                document.getElementById('session-duration').textContent = durationStr;
+            }
+        }, 1000);
+        
+        // Poll session status every 5 seconds as backup to WebSocket
+        setInterval(async () => {
+            if (currentSessionId && isFilmingActive) {
+                await updateSessionStatus();
+            }
+        }, 5000);
+    }
+    
+    // Update session status from API
+    async function updateSessionStatus() {
+        try {
+            const response = await fetch(`/api/sma/session/${currentSessionId}/`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    updateProgressFromAPI(data.status);
+                }
+            }
+        } catch (error) {
+            console.error('Error updating session status:', error);
+        }
+    }
+    
+    // Update progress from WebSocket message
+    function updateProgressFromWebSocket(data) {
+        updateProgressDisplay(data.progress_percent, data.processed_documents, data.total_documents);
+        
+        if (data.eta) {
+            document.querySelector('.eta-text').textContent = `ETA: ${data.eta}`;
+        }
+    }
+    
+    // Update progress from API response
+    function updateProgressFromAPI(status) {
+        updateProgressDisplay(status.progress_percent, status.processed_documents, status.total_documents);
+        
+        // Update workflow state
+        if (status.workflow_state !== currentStep) {
+            updateWorkflowState(status.workflow_state);
+        }
+        
+        // Check if session is complete
+        if (status.status === 'completed') {
+            handleSessionComplete(status);
+        } else if (status.status === 'failed') {
+            handleSessionError(status);
+        }
+    }
+    
+    // Update progress display
+    function updateProgressDisplay(progressPercent, processedDocs, totalDocs) {
+        // Update progress bar
+        const progressBar = document.querySelector('.progress-bar-fill');
+        const progressText = document.querySelector('.progress-text');
+        
+        if (progressBar) {
+            progressBar.style.width = `${progressPercent}%`;
+        }
+        if (progressText) {
+            progressText.textContent = `${progressPercent.toFixed(1)}%`;
+        }
+        
+        // Update document counters
+        const processedElement = document.getElementById('processed-docs');
+        const totalElement = document.getElementById('total-docs');
+        const progressDocsElement = document.getElementById('progress-documents');
+        
+        if (processedElement) processedElement.textContent = processedDocs;
+        if (totalElement) totalElement.textContent = totalDocs;
+        if (progressDocsElement) progressDocsElement.textContent = `${processedDocs} / ${totalDocs} documents`;
+    }
+    
+    function updateWorkflowState(state) {
+        currentStep = state;
+        
+        // Update progress indicators
         const steps = ['initialization', 'preparation', 'filming', 'finalization'];
         const currentIndex = steps.indexOf(currentStep);
         
-        if (currentIndex < steps.length - 1) {
-            // Mark current step as completed
-            const currentStepElement = document.querySelector(`.progress-step[data-step="${currentStep}"]`);
-            if (currentStepElement) {
-                currentStepElement.classList.remove('active');
-                currentStepElement.classList.add('completed');
-            }
+        steps.forEach((step, index) => {
+            const stepElement = document.querySelector(`.progress-step[data-step="${step}"]`);
             
-            // Move to next step
-            currentStep = steps[currentIndex + 1];
-            const nextStepElement = document.querySelector(`.progress-step[data-step="${currentStep}"]`);
-            if (nextStepElement) {
-                nextStepElement.classList.add('active');
-            }
-            
-            // Update activity label
-            updateActivityLabel();
-            
-            // Add log entry for the step transition
-            addLogEntry(`Starting ${formatStepName(currentStep)} phase`);
-            
-            // If we reached the end, show completion
-            if (currentStep === 'finalization') {
-                mockProgress = 100;
-                processedDocuments = totalDocuments;
-                updateProgressBar();
-                updateDocumentCounters();
-                
-                addLogEntry('Filming process completed successfully');
-                addLogEntry(`Final count: ${totalDocuments}/${totalDocuments} documents processed`);
-                
-                // Clear interval if running
-                if (mockInterval) {
-                    clearInterval(mockInterval);
-                    mockInterval = null;
+            if (stepElement) {
+                if (index < currentIndex) {
+                    stepElement.classList.remove('active');
+                    stepElement.classList.add('completed');
+                } else if (index === currentIndex) {
+                    stepElement.classList.remove('completed');
+                    stepElement.classList.add('active');
+                } else {
+                    stepElement.classList.remove('completed', 'active');
                 }
-                
-                // Set filming inactive
-                isFilmingActive = false;
-                
-                // Update buttons
-                updateControlButtons();
-                
-                // Show completion after a delay
-                setTimeout(() => {
-                    showCompletionCard();
-                }, 2000);
             }
-        }
+        });
         
-        // Update the progress indicators
-        updateProgressIndicators();
-    }
-    
-    function togglePauseFilming() {
-        if (!isFilmingActive) return;
-        
-        const pauseButton = document.getElementById('pause-filming');
-        
-        if (mockInterval) {
-            // Currently running, pause it
-            clearInterval(mockInterval);
-            mockInterval = null;
-            pauseButton.innerHTML = '<i class="fas fa-play"></i> Resume Filming';
-            addLogEntry('Filming process paused');
-            document.getElementById('current-activity-label').textContent += ' (Paused)';
-        } else {
-            // Currently paused, resume it
-            startMockFilmingProgress();
-            pauseButton.innerHTML = '<i class="fas fa-pause"></i> Pause Filming';
-            addLogEntry('Filming process resumed');
-            updateActivityLabel();
-        }
-    }
-    
-    function cancelFilming() {
-        if (!isFilmingActive) return;
-        
-        // Show confirmation dialog
-        if (confirm('Are you sure you want to cancel the filming process? This cannot be undone.')) {
-            // Clear interval if running
-            if (mockInterval) {
-                clearInterval(mockInterval);
-                mockInterval = null;
-            }
-            
-            // Reset progress indicators
-            document.querySelectorAll('.progress-step').forEach(step => {
-                step.classList.remove('completed', 'in-progress');
-            });
-            
-            // Add log entry
-            addLogEntry('Filming process cancelled by user');
-            
-            // Hide filming section
-            document.getElementById('filming-process-section').style.display = 'none';
-            
-            // Reset state
-            isFilmingActive = false;
-            currentStep = 'initialization';
-            mockProgress = 0;
-            processedDocuments = 0;
-            
-            // Update interface
-            updateProgressBar();
-            updateDocumentCounters();
-            updateControlButtons();
-        }
+        // Update activity label
+        updateActivityLabel();
     }
     
     function updateActivityLabel() {
@@ -746,121 +938,279 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    function updateProgressBar() {
-        const progressBar = document.querySelector('.progress-bar-fill');
-        const progressText = document.querySelector('.progress-text');
+    function handleSessionComplete(data) {
+        isFilmingActive = false;
+        addLogEntry('Filming session completed successfully', 'info');
+        showNotification('success', 'Session Complete', 'Filming session has been completed');
         
-        if (progressBar) {
-            progressBar.style.width = `${mockProgress}%`;
-        }
-        if (progressText) {
-            progressText.textContent = `${mockProgress.toFixed(1)}%`;
-        }
+        // Update final progress
+        updateProgressDisplay(100, data.total_documents, data.total_documents);
+        
+        // Show completion card
+        setTimeout(() => {
+            showCompletionCard(data);
+        }, 2000);
     }
     
-    function updateDocumentCounters() {
-        const processedElement = document.getElementById('processed-docs');
-        const totalElement = document.getElementById('total-docs');
-        const progressTextElement = document.querySelector('.progress-text');
-        const etaTextElement = document.querySelector('.eta-text');
+    function handleSessionError(data) {
+        isFilmingActive = false;
+        const errorMessage = data.error_message || data.error || 'Unknown error occurred';
         
-        if (processedElement) processedElement.textContent = processedDocuments;
-        if (totalElement) totalElement.textContent = totalDocuments;
-        if (progressTextElement) progressTextElement.textContent = `${mockProgress.toFixed(1)}%`;
-        if (etaTextElement) etaTextElement.textContent = calculateMockETA();
+        addLogEntry(`Session failed: ${errorMessage}`, 'error');
+        showNotification('error', 'Session Failed', `Filming session failed: ${errorMessage}`);
+        updateControlButtons();
+        
+        // Show error modal with retry option for initialization failures
+        showErrorModal(errorMessage, data);
     }
     
-    function updateProgressIndicators() {
-        // Get all steps
-        const steps = ['initialization', 'preparation', 'filming', 'finalization'];
-        const currentIndex = steps.indexOf(currentStep);
+    // Show error modal with retry functionality
+    function showErrorModal(errorMessage, errorData) {
+        // Create and show error modal
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay error-modal';
+        modal.innerHTML = `
+            <div class="modal-content error-content">
+                <div class="error-header">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h3>SMA Process Failed</h3>
+                </div>
+                <div class="error-body">
+                    <p class="error-message">${errorMessage}</p>
+                    <div class="error-details">
+                        <p><strong>What happened:</strong> The SMA filming process encountered an error and could not continue.</p>
+                        <p><strong>What you can do:</strong></p>
+                        <ul>
+                            <li>Check that the SMA machine is properly connected and powered on</li>
+                            <li>Verify that the film is properly inserted and aligned</li>
+                            <li>Ensure the output directory is accessible</li>
+                            <li>Try starting the process again</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button id="retry-process-btn" class="primary-button">
+                        <i class="fas fa-redo"></i> Retry Process
+                    </button>
+                    <button id="back-to-validation-btn" class="secondary-button">
+                        <i class="fas fa-arrow-left"></i> Back to Validation
+                    </button>
+                    <button id="cancel-error-btn" class="secondary-button">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                </div>
+            </div>
+        `;
         
-        // Update each step's status
-        steps.forEach((step, index) => {
-            const stepElement = document.querySelector(`.progress-step[data-step="${step}"]`);
-            
-            if (stepElement) {
-                if (index < currentIndex) {
-                    // Steps before current are completed
-                    stepElement.classList.remove('active');
-                    stepElement.classList.add('completed');
-                } else if (index === currentIndex) {
-                    // Current step is in progress
-                    stepElement.classList.remove('completed');
-                    stepElement.classList.add('active');
-                } else {
-                    // Future steps are neither
-                    stepElement.classList.remove('completed', 'active');
-                }
+        document.body.appendChild(modal);
+        
+        // Add event listeners
+        modal.querySelector('#retry-process-btn').addEventListener('click', () => {
+            document.body.removeChild(modal);
+            addLogEntry('Retrying SMA process...', 'info');
+            // Retry the filming process
+            startFilmingProcess(false);
+        });
+        
+        modal.querySelector('#back-to-validation-btn').addEventListener('click', () => {
+            document.body.removeChild(modal);
+            // Go back to validation card
+            hideCard('filming-process-card');
+            showCard('validation-card');
+            // Reset filming state
+            isFilmingActive = false;
+            currentSessionId = null;
+            sessionStartTime = null;
+            updateControlButtons();
+        });
+        
+        modal.querySelector('#cancel-error-btn').addEventListener('click', () => {
+            document.body.removeChild(modal);
+            // Reset to project selection
+            resetToProjectSelection();
+        });
+        
+        // Close modal when clicking outside
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                document.body.removeChild(modal);
+                resetToProjectSelection();
             }
         });
     }
     
+    function showRecoveryModal(sessionId) {
+        // Create and show recovery modal
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <h3>Session Recovery</h3>
+                <p>An existing filming session was found for this project and roll.</p>
+                <p>Session ID: ${sessionId}</p>
+                <div class="modal-actions">
+                    <button id="recover-session-btn" class="primary-button">
+                        <i class="fas fa-undo"></i> Recover Session
+                    </button>
+                    <button id="force-new-session-btn" class="secondary-button">
+                        <i class="fas fa-plus"></i> Start New Session
+                    </button>
+                    <button id="cancel-recovery-btn" class="secondary-button">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Add event listeners
+        modal.querySelector('#recover-session-btn').addEventListener('click', () => {
+            document.body.removeChild(modal);
+            recoverSession(sessionId);
+        });
+        
+        modal.querySelector('#force-new-session-btn').addEventListener('click', () => {
+            document.body.removeChild(modal);
+            startSMAFilmingSession(false); // Force new session
+        });
+        
+        modal.querySelector('#cancel-recovery-btn').addEventListener('click', () => {
+            document.body.removeChild(modal);
+        });
+    }
+    
+    async function recoverSession(sessionId) {
+        try {
+            const response = await fetch(`/api/sma/session/${sessionId}/recover/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
+                }
+            });
+            
+            const data = await response.json();
+            if (data.success) {
+                currentSessionId = sessionId;
+                isFilmingActive = true;
+                
+                // Subscribe to WebSocket updates
+                if (websocketClient) {
+                    websocketClient.subscribeToSession(currentSessionId);
+                }
+                
+                addLogEntry('Session recovered successfully', 'info');
+                showNotification('success', 'Session Recovered', 'Filming session has been recovered');
+                
+                // Start monitoring
+                startSessionMonitoring();
+                updateControlButtons();
+            } else {
+                throw new Error(data.error || 'Failed to recover session');
+                }
+        } catch (error) {
+            console.error('Error recovering session:', error);
+            addLogEntry(`Error recovering session: ${error.message}`, 'error');
+            showNotification('error', 'Recovery Error', `Failed to recover session: ${error.message}`);
+            }
+    }
+    
     function updateControlButtons() {
         const pauseButton = document.getElementById('pause-filming');
+        const resumeButton = document.getElementById('resume-filming');
         const cancelButton = document.getElementById('cancel-filming');
         
-        if (pauseButton && cancelButton) {
-            if (isFilmingActive) {
-                pauseButton.disabled = false;
-                cancelButton.disabled = false;
-                
-                // Reset pause button text
-                pauseButton.innerHTML = '<i class="fas fa-pause"></i> Pause Filming';
-            } else {
-                pauseButton.disabled = true;
-                cancelButton.disabled = true;
+        if (pauseButton && resumeButton && cancelButton) {
+        if (isFilmingActive) {
+            pauseButton.disabled = false;
+                resumeButton.disabled = true;
+            cancelButton.disabled = false;
+        } else {
+            pauseButton.disabled = true;
+                resumeButton.disabled = false;
+            cancelButton.disabled = true;
             }
         }
     }
     
-    function toggleExpandLog() {
-        const logContent = document.querySelector('.log-content');
-        const expandButton = document.getElementById('expand-log');
+    function addLogEntry(message, level = 'info') {
+        console.log('📝 addLogEntry called:', { message, level });
         
-        if (logContent && expandButton) {
-            if (logContent.classList.contains('expanded')) {
-                logContent.classList.remove('expanded');
-                expandButton.innerHTML = '<i class="fas fa-expand-alt"></i>';
-            } else {
-                logContent.classList.add('expanded');
-                expandButton.innerHTML = '<i class="fas fa-compress-alt"></i>';
-            }
-        }
-    }
-    
-    function addLogEntry(message) {
         const logContent = document.querySelector('.log-content');
-        if (!logContent) return;
+        console.log('📝 Log content element:', logContent);
+        
+        if (!logContent) {
+            console.error('❌ Log content element not found!');
+            return;
+        }
         
         const now = new Date();
         const timestamp = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
         
         const logEntry = document.createElement('div');
-        logEntry.className = 'log-entry info';
+        logEntry.className = `log-entry ${level}`;
         logEntry.innerHTML = `<span class="timestamp">${timestamp}</span><span class="log-text">${message}</span>`;
         
-        logContent.appendChild(logEntry);
-        logContent.scrollTop = logContent.scrollHeight;
-    }
-    
-    function calculateMockETA() {
-        // Mock ETA calculation
-        const now = new Date();
-        const minutesToAdd = 16 + Math.floor(Math.random() * 5);
-        now.setMinutes(now.getMinutes() + minutesToAdd);
+        console.log('📝 Created log entry element:', logEntry);
         
-        return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+        logContent.appendChild(logEntry);
+        
+        // Auto-scroll to bottom to show newest entries
+        scrollLogToBottom();
+        
+        console.log('📝 Log entry added to DOM, total entries:', logContent.children.length);
     }
     
-    function formatStepName(step) {
-        // Convert step ID to readable name
-        switch (step) {
-            case 'initialization': return 'Initialization';
-            case 'preparation': return 'Preparation';
-            case 'filming': return 'Filming';
-            case 'finalization': return 'Finalization';
-            default: return step;
+    // Helper function to ensure consistent auto-scrolling
+    function scrollLogToBottom() {
+        const logContainer = document.querySelector('.log-container');
+        if (logContainer) {
+            // Use requestAnimationFrame to ensure DOM has updated
+            requestAnimationFrame(() => {
+                logContainer.scrollTop = logContainer.scrollHeight;
+            });
+        }
+    }
+    
+    // Notification system
+    function showNotification(type, title, message, duration = 5000) {
+        const container = document.getElementById('toast-container');
+        if (!container) return;
+        
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        
+        const iconMap = {
+            success: 'fas fa-check-circle',
+            error: 'fas fa-exclamation-circle',
+            warning: 'fas fa-exclamation-triangle',
+            info: 'fas fa-info-circle'
+        };
+        
+        notification.innerHTML = `
+            <i class="${iconMap[type] || iconMap.info}"></i>
+            <div class="notification-content">
+                <div class="notification-title">${title}</div>
+                <div class="notification-message">${message}</div>
+            </div>
+            <button class="notification-close" onclick="this.parentElement.remove()">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        
+        container.appendChild(notification);
+        
+        // Auto-remove after duration
+        if (duration > 0) {
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.classList.add('fade-out');
+                    setTimeout(() => {
+                        notification.remove();
+                    }, 300);
+                }
+            }, duration);
         }
     }
     
@@ -931,14 +1281,19 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Reset filming state
         isFilmingActive = false;
+        currentSessionId = null;
+        sessionStartTime = null;
         currentStep = 'initialization';
-        mockProgress = 0;
-        processedDocuments = 0;
         
-        // Clear any intervals
-        if (mockInterval) {
-            clearInterval(mockInterval);
-            mockInterval = null;
+        // Disconnect WebSocket session subscription
+        if (websocketClient && currentSessionId) {
+            websocketClient.unsubscribeFromSession(currentSessionId);
+        }
+        
+        // Clear logs
+        const logContent = document.querySelector('.log-content');
+        if (logContent) {
+            logContent.innerHTML = '';
         }
     }
     
@@ -951,18 +1306,29 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Reset all state
         isFilmingActive = false;
+        currentSessionId = null;
+        sessionStartTime = null;
         currentStep = 'initialization';
-        mockProgress = 0;
-        processedDocuments = 0;
+        currentProjectId = null;
+        currentRollId = null;
         
-        // Clear any intervals
-        if (mockInterval) {
-            clearInterval(mockInterval);
-            mockInterval = null;
+        // Disconnect WebSocket session subscription
+        if (websocketClient && currentSessionId) {
+            websocketClient.unsubscribeFromSession(currentSessionId);
         }
         
         // Deselect all projects
         document.querySelectorAll('.project-item').forEach(p => p.classList.remove('selected'));
+        
+        // Reset project selection button
+        const selectProjectBtn = document.getElementById('select-project-btn');
+        if (selectProjectBtn) selectProjectBtn.disabled = true;
+        
+        // Clear logs
+        const logContent = document.querySelector('.log-content');
+        if (logContent) {
+            logContent.innerHTML = '';
+        }
     }
     
     // Toast notification system
@@ -1015,7 +1381,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Load rolls for a project
+    // Load rolls for a project using SMA API
     async function loadProjectRolls(projectId) {
         const rollsGrid = document.getElementById('rolls-grid');
         if (!rollsGrid) return;
@@ -1029,7 +1395,8 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
         
         try {
-            const response = await fetch(`/api/projects/${projectId}/rolls/`, {
+            // Use SMA-specific rolls endpoint
+            const response = await fetch(`/api/sma/project/${projectId}/rolls/`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1037,67 +1404,49 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
             
-            console.log('API Response status:', response.status);
-            console.log('API Response headers:', response.headers);
-            
             if (!response.ok) {
                 const errorText = await response.text();
-                console.error('API Error response:', errorText);
                 throw new Error(`HTTP ${response.status}: ${errorText}`);
             }
             
             const data = await response.json();
-            console.log('API Response data:', data);
             
             let rolls = [];
             
-            // Handle both API response formats
-            if (data.status === 'success') {
-                // This is from views.get_project_rolls (roll_views.py)
+            if (data.success) {
                 rolls = data.rolls.map(roll => ({
                     id: roll.id,
                     filmNumber: roll.film_number,
                     filmType: roll.film_type,
-                    status: roll.status, // This comes from the API logic
-                    documentCount: roll.document_count,
+                    status: roll.filming_status || 'ready',
+                    documentCount: roll.document_count || 0,
                     pageCount: roll.pages_used || 0,
                     progress: roll.filming_progress_percent || 0,
                     outputDir: roll.output_directory || '',
                     dirExists: roll.output_directory_exists || false,
                     capacity: roll.capacity,
                     pagesRemaining: roll.pages_remaining,
-                    filmingStatus: roll.filming_status,
-                    // Add temp roll information
-                    filmNumberSource: roll.film_number_source,
-                    sourceTempRoll: roll.source_temp_roll,
-                    isNewRoll: roll.is_new_roll,
-                    temp_roll_instructions: roll.temp_roll_instructions
+                    // Enhanced SMA-specific data
+                    isAvailable: roll.is_available_for_filming,
+                    lastFilmedAt: roll.last_filmed_at,
+                    sessionId: roll.current_session_id
                 }));
-            } else if (data.rolls) {
-                // This is from api.get_rolls (api.py) - current format
-                rolls = data.rolls.map(roll => ({
+                
+                // Debug directory existence issues
+                console.log('Roll directory debug info:', data.rolls.map(roll => ({
                     id: roll.id,
-                    filmNumber: roll.film_number,
-                    filmType: roll.film_type,
-                    status: roll.status === 'active' ? 'ready' : roll.status, // Convert status
-                    documentCount: 0, // Not available in this API
-                    pageCount: roll.pages_used || 0,
-                    progress: 0, // Not available in this API
-                    outputDir: '', // Not available in this API
-                    dirExists: false, // Not available in this API
-                    capacity: roll.capacity,
-                    pagesRemaining: roll.pages_remaining,
-                    filmingStatus: 'ready' // Default status
-                }));
+                    film_number: roll.film_number,
+                    output_directory: roll.output_directory,
+                    output_directory_exists: roll.output_directory_exists,
+                    debug_info: roll.debug_directory_info
+                })));
             } else {
-                throw new Error('Invalid API response format');
+                throw new Error(data.error || 'Failed to load rolls');
             }
             
-            console.log('Processed rolls:', rolls);
             displayRolls(rolls);
         } catch (error) {
             console.error('Error loading rolls:', error);
-            console.error('Response details:', error.response);
             rollsGrid.innerHTML = `
                 <div class="error-state">
                     <i class="fas fa-exclamation-triangle"></i>
@@ -1117,7 +1466,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             }
             
-            showToast('error', 'Load Error', `Failed to load rolls: ${error.message}`);
+            showNotification('error', 'Load Error', `Failed to load rolls: ${error.message}`);
         }
     }
     
@@ -1389,9 +1738,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Show completion card
-    function showCompletionCard() {
-        // Hide filming process card and show completion card
-        hideCard('filming-process-card');
+    function showCompletionCard(data) {
+        // Don't hide filming process card - keep it visible so users can see logs
+        // hideCard('filming-process-card');
         showCard('completion-card');
         
         // Get selected roll information
@@ -1405,9 +1754,16 @@ document.addEventListener('DOMContentLoaded', function() {
         const completionDuration = document.getElementById('completion-duration');
         
         if (completedFilmNumber) completedFilmNumber.textContent = filmNumber;
-        if (completionDocuments) completionDocuments.textContent = totalDocuments;
-        if (completionPages) completionPages.textContent = totalDocuments * 2; // Assume 2 pages per document
-        if (completionDuration) completionDuration.textContent = '15:32'; // Mock duration
+        if (completionDocuments) completionDocuments.textContent = data.total_documents || 0;
+        if (completionPages) completionPages.textContent = (data.total_documents || 0) * 2; // Assume 2 pages per document
+        
+        // Calculate duration
+        if (sessionStartTime) {
+            const duration = new Date() - sessionStartTime;
+            const minutes = Math.floor(duration / 60000);
+            const seconds = Math.floor((duration % 60000) / 1000);
+            if (completionDuration) completionDuration.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
         
         // Update completion status
         const completionStatus = document.getElementById('completion-status');
@@ -1416,8 +1772,11 @@ document.addEventListener('DOMContentLoaded', function() {
             completionStatus.className = 'status-indicator success';
         }
         
-        // Show success toast
-        showToast('success', 'Filming Complete', `Roll ${filmNumber} has been successfully filmed`);
+        // Update temp roll instructions
+        updateTempRollInstructions(data);
+        
+        // Show success notification
+        showNotification('success', 'Filming Complete', `Roll ${filmNumber} has been successfully filmed`);
         
         // Update roll status in the background (for when user goes back)
         if (selectedRoll) {
@@ -1429,5 +1788,382 @@ document.addEventListener('DOMContentLoaded', function() {
                 statusBadge.className = 'roll-status-badge completed';
             }
         }
+        
+        // Scroll to completion card but keep filming process visible
+        setTimeout(() => {
+            document.getElementById('completion-card').scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'start' 
+            });
+        }, 500);
+    }
+    
+    // Update temp roll instructions based on completion data
+    function updateTempRollInstructions(data) {
+        const instructionsContainer = document.getElementById('temp-roll-instructions');
+        
+        if (!instructionsContainer) {
+            // Create the instructions container if it doesn't exist
+            const completionContent = document.querySelector('.completion-content');
+            if (completionContent) {
+                const instructionsDiv = document.createElement('div');
+                instructionsDiv.id = 'temp-roll-instructions';
+                instructionsDiv.className = 'temp-roll-instructions';
+                
+                // Insert before the completion actions
+                const actionsDiv = completionContent.querySelector('.completion-actions');
+                if (actionsDiv) {
+                    completionContent.insertBefore(instructionsDiv, actionsDiv);
+                } else {
+                    completionContent.appendChild(instructionsDiv);
+                }
+            }
+        }
+        
+        const container = document.getElementById('temp-roll-instructions');
+        if (!container) return;
+        
+        // Check if temp roll should be created based on completion data
+        const shouldCreateTempRoll = data.temp_roll_info && data.temp_roll_info.create_temp_roll;
+        
+        if (shouldCreateTempRoll) {
+            const tempRollInfo = data.temp_roll_info;
+            container.innerHTML = `
+                <div class="temp-roll-instruction-card">
+                    <div class="instruction-header">
+                        <i class="fas fa-cut"></i>
+                        <h4>Temp Roll Creation Required</h4>
+                    </div>
+                    <div class="instruction-content">
+                        <p><strong>Cut the tape and create a temporary roll:</strong></p>
+                        <ul class="instruction-list">
+                            <li><strong>Temp Roll ID:</strong> ${tempRollInfo.temp_roll_id}</li>
+                            <li><strong>Remaining Capacity:</strong> ${tempRollInfo.remaining_capacity} pages</li>
+                            <li><strong>Film Type:</strong> ${tempRollInfo.film_type}</li>
+                        </ul>
+                        <div class="instruction-note">
+                            <i class="fas fa-info-circle"></i>
+                            This temp roll can be used for future filming sessions.
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else {
+            // No temp roll needed - discard the rest
+            container.innerHTML = `
+                <div class="temp-roll-instruction-card discard">
+                    <div class="instruction-header">
+                        <i class="fas fa-trash-alt"></i>
+                        <h4>Film Roll Complete</h4>
+                    </div>
+                    <div class="instruction-content">
+                        <p><strong>Cut the tape and discard the remaining film.</strong></p>
+                        <div class="instruction-note">
+                            <i class="fas fa-check-circle"></i>
+                            This roll has been fully utilized - no temp roll needed.
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    }
+    
+    // Control functions for filming session
+    async function pauseSession() {
+        if (!currentSessionId || !isFilmingActive) return;
+        
+        try {
+            const response = await fetch(`/api/sma/session/${currentSessionId}/pause/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
+                }
+            });
+            
+            const data = await response.json();
+            if (data.success) {
+                addLogEntry('Session paused by user', 'info');
+                showNotification('info', 'Session Paused', 'Filming session has been paused');
+                updateControlButtons();
+            } else {
+                throw new Error(data.error || 'Failed to pause session');
+            }
+        } catch (error) {
+            console.error('Error pausing session:', error);
+            addLogEntry(`Error pausing session: ${error.message}`, 'error');
+            showNotification('error', 'Pause Error', `Failed to pause session: ${error.message}`);
+        }
+    }
+    
+    async function resumeSession() {
+        if (!currentSessionId) return;
+        
+        try {
+            const response = await fetch(`/api/sma/session/${currentSessionId}/resume/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
+                }
+            });
+            
+            const data = await response.json();
+            if (data.success) {
+                addLogEntry('Session resumed by user', 'info');
+                showNotification('info', 'Session Resumed', 'Filming session has been resumed');
+                updateControlButtons();
+            } else {
+                throw new Error(data.error || 'Failed to resume session');
+            }
+        } catch (error) {
+            console.error('Error resuming session:', error);
+            addLogEntry(`Error resuming session: ${error.message}`, 'error');
+            showNotification('error', 'Resume Error', `Failed to resume session: ${error.message}`);
+        }
+    }
+    
+    async function cancelSession() {
+        if (!currentSessionId || !isFilmingActive) return;
+        
+        if (!confirm('Are you sure you want to cancel the filming session? This cannot be undone.')) {
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/api/sma/session/${currentSessionId}/cancel/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
+                }
+            });
+            
+            const data = await response.json();
+            if (data.success) {
+                isFilmingActive = false;
+                addLogEntry('Session cancelled by user', 'warning');
+                showNotification('warning', 'Session Cancelled', 'Filming session has been cancelled');
+                updateControlButtons();
+                
+                // Reset to project selection
+                setTimeout(() => {
+                    resetToProjectSelection();
+                }, 2000);
+            } else {
+                throw new Error(data.error || 'Failed to cancel session');
+            }
+        } catch (error) {
+            console.error('Error cancelling session:', error);
+            addLogEntry(`Error cancelling session: ${error.message}`, 'error');
+            showNotification('error', 'Cancel Error', `Failed to cancel session: ${error.message}`);
+        }
+    }
+    
+    function toggleExpandLog() {
+        const logContent = document.querySelector('.log-content');
+        const logContainer = document.querySelector('.log-container');
+        const expandButton = document.getElementById('expand-log');
+        
+        if (logContent && logContainer && expandButton) {
+            if (logContent.classList.contains('expanded')) {
+                logContent.classList.remove('expanded');
+                logContainer.classList.remove('expanded');
+                expandButton.innerHTML = '<i class="fas fa-expand-alt"></i>';
+                expandButton.title = 'Expand log';
+            } else {
+                logContent.classList.add('expanded');
+                logContainer.classList.add('expanded');
+                expandButton.innerHTML = '<i class="fas fa-compress-alt"></i>';
+                expandButton.title = 'Collapse log';
+            }
+            
+            // Ensure we scroll to bottom after expanding/collapsing
+            setTimeout(() => {
+                logContainer.scrollTop = logContainer.scrollHeight;
+            }, 350); // Wait for transition to complete
+        }
+    }
+    
+    // Automatically restore an active session
+    async function restoreActiveSession(session) {
+        try {
+            console.log('🔄 Restoring active session:', session.session_id);
+            console.log('📊 Session details:', {
+                project: session.project_name,
+                roll: session.roll_number,
+                status: session.status,
+                progress: session.progress_percent
+            });
+            
+            // Set global state variables
+            currentSessionId = session.session_id;
+            currentProjectId = session.project_id;
+            currentRollId = session.roll_id;
+            isFilmingActive = session.status === 'running';
+            sessionStartTime = session.started_at ? new Date(session.started_at) : new Date();
+            
+            // Hide all selection cards and show filming interface
+            hideCard('project-selection-card');
+            hideCard('roll-selection-card');
+            hideCard('validation-card');
+            
+            // Determine which card to show based on session status
+            if (session.status === 'completed') {
+                showCard('completion-card');
+                await restoreCompletionState(session);
+            } else {
+                showCard('filming-process-card');
+                await restoreFilmingState(session);
+            }
+            
+            // Load projects in background for potential future use
+            await loadProjects();
+            
+            // Show restoration notification
+            showNotification('info', 'Session Restored', 
+                `Resumed filming session for ${session.project_name} - ${session.roll_number}`);
+            
+        } catch (error) {
+            console.error('Error restoring session:', error);
+            showNotification('error', 'Restoration Error', 
+                'Failed to restore session. Starting fresh.');
+            
+            // Fall back to normal initialization
+            await loadProjects();
+            showCard('project-selection-card');
+        }
+    }
+    
+    // Restore filming interface state
+    async function restoreFilmingState(session) {
+        // Restore session information display
+        const sessionIdElement = document.getElementById('current-session-id');
+        const startTimeElement = document.getElementById('session-start-time');
+        
+        if (sessionIdElement) sessionIdElement.textContent = session.session_id;
+        if (startTimeElement && session.started_at) {
+            const startTime = new Date(session.started_at);
+            startTimeElement.textContent = startTime.toLocaleTimeString();
+        }
+        
+        // Restore progress display
+        updateProgressDisplay(
+            session.progress_percent || 0,
+            session.processed_documents || 0,
+            session.total_documents || 0
+        );
+        
+        // Restore workflow state
+        updateWorkflowState(session.workflow_state || 'initialization');
+        
+        // Update control buttons based on session status
+        updateControlButtons();
+        
+        // Subscribe to WebSocket updates for this session
+        if (websocketClient) {
+            websocketClient.subscribeToSession(currentSessionId);
+        }
+        
+        // Start session monitoring
+        startSessionMonitoring();
+        
+        // Load recent logs
+        await loadRecentLogs(session.session_id);
+        
+        // Add restoration log entry
+        addLogEntry(`Session restored - continuing from ${session.progress_percent?.toFixed(1) || 0}% progress`, 'info');
+    }
+    
+    // Restore completion state
+    async function restoreCompletionState(session) {
+        // Show completion card with session results
+        const completedFilmNumber = document.getElementById('completed-film-number');
+        const completionDocuments = document.getElementById('completion-documents');
+        const completionPages = document.getElementById('completion-pages');
+        const completionDuration = document.getElementById('completion-duration');
+        
+        if (completedFilmNumber) completedFilmNumber.textContent = session.roll_number || 'Unknown';
+        if (completionDocuments) completionDocuments.textContent = session.total_documents || 0;
+        if (completionPages) completionPages.textContent = (session.total_documents || 0) * 2;
+        
+        // Calculate and display duration
+        if (session.started_at && session.completed_at) {
+            const startTime = new Date(session.started_at);
+            const endTime = new Date(session.completed_at);
+            const duration = endTime - startTime;
+            const minutes = Math.floor(duration / 60000);
+            const seconds = Math.floor((duration % 60000) / 1000);
+            if (completionDuration) {
+                completionDuration.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            }
+        }
+        
+        // Update completion status
+        const completionStatus = document.getElementById('completion-status');
+        if (completionStatus) {
+            completionStatus.textContent = 'Roll filming completed successfully';
+            completionStatus.className = 'status-indicator success';
+        }
+        
+        // Update temp roll instructions for restored session
+        if (session.completion_data) {
+            updateTempRollInstructions(session.completion_data);
+        }
+    }
+    
+    // Load recent logs for restored session
+    async function loadRecentLogs(sessionId, limit = 50) {
+        try {
+            const response = await fetch(`/api/sma/session/${sessionId}/logs/?limit=${limit}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success && data.logs) {
+                    // Clear existing logs and add recent ones
+                    const logContent = document.querySelector('.log-content');
+                    if (logContent) {
+                        logContent.innerHTML = '';
+                        
+                        // Add logs in chronological order
+                        data.logs.reverse().forEach(log => {
+                            const timestamp = new Date(log.timestamp).toLocaleTimeString();
+                            addLogEntryDirect(log.message, log.level, timestamp);
+                        });
+                        
+                        // Scroll to bottom after loading all logs
+                        scrollLogToBottom();
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error loading recent logs:', error);
+        }
+    }
+    
+    // Helper function to add log entry with custom timestamp
+    function addLogEntryDirect(message, level = 'info', timestamp = null) {
+        const logContent = document.querySelector('.log-content');
+        if (!logContent) return;
+        
+        if (!timestamp) {
+            const now = new Date();
+            timestamp = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+        }
+        
+        const logEntry = document.createElement('div');
+        logEntry.className = `log-entry ${level}`;
+        logEntry.innerHTML = `<span class="timestamp">${timestamp}</span><span class="log-text">${message}</span>`;
+        
+        logContent.appendChild(logEntry);
+        
+        // Auto-scroll to bottom to show newest entries
+        scrollLogToBottom();
     }
 });

@@ -264,6 +264,19 @@
             
             <!-- Current Activity Section -->
             <div class="current-activity">
+                <!-- Session Info -->
+                <div class="session-info">
+                    <div class="session-id">
+                        <strong>Session ID:</strong> <span id="current-session-id">-</span>
+                    </div>
+                    <div class="session-time">
+                        <strong>Started:</strong> <span id="session-start-time">-</span>
+                    </div>
+                    <div class="session-duration">
+                        <strong>Duration:</strong> <span id="session-duration">00:00:00</span>
+                    </div>
+                </div>
+                
                 <h3>Current Activity: <span id="current-activity-label">Processing Documents</span></h3>
                 <div class="activity-details">
                     <div class="activity-info">
@@ -282,6 +295,10 @@
                         <div class="info-item">
                             <span class="info-label">ETA:</span>
                             <span class="info-value eta-text">Calculating...</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Documents:</span>
+                            <span class="info-value" id="progress-documents">0 / 0 documents</span>
                         </div>
                     </div>
                     <div class="activity-progress">
@@ -354,6 +371,11 @@
                     </div>
                 </div>
                 
+                <!-- Temp Roll Instructions Container -->
+                <div id="temp-roll-instructions" class="temp-roll-instructions">
+                    <!-- Instructions will be populated dynamically -->
+                </div>
+                
                 <div class="completion-actions">
                     <button id="film-another-roll" class="primary-button">
                         <i class="fas fa-plus"></i> Film Another Roll
@@ -372,5 +394,6 @@
 
 {% block extra_js %}
 <script src="{% static 'microapp/js/common/database-service.js' %}"></script>
+<script src="{% static 'microapp/js/film/websocket-client.js' %}"></script>
 <script src="{% static 'microapp/js/film/film.js' %}"></script>
 {% endblock %} 

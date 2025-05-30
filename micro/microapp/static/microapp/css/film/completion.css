@@ -111,6 +111,110 @@
     font-size: 16px;
 }
 
+/* Temp Roll Instructions */
+.temp-roll-instructions {
+    margin: var(--film-spacing-xl) 0;
+}
+
+.temp-roll-instruction-card {
+    background-color: var(--film-surface);
+    border-radius: var(--film-border-radius);
+    border: 1px solid var(--film-border);
+    padding: var(--film-spacing-lg);
+    text-align: left;
+    box-shadow: 0 2px 4px var(--film-shadow);
+}
+
+.temp-roll-instruction-card.discard {
+    border-left: 4px solid var(--film-success);
+}
+
+.temp-roll-instruction-card:not(.discard) {
+    border-left: 4px solid var(--film-warning);
+}
+
+.instruction-header {
+    display: flex;
+    align-items: center;
+    gap: var(--film-spacing-md);
+    margin-bottom: var(--film-spacing-md);
+    padding-bottom: var(--film-spacing-md);
+    border-bottom: 1px solid var(--film-border);
+}
+
+.instruction-header i {
+    font-size: 24px;
+    color: var(--film-warning);
+}
+
+.temp-roll-instruction-card.discard .instruction-header i {
+    color: var(--film-success);
+}
+
+.instruction-header h4 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--film-text);
+    margin: 0;
+}
+
+.instruction-content p {
+    font-size: 16px;
+    color: var(--film-text);
+    margin-bottom: var(--film-spacing-md);
+    font-weight: 500;
+}
+
+.instruction-list {
+    list-style: none;
+    padding: 0;
+    margin: var(--film-spacing-md) 0;
+}
+
+.instruction-list li {
+    padding: var(--film-spacing-sm) 0;
+    font-size: 14px;
+    color: var(--film-text-light);
+    border-bottom: 1px solid var(--film-border-light);
+}
+
+.instruction-list li:last-child {
+    border-bottom: none;
+}
+
+.instruction-list li strong {
+    color: var(--film-text);
+    font-weight: 600;
+    display: inline-block;
+    min-width: 140px;
+}
+
+.instruction-note {
+    display: flex;
+    align-items: center;
+    gap: var(--film-spacing-sm);
+    padding: var(--film-spacing-md);
+    background-color: var(--film-background);
+    border-radius: var(--film-border-radius);
+    border: 1px solid var(--film-border-light);
+    margin-top: var(--film-spacing-md);
+}
+
+.instruction-note i {
+    font-size: 16px;
+    color: var(--film-primary);
+}
+
+.temp-roll-instruction-card.discard .instruction-note i {
+    color: var(--film-success);
+}
+
+.instruction-note {
+    font-size: 14px;
+    color: var(--film-text-light);
+    font-style: italic;
+}
+
 /* Toast notifications */
 #toast-container {
     position: fixed;

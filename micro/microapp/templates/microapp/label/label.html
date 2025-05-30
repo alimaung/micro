@@ -1,0 +1,129 @@
+{% extends 'microapp/base.html' %}
+{% load static %}
+
+{% block title %}Label Management{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'microapp/css/label/label.css' %}">
+{% endblock %}
+
+{% block content %}
+<!-- CSRF Token -->
+{% csrf_token %}
+
+<div class="label-container">
+    <!-- Header -->
+    <div class="label-header">
+        <h1>Label Management</h1>
+        <p>Generate and print professional film labels for developed rolls</p>
+    </div>
+
+    <!-- Notifications Container -->
+    <div id="notifications-container" class="notifications-container"></div>
+
+    <!-- Roll Labels Section -->
+    <div class="label-section">
+        <div class="section-header">
+            <h2>
+                <i class="fas fa-film"></i>
+                Developed Rolls
+            </h2>
+            <div class="section-actions">
+                <button id="refresh-rolls" class="btn btn-outline btn-small">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+                <button id="select-all-rolls" class="btn btn-secondary btn-small">
+                    <i class="fas fa-check-square"></i> Select All
+                </button>
+                <button id="clear-selection" class="btn btn-outline btn-small">
+                    <i class="fas fa-square"></i> Clear
+                </button>
+            </div>
+        </div>
+        
+        <div class="selection-info">
+            <span id="selection-count">0 rolls selected</span>
+            <button id="generate-selected" class="btn btn-primary" disabled>
+                <i class="fas fa-file-pdf"></i> Generate Labels
+            </button>
+        </div>
+        
+        <div id="rolls-grid" class="rolls-grid">
+            <!-- Rolls will be loaded here by JavaScript -->
+            <div class="loading-state">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Loading developed rolls...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Generated Labels Section -->
+    <div class="label-section">
+        <div class="section-header">
+            <h2>
+                <i class="fas fa-file-pdf"></i>
+                Generated Labels
+            </h2>
+            <div class="section-actions">
+                <button id="clear-generated" class="btn btn-outline btn-small">
+                    <i class="fas fa-trash"></i> Clear All
+                </button>
+            </div>
+        </div>
+        
+        <div id="generated-labels" class="generated-labels">
+            <!-- Generated labels will appear here -->
+            <div class="empty-state">
+                <i class="fas fa-file-pdf"></i>
+                <p>No labels generated yet</p>
+                <small>Select rolls above and click "Generate Labels"</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Print Queue Section -->
+    <div class="label-section">
+        <div class="section-header">
+            <h2>
+                <i class="fas fa-print"></i>
+                Print Queue
+            </h2>
+            <div class="section-actions">
+                <button id="refresh-queue" class="btn btn-outline btn-small">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+            </div>
+        </div>
+        
+        <div class="print-info">
+            <div class="printer-status">
+                <i class="fas fa-printer"></i>
+                <span>Printing Method: Browser Print Dialog</span>
+                <small>Click "Print Now" to open your browser's print dialog where you can select any available printer</small>
+            </div>
+            <div class="print-instructions">
+                <h4>How Printing Works:</h4>
+                <ul>
+                    <li><strong>Print Now:</strong> Opens PDF in new window with print dialog</li>
+                    <li><strong>Printer Selection:</strong> Choose from your computer's installed printers</li>
+                    <li><strong>Settings:</strong> Adjust paper size, orientation, and quality as needed</li>
+                    <li><strong>Queue:</strong> Add multiple labels to queue for batch printing</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div id="print-queue" class="print-queue">
+            <!-- Print queue items will appear here -->
+            <div class="empty-state">
+                <i class="fas fa-print"></i>
+                <p>Print queue is empty</p>
+                <small>Add generated labels to the queue</small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'microapp/js/label/label.js' %}"></script>
+{% endblock %} 

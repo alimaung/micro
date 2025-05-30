@@ -467,7 +467,7 @@ def safe_file_operation(operation, *args, **kwargs):
         result = operation(*args, **kwargs)
         return True, result, ""
     except Exception as e:
-        return False, None, str(e)
+        return False, None, str(e) 
 
 
 def calculate_eta_legacy(start_time, first_docs, current_docs, total_docs, logger):

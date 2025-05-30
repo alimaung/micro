@@ -62,9 +62,18 @@ def film(request):
     """Film page view."""
     return render(request, 'microapp/film/film.html')
 
+def sma_filming(request):
+    """SMA Filming interface view."""
+    return render(request, 'microapp/film/sma_filming.html')
+
 def develop(request):
     """Develop page view."""
-    return render(request, 'microapp/develop/develop.html')
+    from .development_views import develop_dashboard
+    return develop_dashboard(request)
+
+def label(request):
+    """Label page view."""
+    return render(request, 'microapp/label/label.html')
 
 def control(request):
     """Control page view."""

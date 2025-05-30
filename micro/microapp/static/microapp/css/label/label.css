@@ -1,0 +1,624 @@
+/* Label Page Styles */
+
+.label-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+    background: var(--color-background);
+    min-height: 100vh;
+}
+
+.label-header {
+    text-align: center;
+    margin-bottom: 3rem;
+    padding: 2rem;
+    background: var(--color-surface);
+    border-radius: 12px;
+    border: 1px solid var(--color-border);
+}
+
+.label-header h1 {
+    color: var(--color-text-primary);
+    margin-bottom: 0.5rem;
+    font-size: 2.5rem;
+    font-weight: 600;
+}
+
+.label-header p {
+    color: var(--color-text-secondary);
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+.label-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.label-section {
+    background: var(--color-surface);
+    border-radius: 12px;
+    border: 1px solid var(--color-border);
+    margin-bottom: 2rem;
+    overflow: hidden;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    background: var(--color-surface-elevated);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.section-header h2 {
+    color: var(--color-text-primary);
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.section-header h2 i {
+    color: var(--color-primary);
+}
+
+.section-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.label-section p {
+    color: var(--color-text-secondary);
+    font-size: 1rem;
+    margin-bottom: 2rem;
+}
+
+/* Button Styles */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-primary {
+    background: var(--color-primary);
+    color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: var(--color-primary-dark);
+    transform: translateY(-1px);
+}
+
+.btn-secondary {
+    background: var(--color-text-secondary);
+    color: white;
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background: var(--color-text-primary);
+    transform: translateY(-1px);
+}
+
+.btn-outline {
+    background: transparent;
+    color: var(--color-text-secondary);
+    border: 1px solid var(--color-border);
+}
+
+.btn-outline:hover:not(:disabled) {
+    background: var(--color-surface-elevated);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+
+/* Rolls Container */
+.rolls-container {
+    margin-top: 1rem;
+}
+
+.rolls-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background: var(--color-background);
+    border-radius: 8px;
+}
+
+.bulk-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.selection-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+    background: var(--color-background);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.selection-info span {
+    color: var(--color-text-secondary);
+    font-weight: 500;
+}
+
+.rolls-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1.5rem;
+    padding: 2rem;
+}
+
+.roll-card {
+    background: var(--color-surface);
+    border: 2px solid var(--color-border);
+    border-radius: 8px;
+    padding: 1.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.roll-card:hover {
+    border-color: var(--color-primary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-medium);
+}
+
+.roll-card.selected {
+    border-color: var(--color-success);
+    background: var(--color-success-light);
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+}
+
+.roll-card.selected::before {
+    content: '✓';
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    background: var(--color-success);
+    color: white;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.roll-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.roll-title {
+    flex: 1;
+}
+
+.roll-film-number {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.roll-film-type {
+    color: var(--color-text-secondary);
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.roll-status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.roll-status-badge.completed {
+    background: var(--color-success-light);
+    color: var(--color-success);
+}
+
+.roll-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+}
+
+.detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.detail-item .label {
+    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 500;
+}
+
+.detail-item .value {
+    color: var(--color-text-primary);
+    font-weight: 500;
+}
+
+.text-success {
+    color: var(--color-success) !important;
+}
+
+.text-error {
+    color: var(--color-error) !important;
+}
+
+/* Generated Labels */
+.generated-labels {
+    padding: 2rem;
+}
+
+.label-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    background: var(--color-background);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.label-item:last-child {
+    margin-bottom: 0;
+}
+
+.label-info h4 {
+    color: var(--color-text-primary);
+    margin: 0 0 0.5rem 0;
+    font-size: 1.1rem;
+}
+
+.label-info p {
+    color: var(--color-text-secondary);
+    margin: 0 0 0.25rem 0;
+}
+
+.label-info small {
+    color: var(--color-text-tertiary);
+    font-size: 0.8rem;
+}
+
+.label-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Print Queue */
+.print-queue {
+    padding: 2rem;
+}
+
+.queue-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    background: var(--color-background);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.queue-item:last-child {
+    margin-bottom: 0;
+}
+
+.queue-info h5 {
+    color: var(--color-text-primary);
+    margin: 0 0 0.25rem 0;
+    font-size: 1rem;
+}
+
+.queue-info p {
+    color: var(--color-text-secondary);
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.queue-status {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-right: 1rem;
+}
+
+.queue-status.pending {
+    background: var(--color-warning-light);
+    color: var(--color-warning);
+}
+
+.queue-status.printing {
+    background: var(--color-primary-light);
+    color: var(--color-primary);
+}
+
+.queue-status.completed {
+    background: var(--color-success-light);
+    color: var(--color-success);
+}
+
+/* Empty States */
+.empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: var(--color-text-secondary);
+}
+
+.empty-state i {
+    font-size: 3rem;
+    color: var(--color-text-tertiary);
+    margin-bottom: 1rem;
+}
+
+.empty-state p {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+}
+
+.empty-state small {
+    font-size: 0.9rem;
+    color: var(--color-text-tertiary);
+}
+
+/* Loading State */
+.loading-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: var(--color-text-secondary);
+}
+
+.loading-state i {
+    font-size: 2rem;
+    color: var(--color-primary);
+    margin-bottom: 1rem;
+}
+
+.loading-state p {
+    font-size: 1rem;
+    margin: 0;
+}
+
+/* Buttons */
+.btn-small {
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+}
+
+/* Notifications */
+.notifications-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    max-width: 400px;
+}
+
+.notification {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+    box-shadow: var(--shadow-medium);
+    animation: slideIn 0.3s ease;
+}
+
+.notification.success {
+    border-left: 4px solid var(--color-success);
+}
+
+.notification.error {
+    border-left: 4px solid var(--color-error);
+}
+
+.notification.warning {
+    border-left: 4px solid var(--color-warning);
+}
+
+.notification.info {
+    border-left: 4px solid var(--color-primary);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .label-container {
+        padding: 1rem;
+    }
+    
+    .section-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+    }
+    
+    .section-actions {
+        justify-content: center;
+    }
+    
+    .selection-info {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+    }
+    
+    .rolls-grid {
+        grid-template-columns: 1fr;
+        padding: 1rem;
+    }
+    
+    .label-item,
+    .queue-item {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+    }
+    
+    .label-actions {
+        justify-content: center;
+    }
+    
+    .notifications-container {
+        left: 1rem;
+        right: 1rem;
+        max-width: none;
+    }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --color-background: #0f172a;
+        --color-surface: #1e293b;
+        --color-surface-elevated: #334155;
+        --color-border: #475569;
+        --color-text-primary: #f8fafc;
+        --color-text-secondary: #cbd5e1;
+        --color-text-tertiary: #94a3b8;
+        --color-primary: #3b82f6;
+        --color-primary-dark: #2563eb;
+        --color-primary-light: rgba(59, 130, 246, 0.1);
+        --color-success: #22c55e;
+        --color-success-light: rgba(34, 197, 94, 0.1);
+        --color-warning: #f59e0b;
+        --color-warning-light: rgba(245, 158, 11, 0.1);
+        --color-error: #ef4444;
+        --color-error-light: rgba(239, 68, 68, 0.1);
+        --shadow-small: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+        --shadow-medium: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+        --shadow-large: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+    }
+}
+
+/* Animations */
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+/* Print Info */
+.print-info {
+    padding: 1rem 2rem;
+    background: var(--color-background);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.printer-status {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--color-text-secondary);
+    margin-bottom: 1rem;
+}
+
+.printer-status i {
+    color: var(--color-primary);
+}
+
+.printer-status small {
+    margin-left: auto;
+    font-style: italic;
+}
+
+.print-instructions {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.print-instructions h4 {
+    color: var(--color-text-primary);
+    margin: 0 0 0.75rem 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.print-instructions h4::before {
+    content: '💡';
+    font-size: 1rem;
+}
+
+.print-instructions ul {
+    margin: 0;
+    padding-left: 1.5rem;
+    color: var(--color-text-secondary);
+}
+
+.print-instructions li {
+    margin-bottom: 0.5rem;
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
+.print-instructions li:last-child {
+    margin-bottom: 0;
+}
+
+.print-instructions strong {
+    color: var(--color-text-primary);
+    font-weight: 600;
+} 

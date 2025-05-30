@@ -1420,21 +1420,22 @@ def monitor_progress(film_window, logger):
                                                             prep_notifications_sent["PREP3"] = True
                                                             logger.info(f"Sent PREP3 notification (percentage mode - {progress_percent:.2f}%)")
                                                     
-                                                    # Send regular RUNNING notifications every 2% (only if not in PREP mode)
-                                                    if prep_mode is None:
-                                                        current_notification_percent = int(progress_percent // 2) * 2
-                                                        if current_notification_percent > last_notification_percent and current_notification_percent > 0:
-                                                            last_notification_percent = current_notification_percent
-                                                            remaining_frames = total_docs - verfilmt
-                                                            eta_str = eta.strftime('%H:%M:%S') if eta else "N/A"
-                                                            
-                                                            message = f"{progress_percent:.1f}% complete, {remaining_frames} frames remaining, ETA: {eta_str}"
-                                                            firebase_notif.send_notification(
-                                                                "RUNNING", 
-                                                                message, 
-                                                                "process"
-                                                            )
-                                                            logger.info(f"Sent RUNNING notification at {current_notification_percent}%: {message}")
+                                                    # Send regular RUNNING notifications every 2% (continue even during PREP mode)
+                                                    # RUNNING notifications use "process" message_id, PREP uses "prep" message_id
+                                                    current_notification_percent = int(progress_percent // 2) * 2
+                                                    if current_notification_percent > last_notification_percent and current_notification_percent > 0:
+                                                        last_notification_percent = current_notification_percent
+                                                        remaining_frames = total_docs - verfilmt
+                                                        
+                                                        eta_str = eta.strftime('%H:%M:%S') if eta else "N/A"
+                                                        
+                                                        message = f"{progress_percent:.1f}% complete, {remaining_frames} frames remaining, ETA: {eta_str}"
+                                                        firebase_notif.send_notification(
+                                                            "RUNNING", 
+                                                            message, 
+                                                            "process"
+                                                        )
+                                                        logger.info(f"Sent RUNNING notification at {current_notification_percent}%: {message}")
                                                 
                                                 except Exception as e:
                                                     logger.error(f"Error sending notification: {e}")

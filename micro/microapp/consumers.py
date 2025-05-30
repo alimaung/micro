@@ -3,6 +3,14 @@ import json
 import websockets
 import asyncio
 import uuid
+import logging
+from channels.db import database_sync_to_async
+from django.contrib.auth.models import AnonymousUser
+
+from .services.sma_service import SMAService
+from .models import FilmingSession
+
+logger = logging.getLogger(__name__)
 
 class RelayConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -347,6 +355,32 @@ class SMAConsumer(AsyncWebsocketConsumer):
             'status': event['status']
         }))
 
+    async def sma_workflow_state(self, event):
+        """Handle SMA workflow state changes"""
+        await self.send(text_data=json.dumps({
+            'type': 'sma_workflow_state',
+            'session_id': event['session_id'],
+            'old_state': event['old_state'],
+            'new_state': event['new_state'],
+            'timestamp': event.get('timestamp')
+        }))
+
+    async def sma_error(self, event):
+        """Handle SMA error notifications"""
+        await self.send(text_data=json.dumps({
+            'type': 'sma_error',
+            'session_id': event['session_id'],
+            'error': event['error']
+        }))
+
+    async def sma_completed(self, event):
+        """Handle SMA completion notifications"""
+        await self.send(text_data=json.dumps({
+            'type': 'sma_completed',
+            'session_id': event['session_id'],
+            'completion': event['completion']
+        }))
+
 
 class NotificationConsumer(AsyncWebsocketConsumer):
     """
@@ -456,3 +490,396 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             'type': 'user_message',
             'message': event['message']
         }))
+
+
+class SMAFilmingConsumer(AsyncWebsocketConsumer):
+    """WebSocket consumer for SMA filming real-time updates with enhanced functionality."""
+    
+    async def connect(self):
+        """Handle WebSocket connection with authentication and session validation."""
+        try:
+            # Get session ID from URL
+            self.session_id = self.scope['url_route']['kwargs']['session_id']
+            self.group_name = f"sma_session_{self.session_id}"
+        
+            # Check authentication
+            user = self.scope.get('user')
+            if isinstance(user, AnonymousUser):
+                logger.warning(f"Unauthenticated WebSocket connection attempt for session {self.session_id}")
+                await self.close(code=4001)  # Custom close code for authentication failure
+                return
+        
+            # Validate session access
+            has_access = await self.check_session_access(user, self.session_id)
+            if not has_access:
+                logger.warning(f"User {user.username} denied access to session {self.session_id}")
+                await self.close(code=4003)  # Custom close code for access denied
+                return
+        
+            # Join session group
+            await self.channel_layer.group_add(
+                self.group_name,
+                self.channel_name
+            )
+            
+            await self.accept()
+        
+            # Send initial session status
+            await self.send_initial_status()
+        
+            logger.info(f"User {user.username} connected to SMA session {self.session_id}")
+            
+        except Exception as e:
+            logger.error(f"Error in WebSocket connect: {e}")
+            await self.close(code=4000)  # Generic error
+    
+    async def disconnect(self, close_code):
+        """Handle WebSocket disconnection with cleanup."""
+        try:
+            # Leave session group
+            if hasattr(self, 'group_name'):
+                await self.channel_layer.group_discard(
+                    self.group_name,
+                    self.channel_name
+                )
+            
+                user = self.scope.get('user')
+                if user and not isinstance(user, AnonymousUser):
+                    logger.info(f"User {user.username} disconnected from SMA session {getattr(self, 'session_id', 'unknown')} (code: {close_code})")
+                
+        except Exception as e:
+            logger.error(f"Error in WebSocket disconnect: {e}")
+    
+    async def receive(self, text_data):
+        """Handle incoming WebSocket messages with command processing."""
+        try:
+            data = json.loads(text_data)
+            message_type = data.get('type')
+            
+            # Handle different message types
+            if message_type == 'ping':
+                await self.send_pong()
+            elif message_type == 'get_status':
+                await self.send_current_status()
+            elif message_type == 'subscribe_logs':
+                await self.handle_log_subscription(data.get('level', 'info'))
+            elif message_type == 'command':
+                await self.handle_session_command(data)
+            else:
+                await self.send_error('Unknown message type')
+        
+        except json.JSONDecodeError:
+            await self.send_error('Invalid JSON format')
+        except Exception as e:
+            logger.error(f"Error processing WebSocket message: {e}")
+            await self.send_error('Internal error processing message')
+    
+    # SMA Event Handlers
+    async def sma_progress(self, event):
+        """Handle SMA progress updates with enhanced formatting."""
+        try:
+            progress_data = event['progress']
+            
+            # Add timestamp if not present
+            if 'timestamp' not in progress_data:
+                from datetime import datetime
+                progress_data['timestamp'] = datetime.now().isoformat()
+        
+            await self.send(text_data=json.dumps({
+                    'type': 'progress_update',
+                    'session_id': event['session_id'],
+                    'data': progress_data
+                }))
+        
+        except Exception as e:
+            logger.error(f"Error sending progress update: {e}")
+    
+    async def sma_workflow_state(self, event):
+        """Handle SMA workflow state changes with transition information."""
+        try:
+            await self.send(text_data=json.dumps({
+                'type': 'workflow_state_change',
+                'session_id': event['session_id'],
+                'old_state': event['old_state'],
+                'new_state': event['new_state'],
+                'timestamp': event.get('timestamp')
+            }))
+        
+        except Exception as e:
+            logger.error(f"Error sending workflow state change: {e}")
+    
+    async def sma_log(self, event):
+        """Handle SMA log entries with filtering."""
+        try:
+            log_data = event['log']
+            
+            # Check if client is subscribed to this log level
+            if hasattr(self, 'log_subscription_level'):
+                log_levels = ['debug', 'info', 'warning', 'error', 'critical']
+                if log_levels.index(log_data.get('level', 'info')) < log_levels.index(self.log_subscription_level):
+                    return  # Skip this log entry
+            
+            await self.send(text_data=json.dumps({
+                'type': 'log_entry',
+                'session_id': event['session_id'],
+                    'data': log_data
+            }))
+            
+        except Exception as e:
+            logger.error(f"Error sending log entry: {e}")
+    
+    async def sma_error(self, event):
+        """Handle SMA error notifications with severity classification."""
+        try:
+            error_data = event['error']
+            
+            await self.send(text_data=json.dumps({
+                'type': 'error',
+                'session_id': event['session_id'],
+                    'data': error_data,
+                    'severity': error_data.get('severity', 'high'),
+                    'timestamp': error_data.get('timestamp')
+            }))
+            
+        except Exception as e:
+            logger.error(f"Error sending error notification: {e}")
+    
+    async def sma_completed(self, event):
+        """Handle SMA completion notifications with summary information."""
+        try:
+            completion_data = event['completion']
+            
+            await self.send(text_data=json.dumps({
+                'type': 'session_completed',
+                'session_id': event['session_id'],
+                    'data': completion_data,
+                    'timestamp': completion_data.get('timestamp')
+            }))
+
+        except Exception as e:
+            logger.error(f"Error sending completion notification: {e}")
+    
+    async def sma_health_alert(self, event):
+        """Handle SMA health alerts with actionable information."""
+        try:
+            health_data = event['health']
+            
+            await self.send(text_data=json.dumps({
+                'type': 'health_alert',
+                'session_id': event['session_id'],
+                'data': health_data,
+                'alert_level': health_data.get('alert_level', 'warning'),
+                'timestamp': health_data.get('timestamp')
+            }))
+            
+        except Exception as e:
+            logger.error(f"Error sending health alert: {e}")
+    
+    # Helper Methods
+    async def send_pong(self):
+        """Send pong response to ping."""
+        await self.send(text_data=json.dumps({
+            'type': 'pong',
+            'timestamp': self.get_current_timestamp()
+        }))
+    
+    async def send_current_status(self):
+        """Send current session status to client."""
+        try:
+            from .services.sma_service import SMAService
+            
+            # Get status from service
+            status_result = await database_sync_to_async(SMAService.get_session_status)(self.session_id)
+            
+            if status_result['success']:
+                await self.send(text_data=json.dumps({
+                        'type': 'status_update',
+                        'session_id': self.session_id,
+                        'data': status_result['status'],
+                        'timestamp': self.get_current_timestamp()
+                    }))
+            else:
+                await self.send_error(f"Failed to get status: {status_result.get('error', 'Unknown error')}")
+                
+        except Exception as e:
+            logger.error(f"Error sending current status: {e}")
+            await self.send_error('Failed to retrieve session status')
+    
+    async def send_initial_status(self):
+        """Send initial session status when client connects."""
+        await self.send_current_status()
+    
+    async def handle_log_subscription(self, level):
+        """Handle log subscription level changes."""
+        valid_levels = ['debug', 'info', 'warning', 'error', 'critical']
+        if level in valid_levels:
+            self.log_subscription_level = level
+            await self.send(text_data=json.dumps({
+                'type': 'subscription_updated',
+                'log_level': level,
+                'timestamp': self.get_current_timestamp()
+            }))
+        else:
+            await self.send_error(f'Invalid log level: {level}')
+    
+    async def handle_session_command(self, data):
+        """Handle session control commands from WebSocket."""
+        try:
+            command = data.get('command')
+            valid_commands = ['pause', 'resume', 'cancel', 'get_health']
+            
+            if command not in valid_commands:
+                await self.send_error(f'Invalid command: {command}')
+                return
+            
+            user = self.scope.get('user')
+            
+            # Check if user can control this session
+            can_control = await self.check_session_control_access(user, self.session_id)
+            if not can_control:
+                await self.send_error('Access denied - insufficient permissions')
+                return
+            
+            # Execute command
+            from .services.sma_service import SMAService
+            
+            if command == 'pause':
+                result = await database_sync_to_async(SMAService.pause_session)(self.session_id)
+            elif command == 'resume':
+                result = await database_sync_to_async(SMAService.resume_session)(self.session_id)
+            elif command == 'cancel':
+                result = await database_sync_to_async(SMAService.cancel_session)(self.session_id)
+            elif command == 'get_health':
+                result = await database_sync_to_async(SMAService.get_session_health)(self.session_id)
+            
+            # Send result back to client
+            await self.send(text_data=json.dumps({
+                'type': 'command_result',
+                'command': command,
+                'success': result.get('success', False),
+                'data': result,
+                'timestamp': self.get_current_timestamp()
+            }))
+        
+        except Exception as e:
+            logger.error(f"Error handling session command: {e}")
+            await self.send_error('Failed to execute command')
+    
+    async def send_error(self, message):
+        """Send error message to client."""
+        await self.send(text_data=json.dumps({
+            'type': 'error',
+        'message': message,
+        'timestamp': self.get_current_timestamp()
+        }))
+    
+    def get_current_timestamp(self):
+        """Get current timestamp in ISO format."""
+        from datetime import datetime
+        return datetime.now().isoformat()
+    
+    @database_sync_to_async
+    def check_session_access(self, user, session_id):
+        """Check if user has access to view this session."""
+        try:
+            from .models import FilmingSession
+            
+            # Staff users can access all sessions
+            if user.is_staff:
+                return True
+            
+            # Check if session exists and belongs to user
+            session = FilmingSession.objects.filter(
+                session_id=session_id,
+                user=user
+            ).first()
+            
+            return session is not None
+        
+        except Exception as e:
+            logger.error(f"Error checking session access: {e}")
+            return False
+    
+    @database_sync_to_async
+    def check_session_control_access(self, user, session_id):
+        """Check if user has permission to control this session."""
+        try:
+            from .models import FilmingSession
+            
+            # Staff users can control all sessions
+            if user.is_staff:
+                return True
+            
+            # Check if session exists and belongs to user
+            session = FilmingSession.objects.filter(
+                session_id=session_id,
+                user=user,
+                status__in=['running', 'paused']  # Only allow control of active sessions
+            ).first()
+            
+            return session is not None
+            
+        except Exception as e:
+            logger.error(f"Error checking session control access: {e}")
+            return False
+
+
+class GeneralNotificationConsumer(AsyncWebsocketConsumer):
+    """WebSocket consumer for general system notifications."""
+    
+    async def connect(self):
+        """Handle connection for general notifications."""
+        try:
+            # Check authentication
+            user = self.scope.get('user')
+            if isinstance(user, AnonymousUser):
+                await self.close(code=4001)
+                return
+        
+            # Join general notifications group
+            self.group_name = "general_notifications"
+            await self.channel_layer.group_add(
+                self.group_name,
+                self.channel_name
+            )
+        
+            await self.accept()
+            logger.info(f"User {user.username} connected to general notifications")
+        
+        except Exception as e:
+            logger.error(f"Error in general notification connect: {e}")
+            await self.close(code=4000)
+    
+    async def disconnect(self, close_code):
+        """Handle disconnection from general notifications."""
+        try:
+            if hasattr(self, 'group_name'):
+                await self.channel_layer.group_discard(
+                    self.group_name,
+                    self.channel_name
+                )
+        except Exception as e:
+            logger.error(f"Error in general notification disconnect: {e}")
+    
+    async def system_notification(self, event):
+        """Handle system-wide notifications."""
+        try:
+                await self.send(text_data=json.dumps({
+                'type': 'system_notification',
+                'data': event['data'],
+                'timestamp': event.get('timestamp')
+            }))
+        except Exception as e:
+            logger.error(f"Error sending system notification: {e}")
+    
+    async def session_alert(self, event):
+        """Handle session-related alerts."""
+        try:
+            await self.send(text_data=json.dumps({
+                    'type': 'session_alert',
+                'session_id': event['session_id'],
+                    'data': event['data'],
+                    'timestamp': event.get('timestamp')
+            }))
+        except Exception as e:
+            logger.error(f"Error sending session alert: {e}")

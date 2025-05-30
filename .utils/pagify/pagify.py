@@ -110,15 +110,26 @@ def select_directories():
     return selected_dirs
 
 def scan_pdf_files(directories):
-    """Scan all PDF files in the selected directories"""
+    """Scan all PDF files in the selected directories, only in subfolders containing 'pdf' and excluding .output folders"""
     if not directories:
         return []
     
     pdf_files = []
     
     for directory in directories:
-        pdf_pattern = os.path.join(directory, "**/*.pdf")
-        pdf_files.extend(glob.glob(pdf_pattern, recursive=True))
+        # Walk through the directory structure
+        for root, dirs, files in os.walk(directory):
+            # Skip .output folders
+            if '.output' in root:
+                continue
+            
+            # Only process directories that contain 'pdf' in their name (case-insensitive)
+            # or if we're in the root directory itself
+            if root == directory or 'pdf' in os.path.basename(root).lower():
+                # Look for PDF files in this directory
+                for file in files:
+                    if file.lower().endswith('.pdf'):
+                        pdf_files.append(os.path.join(root, file))
     
     return pdf_files
 
@@ -137,11 +148,15 @@ def analyze_pdfs(pdf_files):
                 # Check each page size
                 for page_num in range(file_page_count):
                     page = pdf_reader.pages[page_num]
-                    width = page.mediabox.width
-                    height = page.mediabox.height
+                    width = float(page.mediabox.width)
+                    height = float(page.mediabox.height)
                     
-                    # Check if page is larger than A3
-                    if width > A3_WIDTH_POINTS or height > A3_HEIGHT_POINTS:
+                    # Check if page is oversized (using same logic as document_views.py)
+                    # A page is oversized if both dimensions exceed A3 in either orientation
+                    is_oversized = ((width > A3_WIDTH_POINTS and height > A3_HEIGHT_POINTS) or
+                                    (width > A3_HEIGHT_POINTS and height > A3_WIDTH_POINTS))
+                    
+                    if is_oversized:
                         oversized_pages.append({
                             'file': pdf_file,
                             'page': page_num + 1,
@@ -189,7 +204,7 @@ def save_to_json(directories, total_files, total_pages, oversized_pages, rolls_n
     existing_data = []
     if os.path.exists(JSON_OUTPUT_FILE):
         try:
-            with open(JSON_OUTPUT_FILE, 'r') as f:
+            with open(JSON_OUTPUT_FILE, 'r', encoding='utf-8') as f:
                 existing_data = json.load(f)
         except json.JSONDecodeError:
             print(f"Warning: Existing file {JSON_OUTPUT_FILE} is not valid JSON. Creating new file.")
@@ -201,8 +216,8 @@ def save_to_json(directories, total_files, total_pages, oversized_pages, rolls_n
         existing_data = [data]
     
     # Save combined data
-    with open(JSON_OUTPUT_FILE, 'w') as f:
-        json.dump(existing_data, f, indent=2)
+    with open(JSON_OUTPUT_FILE, 'w', encoding='utf-8') as f:
+        json.dump(existing_data, f, indent=2, ensure_ascii=False)
     
     print(f"Results saved to {JSON_OUTPUT_FILE}")
 

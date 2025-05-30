@@ -23,7 +23,7 @@ PROXY_URL = "https://micro.film"
 LAUNCH_DIR = os.path.abspath(os.path.dirname(__file__))
 
 # /micro/micro/manage.py is one level up + into micro/
-MANAGE_PY = os.path.join(LAUNCH_DIR, "..", "micro", "manage.py")
+MANAGE_PY = os.path.join(LAUNCH_DIR, "...", "micro", "manage.py")
 # caddy.exe and caddyfile are in the same directory as run_micro.pyw
 CADDY_EXE = os.path.join(LAUNCH_DIR, "caddy.exe")
 CADDYFILE = os.path.join(LAUNCH_DIR, "caddyfile")

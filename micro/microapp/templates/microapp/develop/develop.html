@@ -1,9 +1,431 @@
 {% extends 'microapp/base.html' %}
+{% load static %}
 
 {% block title %}Develop - Microfilm Processing System{% endblock %}
 
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'microapp/css/develop/develop.css' %}">
+    <link rel="stylesheet" href="{% static 'microapp/css/control/developer_machine.css' %}">
+{% endblock %}
+
 {% block content %}
-    <div class="develop-container">
-        <h1>Develop</h1>
+<div class="develop-container">
+    <div class="develop-header">
+        <h1><i class="fas fa-flask"></i> Film Development Dashboard</h1>
+        <div class="header-actions">
+            <button id="refresh-dashboard" class="btn btn-secondary">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+        </div>
     </div>
+
+    <!-- Status Overview -->
+    <div class="status-overview">
+        <div class="status-card">
+            <div class="status-icon">
+                <i class="fas fa-film"></i>
+            </div>
+            <div class="status-content">
+                <div class="status-value" id="rolls-ready-count">0</div>
+                <div class="status-label">Rolls Ready</div>
+            </div>
+        </div>
+        <div class="status-card">
+            <div class="status-icon developing">
+                <i class="fas fa-cog fa-spin"></i>
+            </div>
+            <div class="status-content">
+                <div class="status-value" id="rolls-developing-count">0</div>
+                <div class="status-label">Currently Developing</div>
+            </div>
+        </div>
+        <div class="status-card">
+            <div class="status-icon completed">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="status-content">
+                <div class="status-value" id="rolls-completed-count">0</div>
+                <div class="status-label">Completed Today</div>
+            </div>
+        </div>
+        <div class="status-card">
+            <div class="status-icon warning">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="status-content">
+                <div class="status-value" id="chemical-warnings-count">0</div>
+                <div class="status-label">Chemical Warnings</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Dashboard Grid -->
+    <div class="develop-grid">
+        <!-- Rolls Ready for Development -->
+        <div class="develop-section">
+            <div class="section-header">
+                <h2><i class="fas fa-film"></i> Rolls Ready for Development</h2>
+                <div class="section-actions">
+                    <button id="refresh-rolls" class="btn btn-sm btn-secondary">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="rolls-grid" id="ready-rolls-grid">
+                <!-- Rolls will be populated here -->
+                <div class="loading-state">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Loading rolls...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Development Control Panel -->
+        <div class="develop-section">
+            <div class="section-header">
+                <h2><i class="fas fa-play-circle"></i> Development Control</h2>
+            </div>
+            <div class="development-control">
+                <div class="selected-roll-info" id="selected-roll-info" style="display: none;">
+                    <h3>Selected Roll</h3>
+                    <div class="roll-details">
+                        <div class="detail-item">
+                            <span class="label">Film Number:</span>
+                            <span class="value" id="selected-film-number">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">Film Type:</span>
+                            <span class="value" id="selected-film-type">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">Project:</span>
+                            <span class="value" id="selected-project">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">Pages:</span>
+                            <span class="value" id="selected-pages">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="development-timer" id="development-timer" style="display: none;">
+                    <div class="timer-display">
+                        <div class="timer-circle">
+                            <svg class="timer-svg" viewBox="0 0 100 100">
+                                <circle class="timer-background" cx="50" cy="50" r="45"></circle>
+                                <circle class="timer-progress" cx="50" cy="50" r="45" id="timer-progress-circle"></circle>
+                            </svg>
+                            <div class="timer-text">
+                                <div class="timer-time" id="timer-time">30:00</div>
+                                <div class="timer-label">Remaining</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="timer-info">
+                        <div class="info-item">
+                            <span class="label">Started:</span>
+                            <span class="value" id="development-started">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Estimated Completion:</span>
+                            <span class="value" id="development-completion">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Progress:</span>
+                            <span class="value" id="development-progress">0%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="development-actions">
+                    <button id="start-development" class="btn btn-primary" disabled>
+                        <i class="fas fa-play"></i> Start Development (30 min)
+                    </button>
+                    <button id="complete-development" class="btn btn-success" style="display: none;">
+                        <i class="fas fa-check"></i> Mark Complete
+                    </button>
+                    <button id="cancel-development" class="btn btn-danger" style="display: none;">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                </div>
+
+                <div class="no-selection-message" id="no-selection-message">
+                    <i class="fas fa-hand-pointer"></i>
+                    <p>Select a roll from the list above to start development</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chemical Status Monitor -->
+        <div class="develop-section chemicals-section">
+            <div class="section-header">
+                <h2><i class="fas fa-flask"></i> Chemical Status</h2>
+                <div class="section-actions">
+                    <button id="insert-chemicals" class="btn btn-primary">
+                        <i class="fas fa-plus-circle"></i> Insert Chemicals
+                    </button>
+                    <button id="refresh-chemicals" class="btn btn-sm btn-secondary">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="chemicals-level">
+                <div class="chemicals-grid">
+                    <div class="chemical-container" data-chemical="developer">
+                        <div class="chemical-label">Developer</div>
+                        <div class="level-indicator">
+                            <div class="level-fill" id="developer-fill"></div>
+                        </div>
+                        <div class="chemical-percentage" id="developer-percentage">0%</div>
+                        <div class="chemical-date" id="developer-date">No active batch</div>
+                        <button class="chemical-reset-btn" data-chemical="developer">
+                            <i class="fas fa-redo"></i> Reset
+                        </button>
+                    </div>
+                    <div class="chemical-container" data-chemical="fixer">
+                        <div class="chemical-label">Fixer</div>
+                        <div class="level-indicator">
+                            <div class="level-fill" id="fixer-fill"></div>
+                        </div>
+                        <div class="chemical-percentage" id="fixer-percentage">0%</div>
+                        <div class="chemical-date" id="fixer-date">No active batch</div>
+                        <button class="chemical-reset-btn" data-chemical="fixer">
+                            <i class="fas fa-redo"></i> Reset
+                        </button>
+                    </div>
+                    <div class="chemical-container" data-chemical="cleaner1">
+                        <div class="chemical-label">Cleaner 1</div>
+                        <div class="level-indicator">
+                            <div class="level-fill" id="cleaner1-fill"></div>
+                        </div>
+                        <div class="chemical-percentage" id="cleaner1-percentage">0%</div>
+                        <div class="chemical-date" id="cleaner1-date">No active batch</div>
+                        <button class="chemical-reset-btn" data-chemical="cleaner1">
+                            <i class="fas fa-redo"></i> Reset
+                        </button>
+                    </div>
+                    <div class="chemical-container" data-chemical="cleaner2">
+                        <div class="chemical-label">Cleaner 2</div>
+                        <div class="level-indicator">
+                            <div class="level-fill" id="cleaner2-fill"></div>
+                        </div>
+                        <div class="chemical-percentage" id="cleaner2-percentage">0%</div>
+                        <div class="chemical-date" id="cleaner2-date">No active batch</div>
+                        <button class="chemical-reset-btn" data-chemical="cleaner2">
+                            <i class="fas fa-redo"></i> Reset
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Chemical Usage Summary -->
+                <div class="chemical-summary">
+                    <h3>Chemical Usage Summary</h3>
+                    <div class="usage-stats">
+                        <div class="usage-item">
+                            <span class="label">Total 16mm Rolls:</span>
+                            <span class="value" id="total-16mm-rolls">0</span>
+                        </div>
+                        <div class="usage-item">
+                            <span class="label">Total 35mm Rolls:</span>
+                            <span class="value" id="total-35mm-rolls">0</span>
+                        </div>
+                        <div class="usage-item">
+                            <span class="label">Total Area Used:</span>
+                            <span class="value" id="total-area-used">0.000 m²</span>
+                        </div>
+                        <div class="usage-item">
+                            <span class="label">Remaining Capacity:</span>
+                            <span class="value" id="remaining-capacity">0.000 m²</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Development History -->
+        <div class="develop-section history-section">
+            <div class="section-header">
+                <h2><i class="fas fa-history"></i> Recent Development History</h2>
+            </div>
+            <div class="development-history">
+                <div class="history-list" id="development-history-list">
+                    <!-- History items will be populated here -->
+                    <div class="loading-state">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Loading history...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chemical Reset Modal -->
+<div class="modal" id="chemical-reset-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Reset Chemical Batch</h3>
+            <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p>Are you sure you want to reset the <span id="reset-chemical-name"></span> batch?</p>
+            <div class="form-group">
+                <label for="new-batch-id">New Batch ID:</label>
+                <input type="text" id="new-batch-id" class="form-control" placeholder="Enter new batch ID">
+            </div>
+            <div class="form-group">
+                <label for="max-area">Maximum Area (m²):</label>
+                <input type="number" id="max-area" class="form-control" value="10.0" step="0.1" min="0.1">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button id="confirm-reset" class="btn btn-danger">Reset Batch</button>
+            <button class="modal-close btn btn-secondary">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Chemical Insertion Modal -->
+<div class="modal" id="chemical-insertion-modal">
+    <div class="modal-content chemical-insertion-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-flask"></i> Insert Development Chemicals</h3>
+            <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <!-- Safety Warning -->
+            <div class="safety-warning">
+                <div class="warning-header">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h4>Safety Instructions</h4>
+                </div>
+                <p><strong>Please observe the safety advice on the chemical bottles and safety data sheets.</strong></p>
+                <ul class="safety-list">
+                    <li>Wear appropriate protective equipment (gloves, safety glasses)</li>
+                    <li>Ensure adequate ventilation in the work area</li>
+                    <li>Keep chemicals away from heat sources and direct sunlight</li>
+                    <li>Do not mix different chemical types</li>
+                </ul>
+            </div>
+
+            <!-- Step-by-step Instructions -->
+            <div class="insertion-steps">
+                <h4><i class="fas fa-list-ol"></i> Installation Steps</h4>
+                <div class="step-list">
+                    <div class="step-item">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h5>Open the Front Panel</h5>
+                            <p>Open the front panel of the development machine to access the chemical compartment.</p>
+                        </div>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h5>Prepare Chemical Bottles</h5>
+                            <p>Unscrew the caps from all four chemical bottles. Keep the caps for later resealing.</p>
+                        </div>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h5>Insert Connection Hoses</h5>
+                            <p>Insert the connection hoses into the bottle openings and simultaneously place the bottles into the machine compartment.</p>
+                        </div>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <h5>Secure Connections</h5>
+                            <p>Screw the connection hoses and bottles together securely to prevent leaks.</p>
+                        </div>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-number">5</div>
+                        <div class="step-content">
+                            <h5>Repeat for All Bottles</h5>
+                            <p>Repeat this process for all four chemical bottles: Developer, Fixer, Cleaner 1, and Cleaner 2.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chemical Types Checklist -->
+            <div class="chemical-checklist">
+                <h4><i class="fas fa-check-square"></i> Chemical Installation Checklist</h4>
+                <div class="checklist-grid">
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-developer" class="chemical-checkbox">
+                        <label for="check-developer">
+                            <i class="fas fa-flask"></i>
+                            <span>Developer</span>
+                        </label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-fixer" class="chemical-checkbox">
+                        <label for="check-fixer">
+                            <i class="fas fa-flask"></i>
+                            <span>Fixer</span>
+                        </label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-cleaner1" class="chemical-checkbox">
+                        <label for="check-cleaner1">
+                            <i class="fas fa-flask"></i>
+                            <span>Cleaner 1</span>
+                        </label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check-cleaner2" class="chemical-checkbox">
+                        <label for="check-cleaner2">
+                            <i class="fas fa-flask"></i>
+                            <span>Cleaner 2</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Batch Information -->
+            <div class="batch-info">
+                <h4><i class="fas fa-info-circle"></i> New Batch Information</h4>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="batch-date">Installation Date:</label>
+                        <input type="date" id="batch-date" class="form-control" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="batch-capacity">Capacity per Chemical (m²):</label>
+                        <input type="number" id="batch-capacity" class="form-control" value="10.0" step="0.1" min="0.1">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="batch-notes">Notes (optional):</label>
+                    <textarea id="batch-notes" class="form-control" rows="2" placeholder="Enter any additional notes about this chemical batch..."></textarea>
+                </div>
+            </div>
+
+            <!-- Tip Box -->
+            <div class="tip-box">
+                <div class="tip-header">
+                    <i class="fas fa-lightbulb"></i>
+                    <strong>Tip:</strong>
+                </div>
+                <p>Keep the bottle caps for resealing when chemicals need to be replaced. Label them if necessary to avoid confusion.</p>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button id="confirm-chemical-insertion" class="btn btn-success" disabled>
+                <i class="fas fa-check"></i> Confirm Installation Complete
+            </button>
+            <button class="modal-close btn btn-secondary">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Notifications Container -->
+<div id="notifications-container"></div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'microapp/js/develop/develop.js' %}"></script>
 {% endblock %}

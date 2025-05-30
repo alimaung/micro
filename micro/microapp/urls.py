@@ -2,7 +2,7 @@ from django.urls import path, include
 from . import views
 from django.views.i18n import JavaScriptCatalog
 from . import api
-from .views import external_systems_views
+from .views import external_systems_views, sma_views
 
 
 urlpatterns = [
@@ -23,7 +23,9 @@ urlpatterns = [
     path('register/export/', views.register_export, name='register_export'),
     
     path('film/', views.film, name='film'),
+    path('film/sma/', views.sma_filming, name='sma_filming'),
     path('develop/', views.develop, name='develop'),
+    path('label/', views.label, name='label'),
     path('control/', views.control, name='control'),
     path('handoff/', views.handoff, name='handoff'),
     path('explore/', views.explore, name='explore'),
@@ -204,4 +206,47 @@ urlpatterns = [
     path('api/projects/<int:project_id>/rolls/', views.get_project_rolls, name='get_project_rolls'),
     path('api/rolls/<int:roll_id>/', views.get_roll_details, name='get_roll_details'),
     path('api/rolls/<int:roll_id>/filming-status/', views.update_roll_filming_status, name='update_roll_filming_status'),
+    
+    # Development API Endpoints
+    path('api/development/rolls/', views.get_rolls_for_development, name='api_development_rolls'),
+    path('api/development/chemicals/', views.get_chemical_status, name='api_chemical_status'),
+    path('api/development/start/', views.start_development, name='api_start_development'),
+    path('api/development/complete/', views.complete_development, name='api_complete_development'),
+    path('api/development/progress/', views.get_development_progress, name='api_development_progress'),
+    path('api/development/chemicals/reset/<str:chemical_type>/', views.reset_chemical_batch, name='api_reset_chemical_batch'),
+    path('api/development/chemicals/insert/', views.insert_chemicals, name='api_insert_chemicals'),
+    path('api/development/history/', views.get_development_history, name='api_development_history'),
+    
+    # Label API Endpoints
+    path('api/labels/rolls/', views.get_rolls_for_labels, name='api_get_rolls_for_labels'),
+    path('api/labels/generate/', views.generate_film_labels, name='api_generate_film_labels'),
+    path('api/labels/download/<str:label_id>/', views.download_label_pdf, name='api_download_label_pdf'),
+    path('api/labels/print-queue/', views.get_print_queue, name='api_get_print_queue'),
+    path('api/labels/print-queue/add/', views.add_to_print_queue, name='api_add_to_print_queue'),
+    path('api/labels/print-queue/remove/<str:queue_id>/', views.remove_from_print_queue, name='api_remove_from_print_queue'),
+    
+    # Enhanced SMA API endpoints
+    path('api/sma/filming/', sma_views.SMAFilmingView.as_view(), name='sma_filming'),
+    path('api/sma/sessions/', sma_views.SMAFilmingView.as_view(), name='sma_sessions_list'),
+    path('api/sma/session/<str:session_id>/', sma_views.SMASessionView.as_view(), name='sma_session_detail'),
+    
+    # Session management endpoints
+    path('api/sma/session/<str:session_id>/health/', sma_views.session_health, name='sma_session_health'),
+    path('api/sma/session/<str:session_id>/checkpoint/', sma_views.force_checkpoint, name='sma_force_checkpoint'),
+    path('api/sma/session/<str:session_id>/recover/', sma_views.recover_session, name='sma_recover_session'),
+    path('api/sma/session/<str:session_id>/logs/', sma_views.session_logs, name='sma_session_logs'),
+    path('api/sma/session/<str:session_id>/statistics/', sma_views.session_statistics, name='sma_session_statistics'),
+    
+    # Session control endpoints
+    path('api/sma/session/<str:session_id>/pause/', sma_views.pause_session, name='sma_pause_session'),
+    path('api/sma/session/<str:session_id>/resume/', sma_views.resume_session, name='sma_resume_session'),
+    path('api/sma/session/<str:session_id>/cancel/', sma_views.cancel_session, name='sma_cancel_session'),
+    
+    # Project and roll management
+    path('api/sma/projects/', sma_views.sma_projects, name='sma_projects'),
+    path('api/sma/project/<int:project_id>/rolls/', sma_views.project_rolls, name='sma_project_rolls'),
+    
+    # System management endpoints
+    path('api/sma/sessions/history/', sma_views.session_history, name='sma_session_history'),
+    path('api/sma/sessions/cleanup/', sma_views.cleanup_sessions, name='sma_cleanup_sessions'),
 ]

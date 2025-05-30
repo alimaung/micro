@@ -19,7 +19,7 @@ from .sma_workflow import (
 from .progress_monitor import ProgressMonitor
 from .post_processing import PostProcessingManager
 from .sma_exceptions import (
-    SMAException, SMAConfigurationError, log_exception
+    SMAException, SMAConfigurationError, log_exception, SMARecoveryError
 )
 from .sma_utils import setup_logging, log_system_info, PerformanceTimer
 
@@ -120,6 +120,14 @@ class SMAController:
             self.logger.info("=== SMA Automation Process Completed Successfully ===")
             return True
             
+        except SMARecoveryError as e:
+            # Special handling for recovery errors - don't do emergency cleanup
+            # since we want to leave the existing process running
+            self.logger.error("=== Recovery Mode Failed - Manual Intervention Required ===")
+            self.logger.error(str(e))
+            self.logger.error("Existing SMA process has been left running for safety.")
+            return False
+            
         except Exception as e:
             self.logger.error(f"SMA automation process failed: {e}")
             log_exception(self.logger, e, "SMA automation")
@@ -195,17 +203,26 @@ class SMAController:
                 # Skip to monitoring phase for recovered sessions
                 return
             else:
-                self.logger.error("Failed to recover session. Starting new session instead.")
-                # Cleanup and start fresh
-                if self.app:
-                    try:
-                        self.app.kill()
-                        time.sleep(2)
-                    except:
-                        pass
+                # SAFE FAILURE: Never kill existing process in recovery mode
+                self.logger.error("Failed to recover existing scanning session.")
+                self.logger.error("SMA application is still running but cannot be recovered automatically.")
+                self.logger.error("This could be due to:")
+                self.logger.error("  - SMA is in an unexpected state")
+                self.logger.error("  - Required window is not accessible")
+                self.logger.error("  - Film number cannot be determined")
+                self.logger.error("")
+                self.logger.error("MANUAL INTERVENTION REQUIRED:")
+                self.logger.error("1. Check the SMA application manually")
+                self.logger.error("2. If SMA is actively scanning, let it complete")
+                self.logger.error("3. If SMA is stuck or idle, manually close it")
+                self.logger.error("4. Then run the script again WITHOUT --recovery flag")
+                self.logger.error("")
+                self.logger.error("NEVER killing existing process to prevent data loss!")
                 
-                # Start new application
-                self.app = start_application(self.config['app_path'], self.logger)
+                raise SMARecoveryError(
+                    "Cannot recover existing session. SMA process left running for safety. "
+                    "Manual intervention required - check SMA application state and close manually if safe."
+                )
         
         self.logger.info("Application lifecycle management completed")
     

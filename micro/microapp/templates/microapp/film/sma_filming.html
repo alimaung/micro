@@ -1,0 +1,449 @@
+{% extends 'microapp/base.html' %}
+
+{% block title %}SMA Filming Controller - Microfilm Processing System{% endblock %}
+
+{% load static %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'microapp/css/film/sma-filming.css' %}">
+    <link rel="stylesheet" href="{% static 'microapp/css/film/progress.css' %}">
+    <link rel="stylesheet" href="{% static 'microapp/css/film/monitoring.css' %}">
+{% endblock %}
+
+{% block content %}
+    {% csrf_token %}
+    <div class="sma-filming-container">
+        <!-- Header Section -->
+        <div class="sma-header">
+            <div class="header-content">
+                <h1><i class="fas fa-video"></i> SMA Filming Controller</h1>
+                <p class="subtitle">Automated microfilm scanning with real-time monitoring</p>
+            </div>
+            <div class="connection-status">
+                <div class="status-indicator" id="sma-connection-status">
+                    <i class="fas fa-circle"></i>
+                    <span>Checking connection...</span>
+                </div>
+                <button id="test-connection-btn" class="test-btn">
+                    <i class="fas fa-plug"></i> Test Connection
+                </button>
+            </div>
+        </div>
+
+        <!-- Active Sessions Overview -->
+        <div class="active-sessions-panel" id="active-sessions-panel">
+            <div class="panel-header">
+                <h2><i class="fas fa-play-circle"></i> Active Filming Sessions</h2>
+                <div class="session-controls">
+                    <button id="refresh-sessions-btn" class="icon-btn" title="Refresh Sessions">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                    <button id="cleanup-sessions-btn" class="icon-btn" title="Cleanup Old Sessions">
+                        <i class="fas fa-broom"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="sessions-grid" id="active-sessions-grid">
+                <!-- Active sessions will be populated here -->
+                <div class="no-sessions-message">
+                    <i class="fas fa-info-circle"></i>
+                    <p>No active filming sessions</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Filming Interface -->
+        <div class="filming-workflow">
+            <!-- Step 1: Project & Roll Selection -->
+            <div class="workflow-step" id="step-selection">
+                <div class="step-header">
+                    <div class="step-number">1</div>
+                    <h2>Project & Roll Selection</h2>
+                    <div class="step-status" id="selection-status">Select project and roll</div>
+                </div>
+                
+                <div class="selection-content">
+                    <div class="project-selection">
+                        <h3>Select Project</h3>
+                        <div class="search-filter">
+                            <input type="text" id="project-search" placeholder="Search projects...">
+                            <select id="project-filter">
+                                <option value="all">All Projects</option>
+                                <option value="ready">Ready for Filming</option>
+                                <option value="in-progress">In Progress</option>
+                            </select>
+                        </div>
+                        <div class="projects-list" id="projects-list">
+                            <!-- Projects will be loaded here -->
+                        </div>
+                    </div>
+                    
+                    <div class="roll-selection" id="roll-selection" style="display: none;">
+                        <h3>Select Roll</h3>
+                        <div class="project-info" id="selected-project-info">
+                            <!-- Selected project info will be shown here -->
+                        </div>
+                        <div class="rolls-grid" id="rolls-grid">
+                            <!-- Rolls will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="step-actions">
+                    <button id="continue-to-config-btn" class="primary-btn" disabled>
+                        <i class="fas fa-arrow-right"></i> Continue to Configuration
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 2: Filming Configuration -->
+            <div class="workflow-step" id="step-configuration" style="display: none;">
+                <div class="step-header">
+                    <div class="step-number">2</div>
+                    <h2>Filming Configuration</h2>
+                    <div class="step-status" id="config-status">Configure filming parameters</div>
+                </div>
+                
+                <div class="config-content">
+                    <div class="roll-summary">
+                        <h3>Roll Summary</h3>
+                        <div class="summary-grid" id="roll-summary-grid">
+                            <!-- Roll summary will be populated here -->
+                        </div>
+                    </div>
+                    
+                    <div class="filming-config">
+                        <h3>Filming Parameters</h3>
+                        <div class="config-form">
+                            <div class="form-group">
+                                <label for="film-type-select">Film Type:</label>
+                                <select id="film-type-select">
+                                    <option value="16mm">16mm Film</option>
+                                    <option value="35mm">35mm Film</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="workflow-mode">Workflow Mode:</label>
+                                <select id="workflow-mode">
+                                    <option value="standard">Standard Workflow</option>
+                                    <option value="recovery">Recovery Mode</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" id="auto-advance">
+                                    Auto-advance through workflow states
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="pre-flight-checklist">
+                        <h3>Pre-Flight Checklist</h3>
+                        <div class="checklist-items">
+                            <div class="checklist-item">
+                                <input type="checkbox" id="check-sma-ready">
+                                <label for="check-sma-ready">
+                                    <i class="fas fa-desktop"></i>
+                                    SMA application is running and ready
+                                </label>
+                            </div>
+                            <div class="checklist-item">
+                                <input type="checkbox" id="check-film-loaded">
+                                <label for="check-film-loaded">
+                                    <i class="fas fa-film"></i>
+                                    <span id="film-type-instruction">16mm film loaded in camera</span>
+                                </label>
+                            </div>
+                            <div class="checklist-item">
+                                <input type="checkbox" id="check-documents-ready">
+                                <label for="check-documents-ready">
+                                    <i class="fas fa-folder-open"></i>
+                                    Documents are prepared and accessible
+                                </label>
+                            </div>
+                            <div class="checklist-item">
+                                <input type="checkbox" id="check-output-ready">
+                                <label for="check-output-ready">
+                                    <i class="fas fa-save"></i>
+                                    Output directory is accessible
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="step-actions">
+                    <button id="back-to-selection-btn" class="secondary-btn">
+                        <i class="fas fa-arrow-left"></i> Back to Selection
+                    </button>
+                    <button id="start-filming-btn" class="primary-btn" disabled>
+                        <i class="fas fa-play"></i> Start Filming
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 3: Filming Progress -->
+            <div class="workflow-step" id="step-filming" style="display: none;">
+                <div class="step-header">
+                    <div class="step-number">3</div>
+                    <h2>Filming in Progress</h2>
+                    <div class="step-status" id="filming-status">Initializing filming session...</div>
+                </div>
+                
+                <div class="filming-content">
+                    <!-- Session Info -->
+                    <div class="session-info">
+                        <div class="session-id">
+                            <strong>Session ID:</strong> <span id="current-session-id">-</span>
+                        </div>
+                        <div class="session-time">
+                            <strong>Started:</strong> <span id="session-start-time">-</span>
+                        </div>
+                        <div class="session-duration">
+                            <strong>Duration:</strong> <span id="session-duration">00:00:00</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Progress Overview -->
+                    <div class="progress-overview">
+                        <div class="progress-bar-container">
+                            <div class="progress-label">
+                                <span>Overall Progress</span>
+                                <span id="progress-percentage">0%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="progress-fill"></div>
+                            </div>
+                            <div class="progress-details">
+                                <span id="progress-documents">0 / 0 documents</span>
+                                <span id="progress-eta">ETA: Calculating...</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Workflow States -->
+                    <div class="workflow-states">
+                        <div class="workflow-state" id="state-initialization">
+                            <div class="state-icon"><i class="fas fa-cog"></i></div>
+                            <div class="state-label">Initialization</div>
+                            <div class="state-status">pending</div>
+                        </div>
+                        <div class="workflow-state" id="state-monitoring">
+                            <div class="state-icon"><i class="fas fa-eye"></i></div>
+                            <div class="state-label">Monitoring</div>
+                            <div class="state-status">pending</div>
+                        </div>
+                        <div class="workflow-state" id="state-advanced-finish">
+                            <div class="state-icon"><i class="fas fa-flag-checkered"></i></div>
+                            <div class="state-label">Advanced Finish</div>
+                            <div class="state-status">pending</div>
+                        </div>
+                        <div class="workflow-state" id="state-completed">
+                            <div class="state-icon"><i class="fas fa-check"></i></div>
+                            <div class="state-label">Completed</div>
+                            <div class="state-status">pending</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Live Log Feed -->
+                    <div class="log-feed">
+                        <div class="log-header">
+                            <h3><i class="fas fa-terminal"></i> Live Log Feed</h3>
+                            <div class="log-controls">
+                                <select id="filter-logs-select" title="Filter by log level">
+                                    <option value="">All Levels</option>
+                                    <option value="debug">Debug</option>
+                                    <option value="info">Info</option>
+                                    <option value="warning">Warning</option>
+                                    <option value="error">Error</option>
+                                </select>
+                                <button id="clear-logs-btn" class="icon-btn" title="Clear Logs">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                <button id="download-logs-btn" class="icon-btn" title="Download Logs">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="log-content" id="log-content">
+                            <!-- Log entries will be added here -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="step-actions">
+                    <div class="control-group">
+                        <button id="pause-filming-btn" class="warning-btn">
+                            <i class="fas fa-pause"></i> Pause
+                        </button>
+                        <button id="resume-filming-btn" class="primary-btn" style="display: none;">
+                            <i class="fas fa-play"></i> Resume
+                        </button>
+                        <button id="cancel-filming-btn" class="danger-btn">
+                            <i class="fas fa-stop"></i> Cancel
+                        </button>
+                        <button id="terminate-filming-btn" class="danger-btn">
+                            <i class="fas fa-skull"></i> Terminate
+                        </button>
+                        <button id="complete-filming-btn" class="success-btn" style="display: none;">
+                            <i class="fas fa-check"></i> Mark Complete
+                        </button>
+                    </div>
+                    <div class="enhanced-controls">
+                        <button id="force-checkpoint-btn" class="secondary-btn" title="Force Checkpoint">
+                            <i class="fas fa-save"></i> Checkpoint
+                        </button>
+                        <button id="view-health-btn" class="secondary-btn" title="View Health Status">
+                            <i class="fas fa-heartbeat"></i> Health
+                        </button>
+                        <button id="view-statistics-btn" class="secondary-btn" title="View Statistics">
+                            <i class="fas fa-chart-line"></i> Statistics
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 4: Completion -->
+            <div class="workflow-step" id="step-completion" style="display: none;">
+                <div class="step-header">
+                    <div class="step-number">4</div>
+                    <h2>Filming Complete</h2>
+                    <div class="step-status" id="completion-status">Session completed successfully</div>
+                </div>
+                
+                <div class="completion-content">
+                    <div class="completion-summary">
+                        <div class="success-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <h3>Filming Session Completed</h3>
+                        <div class="completion-stats" id="completion-stats">
+                            <!-- Completion statistics will be shown here -->
+                        </div>
+                    </div>
+                    
+                    <div class="next-actions">
+                        <h3>Next Steps</h3>
+                        <div class="action-buttons">
+                            <button id="view-session-details-btn" class="secondary-btn">
+                                <i class="fas fa-chart-line"></i> View Session Details
+                            </button>
+                            <button id="start-new-session-btn" class="primary-btn">
+                                <i class="fas fa-plus"></i> Start New Session
+                            </button>
+                            <button id="go-to-develop-btn" class="primary-btn">
+                                <i class="fas fa-arrow-right"></i> Go to Develop
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Session Details Modal -->
+    <div class="modal" id="session-details-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-info-circle"></i> Session Details</h2>
+                <button class="modal-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="session-details-content">
+                <!-- Session details will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Health Status Modal -->
+    <div class="modal" id="health-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-heartbeat"></i> Session Health</h2>
+                <button class="modal-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="health-modal-content">
+                <!-- Health status will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Modal -->
+    <div class="modal" id="statistics-modal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h2><i class="fas fa-chart-line"></i> Session Statistics</h2>
+                <button class="modal-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="statistics-modal-content">
+                <!-- Statistics will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Recovery Options Modal -->
+    <div class="modal" id="recovery-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-wrench"></i> Session Recovery</h2>
+                <button class="modal-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="recovery-options">
+                    <p>An existing session was found for this project and roll. What would you like to do?</p>
+                    <div class="recovery-actions">
+                        <button id="recover-session-btn" class="primary-btn">
+                            <i class="fas fa-undo"></i> Recover Existing Session
+                        </button>
+                        <button id="force-new-session-btn" class="warning-btn">
+                            <i class="fas fa-plus"></i> Start New Session (Force)
+                        </button>
+                        <button class="modal-close secondary-btn">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Modal -->
+    <div class="modal" id="error-modal">
+        <div class="modal-content error">
+            <div class="modal-header">
+                <h2><i class="fas fa-exclamation-triangle"></i> Error</h2>
+                <button class="modal-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p id="error-message">An error occurred</p>
+                <div class="error-actions">
+                    <button id="retry-action-btn" class="primary-btn">
+                        <i class="fas fa-redo"></i> Retry
+                    </button>
+                    <button class="modal-close secondary-btn">
+                        <i class="fas fa-times"></i> Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Container -->
+    <div id="notification-container"></div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'microapp/js/film/websocket-client.js' %}"></script>
+    <script src="{% static 'microapp/js/film/sma-filming.js' %}"></script>
+{% endblock %} 

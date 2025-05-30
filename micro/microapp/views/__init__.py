@@ -7,7 +7,7 @@ This allows existing URL patterns to continue working without modifications.
 from .template_views import (
     home, transfer, register, register_project, register_document, register_workflow,
     register_references, register_allocation, register_index, register_filmnumber,
-    register_distribution, register_export, film, develop, control, handoff, explore, report,
+    register_distribution, register_export, film, sma_filming, develop, label, control, handoff, explore, report,
     settings_view, login, oldcontrol, oldregister, oldtransfer, oldexplore, oldfilm,
     toggle_language
 )
@@ -72,8 +72,11 @@ from .export_views import (
 
 # Import SMA views
 from .sma_views import (
-    start_filming, control_filming, filming_status, filming_logs, 
-    filming_progress, active_sessions, machine_status, test_sma_connection
+    SMAFilmingView, SMASessionView, recover_session, session_logs,
+    session_statistics, mark_roll_filmed, cleanup_sessions,
+    project_rolls, session_history, start_filming, control_filming,
+    filming_status, filming_logs, filming_progress, active_sessions,
+    machine_status, test_sma_connection
 )
 
 # Import notification views
@@ -86,4 +89,15 @@ from .notification_views import (
 # Import roll views
 from .roll_views import (
     get_project_rolls, update_roll_filming_status, get_roll_details
+)
+
+from .development_views import (
+    develop_dashboard, get_rolls_for_development, get_chemical_status,
+    start_development, complete_development, get_development_progress,
+    reset_chemical_batch, get_development_history, insert_chemicals
+)
+
+from .label_views import (
+    get_rolls_for_labels, generate_film_labels, download_label_pdf,
+    get_print_queue, add_to_print_queue, remove_from_print_queue
 )

@@ -215,9 +215,9 @@ class ProgressMonitor:
             # Handle PREP notifications based on mode
             self._send_prep_notifications(current_time, progress_percent)
             
-            # Send regular RUNNING notifications every 2% (only if not in PREP mode)
-            if self.prep_mode is None:
-                self._send_running_notifications(progress_percent, verfilmt, eta)
+            # Send regular RUNNING notifications every 2% (continue even during PREP mode)
+            # RUNNING notifications use "process" message_id, PREP uses "prep" message_id
+            self._send_running_notifications(progress_percent, verfilmt, eta)
         except Exception as e:
             self.logger.error(f"Error sending notification: {e}")
     
