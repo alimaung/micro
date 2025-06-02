@@ -19,10 +19,20 @@ const RelayControls = {
         document.addEventListener('keydown', (event) => {
             // Check if spacebar is pressed and we're in dark mode
             if (event.key === ' ' && !this.isLightMode) {
-                // Toggle back to light mode
-                this.toggleRelayMode();
-                // Prevent page scrolling
-                event.preventDefault();
+                // Only toggle if we're not in an input field or if specifically called from development
+                const activeElement = document.activeElement;
+                const isInInput = activeElement && (
+                    activeElement.tagName === 'INPUT' || 
+                    activeElement.tagName === 'TEXTAREA' || 
+                    activeElement.contentEditable === 'true'
+                );
+                
+                // Allow toggle if not in input field, or if we're on the development page
+                if (!isInInput || window.location.pathname.includes('/develop/')) {
+                    this.toggleRelayMode();
+                    // Prevent page scrolling
+                    event.preventDefault();
+                }
             }
         });
     },

@@ -4,11 +4,12 @@ document.addEventListener('DOMContentLoaded', function() {
     let isFilmingActive = false;
     let currentSessionId = null;
     let websocketClient = null;
-    let allProjects = []; // Store all loaded projects
-    let filteredProjects = []; // Store filtered projects
-    let currentProjectId = null;
+    let allRolls = []; // Store all loaded rolls
+    let filteredRolls = []; // Store filtered rolls
     let currentRollId = null;
     let sessionStartTime = null;
+    let selectedRollData = null; // Store selected roll data for validation
+    let isLightMode = true; // Default to light mode for film handling
     
     // Initialize the application
     initializeApp();
@@ -24,20 +25,30 @@ document.addEventListener('DOMContentLoaded', function() {
             // Automatically restore the active session
             await restoreActiveSession(activeSessions[0]);
         } else {
-            console.log('📋 No active sessions found, showing project selection...');
-            // Normal initialization - show project selection
-            await loadProjects();
-            showCard('project-selection-card');
+            console.log('📋 No active sessions found, loading rolls...');
+            // Normal initialization - load rolls first
+            await loadRolls();
+            
+            // Try to restore roll selection state
+            const stateRestored = restoreRollSelectionState();
+            
+            if (!stateRestored) {
+                // No saved state, show roll selection
+                showCard('roll-selection-card');
+            }
         }
         
-    // Initialize event handlers
-    initializeEventHandlers();
+        // Initialize event handlers
+        initializeEventHandlers();
         
         // Initialize WebSocket connection
         initializeWebSocket();
     
-    // Initialize interface
+        // Initialize interface
         updateQuickStats();
+        
+        // Initialize lighting mode
+        initializeFilmingLightingMode();
         
         // Disable start filming button initially (if in normal mode)
         const startFilmingButton = document.getElementById('start-filming');
@@ -46,18 +57,18 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Handle dark mode for stat-items
-    handleDarkMode();
+        handleDarkMode();
     
-    // Observe body class changes for dark mode toggle
-    const observer = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-            if (mutation.attributeName === 'class') {
-                handleDarkMode();
-            }
+        // Observe body class changes for dark mode toggle
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.attributeName === 'class') {
+                    handleDarkMode();
+                }
+            });
         });
-    });
     
-    observer.observe(document.body, { attributes: true });
+        observer.observe(document.body, { attributes: true });
         
         // Add navigation warning for active sessions
         setupNavigationWarning();
@@ -272,13 +283,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Load projects from the SMA API
-    async function loadProjects() {
+    // Load all rolls from the SMA API
+    async function loadRolls() {
         try {
             showLoadingState();
             
-            // Use SMA-specific projects endpoint
-            const response = await fetch('/api/sma/projects/', {
+            // Use SMA-specific rolls endpoint to get all rolls
+            const response = await fetch('/api/sma/rolls/', {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -294,202 +305,534 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Handle the response format from SMA service
             if (data.success) {
-                allProjects = data.projects || [];
+                allRolls = data.rolls || [];
             } else {
-                throw new Error(data.error || 'Failed to load projects');
+                throw new Error(data.error || 'Failed to load rolls');
             }
             
-            // Projects are already filtered by SMA service for filming readiness
-            filteredProjects = allProjects;
+            // Apply initial filtering
+            filteredRolls = allRolls;
             
-            displayProjects(filteredProjects);
+            displayRolls(filteredRolls);
             hideLoadingState();
             
         } catch (error) {
-            console.error('Error loading projects:', error);
-            showErrorState('Failed to load projects. Please try again.');
-            showNotification('error', 'Load Error', `Failed to load projects: ${error.message}`);
+            console.error('Error loading rolls:', error);
+            showErrorState('Failed to load rolls. Please try again.');
+            showNotification('error', 'Load Error', `Failed to load rolls: ${error.message}`);
         }
     }
     
-    // Display projects in the list
-    function displayProjects(projects) {
-        const projectList = document.getElementById('project-list');
+    // Display rolls in the grid
+    function displayRolls(rolls) {
+        const rollsGrid = document.getElementById('rolls-grid');
         
-        if (!projectList) {
-            console.warn('Project list element not found');
+        if (!rollsGrid) {
+            console.warn('Rolls grid element not found');
             return;
         }
         
-        if (projects.length === 0) {
-            projectList.innerHTML = `
+        if (rolls.length === 0) {
+            rollsGrid.innerHTML = `
                 <div class="empty-state">
-                    <i class="fas fa-folder-open"></i>
-                    <p>No projects available for filming</p>
-                    <small>Projects need to be processed and have available rolls for SMA filming.</small>
+                    <i class="fas fa-film"></i>
+                    <p>No rolls available for filming</p>
+                    <small>Rolls need to be processed and have available documents for SMA filming.</small>
                 </div>
             `;
             return;
         }
         
-        projectList.innerHTML = projects.map(project => {
-            const status = project.filming_status || 'ready';
+        rollsGrid.innerHTML = rolls.map(roll => {
+            const status = roll.filming_status || 'ready';
             const statusClass = getStatusClass(status);
-            const projectName = project.name || project.archive_id;
-            const archiveId = project.archive_id;
-            const location = project.location || 'Unknown';
-            const rollCount = project.available_rolls || 0;
+            const filmNumber = roll.film_number || 'Unknown';
+            const filmType = roll.film_type || '16mm';
+            const projectName = roll.project_name || 'Unknown Project';
+            const archiveId = roll.project_archive_id || 'Unknown';
+            const documentCount = roll.document_count || 0;
+            const pageCount = roll.pages_used || 0;
+            const progressPercent = roll.filming_progress_percent || 0;
+            const isCompleted = status === 'completed';
+            const isReFilming = roll.is_re_filming || false;
+            
+            // Build CSS classes - avoid duplication
+            const cardClasses = ['roll-card', statusClass];
+            if (isCompleted && statusClass !== 'completed') {
+                cardClasses.push('completed');
+            }
             
             return `
-                <div class="project-item" data-id="${project.id}" data-archive-id="${project.archive_id}">
-                    <span class="project-name">${projectName}</span>
-                    <span class="project-id">${archiveId}</span>
-                    <span class="project-location">${location}</span>
-                    <span class="project-rolls">${rollCount}</span>
-                    <span class="project-status">
-                        <span class="status-badge ${statusClass}">${status}</span>
-                    </span>
-                    <span class="project-actions">
-                        ${status === 'completed' ? `
-                            <button class="view-button" title="View details">
-                                <i class="fas fa-eye"></i> View
-                            </button>
+                <div class="${cardClasses.join(' ')}" 
+                     data-roll-id="${roll.id}" 
+                     data-status="${status}"
+                     data-film-type="${filmType}">
+                    
+                    ${status === 'filming' ? `
+                        <div class="filming-progress-indicator">
+                            <div class="filming-progress-fill" style="width: ${progressPercent}%"></div>
+                        </div>
+                    ` : ''}
+                    
+                    ${isCompleted ? `
+                        <div class="completed-badge">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Completed</span>
+                        </div>
+                    ` : ''}
+                    
+                    <div class="roll-header">
+                        <div class="roll-title">
+                            <div class="roll-film-number">${filmNumber}</div>
+                            <div class="roll-film-type">${filmType}</div>
+                        </div>
+                        ${!isCompleted ? `
+                            <div class="roll-status-badge ${statusClass}">
+                                ${status.replace('-', ' ')}
+                            </div>
+                        ` : ''}
+                    </div>
+                    
+                    <div class="roll-project-info">
+                        <div class="project-name">${projectName}</div>
+                        <div class="archive-id">${archiveId}</div>
+                    </div>
+                    
+                    <div class="roll-details">
+                        <div class="roll-detail-item">
+                            <span class="roll-detail-label">Documents:</span>
+                            <span class="roll-detail-value">${documentCount}</span>
+                        </div>
+                        <div class="roll-detail-item">
+                            <span class="roll-detail-label">Pages:</span>
+                            <span class="roll-detail-value">${pageCount}</span>
+                        </div>
+                        <div class="roll-detail-item">
+                            <span class="roll-detail-label">Output:</span>
+                            <span class="roll-detail-value">${roll.output_directory || 'Not set'}</span>
+                        </div>
+                        <div class="directory-status ${roll.output_directory_exists ? 'exists' : 'missing'}">
+                            <i class="fas ${roll.output_directory_exists ? 'fa-check' : 'fa-times'}"></i>
+                            Directory ${roll.output_directory_exists ? 'exists' : 'missing'}
+                        </div>
+                    </div>
+                    
+                    ${status === 'filming' ? `
+                        <div class="roll-progress">
+                            <div class="roll-progress-label">
+                                <span>Progress</span>
+                                <span>${progressPercent}%</span>
+                            </div>
+                            <div class="roll-progress-bar">
+                                <div class="roll-progress-fill" style="width: ${progressPercent}%"></div>
+                            </div>
+                        </div>
+                    ` : ''}
+                    
+                    <div class="roll-actions">
+                        ${status === 'ready' || isCompleted ? `
+                            <span class="action-hint">
+                                ${isCompleted ? 'Click to re-film' : 'Click to select'}
+                            </span>
                         ` : `
-                            <span class="action-hint">Click to select</span>
+                            <span class="status-text ${status}">
+                                <i class="fas ${status === 'filming' ? 'fa-spinner fa-spin' : 'fa-exclamation-triangle'}"></i>
+                                ${status === 'filming' ? 'Currently Filming' : 'Not Ready'}
+                            </span>
                         `}
-                    </span>
+                        <button class="roll-info-button" title="Roll details">
+                            <i class="fas fa-info"></i>
+                        </button>
+                    </div>
                 </div>
             `;
         }).join('');
         
-        // Re-attach event listeners to new project items
-        attachProjectEventListeners();
-    }
-    
-    // Determine project filming status
-    function getProjectFilmingStatus(project) {
-        if (project.film_allocation_complete) {
-            return 'Completed';
-        } else if (project.processing_complete && project.total_pages > 0) {
-            return 'Ready';
-        } else if (project.total_pages > 0) {
-            return 'In Progress';
-        } else {
-            return 'Pending';
-        }
+        // Attach event listeners to roll cards
+        attachRollEventListeners();
     }
     
     // Get CSS class for status
     function getStatusClass(status) {
         switch (status) {
-            case 'Ready': return 'ready';
-            case 'In Progress': return 'in-progress';
-            case 'Completed': return 'completed';
-            case 'Pending': return 'pending';
+            case 'ready': return 'ready';
+            case 'filming': return 'filming';
+            case 'completed': return 'completed';
+            case 'error': return 'error';
             default: return 'pending';
         }
     }
     
-    // Attach event listeners to project items
-    function attachProjectEventListeners() {
-        // Project selection functionality - only highlight, don't proceed
-        document.querySelectorAll('.project-item').forEach(item => {
-            item.addEventListener('click', function(e) {
-                // Don't select if clicking on action buttons
-                if (!e.target.closest('.project-actions')) {
-                    highlightProject(this);
-                }
-            });
-        });
-        
-        // Remove individual action buttons since we're using the main select button
-        // Keep view button for completed projects
-        document.querySelectorAll('.view-button').forEach(button => {
-            button.addEventListener('click', function(e) {
-                e.stopPropagation();
-                const projectId = this.closest('.project-item').getAttribute('data-id');
-                viewProjectDetails(projectId);
-            });
+    // Attach event listeners to roll cards
+    function attachRollEventListeners() {
+        document.querySelectorAll('.roll-card').forEach(card => {
+            const infoButton = card.querySelector('.roll-info-button');
+            const status = card.dataset.status;
+            
+            // Allow selection of ready rolls and completed rolls (for re-filming)
+            if (status === 'ready' || status === 'completed') {
+                card.addEventListener('click', function(e) {
+                    // Don't select if clicking on info button
+                    if (!e.target.closest('.roll-info-button')) {
+                        highlightRoll(card);
+                    }
+                });
+            }
+            
+            if (infoButton) {
+                infoButton.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    showRollInfo(card.getAttribute('data-roll-id'));
+                });
+            }
         });
     }
     
-    // Highlight a project and enable the select button
-    function highlightProject(projectItem) {
-        // Deselect all projects
-        document.querySelectorAll('.project-item').forEach(p => p.classList.remove('selected'));
+    // Highlight a roll and enable the select button
+    function highlightRoll(rollCard) {
+        // Deselect all rolls
+        document.querySelectorAll('.roll-card').forEach(card => card.classList.remove('selected'));
         
-        // Select the current project
-        projectItem.classList.add('selected');
+        // Select the current roll
+        rollCard.classList.add('selected');
         
-        // Enable the select project button
-        const selectProjectBtn = document.getElementById('select-project-btn');
-        if (selectProjectBtn) {
-            selectProjectBtn.disabled = false;
+        // Enable the select roll button
+        const selectRollBtn = document.getElementById('select-roll-btn');
+        if (selectRollBtn) {
+            selectRollBtn.disabled = false;
         }
         
-        // Update project status
-        const projectName = projectItem.querySelector('.project-name').textContent;
-        const projectStatus = document.getElementById('project-status');
-        if (projectStatus) {
-            projectStatus.textContent = `Project "${projectName}" highlighted - click Select to continue`;
-            projectStatus.className = 'status-indicator';
+        // Update roll status
+        const filmNumber = rollCard.querySelector('.roll-film-number').textContent;
+        const isCompleted = rollCard.classList.contains('completed');
+        const rollStatus = document.getElementById('roll-status');
+        if (rollStatus) {
+            rollStatus.textContent = `Roll ${filmNumber} highlighted - ${isCompleted ? 'Re-filming' : 'Filming'} - click Select to continue`;
+            rollStatus.className = 'status-indicator';
+        }
+        
+        // Save selection state (but not validation state yet)
+        const rollId = rollCard.getAttribute('data-roll-id');
+        const rollData = allRolls.find(r => r.id == rollId);
+        if (rollData) {
+            selectedRollData = rollData;
+            saveRollSelectionState();
         }
     }
     
-    // Proceed with the selected project (moved from selectProject)
-    function proceedWithSelectedProject(projectItem) {
-        // Get project data
-        const projectName = projectItem.querySelector('.project-name').textContent;
-        const projectId = projectItem.getAttribute('data-id');
-        const projectArchiveId = projectItem.getAttribute('data-archive-id');
-        const projectLocation = projectItem.querySelector('.project-location').textContent;
+    // Proceed with the selected roll
+    function proceedWithSelectedRoll(rollCard) {
+        // Get roll data
+        const rollId = rollCard.getAttribute('data-roll-id');
+        const filmNumber = rollCard.querySelector('.roll-film-number').textContent;
+        const filmType = rollCard.querySelector('.roll-film-type').textContent;
+        const projectName = rollCard.querySelector('.project-name').textContent;
+        const archiveId = rollCard.querySelector('.archive-id').textContent;
+        const documentCount = rollCard.querySelectorAll('.roll-detail-value')[0].textContent;
+        const pageCount = rollCard.querySelectorAll('.roll-detail-value')[1].textContent;
+        const outputDir = rollCard.querySelectorAll('.roll-detail-value')[2].textContent;
+        const dirExists = rollCard.querySelector('.directory-status').classList.contains('exists');
+        const isCompleted = rollCard.classList.contains('completed');
         
-        // Update project info in the roll selection card
-        const selectedProjectNameElement = document.getElementById('selected-project-name');
-        const selectedProjectIdElement = document.getElementById('selected-project-id');
-        const selectedProjectLocationElement = document.getElementById('selected-project-location');
+        // Get the full roll data from the processed rolls
+        const rollData = allRolls.find(r => r.id == rollId);
+        selectedRollData = rollData;
         
-        if (selectedProjectNameElement) selectedProjectNameElement.textContent = projectName;
-        if (selectedProjectIdElement) selectedProjectIdElement.textContent = projectArchiveId;
-        if (selectedProjectLocationElement) selectedProjectLocationElement.textContent = projectLocation;
+        // Update validation card with roll info
+        updateValidationCard(rollId, filmNumber, filmType, projectName, archiveId, documentCount, pageCount, outputDir, dirExists, rollData, isCompleted);
         
-        // Update project status
-        const projectStatus = document.getElementById('project-status');
-        if (projectStatus) {
-            projectStatus.textContent = `Project "${projectName}" selected`;
-            projectStatus.className = 'status-indicator success';
+        // Show validation card
+        showCard('validation-card');
+        
+        // Save state with validation card visible
+        saveRollSelectionState();
+        
+        // Update roll status
+        const rollStatus = document.getElementById('roll-status');
+        if (rollStatus) {
+            rollStatus.textContent = `Roll ${filmNumber} selected for validation`;
+            rollStatus.className = 'status-indicator success';
         }
-        
-        // Show roll selection card
-        showCard('roll-selection-card');
-        
-        // Load rolls for this project
-        loadProjectRolls(projectId);
         
         // Show toast notification
-        showToast('success', 'Project Selected', `Selected project: ${projectName}`);
+        showToast('success', 'Roll Selected', `Selected roll: ${filmNumber} ${isCompleted ? '(Re-filming)' : ''}`);
+    }
+    
+    // Update validation card with roll information
+    function updateValidationCard(rollId, filmNumber, filmType, projectName, archiveId, documentCount, pageCount, outputDir, dirExists, rollData, isReFilming) {
+        // Update validation summary
+        const elements = {
+            'validation-film-number': filmNumber,
+            'validation-film-type': filmType,
+            'validation-project-name': projectName,
+            'validation-archive-id': archiveId,
+            'validation-document-count': documentCount,
+            'validation-page-count': pageCount,
+            'validation-output-dir': outputDir,
+            'validation-dir-status': dirExists ? 'Exists' : 'Missing'
+        };
+        
+        Object.entries(elements).forEach(([id, value]) => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.textContent = value;
+                if (id === 'validation-dir-status') {
+                    element.className = `summary-value ${dirExists ? 'success' : 'error'}`;
+                }
+            }
+        });
+        
+        // Show/hide re-filming warning
+        const reFilmingWarning = document.getElementById('re-filming-warning');
+        const reFilmingCheckItem = document.getElementById('check-re-filming-item');
+        
+        if (isReFilming) {
+            if (reFilmingWarning) reFilmingWarning.style.display = 'block';
+            if (reFilmingCheckItem) reFilmingCheckItem.style.display = 'block';
+            
+            // Fetch temp roll preview for re-filming
+            fetchTempRollPreview(rollId, filmType, pageCount);
+        } else {
+            if (reFilmingWarning) reFilmingWarning.style.display = 'none';
+            if (reFilmingCheckItem) reFilmingCheckItem.style.display = 'none';
+            
+            // For normal filming, show standard roll source
+            updateRollSourceDisplay('New Roll', 'new-roll');
+        }
+        
+        // Update camera head instruction
+        const cameraHeadInstruction = document.getElementById('camera-head-instruction');
+        if (cameraHeadInstruction) {
+            cameraHeadInstruction.textContent = `Use ${filmType} camera head`;
+        }
+        
+        // Reset validation checklist
+        document.querySelectorAll('.checklist-item input[type="checkbox"]').forEach(checkbox => {
+            checkbox.checked = false;
+        });
+        updateValidationStatus();
+    }
+    
+    // Fetch temp roll preview for re-filming (preview only, no updates)
+    async function fetchTempRollPreview(rollId, filmType, requiredPages) {
+        try {
+            // Show loading state for roll source
+            updateRollSourceDisplay('Checking available temp rolls...', 'loading');
+            
+            const response = await fetch(`/api/sma/temp-roll-preview/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
+                },
+                body: JSON.stringify({
+                    roll_id: rollId,
+                    film_type: filmType,
+                    required_pages: parseInt(requiredPages),
+                    preview_only: true  // Important: this is just a preview
+                })
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    displayTempRollPreview(data.temp_roll_strategy);
+                } else {
+                    console.warn('Temp roll preview failed:', data.error);
+                    updateRollSourceDisplay('New Roll (temp roll check failed)', 'new-roll');
+                }
+            } else {
+                console.warn('Temp roll preview request failed:', response.status);
+                updateRollSourceDisplay('New Roll (temp roll service unavailable)', 'new-roll');
+            }
+        } catch (error) {
+            console.error('Error fetching temp roll preview:', error);
+            updateRollSourceDisplay('New Roll (temp roll check error)', 'new-roll');
+        }
+    }
+    
+    // Display temp roll preview information
+    function displayTempRollPreview(strategy) {
+        if (strategy.use_temp_roll) {
+            // Will use existing temp roll
+            const tempRoll = strategy.temp_roll;
+            updateRollSourceDisplay(
+                `Temp Roll #${tempRoll.temp_roll_id} (${tempRoll.remaining_capacity} pages available)`,
+                'temp-roll'
+            );
+            
+            // Update temp roll instruction
+            updateTempRollInstruction(
+                `Insert Temp Roll #${tempRoll.temp_roll_id}`,
+                `Existing temp roll with ${tempRoll.remaining_capacity} pages capacity. Will use ${strategy.pages_to_use} pages.`
+            );
+            
+            // Show preview of what will happen
+            showTempRollPreviewInfo(strategy);
+        } else {
+            // Will use new roll
+            updateRollSourceDisplay('New Roll', 'new-roll');
+            
+            // Update temp roll instruction
+            updateTempRollInstruction(
+                `Insert new ${strategy.film_type} film roll`,
+                `New roll with ${strategy.new_roll_capacity} pages capacity. ${strategy.will_create_temp_roll ? 'Will create temp roll after filming.' : 'Roll will be fully used.'}`
+            );
+            
+            // Show preview of what will happen
+            showTempRollPreviewInfo(strategy);
+        }
+    }
+    
+    // Update roll source display
+    function updateRollSourceDisplay(text, className) {
+        const rollSourceElement = document.getElementById('validation-roll-source');
+        if (rollSourceElement) {
+            rollSourceElement.textContent = text;
+            rollSourceElement.className = `summary-value ${className}`;
+        }
+        
+        // Also update film type highlighting
+        const filmTypeElement = document.getElementById('validation-film-type');
+        if (filmTypeElement) {
+            if (className === 'temp-roll') {
+                filmTypeElement.className = 'summary-value temp-roll';
+            } else {
+                filmTypeElement.className = 'summary-value';
+            }
+        }
+    }
+    
+    // Update temp roll instruction
+    function updateTempRollInstruction(instruction, details) {
+        const tempRollInstruction = document.getElementById('temp-roll-instruction');
+        const tempRollDetails = document.getElementById('temp-roll-details');
+        
+        if (tempRollInstruction) {
+            tempRollInstruction.textContent = instruction;
+        }
+        
+        if (tempRollDetails) {
+            tempRollDetails.textContent = details;
+            // Style based on whether it's temp roll or new roll
+            if (instruction.includes('Temp Roll')) {
+                tempRollDetails.style.color = 'var(--color-warning)';
+                tempRollDetails.style.fontWeight = 'bold';
+            } else {
+                tempRollDetails.style.color = 'var(--color-text-secondary)';
+                tempRollDetails.style.fontWeight = 'normal';
+            }
+        }
+    }
+    
+    // Show temp roll preview information
+    function showTempRollPreviewInfo(strategy) {
+        // Create or update a preview section in the validation card
+        let previewSection = document.getElementById('temp-roll-preview');
+        
+        if (!previewSection) {
+            // Create preview section
+            previewSection = document.createElement('div');
+            previewSection.id = 'temp-roll-preview';
+            previewSection.className = 'temp-roll-preview-section';
+            
+            // Insert after the roll summary
+            const rollSummary = document.querySelector('.roll-summary');
+            if (rollSummary && rollSummary.parentNode) {
+                rollSummary.parentNode.insertBefore(previewSection, rollSummary.nextSibling);
+            }
+        }
+        
+        // Build preview content
+        let previewContent = `
+            <h3>Temp Roll Strategy Preview</h3>
+            <div class="preview-info">
+        `;
+        
+        if (strategy.use_temp_roll) {
+            const tempRoll = strategy.temp_roll;
+            previewContent += `
+                <div class="preview-item">
+                    <span class="preview-label">Will Use:</span>
+                    <span class="preview-value temp-roll">Temp Roll #${tempRoll.temp_roll_id}</span>
+                </div>
+                <div class="preview-item">
+                    <span class="preview-label">Current Capacity:</span>
+                    <span class="preview-value">${tempRoll.remaining_capacity} pages</span>
+                </div>
+                <div class="preview-item">
+                    <span class="preview-label">Pages Needed:</span>
+                    <span class="preview-value">${strategy.pages_to_use} pages</span>
+                </div>
+                <div class="preview-item">
+                    <span class="preview-label">After Filming:</span>
+                    <span class="preview-value">${tempRoll.remaining_capacity - strategy.pages_to_use} pages remaining</span>
+                </div>
+            `;
+        } else {
+            previewContent += `
+                <div class="preview-item">
+                    <span class="preview-label">Will Use:</span>
+                    <span class="preview-value new-roll">New ${strategy.film_type} Roll</span>
+                </div>
+                <div class="preview-item">
+                    <span class="preview-label">Roll Capacity:</span>
+                    <span class="preview-value">${strategy.new_roll_capacity} pages</span>
+                </div>
+                <div class="preview-item">
+                    <span class="preview-label">Pages Needed:</span>
+                    <span class="preview-value">${strategy.pages_to_use} pages</span>
+                </div>
+            `;
+            
+            if (strategy.will_create_temp_roll) {
+                previewContent += `
+                    <div class="preview-item">
+                        <span class="preview-label">Will Create:</span>
+                        <span class="preview-value temp-roll">New Temp Roll (${strategy.new_roll_capacity - strategy.pages_to_use} pages)</span>
+                    </div>
+                `;
+            } else {
+                previewContent += `
+                    <div class="preview-item">
+                        <span class="preview-label">After Filming:</span>
+                        <span class="preview-value">Roll fully used, no temp roll created</span>
+                    </div>
+                `;
+            }
+        }
+        
+        previewContent += `
+            </div>
+            <div class="preview-note">
+                <i class="fas fa-info-circle"></i>
+                This is a preview. Temp rolls will be updated when filming starts.
+            </div>
+        `;
+        
+        previewSection.innerHTML = previewContent;
     }
     
     // Show loading state
     function showLoadingState() {
-        const projectList = document.getElementById('project-list');
-        projectList.innerHTML = `
+        const rollsGrid = document.getElementById('rolls-grid');
+        rollsGrid.innerHTML = `
             <div class="loading-state">
                 <i class="fas fa-spinner fa-spin"></i>
-                <p>Loading projects...</p>
+                <p>Loading rolls...</p>
             </div>
         `;
     }
     
     // Hide loading state
     function hideLoadingState() {
-        // Loading state will be replaced by displayProjects()
+        // Loading state will be replaced by displayRolls()
     }
     
     // Show error state
     function showErrorState(message) {
-        const projectList = document.getElementById('project-list');
-        projectList.innerHTML = `
+        const rollsGrid = document.getElementById('rolls-grid');
+        rollsGrid.innerHTML = `
             <div class="error-state">
                 <i class="fas fa-exclamation-triangle"></i>
                 <p>${message}</p>
@@ -502,54 +845,68 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Update quick stats
     function updateQuickStats() {
-        const totalProjects = allProjects.length;
-        const readyForFilming = allProjects.filter(p => getProjectFilmingStatus(p) === 'Ready').length;
-        const completedProjects = allProjects.filter(p => getProjectFilmingStatus(p) === 'Completed').length;
+        const totalRolls = allRolls.length;
+        const readyRolls = allRolls.filter(r => r.filming_status === 'ready').length;
+        const completedRolls = allRolls.filter(r => r.filming_status === 'completed').length;
         
         // Update stats safely
-        const totalProjectsElement = document.getElementById('total-projects');
+        const totalRollsElement = document.getElementById('total-rolls');
         const readyRollsElement = document.getElementById('ready-rolls');
         const completedRollsElement = document.getElementById('completed-rolls');
         
-        if (totalProjectsElement) totalProjectsElement.textContent = totalProjects;
-        if (readyRollsElement) readyRollsElement.textContent = readyForFilming;
-        if (completedRollsElement) completedRollsElement.textContent = completedProjects;
+        if (totalRollsElement) totalRollsElement.textContent = totalRolls;
+        if (readyRollsElement) readyRollsElement.textContent = readyRolls;
+        if (completedRollsElement) completedRollsElement.textContent = completedRolls;
     }
     
-    // Filter projects based on search and filter criteria
-    function filterProjects() {
-        const searchElement = document.getElementById('project-search');
-        const statusFilterElement = document.getElementById('project-status-filter');
+    // Filter rolls based on search and filter criteria
+    function filterRolls() {
+        const searchElement = document.getElementById('roll-search');
+        const statusFilterElement = document.getElementById('roll-status-filter');
+        const filmTypeFilterElement = document.getElementById('film-type-filter');
         
         const searchTerm = searchElement ? searchElement.value.toLowerCase() : '';
         const statusFilter = statusFilterElement ? statusFilterElement.value : 'all';
+        const filmTypeFilter = filmTypeFilterElement ? filmTypeFilterElement.value : 'all';
         
-        filteredProjects = allProjects.filter(project => {
+        filteredRolls = allRolls.filter(roll => {
             // Search filter
             const matchesSearch = !searchTerm || 
-                (project.archive_id && project.archive_id.toLowerCase().includes(searchTerm)) ||
-                (project.name && project.name.toLowerCase().includes(searchTerm)) ||
-                (project.location && project.location.toLowerCase().includes(searchTerm));
+                (roll.film_number && roll.film_number.toLowerCase().includes(searchTerm)) ||
+                (roll.project_name && roll.project_name.toLowerCase().includes(searchTerm)) ||
+                (roll.project_archive_id && roll.project_archive_id.toLowerCase().includes(searchTerm));
             
             // Status filter
-            const projectStatus = getProjectFilmingStatus(project);
-            const matchesStatus = statusFilter === 'all' || 
-                (statusFilter === 'ready' && projectStatus === 'Ready') ||
-                (statusFilter === 'in-progress' && projectStatus === 'In Progress') ||
-                (statusFilter === 'completed' && projectStatus === 'Completed');
+            const rollStatus = roll.filming_status || 'ready';
+            const matchesStatus = statusFilter === 'all' || rollStatus === statusFilter;
             
-            return matchesSearch && matchesStatus;
+            // Film type filter
+            const rollFilmType = roll.film_type || '16mm';
+            const matchesFilmType = filmTypeFilter === 'all' || rollFilmType === filmTypeFilter;
+            
+            return matchesSearch && matchesStatus && matchesFilmType;
         });
         
-        displayProjects(filteredProjects);
+        displayRolls(filteredRolls);
     }
     
-    // View project details
-    function viewProjectDetails(projectId) {
-        // For now, show an alert. In the future, this could open a modal or navigate to a details page
-        const project = allProjects.find(p => p.id == projectId);
-        if (project) {
-            alert(`Project Details:\n\nArchive ID: ${project.archive_id}\nLocation: ${project.location}\nType: ${project.doc_type}\nPages: ${project.total_pages}\nStatus: ${getProjectFilmingStatus(project)}`);
+    // Show roll information
+    function showRollInfo(rollId) {
+        const roll = allRolls.find(r => r.id == rollId);
+        if (roll) {
+            const info = `Roll Information:
+            
+Film Number: ${roll.film_number}
+Film Type: ${roll.film_type}
+Project: ${roll.project_name}
+Archive ID: ${roll.project_archive_id}
+Status: ${roll.filming_status}
+Documents: ${roll.document_count}
+Pages: ${roll.pages_used}
+Output Directory: ${roll.output_directory}
+Directory Exists: ${roll.output_directory_exists ? 'Yes' : 'No'}`;
+            
+            alert(info);
         }
     }
     
@@ -577,122 +934,71 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Main functions
     function initializeEventHandlers() {
-        // Start filming button - check if exists
-        const startFilmingButton = document.getElementById('start-filming');
-        if (startFilmingButton) {
-            startFilmingButton.addEventListener('click', function() {
-                startFilmingProcess(false);
-            });
+        // Roll selection handlers
+        document.getElementById('select-roll-btn').addEventListener('click', function() {
+            const selectedCard = document.querySelector('.roll-card.selected');
+            if (selectedCard) {
+                proceedWithSelectedRoll(selectedCard);
+            }
+        });
+        
+        // Search and filter handlers
+        document.getElementById('roll-search').addEventListener('input', filterRolls);
+        document.getElementById('roll-status-filter').addEventListener('change', filterRolls);
+        document.getElementById('film-type-filter').addEventListener('change', filterRolls);
+        
+        // Validation handlers
+        document.getElementById('cancel-validation').addEventListener('click', resetToRollSelection);
+        document.getElementById('start-filming').addEventListener('click', () => startFilmingProcess(false));
+        
+        // Filming control handlers
+        document.getElementById('pause-filming').addEventListener('click', pauseSession);
+        document.getElementById('resume-filming').addEventListener('click', resumeSession);
+        document.getElementById('cancel-filming').addEventListener('click', cancelSession);
+        
+        // Log expansion handler
+        document.getElementById('expand-log').addEventListener('click', toggleExpandLog);
+        
+        // Checklist handlers
+        const checkboxes = document.querySelectorAll('.checklist-item input[type="checkbox"]');
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', updateValidationStatus);
+        });
+        
+        // Lighting mode toggle handler
+        const lightingToggleBtn = document.getElementById('toggle-filming-lighting-mode');
+        if (lightingToggleBtn) {
+            lightingToggleBtn.addEventListener('click', toggleFilmingLightingMode);
         }
         
-        // Filming control buttons - check if they exist
-        const pauseButton = document.getElementById('pause-filming');
-        const resumeButton = document.getElementById('resume-filming');
-        const cancelButton = document.getElementById('cancel-filming');
-        const expandLogButton = document.getElementById('expand-log');
-        
-        if (pauseButton) pauseButton.addEventListener('click', pauseSession);
-        if (resumeButton) resumeButton.addEventListener('click', resumeSession);
-        if (cancelButton) cancelButton.addEventListener('click', cancelSession);
-        if (expandLogButton) expandLogButton.addEventListener('click', toggleExpandLog);
-        
-        // Filter and search - check if they exist
-        const projectSearch = document.getElementById('project-search');
-        const projectStatusFilter = document.getElementById('project-status-filter');
-        const searchButton = document.getElementById('search-button');
-        
-        if (projectSearch) projectSearch.addEventListener('input', filterProjects);
-        if (projectStatusFilter) projectStatusFilter.addEventListener('change', filterProjects);
-        if (searchButton) {
-            searchButton.addEventListener('click', function() {
-                filterProjects();
-            });
-        }
-        
-        // Project selection button
-        const selectProjectBtn = document.getElementById('select-project-btn');
-        if (selectProjectBtn) {
-            selectProjectBtn.addEventListener('click', function() {
-        const selectedProject = document.querySelector('.project-item.selected');
-        if (selectedProject) {
-                    proceedWithSelectedProject(selectedProject);
-                }
-            });
-        }
-        
-        // Roll selection buttons
-        const selectRollBtn = document.getElementById('select-roll-btn');
-        const backToProjectsBtn = document.getElementById('back-to-projects-btn');
-        
-        if (selectRollBtn) {
-            selectRollBtn.addEventListener('click', function() {
-                const selectedRoll = document.querySelector('.roll-card.selected');
-                if (selectedRoll) {
-                    proceedWithSelectedRoll(selectedRoll);
-                }
-            });
-        }
-        
-        if (backToProjectsBtn) {
-            backToProjectsBtn.addEventListener('click', function() {
-                hideCard('roll-selection-card');
-                showCard('project-selection-card');
+        // Spacebar hotkey for lighting mode toggle
+        document.addEventListener('keydown', (event) => {
+            if (event.key === ' ') {
+                // Check if we're not focused on an input field
+                const activeElement = document.activeElement;
+                const isInputFocused = activeElement && (
+                    activeElement.tagName === 'INPUT' || 
+                    activeElement.tagName === 'TEXTAREA' || 
+                    activeElement.contentEditable === 'true'
+                );
                 
-                // Reset project selection
-                document.querySelectorAll('.project-item').forEach(p => p.classList.remove('selected'));
-                const selectProjectBtn = document.getElementById('select-project-btn');
-                if (selectProjectBtn) selectProjectBtn.disabled = true;
-            });
-        }
-        
-        // Validation checklist items
-        const checklistItems = document.querySelectorAll('.checklist-item');
-        checklistItems.forEach(item => {
-            const checkbox = item.querySelector('input[type="checkbox"]');
-            if (checkbox) {
-                checkbox.addEventListener('change', updateValidationStatus);
-                item.addEventListener('click', function(e) {
-                    if (e.target !== checkbox) {
-                        checkbox.checked = !checkbox.checked;
-                        updateValidationStatus();
+                if (!isInputFocused) {
+                    const toggleBtn = document.getElementById('toggle-filming-lighting-mode');
+                    if (toggleBtn && !toggleBtn.disabled) {
+                        toggleFilmingLightingMode();
+                        event.preventDefault(); // Prevent page scrolling
+                    }
+                }
             }
         });
     }
-        });
-        
-        // Validation actions
-        const cancelValidationButton = document.getElementById('cancel-validation');
-        
-        if (cancelValidationButton) {
-            cancelValidationButton.addEventListener('click', function() {
-                showCard('roll-selection-card');
-                hideCard('validation-card');
-            });
-        }
-        
-        // Completion actions
-        const filmAnotherRollButton = document.getElementById('film-another-roll');
-        const finishSessionButton = document.getElementById('finish-session');
-        
-        if (filmAnotherRollButton) {
-            filmAnotherRollButton.addEventListener('click', function() {
-                resetToRollSelection();
-            });
-        }
-        
-        if (finishSessionButton) {
-            finishSessionButton.addEventListener('click', function() {
-                resetToProjectSelection();
-            });
-        }
-    }
     
     function updateFilmNumber() {
-        const selectedProject = document.querySelector('.project-item.selected');
-        if (selectedProject) {
-            const projectId = selectedProject.getAttribute('data-id');
+        const selectedRoll = document.querySelector('.roll-card.selected');
+        if (selectedRoll) {
+            const rollId = selectedRoll.getAttribute('data-roll-id');
             // Default to 16mm since we don't have film type selection in current UI
-            const filmNumber = `F-16-${projectId.toString().padStart(4, '0')}`;
+            const filmNumber = `F-16-${rollId.toString().padStart(4, '0')}`;
             const filmNumberElement = document.getElementById('film-number');
             if (filmNumberElement) {
                 filmNumberElement.textContent = filmNumber;
@@ -705,16 +1011,14 @@ document.addEventListener('DOMContentLoaded', function() {
         hideCard('validation-card');
         showCard('filming-process-card');
         
-        // Get selected project and roll information
-        const selectedProject = document.querySelector('.project-item.selected');
+        // Get selected roll information
         const selectedRoll = document.querySelector('.roll-card.selected');
         
-        if (!selectedProject || !selectedRoll) {
-            showNotification('error', 'Selection Required', 'Please select a project and roll');
+        if (!selectedRoll) {
+            showNotification('error', 'Selection Required', 'Please select a roll');
             return;
         }
         
-        currentProjectId = selectedProject.getAttribute('data-id');
         currentRollId = selectedRoll.getAttribute('data-roll-id');
         
         // Start real SMA filming session
@@ -727,16 +1031,22 @@ document.addEventListener('DOMContentLoaded', function() {
             // Get film type from validation card
             const filmType = document.getElementById('validation-film-type').textContent || '16mm';
             
+            // Check if this is a re-filming operation
+            const isReFilming = selectedRollData && selectedRollData.filming_status === 'completed';
+            
             // Prepare request data
             const requestData = {
-                project_id: parseInt(currentProjectId),
                 roll_id: parseInt(currentRollId),
                 film_type: filmType,
-                recovery: isRecovery
+                recovery: isRecovery,
+                re_filming: isReFilming  // Add re-filming flag
             };
             
             // Add initial log entry
             addLogEntry('Starting SMA filming session...', 'info');
+            if (isReFilming) {
+                addLogEntry('Re-filming operation - temp rolls will be updated', 'warning');
+            }
             
             // Call SMA filming API
             const response = await fetch('/api/sma/filming/', {
@@ -756,6 +1066,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 sessionStartTime = new Date();
                 isFilmingActive = true;
                 
+                // Clear saved roll selection state since filming has started
+                clearRollSelectionState();
+                
                 // Update session info
                 document.getElementById('current-session-id').textContent = currentSessionId;
                 document.getElementById('session-start-time').textContent = sessionStartTime.toLocaleTimeString();
@@ -768,7 +1081,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Update UI
                 updateControlButtons();
                 addLogEntry(`Session ${currentSessionId} started successfully`, 'info');
-                addLogEntry(`Project: ${data.project_name || 'Unknown'}, Roll: ${data.roll_number || 'Unknown'}`, 'info');
+                addLogEntry(`Roll: ${data.roll_number || 'Unknown'}, Film Type: ${filmType}`, 'info');
                 
                 // Start session monitoring
                 startSessionMonitoring();
@@ -791,7 +1104,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Reset UI state
             isFilmingActive = false;
-        updateControlButtons();
+            updateControlButtons();
         
             // Show error modal for initialization failures
             showErrorModal(error.message, { error: error.message, phase: 'initialization' });
@@ -1026,15 +1339,15 @@ document.addEventListener('DOMContentLoaded', function() {
         
         modal.querySelector('#cancel-error-btn').addEventListener('click', () => {
             document.body.removeChild(modal);
-            // Reset to project selection
-            resetToProjectSelection();
+            // Reset to roll selection
+            resetToRollSelection();
         });
         
         // Close modal when clicking outside
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
                 document.body.removeChild(modal);
-                resetToProjectSelection();
+                resetToRollSelection();
             }
         });
     }
@@ -1046,7 +1359,7 @@ document.addEventListener('DOMContentLoaded', function() {
         modal.innerHTML = `
             <div class="modal-content">
                 <h3>Session Recovery</h3>
-                <p>An existing filming session was found for this project and roll.</p>
+                <p>An existing filming session was found for this roll.</p>
                 <p>Session ID: ${sessionId}</p>
                 <div class="modal-actions">
                     <button id="recover-session-btn" class="primary-button">
@@ -1270,6 +1583,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 validationStatus.className = 'status-indicator warning';
             }
         }
+        
+        // Save checklist state
+        saveChecklistState();
     }
     
     // Reset functions
@@ -1279,22 +1595,40 @@ document.addEventListener('DOMContentLoaded', function() {
         hideCard('validation-card');
         showCard('roll-selection-card');
         
+        // Clean up temp roll preview
+        cleanupTempRollPreview();
+        
+        // Clear saved state
+        clearRollSelectionState();
+        
         // Reset filming state
         isFilmingActive = false;
         currentSessionId = null;
         sessionStartTime = null;
         currentStep = 'initialization';
+        currentRollId = null;
+        selectedRollData = null;
         
         // Disconnect WebSocket session subscription
         if (websocketClient && currentSessionId) {
             websocketClient.unsubscribeFromSession(currentSessionId);
         }
         
+        // Deselect all rolls
+        document.querySelectorAll('.roll-card').forEach(card => card.classList.remove('selected'));
+        
+        // Reset roll selection button
+        const selectRollBtn = document.getElementById('select-roll-btn');
+        if (selectRollBtn) selectRollBtn.disabled = true;
+        
         // Clear logs
         const logContent = document.querySelector('.log-content');
         if (logContent) {
             logContent.innerHTML = '';
         }
+        
+        // Reload rolls to get updated status
+        loadRolls();
     }
     
     function resetToProjectSelection() {
@@ -1303,6 +1637,9 @@ document.addEventListener('DOMContentLoaded', function() {
         hideCard('validation-card');
         hideCard('roll-selection-card');
         showCard('project-selection-card');
+        
+        // Clear saved state
+        clearRollSelectionState();
         
         // Reset all state
         isFilmingActive = false;
@@ -1383,358 +1720,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Load rolls for a project using SMA API
     async function loadProjectRolls(projectId) {
-        const rollsGrid = document.getElementById('rolls-grid');
-        if (!rollsGrid) return;
-        
-        // Show loading state
-        rollsGrid.innerHTML = `
-            <div class="loading-state">
-                <i class="fas fa-spinner fa-spin"></i>
-                <p>Loading rolls...</p>
-            </div>
-        `;
-        
-        try {
-            // Use SMA-specific rolls endpoint
-            const response = await fetch(`/api/sma/project/${projectId}/rolls/`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCsrfToken()
-                }
-            });
-            
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`HTTP ${response.status}: ${errorText}`);
-            }
-            
-            const data = await response.json();
-            
-            let rolls = [];
-            
-            if (data.success) {
-                rolls = data.rolls.map(roll => ({
-                    id: roll.id,
-                    filmNumber: roll.film_number,
-                    filmType: roll.film_type,
-                    status: roll.filming_status || 'ready',
-                    documentCount: roll.document_count || 0,
-                    pageCount: roll.pages_used || 0,
-                    progress: roll.filming_progress_percent || 0,
-                    outputDir: roll.output_directory || '',
-                    dirExists: roll.output_directory_exists || false,
-                    capacity: roll.capacity,
-                    pagesRemaining: roll.pages_remaining,
-                    // Enhanced SMA-specific data
-                    isAvailable: roll.is_available_for_filming,
-                    lastFilmedAt: roll.last_filmed_at,
-                    sessionId: roll.current_session_id
-                }));
-                
-                // Debug directory existence issues
-                console.log('Roll directory debug info:', data.rolls.map(roll => ({
-                    id: roll.id,
-                    film_number: roll.film_number,
-                    output_directory: roll.output_directory,
-                    output_directory_exists: roll.output_directory_exists,
-                    debug_info: roll.debug_directory_info
-                })));
-            } else {
-                throw new Error(data.error || 'Failed to load rolls');
-            }
-            
-            displayRolls(rolls);
-        } catch (error) {
-            console.error('Error loading rolls:', error);
-            rollsGrid.innerHTML = `
-                <div class="error-state">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <p>Failed to load rolls: ${error.message}</p>
-                    <button class="retry-button" data-project-id="${projectId}">
-                        <i class="fas fa-redo"></i> Retry
-                    </button>
-                </div>
-            `;
-            
-            // Add event listener to retry button
-            const retryButton = rollsGrid.querySelector('.retry-button');
-            if (retryButton) {
-                retryButton.addEventListener('click', function() {
-                    const projectId = this.getAttribute('data-project-id');
-                    loadProjectRolls(projectId);
-                });
-            }
-            
-            showNotification('error', 'Load Error', `Failed to load rolls: ${error.message}`);
-        }
-    }
-    
-    // Display rolls in the grid
-    function displayRolls(rolls) {
-        const rollsGrid = document.getElementById('rolls-grid');
-        if (!rollsGrid) return;
-        
-        // Store roll data globally for validation card access
-        window.currentRollData = rolls;
-        
-        if (rolls.length === 0) {
-            rollsGrid.innerHTML = `
-                <div class="rolls-empty-state">
-                    <i class="fas fa-film"></i>
-                    <h3>No Rolls Found</h3>
-                    <p>This project doesn't have any rolls configured for filming.</p>
-                </div>
-            `;
-            return;
-        }
-        
-        rollsGrid.innerHTML = rolls.map(roll => {
-            const statusClass = roll.status;
-            const progressPercent = roll.progress || 0;
-            
-            return `
-                <div class="roll-card ${statusClass}" data-roll-id="${roll.id}" data-status="${roll.status}">
-                    ${roll.status === 'filming' ? `
-                        <div class="filming-progress-indicator">
-                            <div class="filming-progress-fill" style="width: ${progressPercent}%"></div>
-                        </div>
-                    ` : ''}
-                    
-                    <div class="roll-header">
-                        <div class="roll-title">
-                            <div class="roll-film-number">${roll.filmNumber}</div>
-                            <div class="roll-film-type">${roll.filmType}</div>
-                        </div>
-                        <div class="roll-status-badge ${statusClass}">
-                            ${roll.status.replace('-', ' ')}
-                        </div>
-                    </div>
-                    
-                    <div class="roll-details">
-                        <div class="roll-detail-item">
-                            <span class="roll-detail-label">Documents:</span>
-                            <span class="roll-detail-value">${roll.documentCount}</span>
-                        </div>
-                        <div class="roll-detail-item">
-                            <span class="roll-detail-label">Pages:</span>
-                            <span class="roll-detail-value">${roll.pageCount}</span>
-                        </div>
-                        <div class="roll-detail-item">
-                            <span class="roll-detail-label">Output:</span>
-                            <span class="roll-detail-value">${roll.outputDir}</span>
-                        </div>
-                        <div class="directory-status ${roll.dirExists ? 'exists' : 'missing'}">
-                            <i class="fas ${roll.dirExists ? 'fa-check' : 'fa-times'}"></i>
-                            Directory ${roll.dirExists ? 'exists' : 'missing'}
-                        </div>
-                    </div>
-                    
-                    ${roll.status === 'filming' ? `
-                        <div class="roll-progress">
-                            <div class="roll-progress-label">
-                                <span>Progress</span>
-                                <span>${progressPercent}%</span>
-                            </div>
-                            <div class="roll-progress-bar">
-                                <div class="roll-progress-fill" style="width: ${progressPercent}%"></div>
-                            </div>
-                        </div>
-                    ` : ''}
-                    
-                    <div class="roll-actions">
-                        ${roll.status === 'ready' ? `
-                            <span class="action-hint">Click to select</span>
-                        ` : `
-                            <span class="status-text ${roll.status}">
-                                <i class="fas ${roll.status === 'completed' ? 'fa-check' : 'fa-exclamation-triangle'}"></i>
-                                ${roll.status === 'completed' ? 'Completed' : 'Not Ready'}
-                            </span>
-                        `}
-                        <button class="roll-info-button" title="Roll details">
-                            <i class="fas fa-info"></i>
-                        </button>
-                    </div>
-                </div>
-            `;
-        }).join('');
-        
-        // Attach event listeners to roll cards
-        attachRollEventListeners();
-    }
-    
-    // Attach event listeners to roll cards
-    function attachRollEventListeners() {
-        document.querySelectorAll('.roll-card').forEach(card => {
-            const infoButton = card.querySelector('.roll-info-button');
-            
-            // Only allow selection of ready rolls
-            if (card.classList.contains('ready') || card.dataset.status === 'ready') {
-                card.addEventListener('click', function(e) {
-                    // Don't select if clicking on info button
-                    if (!e.target.closest('.roll-info-button')) {
-                        highlightRoll(card);
-                    }
-                });
-            }
-            
-            if (infoButton) {
-                infoButton.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    showRollInfo(card.getAttribute('data-roll-id'));
-                });
-            }
-        });
-    }
-    
-    // Highlight a roll and enable the select button
-    function highlightRoll(rollCard) {
-        // Deselect all rolls
-        document.querySelectorAll('.roll-card').forEach(card => card.classList.remove('selected'));
-        
-        // Select the current roll
-        rollCard.classList.add('selected');
-        
-        // Enable the select roll button
-        const selectRollBtn = document.getElementById('select-roll-btn');
-        if (selectRollBtn) {
-            selectRollBtn.disabled = false;
-        }
-        
-        // Update roll status
-        const filmNumber = rollCard.querySelector('.roll-film-number').textContent;
-        const rollStatus = document.getElementById('roll-status');
-        if (rollStatus) {
-            rollStatus.textContent = `Roll ${filmNumber} highlighted - click Select to continue`;
-            rollStatus.className = 'status-indicator';
-        }
-    }
-    
-    // Proceed with the selected roll (renamed from selectRoll)
-    function proceedWithSelectedRoll(rollCard) {
-        // Get roll data
-        const rollId = rollCard.getAttribute('data-roll-id');
-        const filmNumber = rollCard.querySelector('.roll-film-number').textContent;
-        const filmType = rollCard.querySelector('.roll-film-type').textContent;
-        const documentCount = rollCard.querySelector('.roll-detail-value').textContent;
-        const outputDir = rollCard.querySelectorAll('.roll-detail-value')[2].textContent;
-        const dirExists = rollCard.querySelector('.directory-status').classList.contains('exists');
-        
-        // Get the full roll data from the processed rolls
-        const rollData = window.currentRollData ? window.currentRollData.find(r => r.id == rollId) : null;
-        
-        // Update validation card with roll info
-        updateValidationCard(rollId, filmNumber, filmType, documentCount, outputDir, dirExists, rollData);
-        
-        // Show validation card
-        showCard('validation-card');
-        
-        // Update roll status
-        const rollStatus = document.getElementById('roll-status');
-        if (rollStatus) {
-            rollStatus.textContent = `Roll ${filmNumber} selected for validation`;
-            rollStatus.className = 'status-indicator success';
-        }
-        
-        // Show toast notification
-        showToast('success', 'Roll Selected', `Selected roll: ${filmNumber}`);
-    }
-    
-    // Update validation card with roll information
-    function updateValidationCard(rollId, filmNumber, filmType, documentCount, outputDir, dirExists, rollData) {
-        // Update validation summary
-        const elements = {
-            'validation-film-number': filmNumber,
-            'validation-film-type': filmType,
-            'validation-document-count': documentCount,
-            'validation-page-count': parseInt(documentCount) * 2, // Assume 2 pages per document
-            'validation-output-dir': outputDir,
-            'validation-dir-status': dirExists ? 'Exists' : 'Missing'
-        };
-        
-        Object.entries(elements).forEach(([id, value]) => {
-            const element = document.getElementById(id);
-            if (element) {
-                element.textContent = value;
-                if (id === 'validation-dir-status') {
-                    element.className = `summary-value ${dirExists ? 'success' : 'error'}`;
-                }
-            }
-        });
-        
-        // Update roll source information
-        const rollSourceElement = document.getElementById('validation-roll-source');
-        if (rollSourceElement && rollData && rollData.temp_roll_instructions) {
-            const instructions = rollData.temp_roll_instructions;
-            if (instructions.use_temp_roll) {
-                rollSourceElement.textContent = `Temp Roll #${instructions.temp_roll_id}`;
-                rollSourceElement.className = 'summary-value temp-roll';
-            } else {
-                rollSourceElement.textContent = 'New Roll';
-                rollSourceElement.className = 'summary-value new-roll';
-            }
-        } else {
-            if (rollSourceElement) {
-                rollSourceElement.textContent = 'New Roll';
-                rollSourceElement.className = 'summary-value new-roll';
-            }
-        }
-        
-        // Add highlighting to film type if using temp roll
-        const filmTypeElement = document.getElementById('validation-film-type');
-        if (filmTypeElement && rollData && rollData.temp_roll_instructions && rollData.temp_roll_instructions.use_temp_roll) {
-            filmTypeElement.className = 'summary-value temp-roll';
-        } else if (filmTypeElement) {
-            filmTypeElement.className = 'summary-value';
-        }
-        
-        // Update camera head instruction
-        const cameraHeadInstruction = document.getElementById('camera-head-instruction');
-        if (cameraHeadInstruction) {
-            cameraHeadInstruction.textContent = `Use ${filmType} camera head`;
-        }
-        
-        // Update temp roll instruction based on roll data
-        const tempRollInstruction = document.getElementById('temp-roll-instruction');
-        const tempRollDetails = document.getElementById('temp-roll-details');
-        
-        if (rollData && rollData.temp_roll_instructions) {
-            const instructions = rollData.temp_roll_instructions;
-            if (tempRollInstruction) {
-                tempRollInstruction.textContent = instructions.instruction;
-            }
-            if (tempRollDetails) {
-                tempRollDetails.textContent = instructions.details;
-                // Add visual indicator for temp roll vs new roll
-                if (instructions.use_temp_roll) {
-                    tempRollDetails.style.color = 'var(--color-warning)';
-                    tempRollDetails.style.fontWeight = 'bold';
-                } else {
-                    tempRollDetails.style.color = 'var(--color-text-secondary)';
-                    tempRollDetails.style.fontWeight = 'normal';
-                }
-            }
-        } else {
-            // Fallback if no roll data
-            if (tempRollInstruction) {
-                tempRollInstruction.textContent = `Insert new ${filmType} film roll`;
-            }
-            if (tempRollDetails) {
-                tempRollDetails.textContent = `New roll with standard capacity`;
-            }
-        }
-        
-        // Reset validation checklist
-        document.querySelectorAll('.checklist-item input[type="checkbox"]').forEach(checkbox => {
-            checkbox.checked = false;
-        });
-        updateValidationStatus();
-    }
-    
-    // Show roll information
-    function showRollInfo(rollId) {
-        // For now, show an alert. In the future, this could open a modal
-        showToast('info', 'Roll Information', `Detailed information for roll ID: ${rollId}`);
+        // This function is no longer needed since we load all rolls directly
+        // Keeping for compatibility but redirecting to loadRolls
+        await loadRolls();
     }
     
     // Show completion card
@@ -1754,8 +1742,14 @@ document.addEventListener('DOMContentLoaded', function() {
         const completionDuration = document.getElementById('completion-duration');
         
         if (completedFilmNumber) completedFilmNumber.textContent = filmNumber;
-        if (completionDocuments) completionDocuments.textContent = data.total_documents || 0;
-        if (completionPages) completionPages.textContent = (data.total_documents || 0) * 2; // Assume 2 pages per document
+        
+        // Use processed_documents (actual documents filmed) instead of total_documents
+        const actualDocuments = data.processed_documents || data.total_documents || 0;
+        if (completionDocuments) completionDocuments.textContent = actualDocuments;
+        
+        // Use actual pages from roll data, not documents × 2
+        const actualPages = data.roll_info ? data.roll_info.pages_used : (actualDocuments || 0);
+        if (completionPages) completionPages.textContent = actualPages;
         
         // Calculate duration
         if (sessionStartTime) {
@@ -1763,6 +1757,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const minutes = Math.floor(duration / 60000);
             const seconds = Math.floor((duration % 60000) / 1000);
             if (completionDuration) completionDuration.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        } else if (data.duration) {
+            // Use duration from session data if available
+            if (completionDuration) completionDuration.textContent = formatDuration(data.duration);
         }
         
         // Update completion status
@@ -1772,8 +1769,8 @@ document.addEventListener('DOMContentLoaded', function() {
             completionStatus.className = 'status-indicator success';
         }
         
-        // Update temp roll instructions
-        updateTempRollInstructions(data);
+        // Fetch and update temp roll instructions from database
+        fetchTempRollInstructions(data);
         
         // Show success notification
         showNotification('success', 'Filming Complete', `Roll ${filmNumber} has been successfully filmed`);
@@ -1798,8 +1795,83 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 500);
     }
     
-    // Update temp roll instructions based on completion data
-    function updateTempRollInstructions(data) {
+    // Format duration string (e.g., "0:49:28.968528" -> "49:28")
+    function formatDuration(durationStr) {
+        if (!durationStr) return '0:00';
+        
+        // Handle different duration formats
+        if (durationStr.includes(':')) {
+            const parts = durationStr.split(':');
+            if (parts.length >= 3) {
+                const hours = parseInt(parts[0]);
+                const minutes = parseInt(parts[1]);
+                const seconds = parseInt(parts[2].split('.')[0]); // Remove microseconds
+                
+                if (hours > 0) {
+                    return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                } else {
+                    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                }
+            }
+        }
+        
+        return durationStr;
+    }
+    
+    // Fetch temp roll instructions from database
+    async function fetchTempRollInstructions(sessionData) {
+        try {
+            // First check if temp roll info is already in session data
+            if (sessionData.roll_info && sessionData.roll_info.temp_roll_info) {
+                console.log('Using temp roll info from session data');
+                updateTempRollInstructionsFromData(sessionData.roll_info.temp_roll_info);
+                return;
+            }
+            
+            // Check if we have roll information for API call
+            if (!sessionData.roll_info || !sessionData.roll_info.id) {
+                console.warn('No roll information available for temp roll check');
+                updateTempRollInstructionsFromData(null);
+                return;
+            }
+            
+            const rollId = sessionData.roll_info.id;
+            
+            console.log('Fetching temp roll info from API for roll:', rollId);
+            
+            // Fetch temp roll information from the database
+            const response = await fetch(`/api/rolls/${rollId}/`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
+                }
+            });
+            
+            if (response.ok) {
+                const rollData = await response.json();
+                
+                if (rollData.success) {
+                    // Check if a temp roll was created
+                    const tempRollInfo = rollData.roll.temp_roll_info;
+                    updateTempRollInstructionsFromData(tempRollInfo);
+                } else {
+                    console.warn('Failed to fetch roll data:', rollData.error);
+                    updateTempRollInstructionsFromData(null);
+                }
+            } else {
+                console.warn('Failed to fetch roll data, status:', response.status);
+                updateTempRollInstructionsFromData(null);
+            }
+            
+        } catch (error) {
+            console.error('Error fetching temp roll instructions:', error);
+            updateTempRollInstructionsFromData(null);
+        }
+    }
+    
+    // Update temp roll instructions based on database data
+    function updateTempRollInstructionsFromData(tempRollInfo) {
         const instructionsContainer = document.getElementById('temp-roll-instructions');
         
         if (!instructionsContainer) {
@@ -1823,44 +1895,43 @@ document.addEventListener('DOMContentLoaded', function() {
         const container = document.getElementById('temp-roll-instructions');
         if (!container) return;
         
-        // Check if temp roll should be created based on completion data
-        const shouldCreateTempRoll = data.temp_roll_info && data.temp_roll_info.create_temp_roll;
-        
-        if (shouldCreateTempRoll) {
-            const tempRollInfo = data.temp_roll_info;
+        // Check if temp roll was created
+        if (tempRollInfo && tempRollInfo.created_temp_roll) {
+            const tempRoll = tempRollInfo.created_temp_roll;
             container.innerHTML = `
                 <div class="temp-roll-instruction-card">
                     <div class="instruction-header">
                         <i class="fas fa-cut"></i>
-                        <h4>Temp Roll Creation Required</h4>
+                        <h4>Temp Roll Created</h4>
                     </div>
                     <div class="instruction-content">
-                        <p><strong>Cut the tape and create a temporary roll:</strong></p>
+                        <p><strong>A temporary roll has been created from the remaining film:</strong></p>
                         <ul class="instruction-list">
-                            <li><strong>Temp Roll ID:</strong> ${tempRollInfo.temp_roll_id}</li>
-                            <li><strong>Remaining Capacity:</strong> ${tempRollInfo.remaining_capacity} pages</li>
-                            <li><strong>Film Type:</strong> ${tempRollInfo.film_type}</li>
+                            <li><strong>Temp Roll ID:</strong> ${tempRoll.temp_roll_id}</li>
+                            <li><strong>Remaining Capacity:</strong> ${tempRoll.usable_capacity} pages</li>
+                            <li><strong>Film Type:</strong> ${tempRoll.film_type}</li>
+                            <li><strong>Status:</strong> ${tempRoll.status}</li>
                         </ul>
                         <div class="instruction-note">
                             <i class="fas fa-info-circle"></i>
-                            This temp roll can be used for future filming sessions.
+                            Cut the tape and store this temp roll for future filming sessions.
                         </div>
                     </div>
                 </div>
             `;
         } else {
-            // No temp roll needed - discard the rest
+            // No temp roll created - check if roll is full or nearly full
             container.innerHTML = `
                 <div class="temp-roll-instruction-card discard">
                     <div class="instruction-header">
-                        <i class="fas fa-trash-alt"></i>
+                        <i class="fas fa-check-circle"></i>
                         <h4>Film Roll Complete</h4>
                     </div>
                     <div class="instruction-content">
-                        <p><strong>Cut the tape and discard the remaining film.</strong></p>
+                        <p><strong>Cut the tape and remove the film roll.</strong></p>
                         <div class="instruction-note">
-                            <i class="fas fa-check-circle"></i>
-                            This roll has been fully utilized - no temp roll needed.
+                            <i class="fas fa-info-circle"></i>
+                            ${tempRollInfo && tempRollInfo.reason ? tempRollInfo.reason : 'This roll has been fully utilized - no temp roll needed.'}
                         </div>
                     </div>
                 </div>
@@ -1990,7 +2061,6 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             console.log('🔄 Restoring active session:', session.session_id);
             console.log('📊 Session details:', {
-                project: session.project_name,
                 roll: session.roll_number,
                 status: session.status,
                 progress: session.progress_percent
@@ -1998,13 +2068,11 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Set global state variables
             currentSessionId = session.session_id;
-            currentProjectId = session.project_id;
             currentRollId = session.roll_id;
             isFilmingActive = session.status === 'running';
             sessionStartTime = session.started_at ? new Date(session.started_at) : new Date();
             
             // Hide all selection cards and show filming interface
-            hideCard('project-selection-card');
             hideCard('roll-selection-card');
             hideCard('validation-card');
             
@@ -2017,12 +2085,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 await restoreFilmingState(session);
             }
             
-            // Load projects in background for potential future use
-            await loadProjects();
+            // Load rolls in background for potential future use
+            await loadRolls();
             
             // Show restoration notification
             showNotification('info', 'Session Restored', 
-                `Resumed filming session for ${session.project_name} - ${session.roll_number}`);
+                `Resumed filming session for ${session.roll_number}`);
             
         } catch (error) {
             console.error('Error restoring session:', error);
@@ -2030,8 +2098,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 'Failed to restore session. Starting fresh.');
             
             // Fall back to normal initialization
-            await loadProjects();
-            showCard('project-selection-card');
+            await loadRolls();
+            showCard('roll-selection-card');
         }
     }
     
@@ -2084,8 +2152,14 @@ document.addEventListener('DOMContentLoaded', function() {
         const completionDuration = document.getElementById('completion-duration');
         
         if (completedFilmNumber) completedFilmNumber.textContent = session.roll_number || 'Unknown';
-        if (completionDocuments) completionDocuments.textContent = session.total_documents || 0;
-        if (completionPages) completionPages.textContent = (session.total_documents || 0) * 2;
+        
+        // Use processed_documents (actual documents filmed) instead of total_documents
+        const actualDocuments = session.processed_documents || session.total_documents || 0;
+        if (completionDocuments) completionDocuments.textContent = actualDocuments;
+        
+        // Use actual pages from roll data, not documents × 2
+        const actualPages = session.roll_info ? session.roll_info.pages_used : (actualDocuments || 0);
+        if (completionPages) completionPages.textContent = actualPages;
         
         // Calculate and display duration
         if (session.started_at && session.completed_at) {
@@ -2097,6 +2171,9 @@ document.addEventListener('DOMContentLoaded', function() {
             if (completionDuration) {
                 completionDuration.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
             }
+        } else if (session.duration) {
+            // Use duration from session data if available
+            if (completionDuration) completionDuration.textContent = formatDuration(session.duration);
         }
         
         // Update completion status
@@ -2106,10 +2183,8 @@ document.addEventListener('DOMContentLoaded', function() {
             completionStatus.className = 'status-indicator success';
         }
         
-        // Update temp roll instructions for restored session
-        if (session.completion_data) {
-            updateTempRollInstructions(session.completion_data);
-        }
+        // Fetch and update temp roll instructions for restored session
+        fetchTempRollInstructions(session);
     }
     
     // Load recent logs for restored session
@@ -2165,5 +2240,264 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Auto-scroll to bottom to show newest entries
         scrollLogToBottom();
+    }
+    
+    // Clean up temp roll preview section
+    function cleanupTempRollPreview() {
+        // Remove any existing temp roll preview sections
+        const existingPreview = document.querySelector('.temp-roll-preview-section');
+        if (existingPreview) {
+            existingPreview.remove();
+        }
+    }
+    
+    // Lighting mode control functions
+    function toggleFilmingLightingMode() {
+        console.log('toggleFilmingLightingMode called - using WebSocket consumer');
+        
+        const lightingToggleBtn = document.getElementById('toggle-filming-lighting-mode');
+        
+        // Add switching animation
+        if (lightingToggleBtn) {
+            lightingToggleBtn.classList.add('switching');
+            lightingToggleBtn.disabled = true;
+        }
+        
+        // Determine target mode (opposite of current)
+        const targetMode = isLightMode ? 'dark' : 'light';
+        
+        // Send command to WebSocket consumer
+        sendLightingCommand(targetMode)
+            .then(success => {
+                if (success) {
+                    // Toggle our internal state
+                    isLightMode = !isLightMode;
+                    
+                    // Save state to localStorage
+                    localStorage.setItem('filmingLightMode', isLightMode.toString());
+                    
+                    const currentMode = isLightMode ? 'light' : 'dark';
+                    
+                    showNotification('success', 'Lighting Mode Changed', 
+                        `Switched to ${currentMode} mode for film handling`, 3000);
+                } else {
+                    showNotification('error', 'Error', 'Failed to toggle lighting mode', 5000);
+                }
+            })
+            .finally(() => {
+                // Remove animation and re-enable button
+                if (lightingToggleBtn) {
+                    lightingToggleBtn.classList.remove('switching');
+                    lightingToggleBtn.disabled = false;
+                }
+                
+                // Update button text
+                updateFilmingLightingModeButton();
+            });
+    }
+    
+    async function sendLightingCommand(mode) {
+        try {
+            const response = await fetch('/control_relay/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': getCsrfToken()
+                },
+                body: new URLSearchParams({
+                    'action': mode
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                console.log('Lighting command sent successfully:', mode);
+                return true;
+            } else {
+                console.error('Lighting command failed:', data.message || 'Unknown error');
+                return false;
+            }
+        } catch (error) {
+            console.error('Error sending lighting command:', error);
+            return false;
+        }
+    }
+    
+    function updateFilmingLightingModeButton() {
+        const lightingToggleBtn = document.getElementById('toggle-filming-lighting-mode');
+        const lightingModeText = document.getElementById('filming-lighting-mode-text');
+        
+        if (!lightingToggleBtn || !lightingModeText) return;
+        
+        // Always show as available since we assume relay is connected
+        if (isLightMode) {
+            lightingModeText.textContent = 'Switch to Dark Mode';
+            lightingToggleBtn.className = 'btn btn-sm btn-warning';
+            lightingToggleBtn.disabled = false;
+            lightingToggleBtn.innerHTML = '<i class="fas fa-moon"></i> <span id="filming-lighting-mode-text">Switch to Dark Mode</span>';
+        } else {
+            lightingModeText.textContent = 'Switch to Light Mode';
+            lightingToggleBtn.className = 'btn btn-sm btn-info';
+            lightingToggleBtn.disabled = false;
+            lightingToggleBtn.innerHTML = '<i class="fas fa-sun"></i> <span id="filming-lighting-mode-text">Switch to Light Mode</span>';
+        }
+    }
+    
+    function initializeFilmingLightingMode() {
+        // Check if we have a saved lighting mode preference
+        const savedMode = localStorage.getItem('filmingLightMode');
+        if (savedMode !== null) {
+            isLightMode = savedMode === 'true';
+        }
+        
+        console.log('Initialized filming lighting mode:', isLightMode ? 'light' : 'dark');
+        
+        // Update button state
+        updateFilmingLightingModeButton();
+    }
+    
+    // State persistence functions
+    function saveRollSelectionState() {
+        try {
+            const selectedCard = document.querySelector('.roll-card.selected');
+            if (selectedCard && selectedRollData) {
+                const state = {
+                    rollId: selectedCard.getAttribute('data-roll-id'),
+                    rollData: selectedRollData,
+                    timestamp: Date.now(),
+                    validationCardVisible: document.getElementById('validation-card').style.display !== 'none'
+                };
+                
+                localStorage.setItem('film_selected_roll', JSON.stringify(state));
+                console.log('Roll selection state saved:', state.rollId);
+            }
+        } catch (error) {
+            console.error('Error saving roll selection state:', error);
+        }
+    }
+    
+    function saveChecklistState() {
+        try {
+            const checkboxes = document.querySelectorAll('.checklist-item input[type="checkbox"]');
+            const checklistState = {};
+            
+            checkboxes.forEach(checkbox => {
+                checklistState[checkbox.id] = checkbox.checked;
+            });
+            
+            localStorage.setItem('film_checklist_state', JSON.stringify({
+                state: checklistState,
+                timestamp: Date.now()
+            }));
+        } catch (error) {
+            console.error('Error saving checklist state:', error);
+        }
+    }
+    
+    function restoreRollSelectionState() {
+        try {
+            const savedState = localStorage.getItem('film_selected_roll');
+            if (!savedState) return false;
+            
+            const state = JSON.parse(savedState);
+            
+            // Check if state is not too old (24 hours)
+            const maxAge = 24 * 60 * 60 * 1000; // 24 hours
+            if (Date.now() - state.timestamp > maxAge) {
+                localStorage.removeItem('film_selected_roll');
+                return false;
+            }
+            
+            // Find the roll in the loaded rolls
+            const roll = allRolls.find(r => r.id == state.rollId);
+            if (!roll) {
+                console.log('Previously selected roll no longer available');
+                localStorage.removeItem('film_selected_roll');
+                return false;
+            }
+            
+            // Restore the selection
+            selectedRollData = state.rollData;
+            
+            // Find and select the roll card
+            const rollCard = document.querySelector(`[data-roll-id="${state.rollId}"]`);
+            if (rollCard) {
+                highlightRoll(rollCard);
+                
+                // If validation card was visible, restore it
+                if (state.validationCardVisible) {
+                    const filmNumber = rollCard.querySelector('.roll-film-number').textContent;
+                    const filmType = rollCard.querySelector('.roll-film-type').textContent;
+                    const projectName = rollCard.querySelector('.project-name').textContent;
+                    const archiveId = rollCard.querySelector('.archive-id').textContent;
+                    const documentCount = rollCard.querySelectorAll('.roll-detail-value')[0].textContent;
+                    const pageCount = rollCard.querySelectorAll('.roll-detail-value')[1].textContent;
+                    const outputDir = rollCard.querySelectorAll('.roll-detail-value')[2].textContent;
+                    const dirExists = rollCard.querySelector('.directory-status').classList.contains('exists');
+                    const isCompleted = rollCard.classList.contains('completed');
+                    
+                    // Update validation card and show it
+                    updateValidationCard(state.rollId, filmNumber, filmType, projectName, archiveId, documentCount, pageCount, outputDir, dirExists, roll, isCompleted);
+                    showCard('validation-card');
+                    
+                    // Restore checklist state
+                    setTimeout(() => restoreChecklistState(), 100);
+                    
+                    console.log('Roll selection and validation state restored for roll:', filmNumber);
+                    showNotification('info', 'State Restored', `Restored selection for roll ${filmNumber}`, 3000);
+                    
+                    return true;
+                }
+            }
+            
+            return false;
+        } catch (error) {
+            console.error('Error restoring roll selection state:', error);
+            localStorage.removeItem('film_selected_roll');
+            return false;
+        }
+    }
+    
+    function restoreChecklistState() {
+        try {
+            const savedState = localStorage.getItem('film_checklist_state');
+            if (!savedState) return;
+            
+            const state = JSON.parse(savedState);
+            
+            // Check if state is not too old (24 hours)
+            const maxAge = 24 * 60 * 60 * 1000; // 24 hours
+            if (Date.now() - state.timestamp > maxAge) {
+                localStorage.removeItem('film_checklist_state');
+                return;
+            }
+            
+            // Restore checkbox states
+            Object.entries(state.state).forEach(([checkboxId, checked]) => {
+                const checkbox = document.getElementById(checkboxId);
+                if (checkbox) {
+                    checkbox.checked = checked;
+                }
+            });
+            
+            // Update validation status after restoring
+            updateValidationStatus();
+            
+            console.log('Checklist state restored');
+        } catch (error) {
+            console.error('Error restoring checklist state:', error);
+            localStorage.removeItem('film_checklist_state');
+        }
+    }
+    
+    function clearRollSelectionState() {
+        try {
+            localStorage.removeItem('film_selected_roll');
+            localStorage.removeItem('film_checklist_state');
+            console.log('Roll selection state cleared');
+        } catch (error) {
+            console.error('Error clearing roll selection state:', error);
+        }
     }
 });

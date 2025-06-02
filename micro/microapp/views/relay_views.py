@@ -61,17 +61,25 @@ def control_relay(request):
                 responses.append(send_esp32_ws_command({"action": "pulse", "relay": 1}))
                 relay_states = {}
                 if action == 'dark':
-                    # Relays 2,3,4 ON
+                    # Relays 2,3,4 ON, relay 5 OFF (room light off in dark mode)
                     for r in [2, 3, 4]:
                         resp = send_esp32_ws_command({"action": "set", "relay": r, "state": True})
                         responses.append(resp)
                         relay_states[r] = True
+                    # Turn OFF room light in dark mode
+                    resp = send_esp32_ws_command({"action": "set", "relay": 5, "state": False})
+                    responses.append(resp)
+                    relay_states[5] = False
                 else:  # light
-                    # Relays 2,3,4 OFF
+                    # Relays 2,3,4 OFF, relay 5 ON (room light on in light mode)
                     for r in [2, 3, 4]:
                         resp = send_esp32_ws_command({"action": "set", "relay": r, "state": False})
                         responses.append(resp)
                         relay_states[r] = False
+                    # Turn ON room light in light mode
+                    resp = send_esp32_ws_command({"action": "set", "relay": 5, "state": True})
+                    responses.append(resp)
+                    relay_states[5] = True
                 # Return the new mode and relay states
                 return JsonResponse({'status': 'success', 'mode': action, 'relay_states': relay_states, 'responses': responses})
             else:

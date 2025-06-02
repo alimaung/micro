@@ -34,21 +34,13 @@ class SMAFilmingView(View):
             data = json.loads(request.body)
             
             # Extract and validate required parameters
-            project_id = data.get('project_id')
             roll_id = data.get('roll_id')
             film_type = data.get('film_type', '16mm')
             recovery = data.get('recovery', False)
+            re_filming = data.get('re_filming', False)
             
             # Enhanced validation
             validation_errors = []
-            
-            if not project_id:
-                validation_errors.append('project_id is required')
-            elif not isinstance(project_id, int):
-                try:
-                    project_id = int(project_id)
-                except (ValueError, TypeError):
-                    validation_errors.append('project_id must be a valid integer')
             
             if not roll_id:
                 validation_errors.append('roll_id is required')
@@ -75,19 +67,19 @@ class SMAFilmingView(View):
                     'error': 'Authentication required'
                 }, status=401)
             
-            # Start filming session
+            # Start filming session with new roll-only interface
             result = SMAService.start_filming_session(
-                project_id=project_id,
                 roll_id=roll_id,
                 film_type=film_type,
                 recovery=recovery,
+                re_filming=re_filming,
                 user_id=request.user.id
             )
             
             # Enhanced response with additional context
             if result['success']:
                 # Log successful start
-                logger.info(f"User {request.user.username} started filming session {result['session_id']}")
+                logger.info(f"User {request.user.username} started {'re-' if re_filming else ''}filming session {result['session_id']}")
                 
                 # Add user context to response
                 result['user'] = {
@@ -988,4 +980,160 @@ def sma_projects(request):
             'success': False,
             'error': 'Failed to get projects',
             'debug_error': str(e)
+        }, status=500)
+
+
+@csrf_exempt
+@login_required
+@require_http_methods(["GET"])
+def all_rolls(request):
+    """Get all rolls across all projects with their filming status and enhanced information."""
+    try:
+        # Get query parameters
+        status_filter = request.GET.get('status')
+        film_type_filter = request.GET.get('film_type')
+        include_sessions = request.GET.get('include_sessions', 'false').lower() == 'true'
+        
+        # Build query - get all rolls with project information
+        rolls_query = Roll.objects.select_related('project').order_by('-creation_date', 'project__archive_id', 'roll_number')
+        
+        if status_filter:
+            rolls_query = rolls_query.filter(filming_status=status_filter)
+            
+        if film_type_filter:
+            rolls_query = rolls_query.filter(film_type=film_type_filter)
+        
+        roll_data = []
+        for roll in rolls_query:
+            # Use getattr with defaults for fields that might not exist
+            roll_info = {
+                'id': roll.id,
+                'roll_number': getattr(roll, 'roll_number', None),
+                'film_number': getattr(roll, 'film_number', None),
+                'film_type': getattr(roll, 'film_type', '16mm'),
+                'filming_status': getattr(roll, 'filming_status', 'ready'),
+                'filming_progress_percent': getattr(roll, 'filming_progress_percent', 0.0),
+                'filming_started_at': roll.filming_started_at.isoformat() if getattr(roll, 'filming_started_at', None) else None,
+                'filming_completed_at': roll.filming_completed_at.isoformat() if getattr(roll, 'filming_completed_at', None) else None,
+                'capacity': getattr(roll, 'capacity', 0),
+                'pages_used': getattr(roll, 'pages_used', 0),
+                'pages_remaining': getattr(roll, 'pages_remaining', 0),
+                'document_count': getattr(roll, 'document_count', 0),
+                'output_directory': getattr(roll, 'output_directory', None),
+                'output_directory_exists': roll.output_directory_exists if hasattr(roll, 'output_directory_exists') else False,
+                'created_at': roll.creation_date.isoformat() if hasattr(roll, 'creation_date') and roll.creation_date else None,
+                'status': getattr(roll, 'status', 'active'),
+                # Project information
+                'project_id': roll.project.id if roll.project else None,
+                'project_name': getattr(roll.project, 'name', None) or getattr(roll.project, 'doc_type', None) or f'Project {roll.project.id}' if roll.project else 'Unknown Project',
+                'project_archive_id': getattr(roll.project, 'archive_id', 'Unknown') if roll.project else 'Unknown',
+                'project_location': getattr(roll.project, 'location', 'Unknown') if roll.project else 'Unknown',
+                # Check if this is a re-filming operation (completed rolls can be re-filmed)
+                'is_re_filming': getattr(roll, 'filming_status', 'ready') == 'completed',
+                # Add debugging info for directory check
+                'debug_directory_info': {
+                    'has_output_directory': bool(getattr(roll, 'output_directory', None)),
+                    'output_directory_path': getattr(roll, 'output_directory', None),
+                    'directory_exists_check': roll.output_directory_exists if hasattr(roll, 'output_directory_exists') else 'property_missing'
+                }
+            }
+            
+            # Include session information if requested
+            if include_sessions:
+                try:
+                    sessions = FilmingSession.objects.filter(roll=roll).order_by('-created_at')[:5]  # Last 5 sessions
+                    roll_info['recent_sessions'] = []
+                    
+                    for session in sessions:
+                        session_info = {
+                            'session_id': session.session_id,
+                            'status': session.status,
+                            'workflow_state': session.workflow_state,
+                            'progress_percent': session.progress_percent,
+                            'film_type': session.film_type,
+                            'recovery_mode': session.recovery_mode,
+                            'created_at': session.created_at.isoformat(),
+                            'started_at': session.started_at.isoformat() if session.started_at else None,
+                            'completed_at': session.completed_at.isoformat() if session.completed_at else None,
+                            'duration': str(session.duration) if session.duration else None,
+                            'error_message': session.error_message
+                        }
+                        roll_info['recent_sessions'].append(session_info)
+                except Exception as e:
+                    logger.warning(f"Error loading sessions for roll {roll.id}: {e}")
+                    roll_info['recent_sessions'] = []
+            
+            roll_data.append(roll_info)
+        
+        return JsonResponse({
+            'success': True,
+            'rolls': roll_data,
+            'total_rolls': len(roll_data),
+            'filters_applied': {
+                'status': status_filter,
+                'film_type': film_type_filter,
+                'include_sessions': include_sessions
+            }
+        })
+            
+    except Exception as e:
+        logger.error(f"Error getting all rolls: {e}")
+        return JsonResponse({
+            'success': False,
+            'error': 'Internal server error',
+            'debug_error': str(e)
+        }, status=500)
+
+
+@csrf_exempt
+@login_required
+@require_http_methods(["POST"])
+def temp_roll_preview(request):
+    """Get temp roll strategy preview for re-filming without making changes."""
+    try:
+        data = json.loads(request.body)
+        
+        # Extract parameters
+        roll_id = data.get('roll_id')
+        film_type = data.get('film_type', '16mm')
+        required_pages = data.get('required_pages', 0)
+        preview_only = data.get('preview_only', True)
+        
+        # Validation
+        if not roll_id:
+            return JsonResponse({
+                'success': False,
+                'error': 'roll_id is required'
+            }, status=400)
+        
+        if not isinstance(required_pages, int) or required_pages <= 0:
+            return JsonResponse({
+                'success': False,
+                'error': 'required_pages must be a positive integer'
+            }, status=400)
+        
+        # Get temp roll strategy from service
+        result = SMAService.get_temp_roll_strategy(
+            roll_id=roll_id,
+            film_type=film_type,
+            required_pages=required_pages,
+            preview_only=preview_only
+        )
+        
+        if result['success']:
+            logger.info(f"Temp roll preview generated for roll {roll_id}: {result['temp_roll_strategy']['use_temp_roll']}")
+        
+        return JsonResponse(result)
+        
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'success': False,
+            'error': 'Invalid JSON data'
+        }, status=400)
+    except Exception as e:
+        logger.error(f"Error generating temp roll preview: {e}")
+        return JsonResponse({
+            'success': False,
+            'error': 'Internal server error',
+            'details': str(e) if settings.DEBUG else 'An unexpected error occurred'
         }, status=500)

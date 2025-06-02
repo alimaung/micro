@@ -1,4 +1,9 @@
 micro.film {
-    tls internal
-    reverse_proxy localhost:8000
+	tls internal
+	reverse_proxy localhost:8000
+}
+
+normie.irm {
+	tls internal
+	reverse_proxy localhost:1918
 }

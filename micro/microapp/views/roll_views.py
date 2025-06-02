@@ -261,17 +261,46 @@ def get_roll_details(request, roll_id):
                 'id': roll.project.id,
                 'archive_id': roll.project.archive_id,
                 'project_folder_name': roll.project.project_folder_name
+            },
+            'temp_roll_info': {
+                'created_temp_roll': {
+                    'temp_roll_id': roll.created_temp_roll.temp_roll_id,
+                    'film_type': roll.created_temp_roll.film_type,
+                    'capacity': roll.created_temp_roll.capacity,
+                    'usable_capacity': roll.created_temp_roll.usable_capacity,
+                    'status': roll.created_temp_roll.status,
+                    'creation_date': roll.created_temp_roll.creation_date.isoformat() if roll.created_temp_roll.creation_date else None
+                } if roll.created_temp_roll else None,
+                'source_temp_roll': {
+                    'temp_roll_id': roll.source_temp_roll.temp_roll_id,
+                    'film_type': roll.source_temp_roll.film_type,
+                    'capacity': roll.source_temp_roll.capacity,
+                    'usable_capacity': roll.source_temp_roll.usable_capacity,
+                    'status': roll.source_temp_roll.status
+                } if roll.source_temp_roll else None,
+                'reason': _get_temp_roll_reason(roll)
             }
         }
         
         return JsonResponse({
-            'status': 'success',
+            'success': True,
             'roll': roll_details
         })
         
     except Exception as e:
         logger.error(f"Error getting roll details for {roll_id}: {str(e)}")
         return JsonResponse({
-            'status': 'error',
-            'message': f'Failed to get roll details: {str(e)}'
-        }, status=500) 
+            'success': False,
+            'error': f'Failed to get roll details: {str(e)}'
+        }, status=500)
+
+def _get_temp_roll_reason(roll):
+    """Get the reason why a temp roll was or wasn't created."""
+    if roll.created_temp_roll:
+        return f"Temp roll created with {roll.created_temp_roll.usable_capacity} pages remaining capacity"
+    elif roll.pages_remaining <= 100:  # Less than 100 pages remaining
+        return "Roll nearly full - insufficient capacity for temp roll creation"
+    elif roll.pages_remaining <= 200:  # Less than 200 pages remaining
+        return "Roll has minimal remaining capacity - no temp roll needed"
+    else:
+        return "Roll completed without creating temp roll" 

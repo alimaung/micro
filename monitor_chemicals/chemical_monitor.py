@@ -46,9 +46,9 @@ class FilmChemicalTracker:
     def get_chemical_color(self):
         # Inverted color scheme: green when fresh, red when depleted
         percent = self.get_chemical_level_percent()
-        if percent > 80:
+        if percent > 20:
             return curses.color_pair(1)  # Green when mostly fresh
-        elif percent > 40:
+        elif percent > 10:
             return curses.color_pair(2)  # Yellow when moderately used
         else:
             return curses.color_pair(3)  # Red when heavily used
@@ -81,7 +81,7 @@ class FilmChemicalTracker:
         
         # Draw gauge title with chemical status
         remaining_pct = self.get_chemical_level_percent()
-        status = "FRESH" if remaining_pct > 80 else "USED" if remaining_pct > 40 else "CRITICAL"
+        status = "FRESH" if remaining_pct > 20 else "LOW" if remaining_pct > 10 else "CRITICAL"
         title = f"Chemical Capacity - {status}"
         self.stdscr.addstr(start_y - 1, start_x, title, self.get_chemical_color() | curses.A_BOLD)
         
@@ -103,10 +103,10 @@ class FilmChemicalTracker:
         
         # Add visual markers for critical thresholds
         y_marker = start_y + gauge_height + 1
-        x_40pct = start_x + int(gauge_width * 0.4)  # 40% remaining
-        x_80pct = start_x + int(gauge_width * 0.8)  # 80% remaining
-        self.stdscr.addstr(y_marker, x_80pct, "▲", curses.color_pair(2))  # Yellow threshold
-        self.stdscr.addstr(y_marker, x_40pct, "▲", curses.color_pair(3))  # Red threshold
+        x_10pct = start_x + int(gauge_width * 0.1)  # 10% remaining
+        x_20pct = start_x + int(gauge_width * 0.2)  # 20% remaining
+        self.stdscr.addstr(y_marker, x_20pct, "▲", curses.color_pair(2))  # Yellow threshold
+        self.stdscr.addstr(y_marker, x_10pct, "▲", curses.color_pair(3))  # Red threshold
                 
         # Add percentage text
         percent_text = f"{remaining_pct:.1f}% remaining"

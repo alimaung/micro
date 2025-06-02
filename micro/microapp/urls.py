@@ -39,7 +39,8 @@ urlpatterns = [
     path('transferold/', views.oldtransfer, name='oldtransfer'),
     path('exploreold/', views.oldexplore, name='oldexplore'),
     path('filmold/', views.oldfilm, name='oldfilm'),
-    
+    path('handoffold/', views.oldhandoff, name='oldhandoff'),
+
     # API Endpoints
     path('control_relay/', views.control_relay, name='control_relay'),
     path('check_port/', views.check_port, name='check_port'),
@@ -213,9 +214,12 @@ urlpatterns = [
     path('api/development/start/', views.start_development, name='api_start_development'),
     path('api/development/complete/', views.complete_development, name='api_complete_development'),
     path('api/development/progress/', views.get_development_progress, name='api_development_progress'),
+    path('api/development/active-session/', views.get_active_development_session, name='api_active_development_session'),
     path('api/development/chemicals/reset/<str:chemical_type>/', views.reset_chemical_batch, name='api_reset_chemical_batch'),
     path('api/development/chemicals/insert/', views.insert_chemicals, name='api_insert_chemicals'),
     path('api/development/history/', views.get_development_history, name='api_development_history'),
+    path('api/development/density/save/', views.save_density_measurement, name='api_save_density_measurement'),
+    path('api/development/density/get/', views.get_density_measurements, name='api_get_density_measurements'),
     
     # Label API Endpoints
     path('api/labels/rolls/', views.get_rolls_for_labels, name='api_get_rolls_for_labels'),
@@ -224,6 +228,11 @@ urlpatterns = [
     path('api/labels/print-queue/', views.get_print_queue, name='api_get_print_queue'),
     path('api/labels/print-queue/add/', views.add_to_print_queue, name='api_add_to_print_queue'),
     path('api/labels/print-queue/remove/<str:queue_id>/', views.remove_from_print_queue, name='api_remove_from_print_queue'),
+    path('api/labels/generated/', views.get_generated_labels, name='api_get_generated_labels'),
+    path('api/labels/mark-printed/<str:label_id>/', views.mark_label_printed, name='api_mark_label_printed'),
+    path('api/labels/print/<str:label_id>/', views.print_label_server_side, name='api_print_label_server_side'),
+    path('api/labels/print-multiple/', views.print_multiple_labels, name='api_print_multiple_labels'),
+    path('api/labels/printer-status/', views.get_printer_status, name='api_get_printer_status'),
     
     # Enhanced SMA API endpoints
     path('api/sma/filming/', sma_views.SMAFilmingView.as_view(), name='sma_filming'),
@@ -245,8 +254,10 @@ urlpatterns = [
     # Project and roll management
     path('api/sma/projects/', sma_views.sma_projects, name='sma_projects'),
     path('api/sma/project/<int:project_id>/rolls/', sma_views.project_rolls, name='sma_project_rolls'),
+    path('api/sma/rolls/', sma_views.all_rolls, name='sma_all_rolls'),
     
     # System management endpoints
     path('api/sma/sessions/history/', sma_views.session_history, name='sma_session_history'),
     path('api/sma/sessions/cleanup/', sma_views.cleanup_sessions, name='sma_cleanup_sessions'),
+    path('api/sma/temp-roll-preview/', sma_views.temp_roll_preview, name='sma_temp_roll_preview'),
 ]

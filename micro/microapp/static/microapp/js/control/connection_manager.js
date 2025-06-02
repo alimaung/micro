@@ -12,6 +12,8 @@ const ConnectionManager = {
     // State tracking
     isMachineConnected: false,
     isRelayConnected: false,
+    activeRelayPort: null, // Track the active relay port internally
+    activeMachinePort: 'COM3', // Track the active machine port internally
     lastMachineDeviceData: {
         port: 'N/A',
         vendor_id: 'N/A',
@@ -273,6 +275,7 @@ const ConnectionManager = {
             if (data.status === 'success') {
                 // COM9 is available
                 this.isRelayConnected = true;
+                this.activeRelayPort = 'COM9'; // Store the active port
                 
                 // Update relay port info with the returned device info
                 if (data.device_info) {
@@ -350,6 +353,7 @@ const ConnectionManager = {
             if (data.status === 'success') {
                 // COM23 is available
                 this.isRelayConnected = true;
+                this.activeRelayPort = 'COM23'; // Store the active port
                 
                 // Update relay port info
                 if (data.device_info) {
@@ -373,6 +377,7 @@ const ConnectionManager = {
             } else {
                 // Neither COM9 nor COM23 is available
                 this.isRelayConnected = false;
+                this.activeRelayPort = null; // Clear the active port
                 
                 // Update UI to show disconnected state
                 UIManager.updateRelayConnectionUI(false);
@@ -395,6 +400,7 @@ const ConnectionManager = {
             
             // Update connection state
             this.isRelayConnected = false;
+            this.activeRelayPort = null; // Clear the active port
             
             // Update UI
             UIManager.updateRelayConnectionUI(false);
@@ -409,11 +415,19 @@ const ConnectionManager = {
      * @returns {string} The COM port for the relay connection
      */
     getActiveRelayPort: function() {
+        // Use internal tracking first
+        if (this.isRelayConnected && this.activeRelayPort) {
+            return this.activeRelayPort;
+        }
+        
+        // Fallback to DOM element if available (for control page compatibility)
         const relayPort = document.getElementById('relay-port');
         if (relayPort && this.isRelayConnected && relayPort.textContent !== 'N/A') {
             return relayPort.textContent;
         }
-        return 'COM9'; // Default fallback to COM23
+        
+        // Default fallback
+        return 'COM9';
     },
 
     /**

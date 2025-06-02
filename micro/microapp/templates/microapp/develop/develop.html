@@ -9,7 +9,8 @@
 {% endblock %}
 
 {% block content %}
-<div class="develop-container">
+    {% csrf_token %}
+    <div class="develop-container">
     <div class="develop-header">
         <h1><i class="fas fa-flask"></i> Film Development Dashboard</h1>
         <div class="header-actions">
@@ -84,6 +85,11 @@
         <div class="develop-section">
             <div class="section-header">
                 <h2><i class="fas fa-play-circle"></i> Development Control</h2>
+                <div class="section-actions">
+                    <button id="toggle-lighting-mode" class="btn btn-sm btn-warning" style="display: none;">
+                        <i class="fas fa-lightbulb"></i> <span id="lighting-mode-text">Switch to Dark Mode</span>
+                    </button>
+                </div>
             </div>
             <div class="development-control">
                 <div class="selected-roll-info" id="selected-roll-info" style="display: none;">
@@ -135,11 +141,63 @@
                             <span class="value" id="development-progress">0%</span>
                         </div>
                     </div>
+                    <div class="lighting-control-note">
+                        <i class="fas fa-info-circle"></i>
+                        <small>Use the lighting toggle button or press <kbd>Spacebar</kbd> to switch between light/dark modes for film handling</small>
+                    </div>
+                </div>
+
+                <!-- Density Tracking Section -->
+                <div class="density-tracking" id="density-tracking" style="display: none;">
+                    <h3><i class="fas fa-chart-line"></i> Film Density Quality Control</h3>
+                    <div class="density-info">
+                        <p><strong>Quality Assurance:</strong> Measure film density every 10 minutes during development.</p>
+                        <p><strong>Optimal Range:</strong> 1.2 - 1.4 (values outside this range indicate quality issues)</p>
+                    </div>
+                    
+                    <div class="density-input-section">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="measurement-time">Time (minutes):</label>
+                                <select id="measurement-time" class="form-control">
+                                    <option value="10">10 minutes</option>
+                                    <option value="20">20 minutes</option>
+                                    <option value="30">30 minutes</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="density-value">Density Value:</label>
+                                <input type="number" id="density-value" class="form-control" 
+                                       min="0.0" max="2.0" step="0.1" placeholder="1.3">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="density-notes">Notes (optional):</label>
+                            <textarea id="density-notes" class="form-control" rows="2" 
+                                      placeholder="Any observations about the measurement..."></textarea>
+                        </div>
+                        <button id="save-density" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Measurement
+                        </button>
+                    </div>
+
+                    <div class="density-measurements" id="density-measurements">
+                        <h4>Recorded Measurements</h4>
+                        <div class="measurements-list" id="measurements-list">
+                            <div class="no-measurements">
+                                <i class="fas fa-info-circle"></i>
+                                <p>No measurements recorded yet. Take your first measurement at 10 minutes.</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="development-actions">
+                    <button id="create-label" class="btn btn-info" style="display: none;">
+                        <i class="fas fa-tag"></i> Create & Print Label
+                    </button>
                     <button id="start-development" class="btn btn-primary" disabled>
-                        <i class="fas fa-play"></i> Start Development (30 min)
+                        <i class="fas fa-play"></i> Start Development (auto duration)
                     </button>
                     <button id="complete-development" class="btn btn-success" style="display: none;">
                         <i class="fas fa-check"></i> Mark Complete
@@ -427,5 +485,10 @@
 {% endblock %}
 
 {% block extra_js %}
+    <script src="{% static 'microapp/js/control/utils.js' %}"></script>
+    <script src="{% static 'microapp/js/control/notification_manager.js' %}"></script>
+    <script src="{% static 'microapp/js/control/ui_manager.js' %}"></script>
+    <script src="{% static 'microapp/js/control/connection_manager.js' %}"></script>
+    <script src="{% static 'microapp/js/control/relay_controls.js' %}"></script>
     <script src="{% static 'microapp/js/develop/develop.js' %}"></script>
 {% endblock %}

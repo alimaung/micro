@@ -26,12 +26,12 @@ def develop_dashboard(request):
 def get_rolls_for_development(request):
     """
     Get rolls that are ready for development (filming completed).
+    Shows all completed rolls so user can choose which ones to develop.
     """
     try:
-        # Get rolls with filming completed status
+        # Get all rolls with filming completed status, regardless of development status
         rolls = Roll.objects.filter(
-            filming_status='completed',
-            development_status__in=['pending', 'developing']
+            filming_status='completed'
         ).select_related('project').order_by('-filming_completed_at')
         
         rolls_data = []
@@ -41,6 +41,11 @@ def get_rolls_for_development(request):
                 roll=roll,
                 status='developing'
             ).first()
+            
+            # Determine if roll can be developed
+            can_develop = roll.development_status in ['pending', 'failed']
+            is_developing = roll.development_status == 'developing'
+            is_completed = roll.development_status == 'completed'
             
             roll_data = {
                 'id': roll.id,
@@ -52,7 +57,11 @@ def get_rolls_for_development(request):
                 'development_status': roll.development_status,
                 'development_progress': 0,
                 'estimated_completion': None,
-                'session_id': None
+                'session_id': None,
+                'can_develop': can_develop,
+                'is_developing': is_developing,
+                'is_completed': is_completed,
+                'development_completed_at': roll.development_completed_at.isoformat() if roll.development_completed_at else None
             }
             
             if active_session:
@@ -185,16 +194,27 @@ def start_development(request):
         
         chemicals_ok = True
         chemical_warnings = []
+        low_chemical_warnings = []
         
-        for chemical_type, _ in ChemicalBatch.CHEMICAL_TYPES:
+        for chemical_type, display_name in ChemicalBatch.CHEMICAL_TYPES:
             batch = ChemicalBatch.objects.filter(
                 chemical_type=chemical_type,
                 is_active=True
             ).first()
             
-            if not batch or not batch.can_process_roll(area_needed):
+            if not batch:
                 chemicals_ok = False
-                chemical_warnings.append(f"{chemical_type.title()} batch needs replacement")
+                chemical_warnings.append(f"{display_name}: No active batch found")
+            elif not batch.can_process_roll(area_needed):
+                chemicals_ok = False
+                remaining = batch.remaining_capacity
+                chemical_warnings.append(f"{display_name}: Insufficient capacity ({remaining:.3f} m² remaining, {area_needed:.3f} m² needed)")
+            elif batch.is_critical:
+                # Critical level but can still process this roll
+                low_chemical_warnings.append(f"{display_name}: Critical level ({batch.capacity_percent:.1f}% remaining)")
+            elif batch.is_low:
+                # Low level but can still process this roll
+                low_chemical_warnings.append(f"{display_name}: Low level ({batch.capacity_percent:.1f}% remaining)")
         
         if not chemicals_ok:
             return JsonResponse({
@@ -203,20 +223,36 @@ def start_development(request):
                 'warnings': chemical_warnings
             }, status=400)
         
+        # If chemicals are OK but some are low, include warnings in success response
+        response_data = {
+            'success': True,
+            'session_id': None,  # Will be set below
+            'estimated_completion': None,  # Will be set below
+            'duration_minutes': None,  # Will be set below
+            'film_length_meters': (roll.pages_used + 100) / 100.0
+        }
+        
+        if low_chemical_warnings:
+            response_data['chemical_warnings'] = low_chemical_warnings
+        
         with transaction.atomic():
             # Create development session
             session_id = f"dev_{uuid.uuid4().hex[:8]}"
-            development_duration = data.get('duration_minutes', 30)
             
             session = DevelopmentSession.objects.create(
                 session_id=session_id,
                 roll=roll,
                 user=request.user,
                 status='developing',
-                development_duration_minutes=development_duration,
-                started_at=timezone.now(),
-                estimated_completion=timezone.now() + timedelta(minutes=development_duration)
+                development_duration_minutes=30,  # This will be updated below
+                started_at=timezone.now()
             )
+            
+            # Calculate actual development duration based on film length
+            actual_duration = session.calculate_development_duration()
+            session.development_duration_minutes = actual_duration
+            session.estimated_completion = timezone.now() + timedelta(minutes=actual_duration)
+            session.save()
             
             # Update roll status
             roll.development_status = 'developing'
@@ -244,15 +280,15 @@ def start_development(request):
             DevelopmentLog.objects.create(
                 session=session,
                 level='info',
-                message=f"Development started for roll {roll.film_number} ({roll.film_type})"
+                message=f"Development started for roll {roll.film_number} ({roll.film_type}) - Duration: {actual_duration:.1f} minutes"
             )
         
-        return JsonResponse({
-            'success': True,
-            'session_id': session_id,
-            'estimated_completion': session.estimated_completion.isoformat(),
-            'duration_minutes': development_duration
-        })
+        response_data['session_id'] = session_id
+        response_data['estimated_completion'] = session.estimated_completion.isoformat()
+        response_data['duration_minutes'] = actual_duration
+        response_data['film_length_meters'] = (roll.pages_used + 100) / 100.0
+        
+        return JsonResponse(response_data)
         
     except Exception as e:
         logger.error(f"Error starting development: {e}")
@@ -516,6 +552,206 @@ def insert_chemicals(request):
         }, status=400)
     except Exception as e:
         logger.error(f"Error inserting chemicals: {e}")
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def save_density_measurement(request):
+    """
+    Save a density measurement for a development session.
+    """
+    try:
+        data = json.loads(request.body)
+        session_id = data.get('session_id')
+        density_value = data.get('density_value')
+        measurement_time_minutes = data.get('measurement_time_minutes')
+        notes = data.get('notes', '')
+        
+        if not session_id:
+            return JsonResponse({
+                'success': False,
+                'error': 'Session ID is required'
+            }, status=400)
+        
+        if density_value is None:
+            return JsonResponse({
+                'success': False,
+                'error': 'Density value is required'
+            }, status=400)
+        
+        if measurement_time_minutes is None:
+            return JsonResponse({
+                'success': False,
+                'error': 'Measurement time is required'
+            }, status=400)
+        
+        # Validate density value range
+        try:
+            density_value = float(density_value)
+            if density_value < 0.0 or density_value > 2.0:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Density value must be between 0.0 and 2.0'
+                }, status=400)
+        except (ValueError, TypeError):
+            return JsonResponse({
+                'success': False,
+                'error': 'Invalid density value'
+            }, status=400)
+        
+        # Validate measurement time
+        try:
+            measurement_time_minutes = int(measurement_time_minutes)
+            if measurement_time_minutes < 0 or measurement_time_minutes > 60:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Measurement time must be between 0 and 60 minutes'
+                }, status=400)
+        except (ValueError, TypeError):
+            return JsonResponse({
+                'success': False,
+                'error': 'Invalid measurement time'
+            }, status=400)
+        
+        session = get_object_or_404(DevelopmentSession, session_id=session_id)
+        
+        # Import DensityMeasurement here to avoid circular imports
+        from ..models import DensityMeasurement
+        
+        # Create or update the measurement
+        measurement, created = DensityMeasurement.objects.update_or_create(
+            session=session,
+            measurement_time_minutes=measurement_time_minutes,
+            defaults={
+                'density_value': density_value,
+                'notes': notes,
+                'user': request.user
+            }
+        )
+        
+        # Log the measurement
+        DevelopmentLog.objects.create(
+            session=session,
+            level='info',
+            message=f"Density measurement recorded: {density_value} at {measurement_time_minutes} minutes"
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'measurement': {
+                'id': measurement.id,
+                'density_value': measurement.density_value,
+                'measurement_time_minutes': measurement.measurement_time_minutes,
+                'notes': measurement.notes,
+                'is_within_optimal_range': measurement.is_within_optimal_range,
+                'quality_status': measurement.quality_status,
+                'quality_color': measurement.quality_color,
+                'created_at': measurement.created_at.isoformat()
+            },
+            'created': created
+        })
+        
+    except Exception as e:
+        logger.error(f"Error saving density measurement: {e}")
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+@require_http_methods(["GET"])
+def get_density_measurements(request):
+    """
+    Get density measurements for a development session.
+    """
+    try:
+        session_id = request.GET.get('session_id')
+        
+        if not session_id:
+            return JsonResponse({
+                'success': False,
+                'error': 'Session ID is required'
+            }, status=400)
+        
+        session = get_object_or_404(DevelopmentSession, session_id=session_id)
+        
+        # Import DensityMeasurement here to avoid circular imports
+        from ..models import DensityMeasurement
+        
+        measurements = DensityMeasurement.objects.filter(
+            session=session
+        ).order_by('measurement_time_minutes')
+        
+        measurements_data = []
+        for measurement in measurements:
+            measurements_data.append({
+                'id': measurement.id,
+                'density_value': measurement.density_value,
+                'measurement_time_minutes': measurement.measurement_time_minutes,
+                'notes': measurement.notes,
+                'is_within_optimal_range': measurement.is_within_optimal_range,
+                'quality_status': measurement.quality_status,
+                'quality_color': measurement.quality_color,
+                'created_at': measurement.created_at.isoformat(),
+                'user': measurement.user.username if measurement.user else None
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'measurements': measurements_data
+        })
+        
+    except Exception as e:
+        logger.error(f"Error fetching density measurements: {e}")
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+@require_http_methods(["GET"])
+def get_active_development_session(request):
+    """
+    Get the currently active development session for timer restoration.
+    """
+    try:
+        # Find any active development session
+        active_session = DevelopmentSession.objects.filter(
+            status='developing'
+        ).select_related('roll', 'roll__project').first()
+        
+        if not active_session:
+            return JsonResponse({
+                'success': True,
+                'session': None
+            })
+        
+        # Calculate development duration
+        total_frames = active_session.roll.pages_used + 100  # Add leader/trailer
+        film_length_m = (total_frames * 1.0) / 100.0  # 1cm per frame, convert to meters
+        development_duration = film_length_m  # 1 minute per meter
+        
+        session_data = {
+            'session_id': str(active_session.session_id),
+            'roll_id': active_session.roll.id,
+            'film_number': active_session.roll.film_number,
+            'film_type': active_session.roll.film_type,
+            'project_name': active_session.roll.project.name,
+            'pages_used': active_session.roll.pages_used,
+            'duration_minutes': development_duration,
+            'film_length_meters': film_length_m,
+            'started_at': active_session.started_at.isoformat() if active_session.started_at else None,
+            'status': active_session.status
+        }
+        
+        return JsonResponse({
+            'success': True,
+            'session': session_data
+        })
+        
+    except Exception as e:
+        logger.error(f"Error fetching active development session: {e}")
         return JsonResponse({
             'success': False,
             'error': str(e)

@@ -3,7 +3,7 @@
 /* Rolls grid layout */
 .rolls-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     gap: var(--film-spacing-lg);
     margin-bottom: var(--film-spacing-lg);
 }
@@ -32,6 +32,13 @@
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
+/* Ensure selected state overrides completed state */
+.roll-card.completed.selected {
+    border-color: var(--film-primary) !important;
+    background-color: rgba(37, 99, 235, 0.1) !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2) !important;
+}
+
 .roll-card.not-ready {
     opacity: 0.6;
     cursor: not-allowed;
@@ -51,6 +58,34 @@
 .roll-card.completed {
     border-color: var(--film-success);
     background-color: rgba(16, 185, 129, 0.05);
+}
+
+.roll-card.completed:hover {
+    border-color: var(--film-warning);
+    background-color: rgba(245, 158, 11, 0.05);
+}
+
+/* Completed badge */
+.completed-badge {
+    position: absolute;
+    top: var(--film-spacing-sm);
+    right: var(--film-spacing-sm);
+    background-color: var(--film-success);
+    color: white;
+    padding: var(--film-spacing-xs) var(--film-spacing-sm);
+    border-radius: var(--film-border-radius);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: var(--film-spacing-xs);
+    z-index: 2;
+}
+
+.completed-badge i {
+    font-size: 10px;
 }
 
 /* Roll header */
@@ -107,6 +142,29 @@
 .roll-status-badge.not-ready {
     background-color: var(--film-warning);
     color: white;
+}
+
+/* Project information */
+.roll-project-info {
+    margin-bottom: var(--film-spacing-md);
+    padding: var(--film-spacing-sm);
+    background-color: rgba(0, 0, 0, 0.02);
+    border-radius: var(--film-border-radius);
+    border-left: 3px solid var(--film-primary);
+}
+
+.roll-project-info .project-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--film-text);
+    margin-bottom: var(--film-spacing-xs);
+}
+
+.roll-project-info .archive-id {
+    font-size: 12px;
+    color: var(--film-text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 /* Roll details */
@@ -166,7 +224,37 @@
 /* Roll actions */
 .roll-actions {
     display: flex;
+    justify-content: space-between;
+    align-items: center;
     gap: var(--film-spacing-sm);
+}
+
+.action-hint {
+    font-size: 12px;
+    color: var(--film-text-light);
+    font-style: italic;
+    flex: 1;
+}
+
+.roll-card.completed .action-hint {
+    color: var(--film-warning);
+    font-weight: 500;
+}
+
+.status-text {
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: var(--film-spacing-xs);
+    flex: 1;
+}
+
+.status-text.filming {
+    color: var(--film-primary);
+}
+
+.status-text i {
+    font-size: 10px;
 }
 
 .roll-select-button {
@@ -198,16 +286,22 @@
 .roll-info-button {
     padding: var(--film-spacing-sm);
     background-color: var(--film-surface);
-    color: var(--film-text-light);
     border: 1px solid var(--film-border);
     border-radius: var(--film-border-radius);
+    color: var(--film-text-light);
     cursor: pointer;
     transition: var(--film-transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
 }
 
 .roll-info-button:hover {
-    background-color: var(--film-border);
-    color: var(--film-text);
+    background-color: var(--film-primary);
+    color: white;
+    border-color: var(--film-primary);
 }
 
 /* Directory status indicator */

@@ -5,7 +5,8 @@ from .models import (
     RangeReferenceInfo, FilmAllocation, DocumentAllocationRequest35mm,
     DistributionResult, ReferenceSheet, ReadablePageDescription, AdjustedRange,
     ProcessedDocument, FilmingSession, FilmingSessionLog,
-    DevelopmentSession, ChemicalBatch, DevelopmentLog
+    DevelopmentSession, ChemicalBatch, DevelopmentLog, DensityMeasurement,
+    FilmLabel
 )
 
 class ProjectAdmin(admin.ModelAdmin):
@@ -455,6 +456,76 @@ class DevelopmentLogAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('session', 'session__roll')
 
+class DensityMeasurementAdmin(admin.ModelAdmin):
+    list_display = ('id', 'session', 'measurement_time_minutes', 'density_value', 
+                    'quality_status_display', 'is_within_optimal_range', 'user', 'created_at')
+    search_fields = ('session__session_id', 'session__roll__film_number', 'user__username', 'notes')
+    list_filter = ('is_within_optimal_range', 'measurement_time_minutes', 'created_at')
+    readonly_fields = ('id', 'created_at', 'is_within_optimal_range', 'quality_status_display')
+    fieldsets = (
+        ('Identification', {
+            'fields': ('id', 'session', 'user')
+        }),
+        ('Measurement Data', {
+            'fields': ('measurement_time_minutes', 'density_value', 'notes')
+        }),
+        ('Quality Assessment', {
+            'fields': ('is_within_optimal_range', 'quality_status_display')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at',)
+        }),
+    )
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('session', 'session__roll', 'user')
+    
+    def quality_status_display(self, obj):
+        """Display quality status with color coding"""
+        status = obj.quality_status
+        color = obj.quality_color
+        status_text = {
+            'too_low': 'TOO LOW',
+            'low': 'LOW',
+            'optimal': 'OPTIMAL',
+            'high': 'HIGH',
+            'too_high': 'TOO HIGH'
+        }.get(status, 'UNKNOWN')
+        
+        return f'<span style="color: {color}; font-weight: bold;">{status_text}</span>'
+    quality_status_display.short_description = "Quality Status"
+    quality_status_display.allow_tags = True
+
+class FilmLabelAdmin(admin.ModelAdmin):
+    list_display = ('id', 'label_id', 'roll', 'project', 'film_number', 'archive_id', 
+                    'status', 'generated_at', 'downloaded_at', 'printed_at', 
+                    'download_count', 'print_count', 'user')
+    search_fields = ('label_id', 'film_number', 'archive_id', 'roll__film_number', 
+                     'project__archive_id', 'user__username')
+    list_filter = ('status', 'generated_at', 'downloaded_at', 'printed_at')
+    readonly_fields = ('id', 'label_id', 'generated_at', 'downloaded_at', 'queued_at', 
+                       'printed_at', 'completed_at', 'download_count', 'print_count')
+    fieldsets = (
+        ('Identification', {
+            'fields': ('id', 'label_id', 'roll', 'project', 'user')
+        }),
+        ('Label Content', {
+            'fields': ('film_number', 'archive_id', 'doc_type')
+        }),
+        ('File Information', {
+            'fields': ('pdf_path', 'cache_key')
+        }),
+        ('Status & Progress', {
+            'fields': ('status', 'download_count', 'print_count')
+        }),
+        ('Timestamps', {
+            'fields': ('generated_at', 'downloaded_at', 'queued_at', 'printed_at', 'completed_at')
+        }),
+    )
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('roll', 'project', 'user')
+
 # Register all models
 admin.site.register(Project, ProjectAdmin)
 admin.site.register(Document, DocumentAdmin)
@@ -479,3 +550,5 @@ admin.site.register(FilmingSessionLog, FilmingSessionLogAdmin)
 admin.site.register(DevelopmentSession, DevelopmentSessionAdmin)
 admin.site.register(ChemicalBatch, ChemicalBatchAdmin)
 admin.site.register(DevelopmentLog, DevelopmentLogAdmin)
+admin.site.register(DensityMeasurement, DensityMeasurementAdmin)
+admin.site.register(FilmLabel, FilmLabelAdmin)

@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 import uuid
 from pathlib import Path
+from django.utils import timezone
 
 class FilmType(models.TextChoices):
     """Type of film used for microfilming."""
@@ -740,6 +741,29 @@ class DevelopmentSession(models.Model):
         self.chemical_usage_area = film_length_m * film_height_m
         return self.chemical_usage_area
 
+    def calculate_development_duration(self):
+        """Calculate development duration based on actual film length.
+        
+        Development time = film length in meters (1 minute per meter).
+        A full roll of 30.5m takes 30.5 minutes to develop.
+        """
+        # Total frames = actual pages used + 100 for leader/trailer
+        total_frames = self.roll.pages_used + 100
+        
+        # Each frame is 1cm wide
+        film_length_cm = total_frames * 1.0  # 1cm per frame
+        film_length_m = film_length_cm / 100.0  # Convert to meters
+        
+        # Development time = 1 minute per meter of film
+        development_minutes = film_length_m
+        
+        return development_minutes
+
+    @property
+    def actual_development_duration_minutes(self):
+        """Get the actual development duration based on film length."""
+        return self.calculate_development_duration()
+
 
 class ChemicalBatch(models.Model):
     """Tracks chemical batches used in development."""
@@ -789,13 +813,13 @@ class ChemicalBatch(models.Model):
     
     @property
     def is_critical(self):
-        """Check if chemical level is critical (< 40% remaining)."""
-        return self.capacity_percent < 40
+        """Check if chemical level is critical (< 10% remaining)."""
+        return self.capacity_percent < 10
     
     @property
     def is_low(self):
-        """Check if chemical level is low (< 80% remaining)."""
-        return self.capacity_percent < 80
+        """Check if chemical level is low (< 20% remaining)."""
+        return self.capacity_percent < 20
     
     def add_roll_usage(self, film_type, area_used):
         """Add usage for a film roll with actual area used."""
@@ -845,3 +869,168 @@ class DevelopmentLog(models.Model):
     
     def __str__(self):
         return f"{self.session.session_id} [{self.level}]: {self.message[:50]}..."
+
+
+class DensityMeasurement(models.Model):
+    """Stores film density measurements taken during development for quality assurance."""
+    
+    # Relationships
+    session = models.ForeignKey(DevelopmentSession, on_delete=models.CASCADE, related_name='density_measurements')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='density_measurements', null=True, blank=True)
+    
+    # Measurement data
+    density_value = models.FloatField(help_text="Measured density value (0.0 - 2.0)")
+    measurement_time_minutes = models.IntegerField(help_text="Time in minutes when measurement was taken (e.g., 10, 20, 30)")
+    notes = models.TextField(blank=True, null=True, help_text="Optional notes about the measurement")
+    
+    # Quality assessment
+    is_within_optimal_range = models.BooleanField(default=False, help_text="Whether measurement is within optimal range (1.2-1.4)")
+    
+    # Metadata
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['session', 'measurement_time_minutes']
+        unique_together = ['session', 'measurement_time_minutes']
+        indexes = [
+            models.Index(fields=['session', 'measurement_time_minutes']),
+            models.Index(fields=['density_value']),
+            models.Index(fields=['is_within_optimal_range']),
+        ]
+    
+    def __str__(self):
+        return f"Density {self.density_value} at {self.measurement_time_minutes}min - {self.session.session_id}"
+    
+    def save(self, *args, **kwargs):
+        """Override save to automatically set is_within_optimal_range."""
+        # Optimal range is 1.2 - 1.4
+        self.is_within_optimal_range = 1.2 <= self.density_value <= 1.4
+        super().save(*args, **kwargs)
+    
+    @property
+    def quality_status(self):
+        """Return quality status based on density value."""
+        if self.density_value < 1.0:
+            return 'too_low'
+        elif self.density_value < 1.2:
+            return 'low'
+        elif self.density_value <= 1.4:
+            return 'optimal'
+        elif self.density_value <= 1.6:
+            return 'high'
+        else:
+            return 'too_high'
+    
+    @property
+    def quality_color(self):
+        """Return color code for UI display."""
+        status = self.quality_status
+        colors = {
+            'too_low': '#dc3545',    # Red
+            'low': '#ffc107',        # Yellow
+            'optimal': '#28a745',    # Green
+            'high': '#ffc107',       # Yellow
+            'too_high': '#dc3545'    # Red
+        }
+        return colors.get(status, '#6c757d')
+
+
+class FilmLabel(models.Model):
+    """Tracks generated film labels with their status and file paths."""
+    LABEL_STATUS_CHOICES = [
+        ('generated', 'Generated'),
+        ('downloaded', 'Downloaded'),
+        ('queued', 'Queued for Print'),
+        ('printed', 'Printed'),
+        ('completed', 'Completed'),
+    ]
+    
+    # Relationships
+    roll = models.ForeignKey(Roll, on_delete=models.CASCADE, related_name='film_labels')
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='film_labels')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='film_labels', null=True, blank=True)
+    
+    # Label identification
+    label_id = models.CharField(max_length=100, unique=True, help_text="Unique label identifier")
+    
+    # Label content information
+    film_number = models.CharField(max_length=50, help_text="Film number on the label")
+    archive_id = models.CharField(max_length=20, help_text="Archive ID on the label")
+    doc_type = models.CharField(max_length=50, help_text="Document type on the label")
+    
+    # File paths
+    pdf_path = models.CharField(max_length=500, blank=True, null=True, help_text="Path to saved PDF file")
+    cache_key = models.CharField(max_length=100, blank=True, null=True, help_text="Cache key for temporary storage")
+    
+    # Status tracking
+    status = models.CharField(max_length=20, choices=LABEL_STATUS_CHOICES, default='generated')
+    
+    # Timestamps
+    generated_at = models.DateTimeField(auto_now_add=True)
+    downloaded_at = models.DateTimeField(null=True, blank=True, help_text="When label was first downloaded")
+    queued_at = models.DateTimeField(null=True, blank=True, help_text="When label was added to print queue")
+    printed_at = models.DateTimeField(null=True, blank=True, help_text="When label was printed")
+    completed_at = models.DateTimeField(null=True, blank=True, help_text="When label process was completed")
+    
+    # Print tracking
+    download_count = models.IntegerField(default=0, help_text="Number of times label was downloaded")
+    print_count = models.IntegerField(default=0, help_text="Number of times label was printed")
+    
+    class Meta:
+        ordering = ['-generated_at']
+        indexes = [
+            models.Index(fields=['label_id']),
+            models.Index(fields=['roll', 'status']),
+            models.Index(fields=['project', 'status']),
+            models.Index(fields=['status']),
+            models.Index(fields=['generated_at']),
+        ]
+    
+    def __str__(self):
+        return f"Label {self.label_id} - {self.film_number} ({self.status})"
+    
+    @property
+    def is_completed(self):
+        """Check if the label process is completed (generated and printed)."""
+        return self.status == 'completed' or (self.printed_at is not None)
+    
+    @property
+    def labels_directory(self):
+        """Get the labels directory path for this project."""
+        if self.project.project_path:
+            return Path(self.project.project_path) / '.labels'
+        return None
+    
+    def mark_downloaded(self):
+        """Mark the label as downloaded."""
+        if not self.downloaded_at:
+            self.downloaded_at = timezone.now()
+        self.download_count += 1
+        if self.status == 'generated':
+            self.status = 'downloaded'
+        self.save(update_fields=['downloaded_at', 'download_count', 'status'])
+    
+    def mark_queued(self):
+        """Mark the label as queued for printing."""
+        if not self.queued_at:
+            self.queued_at = timezone.now()
+        self.status = 'queued'
+        self.save(update_fields=['queued_at', 'status'])
+    
+    def mark_printed(self):
+        """Mark the label as printed and completed."""
+        if not self.printed_at:
+            self.printed_at = timezone.now()
+        self.print_count += 1
+        # Automatically mark as completed when printed (final step)
+        if not self.completed_at:
+            self.completed_at = timezone.now()
+        self.status = 'completed'
+        self.save(update_fields=['printed_at', 'print_count', 'completed_at', 'status'])
+    
+    def mark_completed(self):
+        """Mark the label process as completed."""
+        if not self.completed_at:
+            self.completed_at = timezone.now()
+        self.status = 'completed'
+        self.save(update_fields=['completed_at', 'status'])

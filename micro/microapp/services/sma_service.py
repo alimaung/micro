@@ -19,7 +19,7 @@ from django.db import models
 # Import the real SMA process manager
 from .sma_processor.sma_process_manager import SMAProcessManager, SMACallbackHandler
 
-from ..models import FilmingSession, FilmingSessionLog, Project, Roll
+from ..models import FilmingSession, FilmingSessionLog, Project, Roll, TempRoll
 
 logger = logging.getLogger(__name__)
 
@@ -31,20 +31,19 @@ class SMAService:
     _session_health_cache: Dict[str, Dict[str, Any]] = {}
     
     @classmethod
-    def start_filming_session(cls, project_id: int, roll_id: int, film_type: str, 
-                            recovery: bool = False, user_id: Optional[int] = None) -> Dict[str, Any]:
+    def start_filming_session(cls, roll_id: int, film_type: str, 
+                            recovery: bool = False, re_filming: bool = False, user_id: Optional[int] = None) -> Dict[str, Any]:
         """Start a new SMA filming session with enhanced error handling and validation."""
         try:
-            # Validate inputs with detailed error messages
+            # Validate roll input
             try:
-                project = Project.objects.get(id=project_id)
-            except Project.DoesNotExist:
-                return {'success': False, 'error': f'Project with ID {project_id} not found'}
-            
-            try:
-                roll = Roll.objects.get(id=roll_id, project=project)
+                roll = Roll.objects.select_related('project').get(id=roll_id)
+                project = roll.project
             except Roll.DoesNotExist:
-                return {'success': False, 'error': f'Roll with ID {roll_id} not found in project {project.name}'}
+                return {'success': False, 'error': f'Roll with ID {roll_id} not found'}
+            
+            if not project:
+                return {'success': False, 'error': f'Roll {roll_id} is not associated with a project'}
             
             # Enhanced validation checks - use roll's output directory
             if not roll.output_directory or not os.path.exists(roll.output_directory):
@@ -57,8 +56,40 @@ class SMAService:
             if not os.path.exists(roll_project_folder):
                 return {'success': False, 'error': f'Project folder derived from roll does not exist: {roll_project_folder}'}
             
-            if roll.filming_status == 'completed':
-                return {'success': False, 'error': f'Roll {roll.roll_number} has already been filmed'}
+            # Handle re-filming operations
+            if re_filming:
+                if roll.filming_status != 'completed':
+                    return {'success': False, 'error': f'Roll {roll.roll_number} must be completed before re-filming'}
+                
+                # Log re-filming operation
+                logger.info(f"Starting re-filming operation for roll {roll.roll_number} (ID: {roll_id})")
+                
+                # Reset roll status for re-filming
+                roll.filming_status = 'ready'
+                roll.filming_progress_percent = 0.0
+                roll.filming_session_id = None
+                roll.filming_started_at = None
+                roll.filming_completed_at = None
+                
+                # Handle temp roll updates for re-filming
+                # If this roll created a temp roll previously, we need to update/invalidate it
+                if hasattr(roll, 'created_temp_roll') and roll.created_temp_roll:
+                    # Mark the previous temp roll as invalidated due to re-filming
+                    temp_roll = roll.created_temp_roll
+                    temp_roll.status = 'invalidated_refilm'
+                    temp_roll.save(update_fields=['status'])
+                    logger.info(f"Invalidated temp roll {temp_roll.temp_roll_id} due to re-filming")
+                
+                # Clear the temp roll relationship for fresh calculation
+                roll.created_temp_roll = None
+                roll.source_temp_roll = None
+                roll.save(update_fields=[
+                    'filming_status', 'filming_progress_percent', 'filming_session_id',
+                    'filming_started_at', 'filming_completed_at', 'created_temp_roll', 'source_temp_roll'
+                ])
+                
+            elif roll.filming_status == 'completed' and not re_filming:
+                return {'success': False, 'error': f'Roll {roll.roll_number} has already been filmed. Use re-filming option to film again.'}
             
             # Check if roll is already being filmed
             existing_session = FilmingSession.objects.filter(
@@ -88,7 +119,8 @@ class SMAService:
                     status='pending',
                     workflow_state='initialization',
                     user_id=user_id,
-                    recovery_mode=recovery
+                    recovery_mode=recovery,
+                    re_filming=re_filming  # Track if this is a re-filming operation
                 )
                 
                 # Update roll status
@@ -105,13 +137,14 @@ class SMAService:
                 'folder_path': roll.output_directory,  # Use roll's output directory directly
                 'film_number': roll.roll_number,
                 'project_name': project.name,
-                'project_id': project_id,
+                'project_id': project.id,
                 'roll_id': roll_id,
                 'archive_id': project.archive_id,
                 'output_dir': roll.output_directory,  # This is the actual working directory for this roll
                 'film_type': film_type,
                 'capacity': roll.capacity,
-                'pages_used': roll.pages_used
+                'pages_used': roll.pages_used,
+                're_filming': re_filming  # Pass re-filming flag to SMA process
             }
             
             # Create SMA process manager with enhanced configuration
@@ -141,10 +174,11 @@ class SMAService:
                     'project_name': project.name,
                     'roll_number': roll.roll_number,
                     'film_type': film_type,
-                    'started_at': session.started_at.isoformat()
+                    'started_at': session.started_at.isoformat(),
+                    're_filming': re_filming
                 })
                 
-                logger.info(f"Started SMA filming session {session_id} for roll {roll.roll_number}")
+                logger.info(f"Started SMA filming session {session_id} for roll {roll.roll_number} (re-filming: {re_filming})")
                 
                 # Use fallback values for display names
                 project_display_name = project.name or project.doc_type or project.archive_id or f'Project {project.id}'
@@ -155,9 +189,10 @@ class SMAService:
                     'session_id': session_id,
                     'status': 'running',
                     'workflow_state': 'initialization',
-                    'message': f'Started filming roll {roll_display_name}',
+                    'message': f'Started {"re-" if re_filming else ""}filming roll {roll_display_name}',
                     'project_name': project_display_name,
-                    'roll_number': roll_display_name
+                    'roll_number': roll_display_name,
+                    're_filming': re_filming
                 }
             else:
                 # Failed to start process - rollback database changes
@@ -231,7 +266,25 @@ class SMAService:
                     'pages_used': session.roll.pages_used,
                     'pages_remaining': session.roll.pages_remaining,
                     'filming_status': session.roll.filming_status,
-                    'output_directory': session.roll.output_directory
+                    'output_directory': session.roll.output_directory,
+                    'temp_roll_info': {
+                        'created_temp_roll': {
+                            'temp_roll_id': session.roll.created_temp_roll.temp_roll_id,
+                            'film_type': session.roll.created_temp_roll.film_type,
+                            'capacity': session.roll.created_temp_roll.capacity,
+                            'usable_capacity': session.roll.created_temp_roll.usable_capacity,
+                            'status': session.roll.created_temp_roll.status,
+                            'creation_date': session.roll.created_temp_roll.creation_date.isoformat() if session.roll.created_temp_roll.creation_date else None
+                        } if session.roll.created_temp_roll else None,
+                        'source_temp_roll': {
+                            'temp_roll_id': session.roll.source_temp_roll.temp_roll_id,
+                            'film_type': session.roll.source_temp_roll.film_type,
+                            'capacity': session.roll.source_temp_roll.capacity,
+                            'usable_capacity': session.roll.source_temp_roll.usable_capacity,
+                            'status': session.roll.source_temp_roll.status
+                        } if session.roll.source_temp_roll else None,
+                        'reason': cls._get_temp_roll_reason(session.roll)
+                    }
                 }
             
             return {'success': True, 'status': status}
@@ -419,7 +472,25 @@ class SMAService:
                         'pages_used': session.roll.pages_used,
                         'pages_remaining': session.roll.pages_remaining,
                         'filming_status': session.roll.filming_status,
-                        'output_directory': session.roll.output_directory
+                        'output_directory': session.roll.output_directory,
+                        'temp_roll_info': {
+                            'created_temp_roll': {
+                                'temp_roll_id': session.roll.created_temp_roll.temp_roll_id,
+                                'film_type': session.roll.created_temp_roll.film_type,
+                                'capacity': session.roll.created_temp_roll.capacity,
+                                'usable_capacity': session.roll.created_temp_roll.usable_capacity,
+                                'status': session.roll.created_temp_roll.status,
+                                'creation_date': session.roll.created_temp_roll.creation_date.isoformat() if session.roll.created_temp_roll.creation_date else None
+                            } if session.roll.created_temp_roll else None,
+                            'source_temp_roll': {
+                                'temp_roll_id': session.roll.source_temp_roll.temp_roll_id,
+                                'film_type': session.roll.source_temp_roll.film_type,
+                                'capacity': session.roll.source_temp_roll.capacity,
+                                'usable_capacity': session.roll.source_temp_roll.usable_capacity,
+                                'status': session.roll.source_temp_roll.status
+                            } if session.roll.source_temp_roll else None,
+                            'reason': cls._get_temp_roll_reason(session.roll)
+                        }
                     }
                 
                 active_sessions.append(session_info)
@@ -834,3 +905,127 @@ class SMAService:
         except Exception as e:
             logger.error(f"Error marking roll as filmed: {e}")
             return {'success': False, 'error': str(e)}
+
+    @classmethod
+    def _get_temp_roll_reason(cls, roll) -> str:
+        """Get the reason why a temp roll was or wasn't created."""
+        if roll.created_temp_roll:
+            return f"Temp roll created with {roll.created_temp_roll.usable_capacity} pages remaining capacity"
+        elif roll.pages_remaining <= 100:  # Less than 100 pages remaining
+            return "Roll nearly full - insufficient capacity for temp roll creation"
+        elif roll.pages_remaining <= 200:  # Less than 200 pages remaining
+            return "Roll has minimal remaining capacity - no temp roll needed"
+        else:
+            return "Roll completed without creating temp roll"
+
+    @classmethod
+    def get_temp_roll_strategy(cls, roll_id: int, film_type: str, required_pages: int, preview_only: bool = True) -> Dict[str, Any]:
+        """
+        Calculate temp roll strategy for re-filming operations.
+        
+        Args:
+            roll_id: The roll being re-filmed
+            film_type: Type of film (16mm/35mm)
+            required_pages: Number of pages needed for re-filming
+            preview_only: If True, don't make any changes, just calculate strategy
+            
+        Returns:
+            Dict containing strategy information
+        """
+        try:
+            from ..models import Roll, TempRoll
+            
+            # Get the roll being re-filmed
+            try:
+                roll = Roll.objects.get(id=roll_id)
+            except Roll.DoesNotExist:
+                return {
+                    'success': False,
+                    'error': f'Roll {roll_id} not found'
+                }
+            
+            # Standard capacities by film type
+            FILM_CAPACITIES = {
+                '16mm': 2900,
+                '35mm': 1450
+            }
+            
+            standard_capacity = FILM_CAPACITIES.get(film_type, 2900)
+            
+            # Find available temp rolls of the same film type with sufficient capacity
+            available_temp_rolls = TempRoll.objects.filter(
+                film_type=film_type,
+                status='available',
+                usable_capacity__gte=required_pages
+            ).order_by('usable_capacity')  # Best fit: prefer smallest roll that fits
+            
+            strategy = {
+                'film_type': film_type,
+                'required_pages': required_pages,
+                'pages_to_use': required_pages,
+                'use_temp_roll': False,
+                'temp_roll': None,
+                'new_roll_capacity': standard_capacity,
+                'will_create_temp_roll': False,
+                'reason': ''
+            }
+            
+            if available_temp_rolls.exists():
+                # Use the best available temp roll
+                best_temp_roll = available_temp_rolls.first()
+                
+                strategy.update({
+                    'use_temp_roll': True,
+                    'temp_roll': {
+                        'temp_roll_id': best_temp_roll.temp_roll_id,
+                        'remaining_capacity': best_temp_roll.usable_capacity,
+                        'source_roll_id': best_temp_roll.source_roll.id if best_temp_roll.source_roll else None,
+                        'created_date': best_temp_roll.creation_date.isoformat() if best_temp_roll.creation_date else None
+                    },
+                    'reason': f'Using existing temp roll #{best_temp_roll.temp_roll_id} with {best_temp_roll.usable_capacity} pages available'
+                })
+                
+                # If preview_only is False, we would update the temp roll here
+                if not preview_only:
+                    # Update temp roll capacity (this would be done during actual filming)
+                    best_temp_roll.usable_capacity -= required_pages
+                    if best_temp_roll.usable_capacity <= 0:
+                        best_temp_roll.status = 'exhausted'
+                    best_temp_roll.save()
+                    
+                    logger.info(f"Updated temp roll #{best_temp_roll.temp_roll_id}: {best_temp_roll.usable_capacity} pages remaining")
+            
+            else:
+                # Use new roll
+                remaining_capacity = standard_capacity - required_pages
+                min_temp_roll_threshold = 100  # Minimum pages to create a temp roll
+                
+                strategy.update({
+                    'use_temp_roll': False,
+                    'will_create_temp_roll': remaining_capacity >= min_temp_roll_threshold,
+                    'remaining_capacity': remaining_capacity,
+                    'reason': f'No suitable temp rolls available. Using new {film_type} roll.'
+                })
+                
+                if strategy['will_create_temp_roll']:
+                    strategy['reason'] += f' Will create temp roll with {remaining_capacity} pages.'
+                else:
+                    strategy['reason'] += f' Remaining {remaining_capacity} pages too small for temp roll.'
+                
+                # If preview_only is False, we would create the temp roll after filming
+                if not preview_only and strategy['will_create_temp_roll']:
+                    # This would be done after filming completes
+                    pass
+            
+            return {
+                'success': True,
+                'temp_roll_strategy': strategy,
+                'preview_only': preview_only
+            }
+            
+        except Exception as e:
+            logger.error(f"Error calculating temp roll strategy: {e}")
+            return {
+                'success': False,
+                'error': f'Failed to calculate temp roll strategy: {str(e)}'
+            }

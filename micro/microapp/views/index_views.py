@@ -12,10 +12,11 @@ import os
 import time
 import uuid
 import threading
-import xlwings as xw
+import openpyxl
+import xlrd
 from pathlib import Path
 from datetime import datetime
-from ..models import Project
+from ..models import Project, Document
 
 # Dictionary to store index tasks and their progress
 index_tasks = {}
@@ -405,34 +406,62 @@ def process_index_initialization(task_id, project_id, allocation_results=None):
         task['lastUpdateTime'] = time.time()
         
         try:
-            # Implement Excel file reading using xlwings
+            # Implement Excel file reading using openpyxl/xlrd
             if project.comlist_path and os.path.exists(project.comlist_path):
                 print(f"DEBUG: Reading COM list Excel file: {project.comlist_path}")
-                wb = None
-                try:
-                    # Try to use already open workbook
-                    wb = xw.books.active
-                    print(f"DEBUG: Found active workbook: {wb.name}")
-                    if Path(wb.fullname).resolve() != Path(project.comlist_path).resolve():
-                        print(f"DEBUG: Active workbook is not the COM list, opening: {project.comlist_path}")
-                        wb = xw.Book(str(project.comlist_path))
-                except Exception as e:
-                    print(f"DEBUG: No active workbook or error: {str(e)}")
-                    # Open the workbook directly
-                    print(f"DEBUG: Attempting to open workbook directly: {project.comlist_path}")
-                    wb = xw.Book(str(project.comlist_path))
                 
-                # Get the first worksheet
-                print(f"DEBUG: Accessing first worksheet")
-                ws = wb.sheets[0]
+                # Determine file format
+                file_extension = Path(project.comlist_path).suffix.lower()
+                print(f"DEBUG: File format detected: {file_extension}")
                 
-                # Get data range with potential barcode and ComID values
-                print(f"DEBUG: Getting used range")
-                used_range = ws.used_range
-                if used_range:
-                    print(f"DEBUG: Getting data from used range")
-                    data = used_range.value
-                    
+                data = None
+                
+                if file_extension == '.xlsx':
+                    # Use openpyxl for .xlsx files
+                    try:
+                        wb = openpyxl.load_workbook(project.comlist_path, read_only=True)
+                        print(f"DEBUG: Opened .xlsx workbook with sheets: {wb.sheetnames}")
+                        ws = wb.active
+                        
+                        # Get data from worksheet
+                        data = list(ws.values)
+                        wb.close()
+                        
+                    except Exception as e:
+                        print(f"DEBUG: Error reading .xlsx file: {str(e)}")
+                        raise
+                        
+                elif file_extension == '.xls':
+                    # Use xlrd for .xls files
+                    try:
+                        wb = xlrd.open_workbook(project.comlist_path)
+                        print(f"DEBUG: Opened .xls workbook with {wb.nsheets} sheets")
+                        ws = wb.sheet_by_index(0)
+                        
+                        # Convert xlrd data to list format
+                        data = []
+                        for row_idx in range(ws.nrows):
+                            row_data = []
+                            for col_idx in range(ws.ncols):
+                                cell_value = ws.cell_value(row_idx, col_idx)
+                                # Convert xlrd cell types to Python types
+                                if ws.cell_type(row_idx, col_idx) == xlrd.XL_CELL_EMPTY:
+                                    cell_value = None
+                                elif ws.cell_type(row_idx, col_idx) == xlrd.XL_CELL_NUMBER:
+                                    # Check if it's actually an integer
+                                    if cell_value == int(cell_value):
+                                        cell_value = int(cell_value)
+                                row_data.append(cell_value)
+                            data.append(row_data)
+                            
+                    except Exception as e:
+                        print(f"DEBUG: Error reading .xls file: {str(e)}")
+                        raise
+                        
+                else:
+                    raise Exception(f"Unsupported file format: {file_extension}")
+                
+                if data:
                     # Skip header row if exists
                     start_row = 1 if isinstance(data[0][0], str) and not data[0][0].isdigit() else 0
                     print(f"DEBUG: Processing data with {len(data)} rows, starting at row {start_row}")
@@ -477,11 +506,6 @@ def process_index_initialization(task_id, project_id, allocation_results=None):
                                         com_id_mappings[barcode_normalized] = com_id
                                 except (ValueError, TypeError):
                                     pass
-                
-                # Close Excel if we opened it
-                if wb:
-                    print(f"DEBUG: Closing Excel application")
-                    wb.app.quit()
                 
                 print(f"DEBUG: Extracted {len(com_id_mappings)} COM ID mappings")
         except Exception as e:
@@ -547,6 +571,18 @@ def process_index_initialization(task_id, project_id, allocation_results=None):
                 for doc in pseudo_project.documents:
                     if doc.doc_id == doc_id and com_id is not None:
                         doc.com_id = com_id
+                
+                # Also update the actual Document model in the database
+                try:
+                    db_document = Document.objects.filter(project=project, doc_id=doc_id_base).first()
+                    if db_document and com_id is not None:
+                        db_document.com_id = com_id
+                        db_document.save()
+                        print(f"DEBUG: Updated COM ID {com_id} for document {doc_id_base} in database")
+                except Exception as e:
+                    print(f"DEBUG: Error updating COM ID for document {doc_id_base}: {str(e)}")
+                    # Don't fail the whole process for this error
+                    pass
                 
                 # Create initial index array with [roll_id, frameRange_start, frameRange_end]
                 initial_index = [roll_id, frame_range[0], frame_range[1]]

@@ -184,6 +184,24 @@
     background: rgba(255, 193, 7, 0.05);
 }
 
+.roll-card.completed {
+    border-color: #28a745;
+    background: rgba(40, 167, 69, 0.05);
+}
+
+.roll-card.disabled {
+    border-color: #6c757d;
+    background: rgba(108, 117, 125, 0.05);
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.roll-card.disabled:hover {
+    transform: none;
+    box-shadow: none;
+    border-color: #6c757d;
+}
+
 .roll-header {
     display: flex;
     justify-content: space-between;
@@ -226,6 +244,16 @@
 .roll-status-badge.developing {
     background: rgba(255, 193, 7, 0.1);
     color: #ffc107;
+}
+
+.roll-status-badge.completed {
+    background: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+}
+
+.roll-status-badge.disabled {
+    background: rgba(108, 117, 125, 0.1);
+    color: #6c757d;
 }
 
 .roll-details {
@@ -363,57 +391,97 @@
 /* Development Actions */
 .development-actions {
     display: flex;
-    gap: 12px;
-    margin-bottom: 20px;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    flex-wrap: wrap;
 }
 
 .development-actions .btn {
     flex: 1;
-    padding: 12px 16px;
-    font-weight: 600;
+    min-width: 150px;
+    padding: 0.75rem 1rem;
+    font-weight: 500;
     border-radius: 8px;
-    border: none;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
+    transition: all 0.2s ease;
 }
 
-.btn.btn-primary {
-    background: var(--color-primary);
+/* Lighting Mode Toggle Button */
+#toggle-lighting-mode {
+    position: relative;
+    overflow: hidden;
+}
+
+#toggle-lighting-mode.btn-warning {
+    background: linear-gradient(135deg, #ffc107, #ffb300);
+    border-color: #ffc107;
+    color: #212529;
+}
+
+#toggle-lighting-mode.btn-warning:hover {
+    background: linear-gradient(135deg, #ffb300, #ff8f00);
+    border-color: #ffb300;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(255, 193, 7, 0.3);
+}
+
+#toggle-lighting-mode.btn-info {
+    background: linear-gradient(135deg, #17a2b8, #138496);
+    border-color: #17a2b8;
     color: white;
 }
 
-.btn.btn-primary:hover:not(:disabled) {
-    background: var(--color-primary-dark);
+#toggle-lighting-mode.btn-info:hover {
+    background: linear-gradient(135deg, #138496, #117a8b);
+    border-color: #138496;
     transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(23, 162, 184, 0.3);
 }
 
-.btn.btn-success {
-    background: #28a745;
-    color: white;
-}
-
-.btn.btn-success:hover {
-    background: #218838;
-    transform: translateY(-1px);
-}
-
-.btn.btn-danger {
-    background: #dc3545;
-    color: white;
-}
-
-.btn.btn-danger:hover {
-    background: #c82333;
-    transform: translateY(-1px);
-}
-
-.btn:disabled {
+#toggle-lighting-mode:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* Add a subtle animation for mode switching */
+#toggle-lighting-mode.switching {
+    animation: lightingSwitch 0.5s ease-in-out;
+}
+
+@keyframes lightingSwitch {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(0.95); }
+}
+
+/* Lighting Control Note */
+.lighting-control-note {
+    margin-top: 1rem;
+    padding: 0.75rem;
+    background: rgba(23, 162, 184, 0.1);
+    border: 1px solid rgba(23, 162, 184, 0.2);
+    border-radius: 6px;
+    text-align: center;
+}
+
+.lighting-control-note i {
+    color: #17a2b8;
+    margin-right: 0.5rem;
+}
+
+.lighting-control-note small {
+    color: #6c757d;
+    font-size: 0.875rem;
+}
+
+.lighting-control-note kbd {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 3px;
+    padding: 0.2rem 0.4rem;
+    font-size: 0.8rem;
+    color: #495057;
+    font-family: 'Courier New', monospace;
 }
 
 .no-selection-message {
@@ -438,9 +506,118 @@
     grid-column: 1 / -1;
 }
 
+.chemicals-level {
+    padding: 20px;
+}
+
+.chemicals-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+@media (max-width: 768px) {
+    .chemicals-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .chemicals-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 .chemical-container {
     position: relative;
     text-align: center;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px;
+    border-radius: 8px;
+    background: var(--color-background);
+    border: 1px solid var(--color-border);
+}
+
+.chemical-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-text);
+    margin-bottom: 12px;
+}
+
+.level-indicator {
+    width: 24px;
+    height: 120px;
+    background-color: rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 8px;
+    border: 1px solid var(--color-border);
+}
+
+.dark-mode .level-indicator {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: var(--color-dark-border);
+}
+
+.level-fill {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: var(--color-primary);
+    border-radius: 0 0 11px 11px;
+    transition: height 0.3s ease, background-color 0.3s ease;
+    height: 0%;
+}
+
+.chemical-percentage {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: 4px;
+}
+
+.dark-mode .chemical-percentage {
+    color: var(--color-dark-text);
+}
+
+.chemical-date {
+    font-size: 12px;
+    color: var(--color-text-light);
+    margin-bottom: 8px;
+    text-align: center;
+}
+
+.dark-mode .chemical-date {
+    color: var(--color-dark-text-light);
+}
+
+/* Chemical status states */
+.chemical-container.good {
+    border: 2px solid transparent;
+}
+
+.chemical-container.low {
+    border: 2px solid #ffc107;
+    background-color: rgba(255, 193, 7, 0.05);
+}
+
+.chemical-container.critical {
+    border: 2px solid #dc3545;
+    background-color: rgba(220, 53, 69, 0.05);
+    animation: pulse-critical 2s infinite;
+}
+
+@keyframes pulse-critical {
+    0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
 }
 
 .chemical-reset-btn {
@@ -521,32 +698,63 @@
     border: 1px solid var(--color-border);
     border-radius: 8px;
     padding: 16px;
+    transition: all 0.3s ease;
+}
+
+.history-item.completed {
+    border-left: 4px solid #28a745;
+}
+
+.history-item.developing {
+    border-left: 4px solid #ffc107;
+}
+
+.history-item.cancelled {
+    border-left: 4px solid #6c757d;
+}
+
+.history-item.failed {
+    border-left: 4px solid #dc3545;
+}
+
+.history-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-}
-
-.history-info {
-    flex: 1;
+    margin-bottom: 8px;
 }
 
 .history-roll {
-    font-weight: 600;
-    color: var(--color-text);
-    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-.history-details {
-    font-size: 14px;
+.history-roll i {
+    color: var(--color-primary);
+}
+
+.roll-number {
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.film-type {
+    background: var(--color-border);
     color: var(--color-text-light);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
 }
 
 .history-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
     padding: 4px 8px;
     border-radius: 4px;
     font-size: 12px;
     font-weight: 600;
-    text-transform: uppercase;
 }
 
 .history-status.completed {
@@ -559,9 +767,26 @@
     color: #ffc107;
 }
 
+.history-status.cancelled {
+    background: rgba(108, 117, 125, 0.1);
+    color: #6c757d;
+}
+
 .history-status.failed {
     background: rgba(220, 53, 69, 0.1);
     color: #dc3545;
+}
+
+.history-details {
+    font-size: 14px;
+    color: var(--color-text-light);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.history-time, .history-completion, .history-estimated, .history-duration, .history-session {
+    font-size: 13px;
 }
 
 /* Loading States */
@@ -1143,6 +1368,277 @@ textarea.form-control {
     }
     
     .history-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+}
+
+/* Roll Overlays */
+.roll-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-weight: 600;
+    color: #495057;
+    z-index: 10;
+}
+
+.roll-overlay i {
+    font-size: 2rem;
+    margin-bottom: 8px;
+}
+
+.roll-overlay.completed {
+    background: rgba(40, 167, 69, 0.9);
+    color: white;
+}
+
+.roll-overlay.completed i {
+    color: white;
+}
+
+.roll-overlay.failed {
+    background: rgba(220, 53, 69, 0.9);
+    color: white;
+}
+
+.roll-overlay.failed i {
+    color: white;
+}
+
+/* Dark mode overlay adjustments */
+.dark-mode .roll-overlay {
+    background: rgba(0, 0, 0, 0.8);
+    color: var(--color-dark-text);
+}
+
+.dark-mode .roll-overlay.completed {
+    background: rgba(40, 167, 69, 0.8);
+}
+
+.dark-mode .roll-overlay.failed {
+    background: rgba(220, 53, 69, 0.8);
+}
+
+/* Density Tracking Styles */
+.density-tracking {
+    background: var(--color-background);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.density-tracking h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--color-text);
+    margin: 0 0 16px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.density-tracking h3 i {
+    color: var(--color-primary);
+}
+
+.density-info {
+    background: rgba(var(--color-primary-rgb), 0.1);
+    border: 1px solid var(--color-primary);
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 20px;
+}
+
+.density-info p {
+    margin: 0 0 8px 0;
+    font-size: 14px;
+    color: var(--color-text);
+    line-height: 1.4;
+}
+
+.density-info p:last-child {
+    margin-bottom: 0;
+}
+
+.density-input-section {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 20px;
+}
+
+.density-input-section .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.density-input-section .form-group {
+    margin-bottom: 16px;
+}
+
+.density-input-section .form-group:last-child {
+    margin-bottom: 0;
+}
+
+.density-input-section label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+    color: var(--color-text);
+    font-size: 14px;
+}
+
+.density-input-section .form-control {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    font-size: 14px;
+    background: var(--color-background);
+    color: var(--color-text);
+}
+
+.density-input-section .form-control:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.1);
+}
+
+.density-measurements h4 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-text);
+    margin: 0 0 12px 0;
+}
+
+.measurements-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.measurement-item {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    padding: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.measurement-info {
+    flex: 1;
+}
+
+.measurement-time {
+    font-weight: 600;
+    color: var(--color-text);
+    font-size: 14px;
+}
+
+.measurement-value {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 4px 0;
+}
+
+.measurement-notes {
+    font-size: 12px;
+    color: var(--color-text-light);
+    margin-top: 4px;
+}
+
+.measurement-status {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: white;
+}
+
+.measurement-status.optimal {
+    background: #28a745;
+}
+
+.measurement-status.low {
+    background: #ffc107;
+    color: #000;
+}
+
+.measurement-status.high {
+    background: #ffc107;
+    color: #000;
+}
+
+.measurement-status.too_low {
+    background: #dc3545;
+}
+
+.measurement-status.too_high {
+    background: #dc3545;
+}
+
+.no-measurements {
+    text-align: center;
+    padding: 20px;
+    color: var(--color-text-light);
+}
+
+.no-measurements i {
+    font-size: 24px;
+    margin-bottom: 8px;
+    opacity: 0.5;
+}
+
+.no-measurements p {
+    margin: 0;
+    font-size: 14px;
+}
+
+/* Dark mode support for density tracking */
+.dark-mode .density-tracking {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--color-dark-border);
+}
+
+.dark-mode .density-info {
+    background: rgba(var(--color-primary-rgb), 0.2);
+}
+
+.dark-mode .density-input-section {
+    background: rgba(255, 255, 255, 0.02);
+    border-color: var(--color-dark-border);
+}
+
+.dark-mode .measurement-item {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--color-dark-border);
+}
+
+/* Responsive design for density tracking */
+@media (max-width: 768px) {
+    .density-input-section .form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .measurement-item {
         flex-direction: column;
         align-items: flex-start;
         gap: 8px;

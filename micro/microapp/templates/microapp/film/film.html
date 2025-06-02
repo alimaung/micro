@@ -19,12 +19,12 @@
         <div class="film-header">
             <div class="header-content">
                 <h1>Microfilm Controller</h1>
-                <p class="subtitle">Roll-by-roll filming process for registered projects</p>
+                <p class="subtitle">Select any roll for filming or re-filming</p>
             </div>
             <div class="quick-stats">
                 <div class="stat-item">
-                    <span class="stat-value" id="total-projects">0</span>
-                    <span class="stat-label">Total Projects</span>
+                    <span class="stat-value" id="total-rolls">0</span>
+                    <span class="stat-label">Total Rolls</span>
                 </div>
                 <div class="stat-item">
                     <span class="stat-value" id="ready-rolls">0</span>
@@ -37,78 +37,34 @@
             </div>
         </div>
 
-        <!-- Card 1: Project Selection -->
-        <div class="filming-card" id="project-selection-card">
+        <!-- Card 1: Roll Selection -->
+        <div class="filming-card" id="roll-selection-card">
             <div class="card-header">
-                <h2><span class="step-number">1</span> Select Project</h2>
+                <h2><span class="step-number">1</span> Select Roll to Film</h2>
                 <div class="card-status">
-                    <span class="status-indicator" id="project-status">Select a project to begin</span>
+                    <span class="status-indicator" id="roll-status">Select a roll to begin filming</span>
                 </div>
             </div>
             
             <div class="search-filter">
                 <div class="search-box">
-                    <input type="text" id="project-search" placeholder="Search projects...">
+                    <input type="text" id="roll-search" placeholder="Search by film number, project, or archive ID...">
                     <button id="search-button">
                         <i class="fas fa-search"></i>
                     </button>
                 </div>
                 <div class="filter-options">
-                    <select id="project-status-filter">
+                    <select id="roll-status-filter">
                         <option value="all">All Statuses</option>
                         <option value="ready" selected>Ready for Filming</option>
-                        <option value="in-progress">In Progress</option>
+                        <option value="filming">Currently Filming</option>
                         <option value="completed">Completed</option>
                     </select>
-                </div>
-            </div>
-            
-            <div class="projects-list">
-                <div class="list-header">
-                    <span class="project-name">Project Name</span>
-                    <span class="project-id">Archive ID</span>
-                    <span class="project-location">Location</span>
-                    <span class="project-rolls">Rolls</span>
-                    <span class="project-status">Status</span>
-                    <span class="project-actions">Actions</span>
-                </div>
-                <div id="project-list" class="list-body">
-                    <!-- Projects will be loaded dynamically -->
-                    <div class="loading-state">
-                        <i class="fas fa-spinner fa-spin"></i>
-                        <p>Loading projects...</p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="project-selection-actions">
-                <button id="select-project-btn" class="primary-button" disabled>
-                    <i class="fas fa-arrow-right"></i> Select Project & Continue
-                </button>
-            </div>
-        </div>
-
-        <!-- Card 2: Roll Selection (initially hidden) -->
-        <div class="filming-card" id="roll-selection-card" style="display: none;">
-            <div class="card-header">
-                <h2><span class="step-number">2</span> Select Roll to Film</h2>
-                <div class="card-status">
-                    <span class="status-indicator" id="roll-status">Choose a roll from the project</span>
-                </div>
-            </div>
-            
-            <div class="project-info">
-                <div class="info-item">
-                    <span class="info-label">Project:</span>
-                    <span class="info-value" id="selected-project-name">-</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Archive ID:</span>
-                    <span class="info-value" id="selected-project-id">-</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Location:</span>
-                    <span class="info-value" id="selected-project-location">-</span>
+                    <select id="film-type-filter">
+                        <option value="all">All Film Types</option>
+                        <option value="16mm">16mm</option>
+                        <option value="35mm">35mm</option>
+                    </select>
                 </div>
             </div>
             
@@ -121,19 +77,16 @@
             </div>
             
             <div class="roll-selection-actions">
-                <button id="back-to-projects-btn" class="secondary-button">
-                    <i class="fas fa-arrow-left"></i> Back to Projects
-                </button>
                 <button id="select-roll-btn" class="primary-button" disabled>
                     <i class="fas fa-arrow-right"></i> Select Roll & Continue
                 </button>
             </div>
         </div>
 
-        <!-- Card 3: Pre-Filming Validation (initially hidden) -->
+        <!-- Card 2: Pre-Filming Validation (initially hidden) -->
         <div class="filming-card" id="validation-card" style="display: none;">
             <div class="card-header">
-                <h2><span class="step-number">3</span> Pre-Filming Validation</h2>
+                <h2><span class="step-number">2</span> Pre-Filming Validation</h2>
                 <div class="card-status">
                     <span class="status-indicator" id="validation-status">Validate settings and insert film</span>
                 </div>
@@ -150,6 +103,14 @@
                         <div class="summary-item">
                             <span class="summary-label">Film Type:</span>
                             <span class="summary-value" id="validation-film-type">-</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Project:</span>
+                            <span class="summary-value" id="validation-project-name">-</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Archive ID:</span>
+                            <span class="summary-value" id="validation-archive-id">-</span>
                         </div>
                         <div class="summary-item">
                             <span class="summary-label">Roll Source:</span>
@@ -171,11 +132,20 @@
                             <span class="summary-label">Directory Status:</span>
                             <span class="summary-value" id="validation-dir-status">-</span>
                         </div>
+                        <div class="summary-item re-filming-warning" id="re-filming-warning" style="display: none;">
+                            <span class="summary-label">Re-filming Notice:</span>
+                            <span class="summary-value warning">This roll has been filmed before. Temp rolls will be updated.</span>
+                        </div>
                     </div>
                 </div>
                 
                 <div class="validation-checklist">
-                    <h3>Pre-Filming Checklist</h3>
+                    <div class="checklist-header">
+                        <h3>Pre-Filming Checklist</h3>
+                        <button id="toggle-filming-lighting-mode" class="btn btn-sm btn-warning">
+                            <i class="fas fa-lightbulb"></i> <span id="filming-lighting-mode-text">Switch to Dark Mode</span>
+                        </button>
+                    </div>
                     <div class="checklist-items">
                         <div class="checklist-item">
                             <input type="checkbox" id="check-camera-head">
@@ -208,6 +178,13 @@
                                 SMA machine ready and connected
                             </label>
                         </div>
+                        <div class="checklist-item re-filming-check" id="check-re-filming-item" style="display: none;">
+                            <input type="checkbox" id="check-re-filming">
+                            <label for="check-re-filming">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                I understand this is a re-filming operation and temp rolls will be updated
+                            </label>
+                        </div>
                     </div>
                 </div>
                 
@@ -222,10 +199,10 @@
             </div>
         </div>
 
-        <!-- Card 4: Filming Process (initially hidden) -->
+        <!-- Card 3: Filming Process (initially hidden) -->
         <div class="filming-card" id="filming-process-card" style="display: none;">
             <div class="card-header">
-                <h2><span class="step-number">4</span> Filming in Progress</h2>
+                <h2><span class="step-number">3</span> Filming in Progress</h2>
                 <div class="card-status">
                     <span class="status-indicator filming" id="filming-status">Processing documents...</span>
                 </div>
@@ -338,10 +315,10 @@
             </div>
         </div>
 
-        <!-- Card 5: Completion (initially hidden) -->
+        <!-- Card 4: Completion (initially hidden) -->
         <div class="filming-card" id="completion-card" style="display: none;">
             <div class="card-header">
-                <h2><span class="step-number">5</span> Filming Complete</h2>
+                <h2><span class="step-number">4</span> Filming Complete</h2>
                 <div class="card-status">
                     <span class="status-indicator success" id="completion-status">Roll filming completed successfully</span>
                 </div>

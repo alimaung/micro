@@ -15,4 +15,6 @@ __all__ = [
     'RollManager',
     'ProjectManager',
     'DocumentManager',
-] 
+]
+
+# Services package 

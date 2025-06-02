@@ -69,7 +69,9 @@ class LabelManager {
         try {
             await Promise.all([
                 this.loadRolls(),
-                this.loadPrintQueue()
+                this.loadGeneratedLabels(),
+                this.loadPrintQueue(),
+                this.loadPrinterStatus()
             ]);
         } catch (error) {
             console.error('Error loading initial data:', error);
@@ -110,16 +112,18 @@ class LabelManager {
         
         container.innerHTML = rolls.map(roll => {
             const isSelected = this.selectedRolls.has(roll.id);
+            const hasLabel = roll.has_label;
+            const isCompleted = roll.label_completed;
             
             return `
-                <div class="roll-card ${isSelected ? 'selected' : ''}" data-roll-id="${roll.id}">
+                <div class="roll-card ${isSelected ? 'selected' : ''} ${hasLabel ? 'has-label' : ''} ${isCompleted ? 'completed' : ''}" data-roll-id="${roll.id}">
                     <div class="roll-header">
                         <div class="roll-title">
                             <div class="roll-film-number">${roll.film_number}</div>
                             <div class="roll-film-type">${roll.film_type}</div>
                         </div>
-                        <div class="roll-status-badge completed">
-                            Developed
+                        <div class="roll-status-badge ${hasLabel ? (isCompleted ? 'completed' : 'generated') : 'ready'}">
+                            ${hasLabel ? (isCompleted ? 'Completed' : 'Generated') : 'Ready'}
                         </div>
                     </div>
                     
@@ -145,12 +149,19 @@ class LabelManager {
                             <span class="value">${this.formatDateTime(roll.development_completed_at)}</span>
                         </div>
                         <div class="detail-item">
-                            <span class="label">Can Label:</span>
-                            <span class="value ${roll.can_generate_label ? 'text-success' : 'text-error'}">
-                                ${roll.can_generate_label ? 'Yes' : 'No'}
+                            <span class="label">Label Status:</span>
+                            <span class="value ${hasLabel ? 'text-success' : (roll.can_generate_label ? 'text-warning' : 'text-error')}">
+                                ${hasLabel ? (isCompleted ? 'Completed' : roll.label_status) : (roll.can_generate_label ? 'Ready' : 'Cannot Generate')}
                             </span>
                         </div>
                     </div>
+                    
+                    ${isCompleted ? `
+                        <div class="roll-overlay completed">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Label Completed</span>
+                        </div>
+                    ` : ''}
                 </div>
             `;
         }).join('');
@@ -164,6 +175,18 @@ class LabelManager {
         
         if (!roll || !roll.can_generate_label) {
             this.showNotification('warning', 'Cannot Select', 'This roll cannot generate labels (missing film number or archive ID)');
+            return;
+        }
+        
+        // Don't allow selection of rolls that already have completed labels
+        if (roll.label_completed) {
+            this.showNotification('info', 'Already Completed', 'This roll already has a completed label');
+            return;
+        }
+        
+        // Don't allow selection of rolls that already have labels (unless we want to regenerate)
+        if (roll.has_label) {
+            this.showNotification('info', 'Label Exists', 'This roll already has a generated label. Check the Generated Labels section.');
             return;
         }
         
@@ -181,7 +204,7 @@ class LabelManager {
     selectAllRolls() {
         this.selectedRolls.clear();
         this.rolls.forEach(roll => {
-            if (roll.can_generate_label) {
+            if (roll.can_generate_label && !roll.has_label && !roll.label_completed) {
                 this.selectedRolls.add(roll.id);
             }
         });
@@ -218,7 +241,7 @@ class LabelManager {
         const rollIds = Array.from(this.selectedRolls);
         
         try {
-            this.showNotification('info', 'Generating Labels', 'Creating PDF labels...');
+            this.showNotification('info', 'Generating Labels', 'Creating PDF labels and saving to project directories...');
             
             const response = await fetch('/api/labels/generate/', {
                 method: 'POST',
@@ -234,18 +257,36 @@ class LabelManager {
             const data = await response.json();
             
             if (data.success) {
-                this.generatedLabels = [...this.generatedLabels, ...data.labels];
-                this.renderGeneratedLabels();
                 this.showNotification('success', 'Labels Generated', data.message);
                 
                 // Clear selection after successful generation
                 this.clearSelection();
+                
+                // Reload all data to show updated status
+                await this.loadInitialData();
             } else {
                 throw new Error(data.error || 'Failed to generate labels');
             }
         } catch (error) {
             console.error('Error generating labels:', error);
             this.showNotification('error', 'Error', 'Failed to generate labels');
+        }
+    }
+    
+    async loadGeneratedLabels() {
+        try {
+            const response = await fetch('/api/labels/generated/');
+            const data = await response.json();
+            
+            if (data.success) {
+                this.generatedLabels = data.labels;
+                this.renderGeneratedLabels();
+            } else {
+                throw new Error(data.error || 'Failed to load generated labels');
+            }
+        } catch (error) {
+            console.error('Error loading generated labels:', error);
+            this.showNotification('error', 'Error', 'Failed to load generated labels');
         }
     }
     
@@ -264,23 +305,31 @@ class LabelManager {
         }
         
         container.innerHTML = this.generatedLabels.map(label => `
-            <div class="label-item">
+            <div class="label-item ${label.is_completed ? 'completed' : ''}">
                 <div class="label-item-header">
                     <div class="label-info">
                         <h4>${label.film_number}</h4>
                         <p>${label.archive_id} - ${label.doc_type}</p>
                         <small>Generated: ${this.formatDateTime(label.generated_at)}</small>
+                        ${label.printed_at ? `<small>Printed: ${this.formatDateTime(label.printed_at)}</small>` : ''}
+                        ${label.pdf_saved ? '<small class="text-success"><i class="fas fa-check"></i> Saved to project</small>' : ''}
+                    </div>
+                    <div class="label-status-badge ${label.status}">
+                        ${this.getStatusDisplayText(label.status)}
+                        ${label.is_completed ? '<i class="fas fa-check-circle"></i>' : ''}
                     </div>
                 </div>
                 <div class="label-actions">
                     <button class="btn btn-primary btn-small download-label" data-label-id="${label.label_id}">
-                        <i class="fas fa-download"></i> Download
+                        <i class="fas fa-download"></i> Download ${label.download_count > 0 ? `(${label.download_count})` : ''}
                     </button>
-                    <button class="btn btn-secondary btn-small add-to-queue" data-label-id="${label.label_id}">
-                        <i class="fas fa-plus"></i> Add to Queue
-                    </button>
+                    ${label.status === 'generated' || label.status === 'downloaded' ? `
+                        <button class="btn btn-secondary btn-small add-to-queue" data-label-id="${label.label_id}">
+                            <i class="fas fa-plus"></i> Add to Queue
+                        </button>
+                    ` : ''}
                     <button class="btn btn-outline btn-small print-label" data-label-id="${label.label_id}">
-                        <i class="fas fa-print"></i> Print Now
+                        <i class="fas fa-print"></i> Print ${label.print_count > 0 ? `(${label.print_count})` : ''}
                     </button>
                 </div>
             </div>
@@ -288,9 +337,10 @@ class LabelManager {
     }
     
     clearGeneratedLabels() {
+        // Note: This now only clears the UI, not the database records
         this.generatedLabels = [];
         this.renderGeneratedLabels();
-        this.showNotification('info', 'Cleared', 'Generated labels cleared');
+        this.showNotification('info', 'View Cleared', 'Generated labels view cleared (labels still saved in database)');
     }
     
     async downloadLabel(labelId) {
@@ -309,6 +359,9 @@ class LabelManager {
                 document.body.removeChild(a);
                 
                 this.showNotification('success', 'Downloaded', 'Label PDF downloaded successfully');
+                
+                // Reload generated labels to show updated download count
+                this.loadGeneratedLabels();
             } else {
                 throw new Error('Failed to download label');
             }
@@ -335,6 +388,7 @@ class LabelManager {
             
             if (data.success) {
                 this.loadPrintQueue();
+                this.loadGeneratedLabels(); // Reload to show updated status
                 this.showNotification('success', 'Added to Queue', data.message);
             } else {
                 throw new Error(data.error || 'Failed to add to queue');
@@ -362,6 +416,55 @@ class LabelManager {
         }
     }
     
+    async loadPrinterStatus() {
+        try {
+            const response = await fetch('/api/labels/printer-status/');
+            const data = await response.json();
+            
+            if (data.success) {
+                this.updatePrinterStatusDisplay(data.printer_status);
+            } else {
+                throw new Error(data.error || 'Failed to load printer status');
+            }
+        } catch (error) {
+            console.error('Error loading printer status:', error);
+            this.updatePrinterStatusDisplay({
+                default_printer: null,
+                available_printers: [],
+                system: { windows: false, linux: false, mac: false }
+            });
+        }
+    }
+    
+    updatePrinterStatusDisplay(status) {
+        const statusText = document.getElementById('printer-status-text');
+        const detailsText = document.getElementById('printer-details');
+        
+        if (status.default_printer) {
+            statusText.textContent = 'Printing Method: Server-Side Direct Printing';
+            detailsText.innerHTML = `
+                <strong>Default Printer:</strong> ${status.default_printer}<br>
+                <strong>Available Printers:</strong> ${status.available_printers.length} found<br>
+                <strong>System:</strong> ${this.getSystemName(status.system)}
+            `;
+        } else {
+            statusText.textContent = 'Printing Method: No Printer Configured';
+            detailsText.innerHTML = `
+                <span style="color: var(--color-warning);">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    No default printer found. Please configure a printer in your system settings.
+                </span>
+            `;
+        }
+    }
+    
+    getSystemName(system) {
+        if (system.windows) return 'Windows';
+        if (system.linux) return 'Linux';
+        if (system.mac) return 'macOS';
+        return 'Unknown';
+    }
+    
     renderPrintQueue() {
         const container = document.getElementById('print-queue');
         
@@ -379,8 +482,9 @@ class LabelManager {
         container.innerHTML = this.printQueue.map(item => `
             <div class="queue-item">
                 <div class="queue-info">
-                    <h5>Label ${item.label_id}</h5>
+                    <h5>${item.film_number} - ${item.archive_id}</h5>
                     <p>Added: ${this.formatDateTime(item.added_at)}</p>
+                    <small>${item.doc_type}</small>
                 </div>
                 <div class="queue-status ${item.status}">${item.status}</div>
                 <button class="btn btn-secondary btn-small remove-from-queue" data-queue-id="${item.queue_id}">
@@ -403,6 +507,7 @@ class LabelManager {
             
             if (data.success) {
                 this.loadPrintQueue();
+                this.loadGeneratedLabels(); // Reload to show updated status
                 this.showNotification('success', 'Removed', data.message);
             } else {
                 throw new Error(data.error || 'Failed to remove from queue');
@@ -414,57 +519,33 @@ class LabelManager {
     }
     
     async printLabel(labelId) {
-        // This is where printer selection and actual printing happens
+        // Server-side printing - no user interaction required
         try {
-            this.showNotification('info', 'Preparing Print', 'Loading label for printing...');
+            this.showNotification('info', 'Printing Label', 'Sending label to printer...');
             
-            // Download the PDF for printing
-            const response = await fetch(`/api/labels/download/${labelId}/`);
+            const response = await fetch(`/api/labels/print/${labelId}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.getCSRFToken()
+                },
+                body: JSON.stringify({
+                    copies: 1  // Default to 1 copy, could be made configurable
+                })
+            });
             
-            if (!response.ok) {
-                if (response.status === 404) {
-                    throw new Error('Label has expired from cache. Please regenerate the label.');
-                } else {
-                    throw new Error(`Failed to load label (${response.status})`);
-                }
+            const data = await response.json();
+            
+            if (data.success) {
+                this.showNotification('success', 'Label Printed', 
+                    `Label printed successfully to ${data.printer} using ${data.method}`);
+                
+                // Reload data to show updated status
+                this.loadGeneratedLabels();
+                this.loadRolls(); // Update roll status too
+            } else {
+                throw new Error(data.error || 'Failed to print label');
             }
-            
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            
-            // Open in new window and trigger print dialog
-            const printWindow = window.open(url, '_blank', 'width=800,height=600');
-            
-            if (!printWindow) {
-                // Popup blocked - fallback to download
-                this.downloadLabel(labelId);
-                this.showNotification('warning', 'Popup Blocked', 'Print popup was blocked. Downloaded PDF instead - please print manually.');
-                return;
-            }
-            
-            printWindow.onload = () => {
-                // Small delay to ensure PDF is fully loaded
-                setTimeout(() => {
-                    printWindow.print();
-                    
-                    // Show instructions to user
-                    this.showNotification('info', 'Print Dialog Opened', 'Select your printer and click Print. The window will close automatically after printing.');
-                    
-                    // Clean up after a delay (user has time to print)
-                    setTimeout(() => {
-                        if (!printWindow.closed) {
-                            printWindow.close();
-                        }
-                        window.URL.revokeObjectURL(url);
-                    }, 30000); // 30 seconds
-                }, 500);
-            };
-            
-            printWindow.onerror = () => {
-                this.showNotification('error', 'Print Error', 'Failed to open print window. Try downloading the PDF instead.');
-                printWindow.close();
-                window.URL.revokeObjectURL(url);
-            };
             
         } catch (error) {
             console.error('Error printing label:', error);
@@ -482,6 +563,17 @@ class LabelManager {
         if (!dateString) return '-';
         const date = new Date(dateString);
         return date.toLocaleString();
+    }
+    
+    getStatusDisplayText(status) {
+        const statusMap = {
+            'generated': 'Generated',
+            'downloaded': 'Downloaded',
+            'queued': 'Queued',
+            'printed': 'Printed',
+            'completed': 'Completed'
+        };
+        return statusMap[status] || status;
     }
     
     getCSRFToken() {

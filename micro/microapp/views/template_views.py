@@ -134,6 +134,10 @@ def oldfilm(request):
     """Deprecated film page view."""
     return render(request, 'microapp/film_old.html')
 
+def oldhandoff(request):
+    """Deprecated handoff page view."""
+    return render(request, 'microapp/handoff_old.html')
+
 # Language toggle function
 def toggle_language(request):
     """

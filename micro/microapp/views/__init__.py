@@ -8,7 +8,7 @@ from .template_views import (
     home, transfer, register, register_project, register_document, register_workflow,
     register_references, register_allocation, register_index, register_filmnumber,
     register_distribution, register_export, film, sma_filming, develop, label, control, handoff, explore, report,
-    settings_view, login, oldcontrol, oldregister, oldtransfer, oldexplore, oldfilm,
+    settings_view, login, oldcontrol, oldregister, oldtransfer, oldexplore, oldfilm, oldhandoff,
     toggle_language
 )
 
@@ -94,10 +94,13 @@ from .roll_views import (
 from .development_views import (
     develop_dashboard, get_rolls_for_development, get_chemical_status,
     start_development, complete_development, get_development_progress,
-    reset_chemical_batch, get_development_history, insert_chemicals
+    reset_chemical_batch, get_development_history, insert_chemicals,
+    save_density_measurement, get_density_measurements, get_active_development_session
 )
 
 from .label_views import (
     get_rolls_for_labels, generate_film_labels, download_label_pdf,
-    get_print_queue, add_to_print_queue, remove_from_print_queue
+    get_print_queue, add_to_print_queue, remove_from_print_queue,
+    get_generated_labels, mark_label_printed, print_label_server_side,
+    get_printer_status, print_multiple_labels
 )
