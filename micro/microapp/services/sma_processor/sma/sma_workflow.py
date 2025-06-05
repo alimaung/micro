@@ -84,7 +84,7 @@ def handle_data_source_selection(app, template_name, logger):
         # Click on the "Neue Rolle beginnen" control
         click_button(newroll, logger)
 
-        #time.sleep(1)
+        time.sleep(1)
         
         # Wait until the correct main window is visible again
         logger.info("Waiting for the main SMA window to reappear...")

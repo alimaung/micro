@@ -1,0 +1,325 @@
+{% extends 'microapp/base.html' %}
+
+{% block title %}Handoff - Microfilm Processing System{% endblock %}
+
+{% load static %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'microapp/css/handoff/handoff.css' %}">
+    <!-- Load Roboto font from Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap" rel="stylesheet">
+    <!-- TinyMCE will be loaded via CDN in JavaScript -->
+{% endblock %}
+
+{% block content %}
+<div class="handoff-container">
+    <!-- Header -->
+    <div class="handoff-header">
+        <h1><i class="fas fa-exchange-alt"></i> Project Handoff</h1>
+        <p>Final validation and email delivery of completed microfilm projects</p>
+    </div>
+
+    <!-- Project Selection Section -->
+    <div class="section-card" id="project-selection-section">
+        <div class="section-header">
+            <h2><i class="fas fa-folder-open"></i> Select Project for Handoff</h2>
+            <p>Choose a completed project to validate and prepare for handoff</p>
+        </div>
+        
+        <div class="project-search-filter">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="project-search" placeholder="Search projects by archive ID or name...">
+            </div>
+            <select id="status-filter" class="filter-select">
+                <option value="all">All Projects</option>
+                <option value="ready" selected>Ready for Handoff</option>
+                <option value="completed">Handoff Complete</option>
+            </select>
+        </div>
+
+        <div class="project-cards" id="project-cards-container">
+            <!-- Project cards will be populated here -->
+        </div>
+    </div>
+
+    <!-- Validation Section -->
+    <div class="section-card" id="validation-section" style="display: none;">
+        <div class="section-header">
+            <h2><i class="fas fa-check-double"></i> Index Validation</h2>
+            <p>Cross-check temporary index with filming process logs</p>
+            <button class="back-btn" id="back-to-selection">
+                <i class="fas fa-arrow-left"></i> Back to Project Selection
+            </button>
+        </div>
+
+        <div class="project-info-bar">
+            <div class="project-info">
+                <h3 id="selected-project-name">Project Name</h3>
+                <span id="selected-project-id">Archive ID</span>
+            </div>
+            <div class="validation-actions">
+                <button class="validate-btn" id="validate-btn">
+                    <i class="fas fa-search"></i> Validate Index
+                </button>
+            </div>
+        </div>
+
+        <div class="validation-table-container">
+            <table class="validation-table" id="validation-table">
+                <thead>
+                    <tr>
+                        <th>Roll</th>
+                        <th>Barcode</th>
+                        <th>COM ID (Bildnummer)</th>
+                        <th>Temporary Blip</th>
+                        <th>Film Log Blip</th>
+                        <th>Status</th>
+                        <th>Validation</th>
+                    </tr>
+                </thead>
+                <tbody id="validation-table-body">
+                    <!-- Validation rows will be populated here -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="validation-summary" id="validation-summary" style="display: none;">
+            <div class="summary-stats">
+                <div class="stat-item">
+                    <span class="stat-value" id="total-documents">0</span>
+                    <span class="stat-label">Total Documents</span>
+                </div>
+                <div class="stat-item success">
+                    <span class="stat-value" id="validated-documents">0</span>
+                    <span class="stat-label">Validated</span>
+                </div>
+                <div class="stat-item warning">
+                    <span class="stat-value" id="warning-documents">0</span>
+                    <span class="stat-label">Warnings</span>
+                </div>
+                <div class="stat-item error">
+                    <span class="stat-value" id="error-documents">0</span>
+                    <span class="stat-label">Errors</span>
+                </div>
+            </div>
+            <div class="summary-actions">
+                <button class="proceed-btn" id="proceed-to-email" disabled>
+                    <i class="fas fa-envelope"></i> Proceed to Email
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Email Preview Section -->
+    <div class="section-card" id="email-section" style="display: none;">
+        <div class="section-header">
+            <h2><i class="fas fa-envelope"></i> Email Preview & Send</h2>
+            <p>Review and customize the handoff email before sending</p>
+            <button class="back-btn" id="back-to-validation">
+                <i class="fas fa-arrow-left"></i> Back to Validation
+            </button>
+        </div>
+
+        <div class="email-form">
+            <div class="email-field">
+                <label for="email-to">To:</label>
+                <input type="email" id="email-to" value="dilek.kursun@rolls-royce.com" multiple>
+                <button class="add-recipient-btn" id="add-recipient">
+                    <i class="fas fa-plus"></i> Add Recipient
+                </button>
+            </div>
+            
+            <div class="email-field">
+                <label for="email-cc">CC:</label>
+                <div class="input-with-buttons">
+                    <input type="email" id="email-cc" value="thomas.lux@rolls-royce.com, jan.becker@rolls-royce.com" multiple>
+                    <button type="button" class="clear-cc-btn" id="clear-cc-btn" title="Clear CC recipients">
+                        <i class="fas fa-times"></i> Clear CC
+                    </button>
+                </div>
+                <small style="color: #6c757d; font-size: 12px; margin-top: 5px; display: block;">
+                    Leave empty to send without CC recipients. Click "Clear CC" to remove all CC recipients.
+                </small>
+            </div>
+            
+            <div class="email-field">
+                <label for="email-subject">Subject:</label>
+                <input type="text" id="email-subject" value="Microfilm Project Handoff - [Archive ID]">
+            </div>
+            
+            <div class="email-field">
+                <label for="email-body">Email Content:</label>
+                <div class="email-editor-container">
+                    <div class="email-editor-toolbar">
+                        <button type="button" class="load-template-btn" id="load-template-btn">
+                            <i class="fas fa-sync"></i> Reload Template
+                        </button>
+                        <button type="button" class="test-template-btn" id="test-original-template-btn" style="margin-left: 10px;">
+                            <i class="fas fa-vial"></i> Test Original Template
+                        </button>
+                        <span class="editor-status" id="editor-status">Initializing editor...</span>
+                    </div>
+                    <textarea id="email-editor" class="email-editor">Loading email template...</textarea>
+                    <!-- Hidden textarea to store HTML content for form submission -->
+                    <textarea id="email-body" style="display: none;"></textarea>
+                </div>
+                <small style="color: #6c757d; font-size: 12px; margin-top: 5px; display: block;">
+                    Edit the email content directly like in Outlook. The professional German template will be loaded automatically.
+                </small>
+            </div>
+        </div>
+
+        <div class="email-attachments">
+            <h3><i class="fas fa-paperclip"></i> Attachments</h3>
+            <div class="attachment-list" id="attachment-list">
+                <!-- Attachments will be populated here -->
+            </div>
+        </div>
+
+        <div class="email-actions">
+            <button class="preview-btn" id="preview-email">
+                <i class="fas fa-eye"></i> Preview Email
+            </button>
+            <button class="send-btn" id="send-email">
+                <i class="fas fa-paper-plane"></i> Send Email
+            </button>
+        </div>
+    </div>
+
+    <!-- Progress Modal -->
+    <div id="progress-modal" class="modal">
+        <div class="modal-content progress-modal">
+            <h3 id="progress-title">Processing...</h3>
+            <div class="progress-bar">
+                <div id="progress-fill" class="progress-fill"></div>
+            </div>
+            <p id="progress-message">Please wait...</p>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="success-modal" class="modal">
+        <div class="modal-content success-modal">
+            <div class="success-header">
+                <i class="fas fa-check-circle success-icon"></i>
+                <h3>Email Sent Successfully!</h3>
+            </div>
+            <div class="success-body">
+                <p class="success-message">The handoff has been completed successfully.</p>
+                <div class="success-details">
+                    <div class="detail-section">
+                        <h4><i class="fas fa-envelope"></i> Recipients</h4>
+                        <div class="recipient-info">
+                            <div class="recipient-line">
+                                <strong>To:</strong> <span id="success-to-recipients"></span>
+                            </div>
+                            <div class="recipient-line" id="success-cc-section" style="display: none;">
+                                <strong>CC:</strong> <span id="success-cc-recipients"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="detail-section" id="success-attachments-section">
+                        <h4><i class="fas fa-paperclip"></i> Attachments</h4>
+                        <div class="attachment-list" id="success-attachment-list"></div>
+                    </div>
+                    <div class="detail-section">
+                        <h4><i class="fas fa-info-circle"></i> Details</h4>
+                        <div class="detail-info">
+                            <div class="detail-line">
+                                <strong>Project:</strong> <span id="success-project-name"></span>
+                            </div>
+                            <div class="detail-line">
+                                <strong>Archive ID:</strong> <span id="success-archive-id"></span>
+                            </div>
+                            <div class="detail-line">
+                                <strong>Sent at:</strong> <span id="success-sent-time"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="success-footer">
+                <button type="button" class="btn btn-primary" id="success-close-btn">
+                    <i class="fas fa-arrow-left"></i> Back to Projects
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Project Card Template -->
+<template id="project-card-template">
+    <div class="project-card" data-project-id="">
+        <div class="project-card-header">
+            <h3 class="project-name"></h3>
+            <span class="project-status"></span>
+        </div>
+        <div class="project-card-body">
+            <div class="project-details">
+                <div class="detail-item">
+                    <i class="fas fa-tag"></i>
+                    <span class="detail-label">Archive ID:</span>
+                    <span class="detail-value archive-id"></span>
+                </div>
+                <div class="detail-item">
+                    <i class="fas fa-file-alt"></i>
+                    <span class="detail-label">Document Type:</span>
+                    <span class="detail-value doc-type"></span>
+                </div>
+                <div class="detail-item">
+                    <i class="fas fa-film"></i>
+                    <span class="detail-label">Rolls:</span>
+                    <span class="detail-value roll-count"></span>
+                </div>
+                <div class="detail-item">
+                    <i class="fas fa-calendar"></i>
+                    <span class="detail-label">Completed:</span>
+                    <span class="detail-value completion-date"></span>
+                </div>
+            </div>
+        </div>
+        <div class="project-card-footer">
+            <button class="select-project-btn">
+                <i class="fas fa-arrow-right"></i> Select Project
+            </button>
+        </div>
+    </div>
+</template>
+
+<!-- Validation Row Template -->
+<template id="validation-row-template">
+    <tr class="validation-row" data-document-id="">
+        <td class="roll-cell"></td>
+        <td class="barcode-cell"></td>
+        <td class="com-id-cell"></td>
+        <td class="temp-blip-cell"></td>
+        <td class="film-blip-cell"></td>
+        <td class="status-cell">
+            <span class="status-badge pending">Pending</span>
+        </td>
+        <td class="validation-cell">
+            <i class="fas fa-clock validation-icon pending"></i>
+        </td>
+    </tr>
+</template>
+
+<!-- Attachment Item Template -->
+<template id="attachment-template">
+    <div class="attachment-item">
+        <i class="fas fa-file"></i>
+        <span class="attachment-name"></span>
+        <span class="attachment-size"></span>
+        <button class="remove-attachment-btn">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+</template>
+{% endblock %}
+
+{% block extra_js %}
+<!-- TinyMCE Rich Text Editor -->
+<script src="https://cdn.tiny.cloud/1/v2t94lcefoat9pm50ewa7hjv6sv9u5pwdh0xkbrwdpsu06zt/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
+<script src="{% static 'microapp/js/handoff/handoff.js' %}"></script>
+{% endblock %}

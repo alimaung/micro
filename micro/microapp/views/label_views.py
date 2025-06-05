@@ -76,6 +76,7 @@ def generate_film_labels(request):
     try:
         data = json.loads(request.body)
         roll_ids = data.get('roll_ids', [])
+        generate_both_versions = data.get('generate_both_versions', False)
         
         if not roll_ids:
             return JsonResponse({
@@ -104,69 +105,76 @@ def generate_film_labels(request):
         with transaction.atomic():
             for roll in rolls:
                 try:
-                    # Check if label already exists
-                    existing_label = FilmLabel.objects.filter(roll=roll).first()
-                    if existing_label:
-                        logger.info(f"Label already exists for roll {roll.film_number}, skipping")
+                    # Check if labels already exist for this roll
+                    existing_labels = FilmLabel.objects.filter(roll=roll)
+                    if existing_labels.exists():
+                        logger.info(f"Labels already exist for roll {roll.film_number}, skipping")
                         continue
                     
-                    # Generate the label PDF
-                    pdf_content = generator.create_film_label(
-                        film_number=roll.film_number,
-                        archive_id=roll.project.archive_id,
-                        doc_type=roll.project.doc_type or 'Document'
-                    )
+                    # Determine which versions to generate
+                    versions_to_generate = ['normal', 'angled'] if generate_both_versions else ['normal']
                     
-                    # Generate a unique label ID
-                    label_id = f"label_{uuid.uuid4().hex[:8]}"
-                    
-                    # Create labels directory in project path
-                    labels_dir = None
-                    pdf_file_path = None
-                    if roll.project.project_path:
-                        labels_dir = Path(roll.project.project_path) / '.labels'
-                        labels_dir.mkdir(exist_ok=True)
-                        pdf_file_path = labels_dir / f"{roll.film_number}_{label_id}.pdf"
+                    for version in versions_to_generate:
+                        # Generate the label PDF for this version
+                        pdf_content = generator.create_film_label(
+                            film_number=roll.film_number,
+                            archive_id=roll.project.archive_id,
+                            doc_type=roll.project.doc_type or 'Document',
+                            version=version
+                        )
                         
-                        # Save PDF to file
-                        with open(pdf_file_path, 'wb') as f:
-                            f.write(pdf_content)
+                        # Generate a unique label ID
+                        label_id = f"label_{uuid.uuid4().hex[:8]}_{version}"
                         
-                        logger.info(f"Saved label PDF to {pdf_file_path}")
-                    
-                    # Store the PDF content in cache for immediate download (expires in 4 hours)
-                    cache_key = f"label_pdf_{label_id}"
-                    cache.set(cache_key, pdf_content, 14400)
-                    
-                    # Create FilmLabel record
-                    film_label = FilmLabel.objects.create(
-                        roll=roll,
-                        project=roll.project,
-                        user=request.user,
-                        label_id=label_id,
-                        film_number=roll.film_number,
-                        archive_id=roll.project.archive_id,
-                        doc_type=roll.project.doc_type or 'Document',
-                        pdf_path=str(pdf_file_path) if pdf_file_path else None,
-                        cache_key=cache_key,
-                        status='generated'
-                    )
-                    
-                    generated_labels.append({
-                        'label_id': label_id,
-                        'roll_id': roll.id,
-                        'film_number': roll.film_number,
-                        'archive_id': roll.project.archive_id,
-                        'doc_type': roll.project.doc_type or 'Document',
-                        'generated_at': film_label.generated_at.isoformat(),
-                        'status': film_label.status,
-                        'pdf_saved': pdf_file_path is not None
-                    })
-                    
-                    logger.info(f"Generated label for roll {roll.film_number}")
+                        # Create labels directory in project path
+                        labels_dir = None
+                        pdf_file_path = None
+                        if roll.project.project_path:
+                            labels_dir = Path(roll.project.project_path) / '.labels'
+                            labels_dir.mkdir(exist_ok=True)
+                            pdf_file_path = labels_dir / f"{roll.film_number}_{label_id}.pdf"
+                            
+                            # Save PDF to file
+                            with open(pdf_file_path, 'wb') as f:
+                                f.write(pdf_content)
+                            
+                            logger.info(f"Saved {version} label PDF to {pdf_file_path}")
+                        
+                        # Store the PDF content in cache for immediate download (expires in 4 hours)
+                        cache_key = f"label_pdf_{label_id}"
+                        cache.set(cache_key, pdf_content, 14400)
+                        
+                        # Create FilmLabel record
+                        film_label = FilmLabel.objects.create(
+                            roll=roll,
+                            project=roll.project,
+                            user=request.user,
+                            label_id=label_id,
+                            version=version,
+                            film_number=roll.film_number,
+                            archive_id=roll.project.archive_id,
+                            doc_type=roll.project.doc_type or 'Document',
+                            pdf_path=str(pdf_file_path) if pdf_file_path else None,
+                            cache_key=cache_key,
+                            status='generated'
+                        )
+                        
+                        generated_labels.append({
+                            'label_id': label_id,
+                            'roll_id': roll.id,
+                            'version': version,
+                            'film_number': roll.film_number,
+                            'archive_id': roll.project.archive_id,
+                            'doc_type': roll.project.doc_type or 'Document',
+                            'generated_at': film_label.generated_at.isoformat(),
+                            'status': film_label.status,
+                            'pdf_saved': pdf_file_path is not None
+                        })
+                        
+                        logger.info(f"Generated {version} label for roll {roll.film_number}")
                     
                 except Exception as e:
-                    logger.error(f"Error generating label for roll {roll.id}: {e}")
+                    logger.error(f"Error generating labels for roll {roll.id}: {e}")
                     continue
         
         if not generated_labels:
@@ -194,6 +202,9 @@ def download_label_pdf(request, label_id):
     Download a generated label PDF.
     """
     try:
+        # Get version from query parameters
+        version = request.GET.get('version', 'normal')
+        
         # Get the FilmLabel record
         film_label = get_object_or_404(FilmLabel, label_id=label_id)
         
@@ -222,7 +233,7 @@ def download_label_pdf(request, label_id):
         
         # Create HTTP response with PDF content
         response = HttpResponse(pdf_content, content_type='application/pdf')
-        response['Content-Disposition'] = f'attachment; filename="film_label_{film_label.film_number}.pdf"'
+        response['Content-Disposition'] = f'attachment; filename="film_label_{film_label.film_number}_{film_label.version}.pdf"'
         
         return response
         
@@ -398,6 +409,7 @@ def get_generated_labels(request):
             labels_data.append({
                 'label_id': label.label_id,
                 'roll_id': label.roll.id,
+                'version': label.version,
                 'film_number': label.film_number,
                 'archive_id': label.archive_id,
                 'doc_type': label.doc_type,
@@ -433,6 +445,9 @@ def print_label_server_side(request, label_id):
         data = json.loads(request.body) if request.body else {}
         printer_name = data.get('printer_name')  # Optional: specify printer
         copies = data.get('copies', 1)
+        
+        # Get version from query parameters
+        version = request.GET.get('version', 'normal')
         
         # Get the FilmLabel record
         film_label = get_object_or_404(FilmLabel, label_id=label_id)
@@ -607,6 +622,44 @@ def print_multiple_labels(request):
         
     except Exception as e:
         logger.error(f"Error printing multiple labels: {e}")
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def reveal_label_in_explorer(request, label_id):
+    """
+    Reveal a label PDF file in Windows Explorer.
+    """
+    try:
+        # Get the FilmLabel record
+        film_label = get_object_or_404(FilmLabel, label_id=label_id)
+        
+        # Check if the PDF file exists on disk
+        if not film_label.pdf_path or not os.path.exists(film_label.pdf_path):
+            return JsonResponse({
+                'success': False,
+                'error': 'Label file not found on disk. It may only exist in cache.'
+            }, status=404)
+        
+        # Use subprocess to open Windows Explorer and select the file
+        import subprocess
+        subprocess.Popen(['explorer', '/select,', film_label.pdf_path])
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Revealed label file in Explorer: {film_label.pdf_path}'
+        })
+        
+    except FilmLabel.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'Label not found'
+        }, status=404)
+    except Exception as e:
+        logger.error(f"Error revealing label in explorer: {e}")
         return JsonResponse({
             'success': False,
             'error': str(e)

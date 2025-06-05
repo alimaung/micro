@@ -15,7 +15,7 @@
     <!-- Header -->
     <div class="label-header">
         <h1>Label Management</h1>
-        <p>Generate and print professional film labels for developed rolls</p>
+        <p>Generate new labels for uncompleted rolls, or view and manage existing labels for completed rolls. Each section handles different workflows for optimal organization.</p>
     </div>
 
     <!-- Notifications Container -->
@@ -25,34 +25,70 @@
     <div class="label-section">
         <div class="section-header">
             <h2>
-                <i class="fas fa-film"></i>
-                Developed Rolls
+                <i class="fas fa-plus-circle"></i>
+                Generate New Labels
             </h2>
             <div class="section-actions">
-                <button id="refresh-rolls" class="btn btn-outline btn-small">
+                <button id="refresh-uncompleted-rolls" class="btn btn-outline btn-small">
                     <i class="fas fa-sync-alt"></i> Refresh
                 </button>
-                <button id="select-all-rolls" class="btn btn-secondary btn-small">
+                <button id="select-all-uncompleted" class="btn btn-secondary btn-small">
                     <i class="fas fa-check-square"></i> Select All
                 </button>
-                <button id="clear-selection" class="btn btn-outline btn-small">
+                <button id="clear-uncompleted-selection" class="btn btn-outline btn-small">
                     <i class="fas fa-square"></i> Clear
                 </button>
             </div>
         </div>
         
         <div class="selection-info">
-            <span id="selection-count">0 rolls selected</span>
-            <button id="generate-selected" class="btn btn-primary" disabled>
-                <i class="fas fa-file-pdf"></i> Generate Labels
+            <span id="uncompleted-selection-count">0 rolls selected</span>
+            <button id="generate-uncompleted" class="btn btn-primary" disabled>
+                <i class="fas fa-file-pdf"></i> Generate Labels (Both Versions)
             </button>
         </div>
         
-        <div id="rolls-grid" class="rolls-grid">
-            <!-- Rolls will be loaded here by JavaScript -->
+        <div id="uncompleted-rolls-grid" class="rolls-grid">
+            <!-- Uncompleted rolls will be loaded here -->
             <div class="loading-state">
                 <i class="fas fa-spinner fa-spin"></i>
-                <p>Loading developed rolls...</p>
+                <p>Loading rolls ready for label generation...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Completed Labels Management Section -->
+    <div class="label-section">
+        <div class="section-header">
+            <h2>
+                <i class="fas fa-eye"></i>
+                View Existing Labels
+            </h2>
+            <div class="section-actions">
+                <button id="refresh-completed-rolls" class="btn btn-outline btn-small">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+                <button id="select-all-completed" class="btn btn-secondary btn-small">
+                    <i class="fas fa-check-square"></i> Select All
+                </button>
+                <button id="clear-completed-selection" class="btn btn-outline btn-small">
+                    <i class="fas fa-square"></i> Clear
+                </button>
+            </div>
+        </div>
+        
+        <div class="selection-info">
+            <span id="completed-selection-count">0 rolls selected</span>
+            <button id="view-completed-labels" class="btn btn-secondary" disabled>
+                <i class="fas fa-eye"></i> View Selected Labels
+            </button>
+        </div>
+        
+        <div id="completed-rolls-grid" class="rolls-grid">
+            <!-- Completed rolls will be loaded here -->
+            <div class="loading-state">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Loading rolls with existing labels...</p>
             </div>
         </div>
     </div>
@@ -65,6 +101,9 @@
                 Generated Labels
             </h2>
             <div class="section-actions">
+                <button id="show-all-labels" class="btn btn-secondary btn-small">
+                    <i class="fas fa-list"></i> Show All Labels
+                </button>
                 <button id="clear-generated" class="btn btn-outline btn-small">
                     <i class="fas fa-trash"></i> Clear All
                 </button>
@@ -81,18 +120,13 @@
         </div>
     </div>
 
-    <!-- Print Queue Section -->
+    <!-- Printer Status Section -->
     <div class="label-section">
         <div class="section-header">
             <h2>
                 <i class="fas fa-print"></i>
-                Print Queue
+                Printer Status
             </h2>
-            <div class="section-actions">
-                <button id="refresh-queue" class="btn btn-outline btn-small">
-                    <i class="fas fa-sync-alt"></i> Refresh
-                </button>
-            </div>
         </div>
         
         <div class="print-info">
@@ -107,18 +141,9 @@
                     <li><strong>Direct Printing:</strong> Labels print automatically to the default printer</li>
                     <li><strong>No User Interaction:</strong> No print dialogs or manual printer selection required</li>
                     <li><strong>Automatic Status:</strong> Labels are marked as printed automatically</li>
-                    <li><strong>Batch Printing:</strong> Print multiple labels with a single click</li>
-                    <li><strong>Reliable:</strong> Uses system printing services for consistent results</li>
+                    <li><strong>Individual Control:</strong> Download and print each version separately</li>
+                    <li><strong>Version Support:</strong> Both Normal and Angled versions available per roll</li>
                 </ul>
-            </div>
-        </div>
-        
-        <div id="print-queue" class="print-queue">
-            <!-- Print queue items will appear here -->
-            <div class="empty-state">
-                <i class="fas fa-print"></i>
-                <p>Print queue is empty</p>
-                <small>Add generated labels to the queue</small>
             </div>
         </div>
     </div>

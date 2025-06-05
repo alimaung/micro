@@ -64,29 +64,8 @@ class SMAService:
                 # Log re-filming operation
                 logger.info(f"Starting re-filming operation for roll {roll.roll_number} (ID: {roll_id})")
                 
-                # Reset roll status for re-filming
-                roll.filming_status = 'ready'
-                roll.filming_progress_percent = 0.0
-                roll.filming_session_id = None
-                roll.filming_started_at = None
-                roll.filming_completed_at = None
-                
-                # Handle temp roll updates for re-filming
-                # If this roll created a temp roll previously, we need to update/invalidate it
-                if hasattr(roll, 'created_temp_roll') and roll.created_temp_roll:
-                    # Mark the previous temp roll as invalidated due to re-filming
-                    temp_roll = roll.created_temp_roll
-                    temp_roll.status = 'invalidated_refilm'
-                    temp_roll.save(update_fields=['status'])
-                    logger.info(f"Invalidated temp roll {temp_roll.temp_roll_id} due to re-filming")
-                
-                # Clear the temp roll relationship for fresh calculation
-                roll.created_temp_roll = None
-                roll.source_temp_roll = None
-                roll.save(update_fields=[
-                    'filming_status', 'filming_progress_percent', 'filming_session_id',
-                    'filming_started_at', 'filming_completed_at', 'created_temp_roll', 'source_temp_roll'
-                ])
+                # Note: Roll status reset will happen after successful session creation
+                # to prevent inconsistent state if user refreshes before filming starts
                 
             elif roll.filming_status == 'completed' and not re_filming:
                 return {'success': False, 'error': f'Roll {roll.roll_number} has already been filmed. Use re-filming option to film again.'}
@@ -119,11 +98,37 @@ class SMAService:
                     status='pending',
                     workflow_state='initialization',
                     user_id=user_id,
-                    recovery_mode=recovery,
-                    re_filming=re_filming  # Track if this is a re-filming operation
+                    recovery_mode=recovery
+                    # Note: re_filming is tracked at the roll level, not session level
                 )
                 
-                # Update roll status
+                # Handle re-filming roll status reset and temp roll cleanup
+                if re_filming:
+                    # Reset roll status for re-filming
+                    roll.filming_status = 'ready'
+                    roll.filming_progress_percent = 0.0
+                    roll.filming_session_id = None
+                    roll.filming_started_at = None
+                    roll.filming_completed_at = None
+                    
+                    # Handle temp roll updates for re-filming
+                    # If this roll created a temp roll previously, we need to update/invalidate it
+                    if hasattr(roll, 'created_temp_roll') and roll.created_temp_roll:
+                        # Mark the previous temp roll as invalidated due to re-filming
+                        temp_roll = roll.created_temp_roll
+                        temp_roll.status = 'invalidated_refilm'
+                        temp_roll.save(update_fields=['status'])
+                        logger.info(f"Invalidated temp roll {temp_roll.temp_roll_id} due to re-filming")
+                    
+                    # Clear the temp roll relationship for fresh calculation
+                    roll.created_temp_roll = None
+                    roll.source_temp_roll = None
+                    roll.save(update_fields=[
+                        'filming_status', 'filming_progress_percent', 'filming_session_id',
+                        'filming_started_at', 'filming_completed_at', 'created_temp_roll', 'source_temp_roll'
+                    ])
+                
+                # Update roll status to filming
                 roll.filming_status = 'filming'
                 roll.filming_session_id = session_id
                 roll.filming_started_at = timezone.now()
@@ -175,7 +180,7 @@ class SMAService:
                     'roll_number': roll.roll_number,
                     'film_type': film_type,
                     'started_at': session.started_at.isoformat(),
-                    're_filming': re_filming
+                    're_filming': re_filming  # Cache re-filming status for quick access
                 })
                 
                 logger.info(f"Started SMA filming session {session_id} for roll {roll.roll_number} (re-filming: {re_filming})")

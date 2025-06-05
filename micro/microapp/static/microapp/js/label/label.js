@@ -2,9 +2,13 @@
 
 class LabelManager {
     constructor() {
-        this.selectedRolls = new Set();
+        this.selectedUncompletedRolls = new Set();
+        this.selectedCompletedRolls = new Set();
         this.generatedLabels = [];
+        this.labelsByRoll = new Map(); // Map of roll_id -> {normal: label, angled: label}
         this.printQueue = [];
+        this.uncompletedRolls = [];
+        this.completedRolls = [];
         this.init();
     }
     
@@ -16,30 +20,114 @@ class LabelManager {
     
     bindEvents() {
         // Refresh buttons
-        document.getElementById('refresh-rolls').addEventListener('click', () => {
+        const refreshUncompletedBtn = document.getElementById('refresh-uncompleted-rolls');
+        if (refreshUncompletedBtn) {
+            refreshUncompletedBtn.addEventListener('click', () => {
+                this.loadRolls();
+            });
+        }
+        
+        const refreshCompletedBtn = document.getElementById('refresh-completed-rolls');
+        if (refreshCompletedBtn) {
+            refreshCompletedBtn.addEventListener('click', () => {
             this.loadRolls();
         });
+        }
         
-        document.getElementById('refresh-queue').addEventListener('click', () => {
-            this.loadPrintQueue();
+        const refreshQueueBtn = document.getElementById('refresh-queue');
+        if (refreshQueueBtn) {
+            refreshQueueBtn.addEventListener('click', () => {
+                this.loadGeneratedLabels();
         });
+        }
         
-        // Bulk actions
-        document.getElementById('select-all-rolls').addEventListener('click', () => {
-            this.selectAllRolls();
+        // Bulk actions for uncompleted rolls
+        const selectAllUncompletedBtn = document.getElementById('select-all-uncompleted');
+        if (selectAllUncompletedBtn) {
+            selectAllUncompletedBtn.addEventListener('click', () => {
+                this.selectAllUncompleted();
         });
+        }
         
-        document.getElementById('clear-selection').addEventListener('click', () => {
-            this.clearSelection();
+        const clearUncompletedSelectionBtn = document.getElementById('clear-uncompleted-selection');
+        if (clearUncompletedSelectionBtn) {
+            clearUncompletedSelectionBtn.addEventListener('click', () => {
+                this.clearUncompletedSelection();
         });
+        }
         
-        document.getElementById('generate-selected').addEventListener('click', () => {
-            this.generateSelectedLabels();
+        const generateUncompletedBtn = document.getElementById('generate-uncompleted');
+        if (generateUncompletedBtn) {
+            generateUncompletedBtn.addEventListener('click', () => {
+                this.generateUncompletedLabels();
+            });
+        }
+        
+        // Bulk actions for completed rolls
+        const selectAllCompletedBtn = document.getElementById('select-all-completed');
+        if (selectAllCompletedBtn) {
+            selectAllCompletedBtn.addEventListener('click', () => {
+                this.selectAllCompleted();
+            });
+        }
+        
+        const clearCompletedSelectionBtn = document.getElementById('clear-completed-selection');
+        if (clearCompletedSelectionBtn) {
+            clearCompletedSelectionBtn.addEventListener('click', () => {
+                this.clearCompletedSelection();
+            });
+        }
+        
+        const viewCompletedLabelsBtn = document.getElementById('view-completed-labels');
+        if (viewCompletedLabelsBtn) {
+            viewCompletedLabelsBtn.addEventListener('click', () => {
+                this.viewSelectedCompletedLabels();
         });
+        }
         
-        document.getElementById('clear-generated').addEventListener('click', () => {
+        const clearGeneratedBtn = document.getElementById('clear-generated');
+        if (clearGeneratedBtn) {
+            clearGeneratedBtn.addEventListener('click', () => {
             this.clearGeneratedLabels();
         });
+        }
+        
+        const showAllLabelsBtn = document.getElementById('show-all-labels');
+        if (showAllLabelsBtn) {
+            showAllLabelsBtn.addEventListener('click', () => {
+                this.showAllLabels();
+            });
+        }
+        
+        // Download actions
+        const downloadAllNormalBtn = document.getElementById('download-all-normal');
+        if (downloadAllNormalBtn) {
+            downloadAllNormalBtn.addEventListener('click', () => {
+                this.downloadAllLabels('normal');
+            });
+        }
+        
+        const downloadAllAngledBtn = document.getElementById('download-all-angled');
+        if (downloadAllAngledBtn) {
+            downloadAllAngledBtn.addEventListener('click', () => {
+                this.downloadAllLabels('angled');
+            });
+        }
+        
+        // Print actions
+        const printAllNormalBtn = document.getElementById('print-all-normal');
+        if (printAllNormalBtn) {
+            printAllNormalBtn.addEventListener('click', () => {
+                this.printAllLabels('normal');
+            });
+        }
+        
+        const printAllAngledBtn = document.getElementById('print-all-angled');
+        if (printAllAngledBtn) {
+            printAllAngledBtn.addEventListener('click', () => {
+                this.printAllLabels('angled');
+            });
+        }
         
         // Dynamic event delegation for roll cards and label actions
         document.addEventListener('click', (e) => {
@@ -48,19 +136,19 @@ class LabelManager {
             }
             
             if (e.target.closest('.download-label')) {
-                this.downloadLabel(e.target.closest('.download-label').dataset.labelId);
+                this.downloadLabel(e.target.closest('.download-label').dataset.labelId, e.target.closest('.download-label').dataset.version);
             }
             
-            if (e.target.closest('.add-to-queue')) {
-                this.addToQueue(e.target.closest('.add-to-queue').dataset.labelId);
+            if (e.target.closest('.view-label')) {
+                this.viewLabel(e.target.closest('.view-label').dataset.labelId, e.target.closest('.view-label').dataset.version);
             }
             
-            if (e.target.closest('.remove-from-queue')) {
-                this.removeFromQueue(e.target.closest('.remove-from-queue').dataset.queueId);
+            if (e.target.closest('.open-label')) {
+                this.openLabel(e.target.closest('.open-label').dataset.labelId, e.target.closest('.open-label').dataset.version);
             }
             
             if (e.target.closest('.print-label')) {
-                this.printLabel(e.target.closest('.print-label').dataset.labelId);
+                this.printLabel(e.target.closest('.print-label').dataset.labelId, e.target.closest('.print-label').dataset.version);
             }
         });
     }
@@ -70,7 +158,6 @@ class LabelManager {
             await Promise.all([
                 this.loadRolls(),
                 this.loadGeneratedLabels(),
-                this.loadPrintQueue(),
                 this.loadPrinterStatus()
             ]);
         } catch (error) {
@@ -85,8 +172,14 @@ class LabelManager {
             const data = await response.json();
             
             if (data.success) {
-                this.renderRolls(data.rolls);
-                this.updateSelectionInfo();
+                // Separate rolls into uncompleted and completed
+                this.uncompletedRolls = data.rolls.filter(roll => !roll.label_completed);
+                this.completedRolls = data.rolls.filter(roll => roll.label_completed);
+                
+                this.renderUncompletedRolls(this.uncompletedRolls);
+                this.renderCompletedRolls(this.completedRolls);
+                this.updateUncompletedSelectionInfo();
+                this.updateCompletedSelectionInfo();
             } else {
                 throw new Error(data.error || 'Failed to load rolls');
             }
@@ -96,34 +189,33 @@ class LabelManager {
         }
     }
     
-    renderRolls(rolls) {
-        const container = document.getElementById('rolls-grid');
+    renderUncompletedRolls(rolls) {
+        const container = document.getElementById('uncompleted-rolls-grid');
         
         if (rolls.length === 0) {
             container.innerHTML = `
                 <div class="empty-state">
                     <i class="fas fa-film"></i>
-                    <p>No developed rolls available</p>
-                    <small>Complete development first to see rolls here</small>
+                    <p>No rolls ready for label generation</p>
+                    <small>Complete development first or all rolls already have labels</small>
                 </div>
             `;
             return;
         }
         
         container.innerHTML = rolls.map(roll => {
-            const isSelected = this.selectedRolls.has(roll.id);
-            const hasLabel = roll.has_label;
-            const isCompleted = roll.label_completed;
+            const isSelected = this.selectedUncompletedRolls.has(roll.id);
+            const canGenerate = roll.can_generate_label;
             
             return `
-                <div class="roll-card ${isSelected ? 'selected' : ''} ${hasLabel ? 'has-label' : ''} ${isCompleted ? 'completed' : ''}" data-roll-id="${roll.id}">
+                <div class="roll-card uncompleted ${isSelected ? 'selected' : ''} ${!canGenerate ? 'disabled' : ''}" data-roll-id="${roll.id}">
                     <div class="roll-header">
                         <div class="roll-title">
                             <div class="roll-film-number">${roll.film_number}</div>
                             <div class="roll-film-type">${roll.film_type}</div>
                         </div>
-                        <div class="roll-status-badge ${hasLabel ? (isCompleted ? 'completed' : 'generated') : 'ready'}">
-                            ${hasLabel ? (isCompleted ? 'Completed' : 'Generated') : 'Ready'}
+                        <div class="roll-status-badge ${canGenerate ? 'ready' : 'disabled'}">
+                            ${canGenerate ? 'Ready to Generate' : 'Cannot Generate'}
                         </div>
                     </div>
                     
@@ -148,80 +240,165 @@ class LabelManager {
                             <span class="label">Developed:</span>
                             <span class="value">${this.formatDateTime(roll.development_completed_at)}</span>
                         </div>
-                        <div class="detail-item">
-                            <span class="label">Label Status:</span>
-                            <span class="value ${hasLabel ? 'text-success' : (roll.can_generate_label ? 'text-warning' : 'text-error')}">
-                                ${hasLabel ? (isCompleted ? 'Completed' : roll.label_status) : (roll.can_generate_label ? 'Ready' : 'Cannot Generate')}
-                            </span>
-                        </div>
                     </div>
                     
-                    ${isCompleted ? `
-                        <div class="roll-overlay completed">
-                            <i class="fas fa-check-circle"></i>
-                            <span>Label Completed</span>
+                    ${canGenerate ? `
+                        <div class="roll-action-hint">
+                            <i class="fas fa-plus"></i>
+                            <span>Click to generate labels</span>
+                        </div>
+                    ` : ''}
+                    
+                    ${!canGenerate ? `
+                        <div class="roll-overlay disabled">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span>Cannot Generate Labels</span>
                         </div>
                     ` : ''}
                 </div>
             `;
         }).join('');
+    }
+    
+    renderCompletedRolls(rolls) {
+        const container = document.getElementById('completed-rolls-grid');
         
-        this.rolls = rolls; // Store for reference
+        if (rolls.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-check-circle"></i>
+                    <p>No completed labels yet</p>
+                    <small>Generate labels first to see them here</small>
+                </div>
+            `;
+            return;
+        }
+        
+        container.innerHTML = rolls.map(roll => {
+            const isSelected = this.selectedCompletedRolls.has(roll.id);
+            
+            return `
+                <div class="roll-card completed ${isSelected ? 'selected' : ''}" data-roll-id="${roll.id}">
+                    <div class="roll-header">
+                        <div class="roll-title">
+                            <div class="roll-film-number">${roll.film_number}</div>
+                            <div class="roll-film-type">${roll.film_type}</div>
+                        </div>
+                        <div class="roll-status-badge completed">
+                            Labels Available
+                        </div>
+                    </div>
+                    
+                    <div class="roll-details">
+                        <div class="detail-item">
+                            <span class="label">Project:</span>
+                            <span class="value">${roll.project_name}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">Archive ID:</span>
+                            <span class="value">${roll.archive_id}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">Doc Type:</span>
+                            <span class="value">${roll.doc_type}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">Pages:</span>
+                            <span class="value">${roll.pages_used}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">Label Status:</span>
+                            <span class="value text-success">${roll.label_status}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="roll-action-hint">
+                        <i class="fas fa-eye"></i>
+                        <span>Click to view labels</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
     }
     
     handleRollClick(card) {
         const rollId = parseInt(card.dataset.rollId);
-        const roll = this.rolls.find(r => r.id === rollId);
+        const isCompleted = card.classList.contains('completed');
+        const isUncompleted = card.classList.contains('uncompleted');
+        
+        if (isUncompleted) {
+            const roll = this.uncompletedRolls.find(r => r.id === rollId);
         
         if (!roll || !roll.can_generate_label) {
             this.showNotification('warning', 'Cannot Select', 'This roll cannot generate labels (missing film number or archive ID)');
             return;
         }
         
-        // Don't allow selection of rolls that already have completed labels
-        if (roll.label_completed) {
-            this.showNotification('info', 'Already Completed', 'This roll already has a completed label');
+            if (this.selectedUncompletedRolls.has(rollId)) {
+                this.selectedUncompletedRolls.delete(rollId);
+                card.classList.remove('selected');
+            } else {
+                this.selectedUncompletedRolls.add(rollId);
+                card.classList.add('selected');
+            }
+            
+            this.updateUncompletedSelectionInfo();
+        } else if (isCompleted) {
+            const roll = this.completedRolls.find(r => r.id === rollId);
+            
+            if (!roll) {
+                this.showNotification('warning', 'Cannot Select', 'Roll not found');
             return;
         }
         
-        // Don't allow selection of rolls that already have labels (unless we want to regenerate)
-        if (roll.has_label) {
-            this.showNotification('info', 'Label Exists', 'This roll already has a generated label. Check the Generated Labels section.');
-            return;
-        }
-        
-        if (this.selectedRolls.has(rollId)) {
-            this.selectedRolls.delete(rollId);
+            if (this.selectedCompletedRolls.has(rollId)) {
+                this.selectedCompletedRolls.delete(rollId);
             card.classList.remove('selected');
         } else {
-            this.selectedRolls.add(rollId);
+                this.selectedCompletedRolls.add(rollId);
             card.classList.add('selected');
         }
         
-        this.updateSelectionInfo();
+            this.updateCompletedSelectionInfo();
+        }
     }
     
-    selectAllRolls() {
-        this.selectedRolls.clear();
-        this.rolls.forEach(roll => {
-            if (roll.can_generate_label && !roll.has_label && !roll.label_completed) {
-                this.selectedRolls.add(roll.id);
+    selectAllUncompleted() {
+        this.selectedUncompletedRolls.clear();
+        this.uncompletedRolls.forEach(roll => {
+            if (roll.can_generate_label) {
+                this.selectedUncompletedRolls.add(roll.id);
             }
         });
-        this.updateRollSelection();
-        this.updateSelectionInfo();
+        this.updateUncompletedRollSelection();
+        this.updateUncompletedSelectionInfo();
     }
     
-    clearSelection() {
-        this.selectedRolls.clear();
-        this.updateRollSelection();
-        this.updateSelectionInfo();
+    selectAllCompleted() {
+        this.selectedCompletedRolls.clear();
+        this.completedRolls.forEach(roll => {
+            this.selectedCompletedRolls.add(roll.id);
+        });
+        this.updateCompletedRollSelection();
+        this.updateCompletedSelectionInfo();
     }
     
-    updateRollSelection() {
-        document.querySelectorAll('.roll-card').forEach(card => {
+    clearUncompletedSelection() {
+        this.selectedUncompletedRolls.clear();
+        this.updateUncompletedRollSelection();
+        this.updateUncompletedSelectionInfo();
+    }
+    
+    clearCompletedSelection() {
+        this.selectedCompletedRolls.clear();
+        this.updateCompletedRollSelection();
+        this.updateCompletedSelectionInfo();
+    }
+    
+    updateUncompletedRollSelection() {
+        document.querySelectorAll('.roll-card.uncompleted').forEach(card => {
             const rollId = parseInt(card.dataset.rollId);
-            if (this.selectedRolls.has(rollId)) {
+            if (this.selectedUncompletedRolls.has(rollId)) {
                 card.classList.add('selected');
             } else {
                 card.classList.remove('selected');
@@ -229,47 +406,34 @@ class LabelManager {
         });
     }
     
-    updateSelectionInfo() {
-        const count = this.selectedRolls.size;
-        document.getElementById('selection-count').textContent = `${count} roll${count !== 1 ? 's' : ''} selected`;
-        document.getElementById('generate-selected').disabled = count === 0;
+    updateCompletedRollSelection() {
+        document.querySelectorAll('.roll-card.completed').forEach(card => {
+            const rollId = parseInt(card.dataset.rollId);
+            if (this.selectedCompletedRolls.has(rollId)) {
+                card.classList.add('selected');
+            } else {
+                card.classList.remove('selected');
+            }
+        });
     }
     
-    async generateSelectedLabels() {
-        if (this.selectedRolls.size === 0) return;
+    updateUncompletedSelectionInfo() {
+        const count = this.selectedUncompletedRolls.size;
+        document.getElementById('uncompleted-selection-count').textContent = `${count} roll${count !== 1 ? 's' : ''} selected`;
         
-        const rollIds = Array.from(this.selectedRolls);
+        const generateBtn = document.getElementById('generate-uncompleted');
+        if (generateBtn) {
+            generateBtn.disabled = count === 0;
+    }
+    }
+    
+    updateCompletedSelectionInfo() {
+        const count = this.selectedCompletedRolls.size;
+        document.getElementById('completed-selection-count').textContent = `${count} roll${count !== 1 ? 's' : ''} selected`;
         
-        try {
-            this.showNotification('info', 'Generating Labels', 'Creating PDF labels and saving to project directories...');
-            
-            const response = await fetch('/api/labels/generate/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': this.getCSRFToken()
-                },
-                body: JSON.stringify({
-                    roll_ids: rollIds
-                })
-            });
-            
-            const data = await response.json();
-            
-            if (data.success) {
-                this.showNotification('success', 'Labels Generated', data.message);
-                
-                // Clear selection after successful generation
-                this.clearSelection();
-                
-                // Reload all data to show updated status
-                await this.loadInitialData();
-            } else {
-                throw new Error(data.error || 'Failed to generate labels');
-            }
-        } catch (error) {
-            console.error('Error generating labels:', error);
-            this.showNotification('error', 'Error', 'Failed to generate labels');
+        const viewBtn = document.getElementById('view-completed-labels');
+        if (viewBtn) {
+            viewBtn.disabled = count === 0;
         }
     }
     
@@ -280,6 +444,20 @@ class LabelManager {
             
             if (data.success) {
                 this.generatedLabels = data.labels;
+                console.log('Raw generated labels from API:', this.generatedLabels);
+                
+                // Organize labels by roll
+                this.labelsByRoll.clear();
+                this.generatedLabels.forEach(label => {
+                    console.log('Processing label:', label);
+                    if (!this.labelsByRoll.has(label.roll_id)) {
+                        this.labelsByRoll.set(label.roll_id, {});
+                    }
+                    console.log('Setting label version:', label.version, 'for roll:', label.roll_id);
+                    this.labelsByRoll.get(label.roll_id)[label.version] = label;
+                });
+                
+                console.log('Final labelsByRoll structure:', this.labelsByRoll);
                 this.renderGeneratedLabels();
             } else {
                 throw new Error(data.error || 'Failed to load generated labels');
@@ -292,8 +470,16 @@ class LabelManager {
     
     renderGeneratedLabels() {
         const container = document.getElementById('generated-labels');
+        console.log('Rendering generated labels, container:', container);
+        console.log('Labels by roll:', this.labelsByRoll);
         
-        if (this.generatedLabels.length === 0) {
+        if (!container) {
+            console.error('Generated labels container not found!');
+            return;
+        }
+        
+        if (this.labelsByRoll.size === 0) {
+            console.log('No labels to display, showing empty state');
             container.innerHTML = `
                 <div class="empty-state">
                     <i class="fas fa-file-pdf"></i>
@@ -304,55 +490,101 @@ class LabelManager {
             return;
         }
         
-        container.innerHTML = this.generatedLabels.map(label => `
-            <div class="label-item ${label.is_completed ? 'completed' : ''}">
-                <div class="label-item-header">
-                    <div class="label-info">
-                        <h4>${label.film_number}</h4>
-                        <p>${label.archive_id} - ${label.doc_type}</p>
-                        <small>Generated: ${this.formatDateTime(label.generated_at)}</small>
-                        ${label.printed_at ? `<small>Printed: ${this.formatDateTime(label.printed_at)}</small>` : ''}
-                        ${label.pdf_saved ? '<small class="text-success"><i class="fas fa-check"></i> Saved to project</small>' : ''}
+        console.log('Generating HTML for', this.labelsByRoll.size, 'roll(s)');
+        
+        const rollsHtml = Array.from(this.labelsByRoll.entries()).map(([rollId, versions]) => {
+            console.log('Processing roll', rollId, 'versions:', versions);
+            const normalLabel = versions.normal;
+            const angledLabel = versions.angled;
+            console.log('normalLabel:', normalLabel, 'angledLabel:', angledLabel);
+            
+            // Use the first available label for roll info - try any version
+            const rollInfo = normalLabel || angledLabel || Object.values(versions)[0];
+            
+            // Skip if no labels exist for this roll
+            if (!rollInfo) {
+                console.log('Skipping roll', rollId, 'no rollInfo. versions keys:', Object.keys(versions));
+                // Let's try to get any label from the versions object
+                const anyLabel = Object.values(versions)[0];
+                console.log('First available label:', anyLabel);
+                return '';
+            }
+            
+            console.log('Rendering roll', rollId, 'with rollInfo:', rollInfo);
+            
+            // Get all available versions dynamically
+            const allVersions = Object.entries(versions);
+            console.log('All versions for roll', rollId, ':', allVersions);
+            
+            return `
+                <div class="roll-label-container">
+                    <div class="roll-label-header">
+                        <h4>${rollInfo.film_number} - ${rollInfo.archive_id}</h4>
+                        <p>${rollInfo.doc_type}</p>
+                        <small>Generated: ${this.formatDateTime(rollInfo.generated_at)}</small>
                     </div>
-                    <div class="label-status-badge ${label.status}">
-                        ${this.getStatusDisplayText(label.status)}
-                        ${label.is_completed ? '<i class="fas fa-check-circle"></i>' : ''}
+                    
+                    <div class="version-containers">
+                        ${allVersions.map(([versionName, label]) => `
+                            <div class="version-container ${versionName}">
+                                <div class="version-header">
+                                    <h5><i class="fas fa-${versionName === 'angled' ? 'drafting-compass' : 'table'}"></i> ${versionName.charAt(0).toUpperCase() + versionName.slice(1)} Version</h5>
+                                    <div class="version-status ${label.status}">${this.getStatusDisplayText(label.status)}</div>
                     </div>
-                </div>
-                <div class="label-actions">
-                    <button class="btn btn-primary btn-small download-label" data-label-id="${label.label_id}">
+                                <div class="version-actions">
+                                    <button class="btn btn-secondary btn-small download-label" data-label-id="${label.label_id}" data-version="${versionName}">
                         <i class="fas fa-download"></i> Download ${label.download_count > 0 ? `(${label.download_count})` : ''}
                     </button>
-                    ${label.status === 'generated' || label.status === 'downloaded' ? `
-                        <button class="btn btn-secondary btn-small add-to-queue" data-label-id="${label.label_id}">
-                            <i class="fas fa-plus"></i> Add to Queue
+                                    <button class="btn btn-info btn-small view-label" data-label-id="${label.label_id}" data-version="${versionName}">
+                                        <i class="fas fa-eye"></i> View
+                                    </button>
+                                    <button class="btn btn-outline btn-small open-label" data-label-id="${label.label_id}" data-version="${versionName}">
+                                        <i class="fas fa-folder-open"></i> Reveal
                         </button>
-                    ` : ''}
-                    <button class="btn btn-outline btn-small print-label" data-label-id="${label.label_id}">
+                                    <button class="btn btn-primary btn-small print-label" data-label-id="${label.label_id}" data-version="${versionName}">
                         <i class="fas fa-print"></i> Print ${label.print_count > 0 ? `(${label.print_count})` : ''}
                     </button>
+                                </div>
+                                ${label.printed_at ? `<small class="print-info">Printed: ${this.formatDateTime(label.printed_at)}</small>` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
                 </div>
-            </div>
-        `).join('');
+            `;
+        }).filter(html => html !== '').join('');
+        
+        console.log('Final HTML length:', rollsHtml.length);
+        container.innerHTML = rollsHtml;
+        console.log('Labels rendered successfully');
     }
     
     clearGeneratedLabels() {
         // Note: This now only clears the UI, not the database records
         this.generatedLabels = [];
+        this.labelsByRoll.clear();
         this.renderGeneratedLabels();
         this.showNotification('info', 'View Cleared', 'Generated labels view cleared (labels still saved in database)');
     }
     
-    async downloadLabel(labelId) {
+    // Stub methods for bulk actions (not currently implemented in UI)
+    downloadAllLabels(version) {
+        this.showNotification('info', 'Not Available', 'Bulk download is not available in the current interface. Use individual download buttons.');
+    }
+    
+    printAllLabels(version) {
+        this.showNotification('info', 'Not Available', 'Bulk print is not available in the current interface. Use individual print buttons.');
+    }
+    
+    async downloadLabel(labelId, version) {
         try {
-            const response = await fetch(`/api/labels/download/${labelId}/`);
+            const response = await fetch(`/api/labels/download/${labelId}/?version=${version}`);
             
             if (response.ok) {
                 const blob = await response.blob();
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `film_label_${labelId}.pdf`;
+                a.download = `film_label_${labelId}_${version}.pdf`;
                 document.body.appendChild(a);
                 a.click();
                 window.URL.revokeObjectURL(url);
@@ -368,6 +600,66 @@ class LabelManager {
         } catch (error) {
             console.error('Error downloading label:', error);
             this.showNotification('error', 'Error', 'Failed to download label');
+        }
+    }
+    
+    async viewLabel(labelId, version) {
+        try {
+            const response = await fetch(`/api/labels/download/${labelId}/?version=${version}`);
+            
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                
+                // Open PDF in new tab for viewing
+                window.open(url, '_blank');
+                
+                this.showNotification('success', 'Opened', 'Label PDF opened in new tab');
+                
+                // Clean up the URL after a delay to allow the browser to load it
+                setTimeout(() => {
+                    window.URL.revokeObjectURL(url);
+                }, 1000);
+                
+                // Reload generated labels to show updated download count
+                this.loadGeneratedLabels();
+            } else {
+                throw new Error('Failed to view label');
+            }
+        } catch (error) {
+            console.error('Error viewing label:', error);
+            this.showNotification('error', 'Error', 'Failed to view label');
+        }
+    }
+    
+    async openLabel(labelId, version) {
+        try {
+            // Call the reveal API endpoint
+            const response = await fetch(`/api/labels/reveal/${labelId}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.getCSRFToken()
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                this.showNotification('success', 'File Revealed', 'Label file revealed in Windows Explorer');
+            } else {
+                // If file not found on disk, fall back to download
+                if (data.error.includes('not found on disk')) {
+                    this.showNotification('warning', 'File Not Saved', 'Label only exists in cache. Downloading instead...');
+                    // Fall back to download
+                    await this.downloadLabel(labelId, version);
+                } else {
+                    throw new Error(data.error);
+                }
+            }
+        } catch (error) {
+            console.error('Error revealing label in explorer:', error);
+            this.showNotification('error', 'Error', 'Failed to reveal label in explorer');
         }
     }
     
@@ -440,6 +732,7 @@ class LabelManager {
         const statusText = document.getElementById('printer-status-text');
         const detailsText = document.getElementById('printer-details');
         
+        if (statusText && detailsText) {
         if (status.default_printer) {
             statusText.textContent = 'Printing Method: Server-Side Direct Printing';
             detailsText.innerHTML = `
@@ -455,6 +748,7 @@ class LabelManager {
                     No default printer found. Please configure a printer in your system settings.
                 </span>
             `;
+            }
         }
     }
     
@@ -465,65 +759,12 @@ class LabelManager {
         return 'Unknown';
     }
     
-    renderPrintQueue() {
-        const container = document.getElementById('print-queue');
-        
-        if (this.printQueue.length === 0) {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-print"></i>
-                    <p>Print queue is empty</p>
-                    <small>Add generated labels to the queue</small>
-                </div>
-            `;
-            return;
-        }
-        
-        container.innerHTML = this.printQueue.map(item => `
-            <div class="queue-item">
-                <div class="queue-info">
-                    <h5>${item.film_number} - ${item.archive_id}</h5>
-                    <p>Added: ${this.formatDateTime(item.added_at)}</p>
-                    <small>${item.doc_type}</small>
-                </div>
-                <div class="queue-status ${item.status}">${item.status}</div>
-                <button class="btn btn-secondary btn-small remove-from-queue" data-queue-id="${item.queue_id}">
-                    <i class="fas fa-times"></i> Remove
-                </button>
-            </div>
-        `).join('');
-    }
-    
-    async removeFromQueue(queueId) {
-        try {
-            const response = await fetch(`/api/labels/print-queue/remove/${queueId}/`, {
-                method: 'DELETE',
-                headers: {
-                    'X-CSRFToken': this.getCSRFToken()
-                }
-            });
-            
-            const data = await response.json();
-            
-            if (data.success) {
-                this.loadPrintQueue();
-                this.loadGeneratedLabels(); // Reload to show updated status
-                this.showNotification('success', 'Removed', data.message);
-            } else {
-                throw new Error(data.error || 'Failed to remove from queue');
-            }
-        } catch (error) {
-            console.error('Error removing from queue:', error);
-            this.showNotification('error', 'Error', 'Failed to remove from print queue');
-        }
-    }
-    
-    async printLabel(labelId) {
+    async printLabel(labelId, version) {
         // Server-side printing - no user interaction required
         try {
             this.showNotification('info', 'Printing Label', 'Sending label to printer...');
             
-            const response = await fetch(`/api/labels/print/${labelId}/`, {
+            const response = await fetch(`/api/labels/print/${labelId}/?version=${version}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -603,7 +844,7 @@ class LabelManager {
         
         container.appendChild(notification);
         
-        // Auto-remove after 5 seconds
+        // Auto-remove after 8 seconds (increased from 5)
         setTimeout(() => {
             if (notification.parentNode) {
                 notification.style.animation = 'slideOut 0.3s ease';
@@ -613,7 +854,108 @@ class LabelManager {
                     }
                 }, 300);
             }
-        }, 5000);
+        }, 8000);
+    }
+    
+    async generateUncompletedLabels() {
+        if (this.selectedUncompletedRolls.size === 0) return;
+        
+        const rollIds = Array.from(this.selectedUncompletedRolls);
+        
+        try {
+            this.showNotification('info', 'Generating Labels', 'Creating both Normal and Angled PDF labels for selected rolls...');
+            
+            const response = await fetch('/api/labels/generate/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.getCSRFToken()
+                },
+                body: JSON.stringify({
+                    roll_ids: rollIds,
+                    generate_both_versions: true
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                this.showNotification('success', 'Labels Generated', data.message);
+                
+                // Clear selection after successful generation
+                this.clearUncompletedSelection();
+                
+                // Reload all data to show updated status
+                await this.loadInitialData();
+            } else {
+                throw new Error(data.error || 'Failed to generate labels');
+            }
+        } catch (error) {
+            console.error('Error generating labels:', error);
+            this.showNotification('error', 'Error', 'Failed to generate labels');
+        }
+    }
+    
+    async viewSelectedCompletedLabels() {
+        if (this.selectedCompletedRolls.size === 0) {
+            this.showNotification('warning', 'No Selection', 'Please select completed rolls first to view their labels.');
+            return;
+        }
+        
+        const rollIds = Array.from(this.selectedCompletedRolls);
+        console.log('Viewing labels for roll IDs:', rollIds);
+        
+        try {
+            // First, ensure we have the latest generated labels
+            await this.loadGeneratedLabels();
+            console.log('All generated labels:', this.generatedLabels);
+            
+            // Filter existing labels to show only selected rolls
+            const filteredLabels = this.generatedLabels.filter(label => 
+                rollIds.includes(label.roll_id)
+            );
+            
+            console.log('Filtered labels:', filteredLabels);
+            
+            if (filteredLabels.length === 0) {
+                this.showNotification('warning', 'No Labels Found', 'No generated labels found for selected rolls. They may need to be regenerated.');
+                return;
+            }
+            
+            // Organize filtered labels by roll
+            const filteredLabelsByRoll = new Map();
+            filteredLabels.forEach(label => {
+                if (!filteredLabelsByRoll.has(label.roll_id)) {
+                    filteredLabelsByRoll.set(label.roll_id, {});
+                }
+                filteredLabelsByRoll.get(label.roll_id)[label.version] = label;
+            });
+            
+            console.log('Filtered labels by roll:', filteredLabelsByRoll);
+            
+            // Replace with filtered labels
+            this.labelsByRoll = filteredLabelsByRoll;
+            
+            // Render the filtered labels
+            this.renderGeneratedLabels();
+            
+            this.showNotification('success', 'Labels Displayed', `Showing labels for ${rollIds.length} selected roll${rollIds.length !== 1 ? 's' : ''}. Click "Show All Labels" to see all generated labels.`);
+            
+        } catch (error) {
+            console.error('Error viewing completed labels:', error);
+            this.showNotification('error', 'Error', 'Failed to view selected labels: ' + error.message);
+        }
+    }
+    
+    async showAllLabels() {
+        try {
+            // Reload all generated labels
+            await this.loadGeneratedLabels();
+            this.showNotification('success', 'All Labels Displayed', 'Showing all generated labels');
+        } catch (error) {
+            console.error('Error showing all labels:', error);
+            this.showNotification('error', 'Error', 'Failed to load all labels');
+        }
     }
 }
 

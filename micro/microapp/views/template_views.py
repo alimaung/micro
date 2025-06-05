@@ -81,7 +81,7 @@ def control(request):
 
 def handoff(request):
     """Handoff page view."""
-    return render(request, 'microapp/handoff.html')
+    return render(request, 'microapp/handoff/handoff.html')
 
 def explore(request):
     """Explore page view with simple statistics."""

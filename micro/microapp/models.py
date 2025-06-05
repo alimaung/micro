@@ -945,6 +945,11 @@ class FilmLabel(models.Model):
         ('completed', 'Completed'),
     ]
     
+    VERSION_CHOICES = [
+        ('normal', 'Normal'),
+        ('angled', 'Angled'),
+    ]
+    
     # Relationships
     roll = models.ForeignKey(Roll, on_delete=models.CASCADE, related_name='film_labels')
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='film_labels')
@@ -952,6 +957,7 @@ class FilmLabel(models.Model):
     
     # Label identification
     label_id = models.CharField(max_length=100, unique=True, help_text="Unique label identifier")
+    version = models.CharField(max_length=10, choices=VERSION_CHOICES, default='normal', help_text="Label version (normal or angled)")
     
     # Label content information
     film_number = models.CharField(max_length=50, help_text="Film number on the label")
@@ -984,10 +990,12 @@ class FilmLabel(models.Model):
             models.Index(fields=['project', 'status']),
             models.Index(fields=['status']),
             models.Index(fields=['generated_at']),
+            models.Index(fields=['roll', 'version']),
         ]
+        unique_together = ['roll', 'version']  # Ensure only one label per version per roll
     
     def __str__(self):
-        return f"Label {self.label_id} - {self.film_number} ({self.status})"
+        return f"Label {self.label_id} - {self.film_number} ({self.version}, {self.status})"
     
     @property
     def is_completed(self):

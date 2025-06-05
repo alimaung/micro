@@ -225,6 +225,7 @@ urlpatterns = [
     path('api/labels/rolls/', views.get_rolls_for_labels, name='api_get_rolls_for_labels'),
     path('api/labels/generate/', views.generate_film_labels, name='api_generate_film_labels'),
     path('api/labels/download/<str:label_id>/', views.download_label_pdf, name='api_download_label_pdf'),
+    path('api/labels/reveal/<str:label_id>/', views.reveal_label_in_explorer, name='api_reveal_label_in_explorer'),
     path('api/labels/print-queue/', views.get_print_queue, name='api_get_print_queue'),
     path('api/labels/print-queue/add/', views.add_to_print_queue, name='api_add_to_print_queue'),
     path('api/labels/print-queue/remove/<str:queue_id>/', views.remove_from_print_queue, name='api_remove_from_print_queue'),
@@ -260,4 +261,15 @@ urlpatterns = [
     path('api/sma/sessions/history/', sma_views.session_history, name='sma_session_history'),
     path('api/sma/sessions/cleanup/', sma_views.cleanup_sessions, name='sma_cleanup_sessions'),
     path('api/sma/temp-roll-preview/', sma_views.temp_roll_preview, name='sma_temp_roll_preview'),
+    
+    # Handoff endpoints
+    path('api/handoff/test/', views.test_handoff_endpoint, name='api_test_handoff'),
+    path('api/handoff/test-post/', views.test_post_endpoint, name='api_test_post_handoff'),
+    path('api/handoff/projects/', views.get_projects_for_handoff, name='api_get_projects_for_handoff'),
+    path('api/handoff/projects/<int:project_id>/validation-data/', views.get_project_validation_data, name='api_get_project_validation_data'),
+    path('api/handoff/projects/<int:project_id>/validate/', views.validate_project_index, name='api_validate_project_index'),
+    path('api/handoff/projects/<int:project_id>/generate-files/', views.generate_handoff_files, name='api_generate_handoff_files'),
+    path('api/handoff/projects/<int:project_id>/send-email/', views.send_handoff_email, name='api_send_handoff_email'),
+    path('api/handoff/projects/<int:project_id>/preview-email/', views.preview_email_template, name='api_preview_email_template'),
+    path('api/handoff/preview-original-template/', views.preview_original_template, name='api_preview_original_template'),
 ]

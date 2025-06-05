@@ -351,13 +351,13 @@ def get_mock_data():
         {
             'film_number': '90000001',
             'archive_id': 'RRD099-2099',
-            'doc_type': 'QX9000 Quantum Turbofan',
+            'doc_type': 'QX9000 Quantum Turbofan Specification Justification Report Quantum Turbofan Specification Justification Report Report Quantum Turbofan Specification Justification Report',
             'version': 'normal'
         },
         {
             'film_number': '90000001',
             'archive_id': 'RRD099-2099',
-            'doc_type': 'QX9000 Quantum Turbofan',
+            'doc_type': 'QX9000 Quantum Turbofan Specification Justification Report Quantum Turbofan Specification Justification Report Report Quantum Turbofan Specification Justification Report',
             'version': 'angled'
         }
     ]

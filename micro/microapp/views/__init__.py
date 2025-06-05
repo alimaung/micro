@@ -102,5 +102,12 @@ from .label_views import (
     get_rolls_for_labels, generate_film_labels, download_label_pdf,
     get_print_queue, add_to_print_queue, remove_from_print_queue,
     get_generated_labels, mark_label_printed, print_label_server_side,
-    get_printer_status, print_multiple_labels
+    get_printer_status, print_multiple_labels, reveal_label_in_explorer
+)
+
+# Import handoff views
+from .handoff_views import (
+    get_projects_for_handoff, get_project_validation_data, validate_project_index,
+    generate_handoff_files, send_handoff_email, test_handoff_endpoint, test_post_endpoint,
+    preview_email_template, preview_original_template
 )
