@@ -41,9 +41,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const emailTo = document.getElementById('email-to');
     const emailCc = document.getElementById('email-cc');
     const emailSubject = document.getElementById('email-subject');
-    const emailBody = document.getElementById('email-body');
-    const loadTemplateBtn = document.getElementById('load-template-btn');
-    const editorStatus = document.getElementById('editor-status');
+    const emailArchiveId = document.getElementById('email-archive-id');
+    const emailFilmNumbers = document.getElementById('email-film-numbers');
+    const emailCustomMessage = document.getElementById('email-custom-message');
+    const emailPreview = document.getElementById('email-preview');
+    const sendEmailBtn = document.getElementById('send-email-btn');
     const attachmentList = document.getElementById('attachment-list');
     
     // Rich text editor
@@ -167,10 +169,12 @@ document.addEventListener('DOMContentLoaded', function() {
     function saveEmailFormData() {
         try {
             const emailFormData = {
-                to: emailTo.value,
-                cc: emailCc.value,
-                subject: emailSubject.value,
-                body: emailBody.value
+                to: emailTo ? emailTo.value : '',
+                cc: emailCc ? emailCc.value : '',
+                subject: emailSubject ? emailSubject.value : '',
+                archive_id: emailArchiveId ? emailArchiveId.value : '',
+                film_numbers: emailFilmNumbers ? emailFilmNumbers.value : '',
+                custom_message: emailCustomMessage ? emailCustomMessage.value : ''
             };
             localStorage.setItem(STATE_KEYS.EMAIL_FORM_DATA, JSON.stringify(emailFormData));
         } catch (error) {
@@ -183,19 +187,28 @@ document.addEventListener('DOMContentLoaded', function() {
             const savedEmailData = localStorage.getItem(STATE_KEYS.EMAIL_FORM_DATA);
             if (savedEmailData) {
                 const emailFormData = JSON.parse(savedEmailData);
-                emailTo.value = emailFormData.to || 'dilek.kursun@rolls-royce.com';
-                emailCc.value = emailFormData.cc || 'thomas.lux@rolls-royce.com, jan.becker@rolls-royce.com';
-                emailSubject.value = emailFormData.subject || `Microfilm Project Handoff - ${selectedProject?.archive_id || '[Archive ID]'}`;
-                emailBody.value = emailFormData.body || '';
                 
-                // Restore content in TinyMCE if available
-                if (tinyMceEditor && emailFormData.body) {
-                    try {
-                        tinyMceEditor.setContent(emailFormData.body);
-                    } catch (error) {
-                        console.warn('Error restoring TinyMCE content:', error);
-                    }
+                if (emailTo) {
+                    emailTo.value = emailFormData.to || 'dilek.kursun@rolls-royce.com';
                 }
+                        if (emailCc) {
+            emailCc.value = emailFormData.cc || 'thomas.lux@rolls-royce.com; jan.becker@rolls-royce.com';
+        }
+                if (emailSubject) {
+                    emailSubject.value = emailFormData.subject || `Microfilm Project Handoff - ${selectedProject?.archive_id || '[Archive ID]'}`;
+                }
+                if (emailArchiveId) {
+                    emailArchiveId.value = emailFormData.archive_id || '';
+                }
+                if (emailFilmNumbers) {
+                    emailFilmNumbers.value = emailFormData.film_numbers || '';
+                }
+                if (emailCustomMessage) {
+                    emailCustomMessage.value = emailFormData.custom_message || '';
+                }
+                
+                // Update preview after restoring data
+                updateEmailPreview();
             }
         } catch (error) {
             console.warn('Error restoring email form data:', error);
@@ -226,75 +239,70 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function initializeEventHandlers() {
-        // Navigation buttons
-        document.getElementById('back-to-selection').addEventListener('click', () => {
-            if (confirm('Are you sure you want to go back? Your validation progress will be saved.')) {
-                showProjectSelection();
-            }
-        });
-        document.getElementById('back-to-validation').addEventListener('click', () => {
-            if (confirm('Are you sure you want to go back? Your email draft will be saved.')) {
-                showValidationSection();
-            }
-        });
-        
         // Project selection
-        projectSearchInput.addEventListener('input', filterProjects);
-        statusFilter.addEventListener('change', filterProjects);
+        document.getElementById('back-to-selection').addEventListener('click', showProjectSelection);
+        document.getElementById('back-to-validation').addEventListener('click', showValidationSection);
+        
+        // Project search and filter
+        if (projectSearchInput) {
+            projectSearchInput.addEventListener('input', filterProjects);
+        }
+        if (statusFilter) {
+            statusFilter.addEventListener('change', filterProjects);
+        }
         
         // Validation
-        validateBtn.addEventListener('click', validateProject);
+        document.getElementById('validate-btn').addEventListener('click', validateProject);
         document.getElementById('proceed-to-email').addEventListener('click', showEmailSection);
         
-        // Email
-        document.getElementById('add-recipient').addEventListener('click', addRecipient);
-        document.getElementById('clear-cc-btn').addEventListener('click', clearCcRecipients);
-        document.getElementById('preview-email').addEventListener('click', previewEmail);
-        document.getElementById('send-email').addEventListener('click', sendEmail);
+        // Email - only add listeners for elements that exist
+        const addRecipientBtn = document.getElementById('add-recipient');
+        if (addRecipientBtn) {
+            addRecipientBtn.addEventListener('click', addRecipient);
+        }
         
-        // Email editor
-        loadTemplateBtn.addEventListener('click', loadEmailTemplate);
+        const clearCcBtn = document.getElementById('clear-cc-btn');
+        if (clearCcBtn) {
+            clearCcBtn.addEventListener('click', clearCcRecipients);
+        }
         
-        // Test original template button
-        const testOriginalTemplateBtn = document.getElementById('test-original-template-btn');
-        if (testOriginalTemplateBtn) {
-            testOriginalTemplateBtn.addEventListener('click', loadOriginalTemplate);
+        // Use the correct send button ID
+        const sendEmailBtn = document.getElementById('send-email-btn');
+        if (sendEmailBtn) {
+            sendEmailBtn.addEventListener('click', sendEmail);
         }
         
         // Success modal
-        document.getElementById('success-close-btn').addEventListener('click', closeSuccessModal);
+        const successCloseBtn = document.getElementById('success-close-btn');
+        if (successCloseBtn) {
+            successCloseBtn.addEventListener('click', closeSuccessModal);
+        }
         
-        // Add abort button functionality
-        addAbortButton();
-        
-        // Auto-save email form data when typing
-        emailTo.addEventListener('input', saveEmailFormData);
-        emailCc.addEventListener('input', () => {
-            // Mark CC field as user-modified so we don't override their choice
-            emailCc.setAttribute('data-user-modified', 'true');
-            saveEmailFormData();
-        });
-        emailSubject.addEventListener('input', saveEmailFormData);
-        
-        // Initialize rich text editor with a small delay to ensure TinyMCE is loaded
-        setTimeout(initializeEmailEditor, 100);
-    }
-    
-    function addAbortButton() {
-        // Add abort button to email section
-        const emailActions = document.querySelector('.email-actions');
-        if (emailActions && !document.getElementById('abort-handoff-btn')) {
-            const abortBtn = document.createElement('button');
-            abortBtn.id = 'abort-handoff-btn';
-            abortBtn.className = 'abort-btn';
-            abortBtn.innerHTML = '<i class="fas fa-times"></i> Abort Handoff';
+        // Abort button - use existing button from HTML
+        const abortBtn = document.getElementById('abort-handoff-btn');
+        if (abortBtn) {
             abortBtn.addEventListener('click', abortHandoff);
-            
-            // Insert before the send button
-            const sendBtn = document.getElementById('send-email');
-            emailActions.insertBefore(abortBtn, sendBtn);
+        }
+        
+        // Auto-save email form data when typing - only for elements that exist
+        if (emailTo) {
+            emailTo.addEventListener('input', saveEmailFormData);
+        }
+        
+        if (emailCc) {
+            emailCc.addEventListener('input', () => {
+                // Mark CC field as user-modified so we don't override their choice
+                emailCc.setAttribute('data-user-modified', 'true');
+                saveEmailFormData();
+            });
+        }
+        
+        if (emailSubject) {
+            emailSubject.addEventListener('input', saveEmailFormData);
         }
     }
+    
+
     
     function abortHandoff() {
         const confirmed = confirm(
@@ -608,257 +616,170 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!selectedProject || !validationResults) return;
         
         // Only set default recipients if fields are completely empty (first time setup)
-        // Don't override if user has intentionally cleared them
         if (!emailTo.value) {
             emailTo.value = 'dilek.kursun@rolls-royce.com';
         }
         
-        // For CC: only set default if it's the first time (empty and no user interaction)
-        // If user has cleared it, respect their choice
         if (!emailCc.value && !emailCc.hasAttribute('data-user-modified')) {
-            emailCc.value = 'thomas.lux@rolls-royce.com, jan.becker@rolls-royce.com';
+            emailCc.value = 'thomas.lux@rolls-royce.com; jan.becker@rolls-royce.com';
         }
         
-        // Update subject
-        emailSubject.value = emailSubject.value.replace('[Archive ID]', selectedProject.archive_id);
+        // Update subject with archive ID and date
+        const today = new Date();
+        const day = String(today.getDate()).padStart(2, '0');
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const year = today.getFullYear();
+        const dateStr = `${day}.${month}.${year}`;
+        emailSubject.value = `MIKROVERFILMUNG: BLIPS für ${selectedProject.archive_id} am ${dateStr}`;
         
-        // Load the actual template content
-        loadEmailTemplate();
+        // Populate form fields with project data
+        if (emailArchiveId) {
+            emailArchiveId.value = selectedProject.archive_id || '';
+        }
+        
+        // Get film numbers from validation results
+        const filmNumbers = getFilmNumbersFromValidation();
+        console.log('Debug - validationData:', validationData);
+        console.log('Debug - extracted filmNumbers:', filmNumbers);
+        if (emailFilmNumbers) {
+            emailFilmNumbers.value = filmNumbers;
+        }
+        
+        // Update preview immediately to show the populated data
+        updateEmailPreview();
+        
+        console.log('Email template populated with form fields');
+    }
+
+    function getFilmNumbersFromValidation() {
+        // Use validationData instead of validationResults.validated_data
+        if (!validationData || validationData.length === 0) return '';
+        
+        // Extract unique roll/film numbers from validation data
+        const filmNumbers = new Set();
+        
+        validationData.forEach(item => {
+            if (item.roll && (item.status === 'validated' || item.status === 'warning')) {
+                filmNumbers.add(item.roll);
+            }
+        });
+        
+        // Convert Set to sorted array and join
+        const sortedFilmNumbers = Array.from(filmNumbers).sort();
+        return sortedFilmNumbers.join(', ');
+    }
+
+    function updateEmailPreview() {
+        if (!emailPreview) return;
+        
+        const archiveId = emailArchiveId ? emailArchiveId.value : selectedProject?.archive_id || 'XXX';
+        let filmNumbers = emailFilmNumbers ? emailFilmNumbers.value : '';
+        
+        // If film numbers field is empty, try to get them from validation results
+        if (!filmNumbers && validationData) {
+            filmNumbers = getFilmNumbersFromValidation();
+        }
+        
+        // If still empty, show placeholder
+        if (!filmNumbers) {
+            filmNumbers = 'YYY';
+        }
+        
+        const customMessage = emailCustomMessage ? emailCustomMessage.value : '';
+        
+        // Generate timestamp for preview
+        const now = new Date();
+        const timestamp = now.toLocaleDateString('de-DE').replace(/\./g, '') + 
+                         now.toLocaleTimeString('de-DE', {hour: '2-digit', minute: '2-digit'}).replace(':', '');
+        
+        // Create preview content
+        const previewContent = `
+            <div class="email-preview-content">
+                <h4>Email Preview:</h4>
+                <div class="preview-section">
+                    <strong>To:</strong> ${emailTo ? emailTo.value : ''}<br>
+                    <strong>CC:</strong> ${emailCc ? emailCc.value : ''}<br>
+                    <strong>Subject:</strong> ${emailSubject ? emailSubject.value : ''}
+                </div>
+                
+                ${customMessage ? `
+                <div class="preview-section">
+                    <strong>Custom Message:</strong><br>
+                    <div class="custom-message-preview">${customMessage.replace(/\n/g, '<br>')}</div>
+                </div>
+                ` : ''}
+                
+                <div class="preview-section signature-preview">
+                    <strong>Signature will include:</strong><br>
+                    • Auftragsnummer: <span class="highlight">${archiveId}</span><br>
+                    • Filmnummern: <span class="highlight">${filmNumbers}</span><br>
+                    • Excel file: <span class="highlight">${archiveId}_blips_${timestamp}.xlsx</span><br>
+                    • Scan file: <span class="highlight">${archiveId}_scan_${timestamp}.dat</span>
+                </div>
+                
+                <div class="preview-section">
+                    <strong>Attachments:</strong><br>
+                    📎 <span class="highlight">${archiveId}_blips_${timestamp}.xlsx</span> (Excel format)<br>
+                    📎 <span class="highlight">${archiveId}_scan_${timestamp}.dat</span> (Legacy format)
+                </div>
+            </div>
+        `;
+        
+        emailPreview.innerHTML = previewContent;
     }
     
     function loadEmailTemplate() {
-        // Update status
-        editorStatus.textContent = 'Loading template...';
-        loadTemplateBtn.disabled = true;
+        // This function is now simplified since we use Outlook's signature
+        editorStatus.textContent = 'Email ready - Outlook will add signature automatically when sending';
         
-        // Show loading in editor
-        if (tinyMceEditor) {
-            try {
-                tinyMceEditor.setContent('Loading email template...');
-            } catch (error) {
-                console.warn('Error setting TinyMCE content:', error);
-            }
-        } else {
-            // Fallback editor
-            const fallbackEditor = document.getElementById('email-editor');
-            if (fallbackEditor) {
-                fallbackEditor.value = 'Loading email template...';
-            }
+        // Show info about the new approach
+        const noteDiv = document.createElement('div');
+        noteDiv.style.cssText = 'margin-top: 10px; padding: 10px; background-color: #e7f3ff; border-left: 4px solid #2196F3; font-size: 12px; color: #1976D2;';
+        noteDiv.innerHTML = '<strong>Note:</strong> Your Outlook signature will be automatically added when the email is sent. The signature will include project-specific information (Archive ID, Film Numbers, etc.).';
+        noteDiv.className = 'template-note';
+        
+        // Remove any existing note
+        const existingNote = document.querySelector('.template-note');
+        if (existingNote) {
+            existingNote.remove();
         }
         
-        // Fetch the rendered template
-        fetch(`/api/handoff/projects/${selectedProject.id}/preview-email/`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCsrfToken()
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Store the HTML content
-                emailHtmlContent = data.template_content;
-                emailBody.value = emailHtmlContent;
-                
-                // Set content in editor
-                if (tinyMceEditor) {
-                    try {
-                        tinyMceEditor.setContent(emailHtmlContent);
-                    } catch (error) {
-                        console.warn('Error setting TinyMCE content:', error);
-                        // Try alternative method
-                        try {
-                            tinyMceEditor.setContent(emailHtmlContent);
-                        } catch (error2) {
-                            console.warn('Error with alternative TinyMCE method:', error2);
-                        }
-                    }
-                } else {
-                    // Fallback editor
-                    const fallbackEditor = document.getElementById('email-editor');
-                    if (fallbackEditor) {
-                        fallbackEditor.value = emailHtmlContent;
-                    }
-                }
-                
-                // Update status
-                editorStatus.textContent = 'Template loaded - Ready to edit';
-                loadTemplateBtn.disabled = false;
-                
-                // Remove any existing note
-                const existingNote = document.querySelector('.template-note');
-                if (existingNote) {
-                    existingNote.remove();
-                }
-                
-                // Add note about editability
-                const noteDiv = document.createElement('div');
-                noteDiv.style.cssText = 'margin-top: 10px; padding: 10px; background-color: #e7f3ff; border-left: 4px solid #2196F3; font-size: 12px; color: #1976D2;';
-                noteDiv.innerHTML = '<strong>Note:</strong> Edit the email content directly like in Outlook. All formatting and styling is preserved.';
-                noteDiv.className = 'template-note';
-                
-                // Add the note after the email editor container
-                const emailField = document.querySelector('.email-field');
-                emailField.appendChild(noteDiv);
-                
-            } else {
-                editorStatus.textContent = 'Error loading template';
-                loadTemplateBtn.disabled = false;
-                
-                if (tinyMceEditor) {
-                    try {
-                        tinyMceEditor.setContent(`Error loading template: ${data.error}`);
-                    } catch (error) {
-                        console.warn('Error setting TinyMCE error text:', error);
-                    }
-                } else {
-                    const fallbackEditor = document.getElementById('email-editor');
-                    if (fallbackEditor) {
-                        fallbackEditor.value = `Error loading template: ${data.error}`;
-                    }
-                }
-            }
-        })
-        .catch(error => {
-            console.error('Error loading email template:', error);
-            editorStatus.textContent = 'Error loading template';
-            loadTemplateBtn.disabled = false;
-            
-            if (tinyMceEditor) {
-                try {
-                    tinyMceEditor.setContent(`Error loading template: ${error.message}`);
-                } catch (tinyMceError) {
-                    console.warn('Error setting TinyMCE error text:', tinyMceError);
-                }
-            } else {
-                const fallbackEditor = document.getElementById('email-editor');
-                if (fallbackEditor) {
-                    fallbackEditor.value = `Error loading template: ${error.message}`;
-                }
-            }
-        });
+        // Add the note after the email editor container
+        const emailField = document.querySelector('.email-field');
+        emailField.appendChild(noteDiv);
     }
     
     function loadOriginalTemplate() {
-        // Update status
-        editorStatus.textContent = 'Loading original template...';
-        const testBtn = document.getElementById('test-original-template-btn');
-        testBtn.disabled = true;
+        // Remove this functionality since we're using Outlook signatures
+        editorStatus.textContent = 'Using Outlook signature system - no template loading needed';
         
-        // Show loading in editor
-        if (tinyMceEditor) {
-            try {
-                tinyMceEditor.setContent('Loading original email template...');
-            } catch (error) {
-                console.warn('Error setting TinyMCE content:', error);
-            }
-        } else {
-            // Fallback editor
-            const fallbackEditor = document.getElementById('email-editor');
-            if (fallbackEditor) {
-                fallbackEditor.value = 'Loading original email template...';
-            }
-        }
-        
-        // Fetch the original template (no project ID needed)
-        fetch('/api/handoff/preview-original-template/', {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCsrfToken()
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Store the HTML content
-                emailHtmlContent = data.template_content;
-                emailBody.value = emailHtmlContent;
-                
-                // Set content in editor
-                if (tinyMceEditor) {
-                    try {
-                        tinyMceEditor.setContent(emailHtmlContent);
-                    } catch (error) {
-                        console.warn('Error setting TinyMCE content:', error);
-                        // Try alternative method
-                        try {
-                            tinyMceEditor.setContent(emailHtmlContent);
-                        } catch (error2) {
-                            console.warn('Error with alternative TinyMCE method:', error2);
-                        }
-                    }
-                } else {
-                    // Fallback editor
-                    const fallbackEditor = document.getElementById('email-editor');
-                    if (fallbackEditor) {
-                        fallbackEditor.value = emailHtmlContent;
-                    }
-                }
-                
-                // Update status
-                editorStatus.textContent = 'Original template loaded - Testing styling and icons';
-                testBtn.disabled = false;
-                
-                // Remove any existing note
-                const existingNote = document.querySelector('.template-note');
-                if (existingNote) {
-                    existingNote.remove();
-                }
-                
-                // Add note about test template
-                const noteDiv = document.createElement('div');
-                noteDiv.style.cssText = 'margin-top: 10px; padding: 10px; background-color: #fff3cd; border-left: 4px solid #ffc107; font-size: 12px; color: #856404;';
-                noteDiv.innerHTML = '<strong>Test Mode:</strong> This is the original template without variables. Use this to test styling and icon display. Static data: RRD-TEST-001, Films: 430180, 430181, 430182';
-                noteDiv.className = 'template-note';
-                
-                // Add the note after the email editor container
-                const emailField = document.querySelector('.email-field');
-                emailField.appendChild(noteDiv);
-                
-            } else {
-                editorStatus.textContent = 'Error loading original template';
-                testBtn.disabled = false;
-                
-                if (tinyMceEditor) {
-                    try {
-                        tinyMceEditor.setContent(`Error loading original template: ${data.error}`);
-                    } catch (error) {
-                        console.warn('Error setting TinyMCE error text:', error);
-                    }
-                } else {
-                    const fallbackEditor = document.getElementById('email-editor');
-                    if (fallbackEditor) {
-                        fallbackEditor.value = `Error loading original template: ${data.error}`;
-                    }
-                }
-            }
-        })
-        .catch(error => {
-            console.error('Error loading original template:', error);
-            editorStatus.textContent = 'Error loading original template';
-            testBtn.disabled = false;
-            
-            if (tinyMceEditor) {
-                try {
-                    tinyMceEditor.setContent(`Error loading original template: ${error.message}`);
-                } catch (tinyMceError) {
-                    console.warn('Error setting TinyMCE error text:', tinyMceError);
-                }
-            } else {
-                const fallbackEditor = document.getElementById('email-editor');
-                if (fallbackEditor) {
-                    fallbackEditor.value = `Error loading original template: ${error.message}`;
-                }
-            }
-        });
+        // Show info message
+        alert('Template loading is no longer needed. Your Outlook signature will be automatically used with project-specific information when sending emails.');
     }
     
     function generateAttachments() {
+        if (!selectedProject) return;
+        
+        // Generate timestamp for filenames
+        const now = new Date();
+        const timestamp = now.toLocaleDateString('de-DE').replace(/\./g, '') + 
+                         now.toLocaleTimeString('de-DE', {hour: '2-digit', minute: '2-digit'}).replace(':', '');
+        
+        const archiveId = selectedProject.archive_id || 'PROJECT';
+        
         const attachments = [
-            { name: 'scan.xlsx', size: '24.5 KB', type: 'excel' },
-            { name: 'scan.dat', size: '18.2 KB', type: 'text' }
+            { 
+                name: `${archiveId}_blips_${timestamp}.xlsx`, 
+                size: '~25 KB', 
+                type: 'excel',
+                description: 'Excel format index file'
+            },
+            { 
+                name: `${archiveId}_scan_${timestamp}.dat`, 
+                size: '~18 KB', 
+                type: 'text',
+                description: 'Legacy format index file'
+            }
         ];
         
         attachmentList.innerHTML = '';
@@ -926,82 +847,68 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function sendEmail() {
-        if (!validateEmailForm()) return;
-        
-        // Get the current email content from editor
-        let emailContent = '';
-        if (tinyMceEditor) {
-            try {
-                emailContent = tinyMceEditor.getContent();
-                emailHtmlContent = emailContent;
-                emailBody.value = emailContent;
-            } catch (error) {
-                console.warn('Error getting TinyMCE content:', error);
-                emailContent = emailBody.value;
-            }
-        } else {
-            // Fallback editor
-            const fallbackEditor = document.getElementById('email-editor');
-            if (fallbackEditor) {
-                emailContent = fallbackEditor.value;
-                emailBody.value = emailContent;
-            } else {
-                emailContent = emailBody.value;
-            }
+        if (!selectedProject || !validationResults) {
+            showNotification('Please select a project and validate files first', 'error');
+            return;
         }
-        
-        showProgress('Sending Email', 'Preparing email with attachments...');
-        
-        // First generate the handoff files
-        fetch(`/api/handoff/projects/${selectedProject.id}/generate-files/`, {
+
+        // Validate required fields
+        if (!emailTo.value.trim()) {
+            showNotification('Please enter recipient email address', 'error');
+            return;
+        }
+
+        if (!emailSubject.value.trim()) {
+            showNotification('Please enter email subject', 'error');
+            return;
+        }
+
+        // Prepare email data with form fields
+        const emailData = {
+            to: emailTo.value.trim(),
+            cc: emailCc.value.trim(),
+            subject: emailSubject.value.trim(),
+            archive_id: emailArchiveId ? emailArchiveId.value.trim() : selectedProject.archive_id,
+            film_numbers: emailFilmNumbers ? emailFilmNumbers.value.trim() : '',
+            custom_message: emailCustomMessage ? emailCustomMessage.value.trim() : '',
+            use_form_data: true  // Flag to indicate we're using form data instead of HTML body
+        };
+
+        // Show loading state
+        if (sendEmailBtn) {
+            sendEmailBtn.disabled = true;
+            sendEmailBtn.textContent = 'Sending...';
+        }
+
+        // Send email
+        fetch(`/api/handoff/projects/${selectedProject.id}/send-email/`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRFToken': getCsrfToken()
             },
-            body: JSON.stringify({
-                validated_data: validationData
-            })
+            body: JSON.stringify(emailData)
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                updateProgress(50, 'Files generated, sending email...');
-                
-                // Now send the email with the current content
-                return fetch(`/api/handoff/projects/${selectedProject.id}/send-email/`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': getCsrfToken()
-                    },
-                    body: JSON.stringify({
-                        to: emailTo.value,
-                        cc: emailCc.value,
-                        subject: emailSubject.value,
-                        body: emailContent, // Send the current content from editor
-                        use_custom_body: true, // Always use custom body since we have content
-                        attachments: data.files
-                    })
-                });
+                showNotification('Email sent successfully!', 'success');
+                console.log('Email sent:', data);
             } else {
-                throw new Error('Failed to generate files: ' + data.error);
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            hideProgress();
-            if (data.success) {
-                showEmailSuccess(data);
-            } else {
-                // Show the actual error message from the backend
-                showError('Email sending failed: ' + (data.error || 'Unknown error occurred'));
+                showNotification(`Failed to send email: ${data.error}`, 'error');
+                console.error('Email send error:', data);
             }
         })
         .catch(error => {
-            hideProgress();
-            console.error('Error sending email:', error);
-            showError('Failed to send email: ' + error.message);
+            showNotification('Error sending email', 'error');
+            console.error('Email send error:', error);
+        })
+        .finally(() => {
+            // Reset button state
+            if (sendEmailBtn) {
+                sendEmailBtn.disabled = false;
+                sendEmailBtn.textContent = 'Send Email';
+            }
         });
     }
     
@@ -1102,7 +1009,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function resetEmailForm() {
         emailTo.value = 'dilek.kursun@rolls-royce.com';
-        emailCc.value = 'thomas.lux@rolls-royce.com, jan.becker@rolls-royce.com';
+        emailCc.value = 'thomas.lux@rolls-royce.com; jan.becker@rolls-royce.com';
         emailSubject.value = 'Microfilm Project Handoff - [Archive ID]';
         emailBody.value = '';
         
@@ -1217,28 +1124,65 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function showError(message) {
-        // Enhanced error display with options
-        const errorMessage = `Error: ${message}\n\nWhat would you like to do?\n\n` +
-                           `• Click OK to continue (your progress is saved)\n` +
-                           `• Click Cancel to abort and clear all progress`;
+        // Create error notification
+        const notification = document.createElement('div');
+        notification.className = 'error-notification';
+        notification.innerHTML = `
+            <div class="notification-content">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>${message}</span>
+                <button class="close-notification" onclick="this.parentElement.parentElement.remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `;
         
-        const continueWithError = confirm(errorMessage);
+        // Add to page
+        document.body.appendChild(notification);
         
-        if (!continueWithError) {
-            // User chose to abort - clear state and return to start
-            clearAllState();
-            resetEmailForm();
-            selectedProject = null;
-            validationData = [];
-            validationResults = null;
-            clearValidationData();
-            showProjectSelection();
-            
-            setTimeout(() => {
-                alert('Progress cleared. You can start over with a new project.');
-            }, 100);
-        }
-        // If user clicks OK, they continue with saved progress
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            if (notification.parentElement) {
+                notification.remove();
+            }
+        }, 5000);
+        
+        console.error('Error:', message);
+    }
+
+    function showNotification(message, type = 'info') {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+        
+        // Set icon based on type
+        let icon = 'fas fa-info-circle';
+        if (type === 'success') icon = 'fas fa-check-circle';
+        else if (type === 'error') icon = 'fas fa-exclamation-triangle';
+        else if (type === 'warning') icon = 'fas fa-exclamation-circle';
+        
+        notification.innerHTML = `
+            <div class="notification-content">
+                <i class="${icon}"></i>
+                <span>${message}</span>
+                <button class="close-notification" onclick="this.parentElement.parentElement.remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `;
+        
+        // Add to page
+        document.body.appendChild(notification);
+        
+        // Auto-remove after 4 seconds (success) or 6 seconds (error)
+        const timeout = type === 'success' ? 4000 : 6000;
+        setTimeout(() => {
+            if (notification.parentElement) {
+                notification.remove();
+            }
+        }, timeout);
+        
+        console.log(`${type.toUpperCase()}: ${message}`);
     }
     
     function getCsrfToken() {
@@ -1492,4 +1436,42 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     }
+
+    // Add event listeners for real-time preview updates
+    function setupEmailFormListeners() {
+        const formFields = [emailTo, emailCc, emailSubject, emailArchiveId, emailFilmNumbers, emailCustomMessage];
+        
+        formFields.forEach(field => {
+            if (field) {
+                field.addEventListener('input', updateEmailPreview);
+                field.addEventListener('change', updateEmailPreview);
+                
+                // Also save form data when fields change
+                field.addEventListener('input', saveEmailFormData);
+            }
+        });
+
+        // Mark CC field as user-modified when changed
+        if (emailCc) {
+            emailCc.addEventListener('input', () => {
+                emailCc.setAttribute('data-user-modified', 'true');
+            });
+        }
+
+        // Note: Send button listener is already added in initializeEventHandlers
+        // so we don't duplicate it here
+    }
+
+    // Initialize the page
+    function initializePage() {
+        initializeEventHandlers();  // Changed from setupEventListeners
+        setupEmailFormListeners();  // Setup form listeners for real-time preview
+        loadProjects();
+        
+        // Remove TinyMCE initialization since we're using form fields now
+        console.log('Handoff page initialized with form-based email interface');
+    }
+
+    // Call initialization
+    initializePage();
 });

@@ -5,54 +5,53 @@
 {% load static %}
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'microapp/css/handoff/handoff.css' %}">
-    <!-- Load Roboto font from Google Fonts -->
+    <!-- Load modern fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap" rel="stylesheet">
-    <!-- TinyMCE will be loaded via CDN in JavaScript -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 {% endblock %}
 
 {% block content %}
 <div class="handoff-container">
-    <!-- Header -->
-    <div class="handoff-header">
+    <!-- Enhanced Header -->
+    <header class="handoff-header">
         <h1><i class="fas fa-exchange-alt"></i> Project Handoff</h1>
         <p>Final validation and email delivery of completed microfilm projects</p>
-    </div>
+    </header>
 
     <!-- Project Selection Section -->
-    <div class="section-card" id="project-selection-section">
-        <div class="section-header">
+    <section class="section-card" id="project-selection-section">
+        <header class="section-header">
             <h2><i class="fas fa-folder-open"></i> Select Project for Handoff</h2>
             <p>Choose a completed project to validate and prepare for handoff</p>
-        </div>
+        </header>
         
         <div class="project-search-filter">
             <div class="search-box">
                 <i class="fas fa-search"></i>
-                <input type="text" id="project-search" placeholder="Search projects by archive ID or name...">
+                <input type="text" id="project-search" placeholder="Search projects by archive ID or name..." autocomplete="off">
             </div>
-            <select id="status-filter" class="filter-select">
+            <select id="status-filter" class="filter-select" aria-label="Filter projects by status">
                 <option value="all">All Projects</option>
                 <option value="ready" selected>Ready for Handoff</option>
                 <option value="completed">Handoff Complete</option>
             </select>
         </div>
 
-        <div class="project-cards" id="project-cards-container">
+        <div class="project-cards" id="project-cards-container" role="list">
             <!-- Project cards will be populated here -->
         </div>
-    </div>
+    </section>
 
     <!-- Validation Section -->
-    <div class="section-card" id="validation-section" style="display: none;">
-        <div class="section-header">
+    <section class="section-card" id="validation-section" style="display: none;">
+        <header class="section-header">
             <h2><i class="fas fa-check-double"></i> Index Validation</h2>
             <p>Cross-check temporary index with filming process logs</p>
-            <button class="back-btn" id="back-to-selection">
+            <button class="back-btn" id="back-to-selection" aria-label="Back to project selection">
                 <i class="fas fa-arrow-left"></i> Back to Project Selection
             </button>
-        </div>
+        </header>
 
         <div class="project-info-bar">
             <div class="project-info">
@@ -60,23 +59,23 @@
                 <span id="selected-project-id">Archive ID</span>
             </div>
             <div class="validation-actions">
-                <button class="validate-btn" id="validate-btn">
+                <button class="validate-btn" id="validate-btn" aria-label="Start validation process">
                     <i class="fas fa-search"></i> Validate Index
                 </button>
             </div>
         </div>
 
         <div class="validation-table-container">
-            <table class="validation-table" id="validation-table">
+            <table class="validation-table" id="validation-table" role="table">
                 <thead>
                     <tr>
-                        <th>Roll</th>
-                        <th>Barcode</th>
-                        <th>COM ID (Bildnummer)</th>
-                        <th>Temporary Blip</th>
-                        <th>Film Log Blip</th>
-                        <th>Status</th>
-                        <th>Validation</th>
+                        <th scope="col">Roll</th>
+                        <th scope="col">Barcode</th>
+                        <th scope="col">COM ID (Bildnummer)</th>
+                        <th scope="col">Temporary Blip</th>
+                        <th scope="col">Film Log Blip</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Validation</th>
                     </tr>
                 </thead>
                 <tbody id="validation-table-body">
@@ -105,94 +104,124 @@
                 </div>
             </div>
             <div class="summary-actions">
-                <button class="proceed-btn" id="proceed-to-email" disabled>
+                <button class="proceed-btn" id="proceed-to-email" disabled aria-label="Proceed to email composition">
                     <i class="fas fa-envelope"></i> Proceed to Email
                 </button>
             </div>
         </div>
-    </div>
+    </section>
 
-    <!-- Email Preview Section -->
-    <div class="section-card" id="email-section" style="display: none;">
-        <div class="section-header">
-            <h2><i class="fas fa-envelope"></i> Email Preview & Send</h2>
+    <!-- Email Composition Section -->
+    <section class="section-card" id="email-section" style="display: none;">
+        <header class="section-header">
+            <h2><i class="fas fa-envelope"></i> Email Composition & Send</h2>
             <p>Review and customize the handoff email before sending</p>
-            <button class="back-btn" id="back-to-validation">
+            <button class="back-btn" id="back-to-validation" aria-label="Back to validation">
                 <i class="fas fa-arrow-left"></i> Back to Validation
             </button>
-        </div>
+        </header>
 
-        <div class="email-form">
-            <div class="email-field">
-                <label for="email-to">To:</label>
-                <input type="email" id="email-to" value="dilek.kursun@rolls-royce.com" multiple>
-                <button class="add-recipient-btn" id="add-recipient">
-                    <i class="fas fa-plus"></i> Add Recipient
-                </button>
-            </div>
-            
-            <div class="email-field">
-                <label for="email-cc">CC:</label>
-                <div class="input-with-buttons">
-                    <input type="email" id="email-cc" value="thomas.lux@rolls-royce.com, jan.becker@rolls-royce.com" multiple>
-                    <button type="button" class="clear-cc-btn" id="clear-cc-btn" title="Clear CC recipients">
-                        <i class="fas fa-times"></i> Clear CC
-                    </button>
-                </div>
-                <small style="color: #6c757d; font-size: 12px; margin-top: 5px; display: block;">
-                    Leave empty to send without CC recipients. Click "Clear CC" to remove all CC recipients.
-                </small>
-            </div>
-            
-            <div class="email-field">
-                <label for="email-subject">Subject:</label>
-                <input type="text" id="email-subject" value="Microfilm Project Handoff - [Archive ID]">
-            </div>
-            
-            <div class="email-field">
-                <label for="email-body">Email Content:</label>
-                <div class="email-editor-container">
-                    <div class="email-editor-toolbar">
-                        <button type="button" class="load-template-btn" id="load-template-btn">
-                            <i class="fas fa-sync"></i> Reload Template
+        <form class="email-form" id="email-form" novalidate>
+            <!-- Recipients Section -->
+            <fieldset class="email-recipients-section">
+                <legend class="sr-only">Email Recipients</legend>
+                
+                <div class="email-field">
+                    <label for="email-to">To: <span class="required">*</span></label>
+                    <div class="input-with-buttons">
+                        <input type="email" id="email-to" value="dilek.kursun@rolls-royce.com" multiple required aria-describedby="to-help">
+                        <button type="button" class="add-recipient-btn" id="add-recipient" aria-label="Add recipient">
+                            <i class="fas fa-plus"></i> Add Recipient
                         </button>
-                        <button type="button" class="test-template-btn" id="test-original-template-btn" style="margin-left: 10px;">
-                            <i class="fas fa-vial"></i> Test Original Template
-                        </button>
-                        <span class="editor-status" id="editor-status">Initializing editor...</span>
                     </div>
-                    <textarea id="email-editor" class="email-editor">Loading email template...</textarea>
-                    <!-- Hidden textarea to store HTML content for form submission -->
-                    <textarea id="email-body" style="display: none;"></textarea>
+                    <small id="to-help" class="field-help">Primary recipients (required)</small>
                 </div>
-                <small style="color: #6c757d; font-size: 12px; margin-top: 5px; display: block;">
-                    Edit the email content directly like in Outlook. The professional German template will be loaded automatically.
-                </small>
+                
+                <div class="email-field">
+                    <label for="email-cc">CC:</label>
+                    <div class="input-with-buttons">
+                        <input type="email" id="email-cc" value="thomas.lux@rolls-royce.com; jan.becker@rolls-royce.com" multiple aria-describedby="cc-help">
+                        <button type="button" class="clear-cc-btn" id="clear-cc-btn" title="Clear CC recipients" aria-label="Clear CC recipients">
+                            <i class="fas fa-times"></i> Clear CC
+                        </button>
+                    </div>
+                    <small id="cc-help" class="field-help">
+                        Separate multiple emails with semicolons (;) or commas (,). Leave empty to send without CC recipients.
+                    </small>
+                </div>
+                
+                <div class="email-field">
+                    <label for="email-subject">Subject: <span class="required">*</span></label>
+                    <input type="text" id="email-subject" value="MIKROVERFILMUNG: BLIPS für [Archive ID] am [DD.MM.YYYY]" required aria-describedby="subject-help">
+                    <small id="subject-help" class="field-help">Email subject line</small>
+                </div>
+            </fieldset>
+            
+            <!-- Signature Information Section -->
+            <fieldset class="signature-form-section">
+                <legend><i class="fas fa-signature"></i> Signature Information</legend>
+                <p class="form-description">These values will be automatically inserted into your Outlook signature. Available placeholders: XXX (Archive ID), YYY (Film Numbers), DDMMYYHHMM (Timestamp), QQQ (Random Quote), CCC (Custom Message)</p>
+                
+                <div class="form-row">
+                    <div class="email-field half-width">
+                        <label for="email-archive-id">Archive ID (Auftragsnummer): <span class="required">*</span></label>
+                        <input type="text" id="email-archive-id" placeholder="Will be auto-filled from project" required aria-describedby="archive-help">
+                        <small id="archive-help" class="field-help">Project archive identifier</small>
+                    </div>
+                    
+                    <div class="email-field half-width">
+                        <label for="email-film-numbers">Film Numbers (Filmnummern): <span class="required">*</span></label>
+                        <input type="text" id="email-film-numbers" placeholder="Will be auto-filled from validation" required aria-describedby="film-help">
+                        <small id="film-help" class="field-help">Comma-separated film numbers</small>
+                    </div>
+                </div>
+            </fieldset>
+            
+            <!-- Custom Message Section -->
+            <fieldset class="custom-message-section">
+                <legend><i class="fas fa-comment"></i> Custom Message</legend>
+                <div class="email-field">
+                    <label for="email-custom-message">Personal Message (Optional):</label>
+                    <textarea id="email-custom-message" rows="4" placeholder="Add a personal message that will be inserted where CCC appears in your signature..." aria-describedby="message-help"></textarea>
+                    <small id="message-help" class="field-help">
+                        This message will be inserted into your signature where the CCC placeholder appears. Leave empty to remove the CCC placeholder.
+                    </small>
+                </div>
+            </fieldset>
+            
+            <!-- Email Preview Section -->
+            <div class="email-preview-section">
+                <h3><i class="fas fa-eye"></i> Email Preview</h3>
+                <div id="email-preview" class="email-preview-container" role="region" aria-label="Email preview">
+                    <p class="preview-placeholder">Fill in the form fields above to see a preview of your email</p>
+                </div>
             </div>
-        </div>
+        </form>
 
+        <!-- Attachments Section -->
         <div class="email-attachments">
             <h3><i class="fas fa-paperclip"></i> Attachments</h3>
-            <div class="attachment-list" id="attachment-list">
+            <div class="attachment-list" id="attachment-list" role="list">
                 <!-- Attachments will be populated here -->
             </div>
         </div>
 
+        <!-- Email Actions -->
         <div class="email-actions">
-            <button class="preview-btn" id="preview-email">
-                <i class="fas fa-eye"></i> Preview Email
+            <button type="button" class="abort-btn" id="abort-handoff-btn" aria-label="Abort handoff">
+                <i class="fas fa-times"></i> Abort Handoff
             </button>
-            <button class="send-btn" id="send-email">
+            <button type="button" class="send-btn" id="send-email-btn" aria-label="Send email">
                 <i class="fas fa-paper-plane"></i> Send Email
             </button>
         </div>
-    </div>
+    </section>
 
     <!-- Progress Modal -->
-    <div id="progress-modal" class="modal">
+    <div id="progress-modal" class="modal" role="dialog" aria-labelledby="progress-title" aria-hidden="true">
         <div class="modal-content progress-modal">
             <h3 id="progress-title">Processing...</h3>
-            <div class="progress-bar">
+            <div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100">
                 <div id="progress-fill" class="progress-fill"></div>
             </div>
             <p id="progress-message">Please wait...</p>
@@ -200,16 +229,16 @@
     </div>
 
     <!-- Success Modal -->
-    <div id="success-modal" class="modal">
+    <div id="success-modal" class="modal" role="dialog" aria-labelledby="success-title" aria-hidden="true">
         <div class="modal-content success-modal">
-            <div class="success-header">
-                <i class="fas fa-check-circle success-icon"></i>
-                <h3>Email Sent Successfully!</h3>
-            </div>
+            <header class="success-header">
+                <i class="fas fa-check-circle success-icon" aria-hidden="true"></i>
+                <h3 id="success-title">Email Sent Successfully!</h3>
+            </header>
             <div class="success-body">
                 <p class="success-message">The handoff has been completed successfully.</p>
                 <div class="success-details">
-                    <div class="detail-section">
+                    <section class="detail-section">
                         <h4><i class="fas fa-envelope"></i> Recipients</h4>
                         <div class="recipient-info">
                             <div class="recipient-line">
@@ -219,12 +248,12 @@
                                 <strong>CC:</strong> <span id="success-cc-recipients"></span>
                             </div>
                         </div>
-                    </div>
-                    <div class="detail-section" id="success-attachments-section">
+                    </section>
+                    <section class="detail-section" id="success-attachments-section">
                         <h4><i class="fas fa-paperclip"></i> Attachments</h4>
                         <div class="attachment-list" id="success-attachment-list"></div>
-                    </div>
-                    <div class="detail-section">
+                    </section>
+                    <section class="detail-section">
                         <h4><i class="fas fa-info-circle"></i> Details</h4>
                         <div class="detail-info">
                             <div class="detail-line">
@@ -237,58 +266,57 @@
                                 <strong>Sent at:</strong> <span id="success-sent-time"></span>
                             </div>
                         </div>
-                    </div>
+                    </section>
                 </div>
             </div>
-            <div class="success-footer">
-                <button type="button" class="btn btn-primary" id="success-close-btn">
+            <footer class="success-footer">
+                <button type="button" class="btn btn-primary" id="success-close-btn" aria-label="Close and return to projects">
                     <i class="fas fa-arrow-left"></i> Back to Projects
                 </button>
-            </div>
+            </footer>
         </div>
     </div>
 </div>
 
-<!-- Project Card Template -->
+<!-- Templates -->
 <template id="project-card-template">
-    <div class="project-card" data-project-id="">
-        <div class="project-card-header">
+    <article class="project-card" data-project-id="" role="listitem">
+        <header class="project-card-header">
             <h3 class="project-name"></h3>
             <span class="project-status"></span>
-        </div>
+        </header>
         <div class="project-card-body">
-            <div class="project-details">
+            <dl class="project-details">
                 <div class="detail-item">
-                    <i class="fas fa-tag"></i>
-                    <span class="detail-label">Archive ID:</span>
-                    <span class="detail-value archive-id"></span>
+                    <i class="fas fa-tag" aria-hidden="true"></i>
+                    <dt class="detail-label">Archive ID:</dt>
+                    <dd class="detail-value archive-id"></dd>
                 </div>
                 <div class="detail-item">
-                    <i class="fas fa-file-alt"></i>
-                    <span class="detail-label">Document Type:</span>
-                    <span class="detail-value doc-type"></span>
+                    <i class="fas fa-file-alt" aria-hidden="true"></i>
+                    <dt class="detail-label">Document Type:</dt>
+                    <dd class="detail-value doc-type"></dd>
                 </div>
                 <div class="detail-item">
-                    <i class="fas fa-film"></i>
-                    <span class="detail-label">Rolls:</span>
-                    <span class="detail-value roll-count"></span>
+                    <i class="fas fa-film" aria-hidden="true"></i>
+                    <dt class="detail-label">Rolls:</dt>
+                    <dd class="detail-value roll-count"></dd>
                 </div>
                 <div class="detail-item">
-                    <i class="fas fa-calendar"></i>
-                    <span class="detail-label">Completed:</span>
-                    <span class="detail-value completion-date"></span>
+                    <i class="fas fa-calendar" aria-hidden="true"></i>
+                    <dt class="detail-label">Completed:</dt>
+                    <dd class="detail-value completion-date"></dd>
                 </div>
-            </div>
+            </dl>
         </div>
-        <div class="project-card-footer">
-            <button class="select-project-btn">
+        <footer class="project-card-footer">
+            <button class="select-project-btn" aria-label="Select this project">
                 <i class="fas fa-arrow-right"></i> Select Project
             </button>
-        </div>
-    </div>
+        </footer>
+    </article>
 </template>
 
-<!-- Validation Row Template -->
 <template id="validation-row-template">
     <tr class="validation-row" data-document-id="">
         <td class="roll-cell"></td>
@@ -300,18 +328,17 @@
             <span class="status-badge pending">Pending</span>
         </td>
         <td class="validation-cell">
-            <i class="fas fa-clock validation-icon pending"></i>
+            <i class="fas fa-clock validation-icon pending" aria-hidden="true"></i>
         </td>
     </tr>
 </template>
 
-<!-- Attachment Item Template -->
 <template id="attachment-template">
-    <div class="attachment-item">
-        <i class="fas fa-file"></i>
+    <div class="attachment-item" role="listitem">
+        <i class="fas fa-file" aria-hidden="true"></i>
         <span class="attachment-name"></span>
         <span class="attachment-size"></span>
-        <button class="remove-attachment-btn">
+        <button class="remove-attachment-btn" aria-label="Remove attachment">
             <i class="fas fa-times"></i>
         </button>
     </div>
@@ -319,7 +346,5 @@
 {% endblock %}
 
 {% block extra_js %}
-<!-- TinyMCE Rich Text Editor -->
-<script src="https://cdn.tiny.cloud/1/v2t94lcefoat9pm50ewa7hjv6sv9u5pwdh0xkbrwdpsu06zt/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
 <script src="{% static 'microapp/js/handoff/handoff.js' %}"></script>
 {% endblock %}

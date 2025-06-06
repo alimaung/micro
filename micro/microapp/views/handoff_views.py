@@ -355,13 +355,27 @@ def send_handoff_email(request, project_id):
         data = json.loads(request.body)
         project = get_object_or_404(Project, pk=project_id)
         
-        email_data = {
-            'to': data.get('to', ''),
-            'cc': data.get('cc', ''),
-            'subject': data.get('subject', ''),
-            'body': data.get('body', ''),
-            'attachments': data.get('attachments', [])
-        }
+        # Check if using new form data structure
+        if data.get('use_form_data'):
+            # New form-based structure
+            email_data = {
+                'to': data.get('to', ''),
+                'cc': data.get('cc', ''),
+                'subject': data.get('subject', ''),
+                'archive_id': data.get('archive_id', ''),
+                'film_numbers': data.get('film_numbers', ''),
+                'custom_message': data.get('custom_message', ''),
+                'use_form_data': True
+            }
+        else:
+            # Legacy structure for backward compatibility
+            email_data = {
+                'to': data.get('to', ''),
+                'cc': data.get('cc', ''),
+                'subject': data.get('subject', ''),
+                'body': data.get('body', ''),
+                'attachments': data.get('attachments', [])
+            }
         
         if not email_data['to']:
             return JsonResponse({
@@ -373,8 +387,59 @@ def send_handoff_email(request, project_id):
         from ..services.handoff_service import HandoffService
         handoff_service = HandoffService()
         
-        # Get file paths from attachments data
-        file_paths = data.get('attachments', {})
+        # For form data, we need to generate files first
+        if data.get('use_form_data'):
+            # Generate handoff files first
+            try:
+                # Get validation data from the request or generate mock data
+                validated_data = data.get('validated_data', [])
+                if not validated_data:
+                    # Generate mock validation data for testing
+                    from ..models import DocumentSegment
+                    segments = DocumentSegment.objects.filter(
+                        roll__project=project
+                    ).select_related('document', 'roll')
+                    
+                    validated_data = []
+                    for segment in segments:
+                        validated_data.append({
+                            'document_id': segment.document.doc_id,
+                            'roll': segment.roll.film_number,
+                            'barcode': segment.document.doc_id,
+                            'com_id': segment.document.com_id,
+                            'temp_blip': segment.blip,
+                            'film_blip': segment.blip,
+                            'status': 'validated'
+                        })
+                
+                # Convert to ValidationResult objects
+                from ..services.handoff_service import ValidationResult
+                validation_results = []
+                for item in validated_data:
+                    result = ValidationResult(
+                        document_id=item.get('document_id', ''),
+                        roll=item.get('roll', ''),
+                        barcode=item.get('barcode', ''),
+                        com_id=item.get('com_id', ''),
+                        temp_blip=item.get('temp_blip', ''),
+                        film_blip=item.get('film_blip'),
+                        status=item.get('status', 'pending'),
+                        message=item.get('message'),
+                        start_frame=item.get('start_frame'),
+                        end_frame=item.get('end_frame'),
+                        pages=item.get('pages')
+                    )
+                    validation_results.append(result)
+                
+                # Generate files
+                file_paths = handoff_service.generate_handoff_files(project, validation_results)
+                
+            except Exception as file_error:
+                logger.warning(f"Could not generate files, proceeding without attachments: {file_error}")
+                file_paths = {}
+        else:
+            # Legacy: Get file paths from attachments data
+            file_paths = data.get('attachments', {})
         
         result = handoff_service.send_handoff_email(project, email_data, file_paths)
         

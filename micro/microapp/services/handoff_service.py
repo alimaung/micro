@@ -12,6 +12,9 @@ from typing import Dict, List, Tuple, Optional, Any
 from dataclasses import dataclass
 from datetime import datetime
 import pandas as pd
+import win32com.client as win32
+import requests
+import random
 
 # Django imports for template rendering
 from django.template.loader import render_to_string
@@ -525,7 +528,10 @@ class HandoffService:
         Returns:
             Path to the generated Excel file
         """
-        excel_path = export_dir / 'blips.xlsx'
+        # Generate timestamp for filename
+        timestamp = datetime.now().strftime('%d%m%y%H%M')
+        archive_id = project.archive_id or 'PROJECT'
+        excel_path = export_dir / f'{archive_id}_blips_{timestamp}.xlsx'
         
         # Prepare data for DataFrame with only required columns
         data = []
@@ -591,7 +597,10 @@ class HandoffService:
         Returns:
             Path to the generated DAT file
         """
-        dat_path = export_dir / 'scan.dat'
+        # Generate timestamp for filename
+        timestamp = datetime.now().strftime('%d%m%y%H%M')
+        archive_id = project.archive_id or 'PROJECT'
+        dat_path = export_dir / f'{archive_id}_scan_{timestamp}.dat'
         
         # Prepare entries for sorting
         entries_for_sorting = []
@@ -627,161 +636,309 @@ class HandoffService:
     
     def send_handoff_email(self, project, email_data: Dict[str, Any], file_paths: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Send handoff email with generated files using Outlook COM interface.
+        Send handoff email using form data to populate signature placeholders.
         
         Args:
             project: Django Project model instance
-            email_data: Dictionary with email details (to, cc, subject, body, use_custom_body)
+            email_data: Dictionary with form data (to, cc, subject, archive_id, film_numbers, custom_message, use_form_data)
             file_paths: Dictionary with file paths from generate_handoff_files
             
         Returns:
             Dictionary with send result
         """
         try:
-            # Handle default recipients more intelligently
-            # Only set defaults if the field is completely missing (None), not if it's empty string
-            if email_data.get('to') is None:
-                email_data['to'] = DEFAULT_EMAIL_RECIPIENTS['to']
-                self.logger.debug("Using default TO recipients (field was not provided)")
-            elif not email_data.get('to').strip():
-                # TO field is required - cannot be empty
-                self.logger.error("TO field cannot be empty")
-                return {
-                    'success': False,
-                    'error': 'TO field is required and cannot be empty',
-                    'method': 'validation_failed'
-                }
+            # Handle default recipients
+            if not email_data.get('to'):
+                email_data['to'] = 'dilek.kursun@rolls-royce.com'
             
-            # For CC field: None = use default, empty string = no CC recipients
-            if email_data.get('cc') is None:
-                email_data['cc'] = DEFAULT_EMAIL_RECIPIENTS['cc']
-                self.logger.debug("Using default CC recipients (field was not provided)")
-            elif not email_data.get('cc').strip():
-                # User intentionally left CC empty - respect that choice
-                email_data['cc'] = ''
-                self.logger.debug("CC field intentionally left empty by user")
+            if not email_data.get('cc'):
+                email_data['cc'] = 'thomas.lux@rolls-royce.com, jan.becker@rolls-royce.com'
+
+            # Validate email addresses before proceeding
+            def validate_email_list(email_string):
+                if not email_string:
+                    return []
+                # Handle both comma and semicolon separators (convert commas to semicolons for Outlook)
+                # First normalize by replacing semicolons with commas for consistent processing
+                normalized_string = email_string.replace(';', ',')
+                emails = [email.strip() for email in normalized_string.split(',') if email.strip()]
+                valid_emails = []
+                for email in emails:
+                    if '@' in email and '.' in email.split('@')[1]:
+                        valid_emails.append(email)
+                    else:
+                        self.logger.warning(f"Invalid email address format: {email}")
+                return valid_emails
             
-            self.logger.info(f"Final recipients - To: {email_data.get('to')}, CC: {email_data.get('cc') or 'None'}")
+            to_emails = validate_email_list(email_data['to'])
+            cc_emails = validate_email_list(email_data.get('cc', ''))
             
-            # Use custom body if provided and flagged, otherwise generate from template
-            if email_data.get('use_custom_body') and email_data.get('body'):
-                email_body = email_data['body']
-                self.logger.info(f"Using custom email body for project {project.archive_id}")
+            # Log email processing for debugging
+            self.logger.info(f"Processing emails - TO: {to_emails}, CC: {cc_emails}")
+            
+            if not to_emails:
+                raise ValueError("No valid TO email addresses provided")
+            
+            # Update email_data with validated emails using semicolons for Outlook
+            email_data['to'] = '; '.join(to_emails)
+            if cc_emails:
+                email_data['cc'] = '; '.join(cc_emails)
+                self.logger.info(f"CC emails processed: {len(cc_emails)} recipients - {email_data['cc']}")
             else:
-                email_body = self._generate_email_body(project, file_paths)
-                self.logger.info(f"Generated email body using template for project {project.archive_id}")
-            
-            self.logger.debug(f"Email recipients - To: {email_data.get('to')}, CC: {email_data.get('cc')}")
-            
-            # Import win32com for Outlook automation
+                email_data['cc'] = ''
+                self.logger.info("No CC emails provided")
+
+            # Initialize Outlook
             try:
-                import win32com.client as win32
                 import pythoncom
-            except ImportError:
-                self.logger.error("win32com not available - cannot send emails")
-                return {
-                    'success': False,
-                    'error': 'Outlook COM interface not available. Please ensure Microsoft Outlook is installed and accessible.',
-                    'method': 'outlook_com_failed'
-                }
-            
-            # Initialize COM
-            try:
+                # Initialize COM for this thread
                 pythoncom.CoInitialize()
                 self.logger.debug("COM initialized successfully")
-            except Exception as com_error:
-                self.logger.warning(f"COM already initialized or initialization failed: {com_error}")
+            except Exception as com_init_error:
+                self.logger.warning(f"COM initialization warning: {com_init_error}")
                 # Continue anyway as COM might already be initialized
             
-            # Create Outlook application object
-            outlook = win32.Dispatch('outlook.application')
+            outlook = None
+            mail = None
             
             try:
-                # Create mail item
-                mail = outlook.CreateItem(0)  # 0 = olMailItem
+                outlook = win32.Dispatch('Outlook.Application')
+                mail = outlook.CreateItem(0)  # 0 = Mail item
                 
-                # Set recipients - handle multiple recipients properly
-                to_recipients = [email.strip() for email in email_data.get('to', '').split(',') if email.strip()]
-                cc_recipients = [email.strip() for email in email_data.get('cc', '').split(',') if email.strip()]
+                # Set basic email properties
+                mail.To = email_data['to']
+                if email_data.get('cc'):
+                    mail.CC = email_data['cc']
+                mail.Subject = email_data['subject']
                 
-                # Add TO recipients
-                for recipient in to_recipients:
-                    try:
-                        mail.Recipients.Add(recipient)
-                        self.logger.debug(f"Added TO recipient: {recipient}")
-                    except Exception as e:
-                        self.logger.warning(f"Failed to add TO recipient {recipient}: {e}")
-                
-                # Add CC recipients
-                for recipient in cc_recipients:
-                    try:
-                        recipient_obj = mail.Recipients.Add(recipient)
-                        recipient_obj.Type = 2  # 2 = olCC
-                        self.logger.debug(f"Added CC recipient: {recipient}")
-                    except Exception as e:
-                        self.logger.warning(f"Failed to add CC recipient {recipient}: {e}")
-                
-                # Resolve all recipients
+                # Try to resolve recipients before proceeding
                 try:
+                    # This will attempt to resolve all recipients
                     mail.Recipients.ResolveAll()
-                    self.logger.debug("All recipients resolved successfully")
-                except Exception as e:
-                    self.logger.warning(f"Some recipients could not be resolved: {e}")
+                    self.logger.info("All recipients resolved successfully")
+                except Exception as resolve_error:
+                    self.logger.warning(f"Some recipients could not be resolved: {resolve_error}")
                     # Continue anyway - Outlook might still send the email
+                    
+                    # Alternative approach: Add recipients manually and mark as resolved
+                    try:
+                        mail.Recipients.RemoveAll()  # Clear existing recipients
+                        
+                        # Add TO recipients
+                        to_emails = [email.strip() for email in email_data['to'].replace(';', ',').split(',') if email.strip()]
+                        for email_addr in to_emails:
+                            recipient = mail.Recipients.Add(email_addr)
+                            recipient.Type = 1  # olTo
+                            recipient.Resolve()  # Try to resolve individual recipient
+                            self.logger.debug(f"Added TO recipient: {email_addr}")
+                        
+                        # Add CC recipients
+                        if email_data.get('cc'):
+                            cc_emails = [email.strip() for email in email_data['cc'].replace(';', ',').split(',') if email.strip()]
+                            self.logger.info(f"Adding {len(cc_emails)} CC recipients: {cc_emails}")
+                            for email_addr in cc_emails:
+                                recipient = mail.Recipients.Add(email_addr)
+                                recipient.Type = 2  # olCC
+                                recipient.Resolve()  # Try to resolve individual recipient
+                                self.logger.debug(f"Added CC recipient: {email_addr}")
+                        
+                        self.logger.info("Recipients added manually")
+                    except Exception as manual_error:
+                        self.logger.warning(f"Manual recipient resolution also failed: {manual_error}")
+                        # Continue with original recipients
+                        mail.To = email_data['to']
+                        if email_data.get('cc'):
+                            mail.CC = email_data['cc']
                 
-                # Set subject and body
-                mail.Subject = email_data.get('subject', f'Microfilm Project Handoff - {project.archive_id}')
-                mail.HTMLBody = email_body
+                # Get signature with placeholders using GetInspector trick
+                mail.GetInspector  # This triggers Outlook to add the default signature
                 
-                # Add attachments
-                attachments_added = []
-                for file_type, file_path in file_paths.items():
-                    if file_type.endswith('_path') and file_path and Path(file_path).exists():
-                        mail.Attachments.Add(str(file_path))
-                        attachments_added.append(Path(file_path).name)
-                        self.logger.debug(f"Added attachment: {file_path}")
+                # Get the signature HTML (now contains default signature)
+                signature_html = mail.HTMLBody
+                
+                # Prepare placeholder values
+                archive_id = email_data.get('archive_id') or project.archive_id
+                film_numbers = email_data.get('film_numbers', '')
+                
+                # If film numbers are empty, get them from the project
+                if not film_numbers or film_numbers.strip() == '':
+                    film_numbers = self._get_project_roll_numbers(project)
+                
+                custom_message = email_data.get('custom_message', '')
+                
+                # Generate timestamp for filenames
+                timestamp = datetime.now().strftime('%d%m%y%H%M')
+                
+                # Get random quote
+                random_quote = self._get_random_quote()
+                
+                # Replace signature placeholders
+                if signature_html:
+                    # Replace XXX with archive_id (appears in multiple places)
+                    signature_html = signature_html.replace('XXX', archive_id)
+                    
+                    # Replace YYY with film numbers
+                    signature_html = signature_html.replace('YYY', film_numbers)
+                    
+                    # Replace DDMMYYHHMM with actual timestamp
+                    signature_html = signature_html.replace('DDMMYYHHMM', timestamp)
+                    
+                    # Replace QQQ with random quote
+                    signature_html = signature_html.replace('QQQ', random_quote)
+                    
+                    # Replace CCC with custom message or em dash if empty
+                    if custom_message and custom_message.strip():
+                        # Convert line breaks to HTML breaks for proper display
+                        formatted_message = custom_message.strip().replace('\n', '<br>')
+                        signature_html = signature_html.replace('CCC', formatted_message)
+                    else:
+                        # Replace CCC placeholder with em dash if no custom message
+                        signature_html = signature_html.replace('CCC', '—')
+                    
+                    self.logger.debug(f"Replaced signature placeholders: XXX→{archive_id}, YYY→{film_numbers}, DDMMYYHHMM→{timestamp}, QQQ→{random_quote[:50]}..., CCC→{custom_message[:30] if custom_message else 'em dash'}...")
+                    
+                    mail.HTMLBody = signature_html
+                
+                # Add attachments if available
+                if file_paths:
+                    # Handle both old and new file_paths structure
+                    if isinstance(file_paths, dict):
+                        # New structure from generate_handoff_files
+                        if 'excel_path' in file_paths and os.path.exists(file_paths['excel_path']):
+                            mail.Attachments.Add(file_paths['excel_path'])
+                            self.logger.info(f"Added Excel attachment: {file_paths['excel_path']}")
+                        
+                        if 'dat_path' in file_paths and os.path.exists(file_paths['dat_path']):
+                            mail.Attachments.Add(file_paths['dat_path'])
+                            self.logger.info(f"Added DAT attachment: {file_paths['dat_path']}")
+                        
+                        # Only process legacy structure if new structure keys are not present
+                        elif not ('excel_path' in file_paths or 'dat_path' in file_paths):
+                            # Legacy structure support
+                            for file_type, file_info in file_paths.items():
+                                if isinstance(file_info, dict) and 'path' in file_info:
+                                    file_path = file_info['path']
+                                    if os.path.exists(file_path):
+                                        mail.Attachments.Add(file_path)
+                                        self.logger.info(f"Added legacy attachment: {file_path}")
+                                elif isinstance(file_info, str) and os.path.exists(file_info):
+                                    mail.Attachments.Add(file_info)
+                                    self.logger.info(f"Added string path attachment: {file_info}")
                 
                 # Send the email
-                mail.Display(0)
-                #mail.Send()
-                self.logger.info(f"Handoff email sent successfully via Outlook for project {project.archive_id} "
-                               f"to {len(to_recipients)} recipients with {len(attachments_added)} attachments")
-                
+                try:
+                    mail.Send()
+                    #mail.Display(True)
+                    self.logger.info(f"Email sent successfully for project {project.archive_id}")
+                    send_method = "sent"
+                except Exception as send_error:
+                    self.logger.warning(f"Failed to send email directly: {send_error}")
+                    # Fallback: Display the email for manual sending
+                    try:
+                        mail.Display(True)  # True = modal dialog
+                        self.logger.info(f"Email displayed for manual sending for project {project.archive_id}")
+                        send_method = "displayed"
+                    except Exception as display_error:
+                        self.logger.error(f"Failed to display email: {display_error}")
+                        raise Exception(f"Could not send or display email: {send_error}")
+
                 return {
                     'success': True,
-                    'message': f'Email sent successfully via Outlook to {", ".join(to_recipients)}',
-                    'sent_at': datetime.now().isoformat(),
-                    'attachments': attachments_added,
-                    'method': 'outlook_com',
-                    'recipients': {
-                        'to': ', '.join(to_recipients),
-                        'cc': ', '.join(cc_recipients)
-                    },
-                    'body_type': 'custom' if email_data.get('use_custom_body') else 'template'
+                    'message': f'Email {"sent automatically" if send_method == "sent" else "opened in Outlook for manual sending"} to {email_data["to"]}',
+                    'method': send_method,
+                    'archive_id': archive_id,
+                    'film_numbers': film_numbers
                 }
                 
-            except Exception as e:
-                self.logger.error(f"Error with Outlook COM operations for project {project.archive_id}: {e}")
-                return {
-                    'success': False,
-                    'error': f'Error sending handoff email: {str(e)}',
-                    'method': 'outlook_com_failed'
-                }
+            except Exception as outlook_error:
+                self.logger.error(f"Outlook COM error: {outlook_error}")
+                raise
             finally:
                 # Clean up COM
                 try:
+                    import pythoncom
                     pythoncom.CoUninitialize()
                     self.logger.debug("COM uninitialized successfully")
                 except Exception as cleanup_error:
-                    self.logger.warning(f"Error during COM cleanup: {cleanup_error}")
-                    
+                    self.logger.warning(f"COM cleanup warning: {cleanup_error}")
+            
         except Exception as e:
-            self.logger.error(f"Error sending handoff email for project {project.archive_id}: {e}")
+            error_msg = f"Failed to send email for project {project.archive_id}: {str(e)}"
+            self.logger.error(error_msg, exc_info=True)
             return {
                 'success': False,
-                'error': f'Error sending handoff email: {str(e)}',
-                'method': 'outlook_com_failed'
+                'error': error_msg
             }
+
+    def _customize_signature_content(self, signature_html: str, project, custom_message: str = None) -> str:
+        """
+        Customize signature content by replacing placeholders with project data.
+        
+        Args:
+            signature_html: Original signature HTML from Outlook
+            project: Django Project model instance
+            custom_message: Optional custom message to replace CCC placeholder
+            
+        Returns:
+            Customized signature HTML
+        """
+        try:
+            if not signature_html:
+                return signature_html
+            
+            # Generate timestamp for filenames
+            timestamp = self._generate_timestamp()
+            
+            # Get film numbers
+            film_numbers = self._get_project_roll_numbers(project)
+            
+            # Get archive ID
+            archive_id = str(project.archive_id) if hasattr(project, 'archive_id') and project.archive_id else 'UNKNOWN'
+            
+            # Replace placeholders in signature
+            customized_html = signature_html
+            
+            # Replace XXX with archive_id (appears in multiple places)
+            customized_html = customized_html.replace('XXX', archive_id)
+            
+            # Replace YYY with film numbers
+            if film_numbers:
+                customized_html = customized_html.replace('YYY', film_numbers)
+            else:
+                customized_html = customized_html.replace('YYY', 'N/A')
+            
+            # Replace DDMMYYHHMM with actual timestamp
+            customized_html = customized_html.replace('DDMMYYHHMM', timestamp)
+            
+            # Replace QQQ with random quote
+            random_quote = self._get_random_quote()
+            customized_html = customized_html.replace('QQQ', random_quote)
+            
+            # Replace CCC with custom message or em dash if empty
+            if custom_message and custom_message.strip():
+                # Convert line breaks to HTML breaks for proper display
+                formatted_message = custom_message.strip().replace('\n', '<br>')
+                customized_html = customized_html.replace('CCC', formatted_message)
+            else:
+                # Replace CCC placeholder with em dash if no custom message
+                customized_html = customized_html.replace('CCC', '—')
+            
+            self.logger.debug(f"Customized signature placeholders: XXX -> {archive_id}, YYY -> {film_numbers or 'N/A'}, DDMMYYHHMM -> {timestamp}, QQQ -> {random_quote[:50]}..., CCC -> {custom_message[:30] if custom_message else 'em dash'}...")
+            
+            return customized_html
+            
+        except Exception as e:
+            self.logger.error(f"Error customizing signature content: {e}")
+            return signature_html  # Return original if customization fails
+
+    def _generate_timestamp(self) -> str:
+        """
+        Generate timestamp in DDMMYYHHMM format for filenames.
+        
+        Returns:
+            Formatted timestamp string
+        """
+        return datetime.now().strftime('%d%m%y%H%M')
     
     def _generate_email_body(self, project, file_paths: Dict[str, Any]) -> str:
         """
@@ -883,4 +1040,123 @@ Iron Mountain Microfilm Team
 
 ---
 This email was generated automatically by the Microfilm Processing System.
-""" 
+"""
+
+    def _get_random_quote(self) -> str:
+        """
+        Fetch a random inspirational quote from an API or fallback to local quotes.
+        Supports both English and German with specific categories and length limits.
+        
+        Returns:
+            Random quote string
+        """
+        # Randomly choose language
+        language = random.choice(['en', 'de'])
+        
+        # Define categories mapping
+        categories = [
+            'business', 'success', 'motivational', 'inspirational', 
+            'wisdom', 'philosophy', 'work', 'productivity', 'famous-people',
+            'humor', 'education', 'learning'
+        ]
+        
+        try:
+            # Try quotable.io for English quotes
+            if language == 'en':
+                category = random.choice(['wisdom', 'success', 'motivational', 'famous-quotes'])
+                max_length = random.choice([50, 150])  # short or medium
+                
+                response = requests.get(
+                    'https://api.quotable.io/random',
+                    params={
+                        'tags': category,
+                        'maxLength': max_length
+                    },
+                    timeout=3
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    quote = f'"{data["content"]}" - {data["author"]}'
+                    self.logger.debug(f"Fetched English quote from API: {quote}")
+                    return quote
+            
+            # Try alternative API for German quotes
+            else:
+                # For German, we'll use a different approach or fallback faster
+                pass
+                
+        except Exception as api_error:
+            self.logger.warning(f"Failed to fetch quote from API: {api_error}")
+        
+        # Enhanced fallback quotes in both languages
+        english_quotes = [
+            '"The only way to do great work is to love what you do." - Steve Jobs',
+            '"Innovation distinguishes between a leader and a follower." - Steve Jobs',
+            '"Quality is not an act, it is a habit." - Aristotle',
+            '"Excellence is never an accident." - Aristotle',
+            '"Success is not final, failure is not fatal." - Winston Churchill',
+            '"The only impossible journey is the one you never begin." - Tony Robbins',
+            '"In the middle of difficulty lies opportunity." - Albert Einstein',
+            '"Believe you can and you\'re halfway there." - Theodore Roosevelt',
+            '"Knowledge is power." - Francis Bacon',
+            '"The best investment you can make is in yourself." - Warren Buffett',
+            '"Productivity is never an accident." - Paul J. Meyer',
+            '"Laughter is the best medicine." - Proverb',
+            '"A goal without a plan is just a wish." - Antoine de Saint-Exupéry',
+            '"The expert in anything was once a beginner." - Helen Hayes'
+        ]
+        
+        german_quotes = [
+            '"Erfolg ist die Fähigkeit, von einem Misserfolg zum anderen zu gehen, ohne seine Begeisterung zu verlieren." - Winston Churchill',
+            '"Das Geheimnis des Erfolgs ist anzufangen." - Mark Twain',
+            '"Wissen ist Macht." - Francis Bacon',
+            '"Qualität ist kein Zufall." - Aristoteles',
+            '"Innovation unterscheidet zwischen einem Anführer und einem Nachfolger." - Steve Jobs',
+            '"Der beste Weg, die Zukunft vorherzusagen, ist, sie zu erschaffen." - Peter Drucker',
+            '"Bildung ist die mächtigste Waffe, um die Welt zu verändern." - Nelson Mandela',
+            '"Lachen ist die beste Medizin." - Sprichwort',
+            '"Ein Ziel ohne Plan ist nur ein Wunsch." - Antoine de Saint-Exupéry',
+            '"Produktivität ist niemals ein Zufall." - Paul J. Meyer',
+            '"In der Mitte der Schwierigkeit liegt die Möglichkeit." - Albert Einstein',
+            '"Weisheit ist nicht das Ergebnis der Schulbildung, sondern des lebenslangen Versuchs, sie zu erwerben." - Albert Einstein',
+            '"Der Experte in allem war einmal ein Anfänger." - Helen Hayes',
+            '"Glaube an dich selbst und du bist schon zur Hälfte da." - Theodore Roosevelt',
+            # Business/Success quotes
+            '"Geschäfte sind wie ein Rad - sie müssen sich bewegen oder sie fallen um." - Henry Ford',
+            '"Der Kunde ist König, aber der Service ist das Königreich." - Unbekannt',
+            '"Erfolg besteht darin, dass man genau die Fähigkeiten hat, die im Moment gefragt sind." - Henry Ford',
+            '"Wer aufhört zu werben, um Geld zu sparen, kann ebenso seine Uhr anhalten, um Zeit zu sparen." - Henry Ford',
+            # Motivational/Inspirational quotes
+            '"Träume nicht dein Leben, sondern lebe deinen Traum." - Mark Twain',
+            '"Was uns nicht umbringt, macht uns stärker." - Friedrich Nietzsche',
+            '"Mut ist nicht die Abwesenheit von Furcht, sondern die Erkenntnis, dass etwas anderes wichtiger ist als die Furcht." - Ambrose Redmoon',
+            '"Der Weg ist das Ziel." - Konfuzius',
+            # Wisdom/Philosophy quotes
+            '"Ich weiß, dass ich nichts weiß." - Sokrates',
+            '"Die Zeit heilt alle Wunden." - Sprichwort',
+            '"Wer anderen eine Grube gräbt, fällt selbst hinein." - Sprichwort',
+            '"Aller Anfang ist schwer." - Sprichwort',
+            # Work/Productivity quotes
+            '"Arbeit ist das halbe Leben, und die andere Hälfte auch." - Unbekannt',
+            '"Fleiß ist des Glückes Vater." - Sprichwort',
+            '"Ohne Fleiß kein Preis." - Sprichwort',
+            '"Übung macht den Meister." - Sprichwort',
+            # Famous People quotes
+            '"Phantasie ist wichtiger als Wissen." - Albert Einstein',
+            '"Habe Mut, dich deines eigenen Verstandes zu bedienen!" - Immanuel Kant',
+            '"Die Musik drückt das aus, was nicht gesagt werden kann und worüber zu schweigen unmöglich ist." - Victor Hugo',
+            # Humor quotes
+            '"Humor ist der Knopf, der verhindert, dass uns der Kragen platzt." - Joachim Ringelnatz',
+            '"Lächeln ist die eleganteste Art, seinen Gegnern die Zähne zu zeigen." - Werner Finck'
+        ]
+        
+        # Choose quotes based on intended language
+        if language == 'de':
+            quote = random.choice(german_quotes)
+            self.logger.debug(f"Using fallback German quote: {quote}")
+        else:
+            quote = random.choice(english_quotes)
+            self.logger.debug(f"Using fallback English quote: {quote}")
+            
+        return quote 
