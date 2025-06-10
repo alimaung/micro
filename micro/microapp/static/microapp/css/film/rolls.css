@@ -3,17 +3,17 @@
 /* Rolls grid layout */
 .rolls-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: var(--film-spacing-lg);
-    margin-bottom: var(--film-spacing-lg);
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 24px;
+    margin-bottom: 24px;
 }
 
 /* Roll card styling */
 .roll-card {
-    background-color: var(--film-surface);
-    border: 2px solid var(--film-border);
-    border-radius: var(--film-border-radius-lg);
-    padding: var(--film-spacing-lg);
+    background-color: var(--film-background);
+    border: 1px solid var(--film-border);
+    border-radius: 12px;
+    padding: 24px;
     cursor: pointer;
     transition: var(--film-transition);
     position: relative;
@@ -28,19 +28,18 @@
 
 .roll-card.selected {
     border-color: var(--film-primary);
-    background-color: rgba(37, 99, 235, 0.05);
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    background-color: rgba(var(--film-primary-rgb), 0.1);
 }
 
 /* Ensure selected state overrides completed state */
 .roll-card.completed.selected {
-    border-color: var(--film-primary) !important;
-    background-color: rgba(37, 99, 235, 0.1) !important;
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2) !important;
+    border-color: var(--film-primary);
+    background-color: rgba(var(--film-primary-rgb), 0.1);
+    box-shadow: 0 0 0 2px rgba(var(--film-primary-rgb), 0.2);
 }
 
 .roll-card.not-ready {
-    opacity: 0.6;
+    opacity: 0.7;
     cursor: not-allowed;
 }
 
@@ -52,35 +51,35 @@
 
 .roll-card.filming {
     border-color: var(--film-primary);
-    background-color: rgba(37, 99, 235, 0.1);
+    background-color: rgba(var(--film-primary-rgb), 0.05);
 }
 
 .roll-card.completed {
     border-color: var(--film-success);
-    background-color: rgba(16, 185, 129, 0.05);
+    background-color: rgba(var(--film-success-rgb), 0.05);
 }
 
 .roll-card.completed:hover {
     border-color: var(--film-warning);
-    background-color: rgba(245, 158, 11, 0.05);
+    background-color: rgba(var(--film-warning-rgb), 0.05);
 }
 
 /* Completed badge */
 .completed-badge {
     position: absolute;
-    top: var(--film-spacing-sm);
-    right: var(--film-spacing-sm);
+    top: 12px;
+    right: 12px;
     background-color: var(--film-success);
     color: white;
-    padding: var(--film-spacing-xs) var(--film-spacing-sm);
-    border-radius: var(--film-border-radius);
+    padding: 4px 10px;
+    border-radius: 12px;
     font-size: 11px;
-    font-weight: 600;
+    font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     display: flex;
     align-items: center;
-    gap: var(--film-spacing-xs);
+    gap: 6px;
     z-index: 2;
 }
 
@@ -93,7 +92,7 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: var(--film-spacing-md);
+    margin-bottom: 16px;
 }
 
 .roll-title {
@@ -101,63 +100,69 @@
 }
 
 .roll-film-number {
-    font-size: 18px;
-    font-weight: 600;
+    font-size: 16px;
+    font-weight: 500;
     color: var(--film-text);
-    margin-bottom: var(--film-spacing-xs);
+    margin-bottom: 4px;
 }
 
 .roll-film-type {
-    font-size: 14px;
+    font-size: 12px;
     color: var(--film-text-light);
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
 .roll-status-badge {
-    padding: var(--film-spacing-xs) var(--film-spacing-sm);
-    border-radius: var(--film-border-radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 10px;
+    border-radius: 12px;
     font-size: 11px;
-    font-weight: 600;
+    font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    min-width: 80px;
+    min-height: 24px;
+    line-height: 1.2;
 }
 
 .roll-status-badge.ready {
-    background-color: var(--film-success);
-    color: white;
+    background-color: rgba(var(--film-success-rgb), 0.2);
+    color: var(--film-success);
 }
 
 .roll-status-badge.filming {
-    background-color: var(--film-primary);
-    color: white;
+    background-color: rgba(var(--film-primary-rgb), 0.2);
+    color: var(--film-primary);
     animation: pulse 2s infinite;
 }
 
 .roll-status-badge.completed {
-    background-color: var(--film-success);
-    color: white;
+    background-color: rgba(var(--film-success-rgb), 0.2);
+    color: var(--film-success);
 }
 
 .roll-status-badge.not-ready {
-    background-color: var(--film-warning);
-    color: white;
+    background-color: rgba(var(--film-warning-rgb), 0.2);
+    color: var(--film-warning);
 }
 
 /* Project information */
 .roll-project-info {
-    margin-bottom: var(--film-spacing-md);
-    padding: var(--film-spacing-sm);
-    background-color: rgba(0, 0, 0, 0.02);
-    border-radius: var(--film-border-radius);
-    border-left: 3px solid var(--film-primary);
+    margin-bottom: 16px;
+    padding: 12px;
+    background-color: var(--film-surface);
+    border-radius: 8px;
+    border: none;
 }
 
 .roll-project-info .project-name {
     font-size: 14px;
-    font-weight: 600;
+    font-weight: 500;
     color: var(--film-text);
-    margin-bottom: var(--film-spacing-xs);
+    margin-bottom: 4px;
 }
 
 .roll-project-info .archive-id {
@@ -169,14 +174,14 @@
 
 /* Roll details */
 .roll-details {
-    margin-bottom: var(--film-spacing-md);
+    margin-bottom: 16px;
 }
 
 .roll-detail-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: var(--film-spacing-xs);
+    margin-bottom: 6px;
     font-size: 14px;
 }
 
@@ -191,21 +196,21 @@
 
 /* Roll progress bar */
 .roll-progress {
-    margin-bottom: var(--film-spacing-md);
+    margin-bottom: 16px;
 }
 
 .roll-progress-label {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: var(--film-spacing-xs);
+    margin-bottom: 6px;
     font-size: 12px;
     color: var(--film-text-light);
 }
 
 .roll-progress-bar {
     height: 6px;
-    background-color: var(--film-border);
+    background-color: var(--film-surface);
     border-radius: 3px;
     overflow: hidden;
 }
@@ -226,7 +231,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: var(--film-spacing-sm);
+    gap: 8px;
 }
 
 .action-hint {
@@ -245,7 +250,7 @@
     font-size: 12px;
     display: flex;
     align-items: center;
-    gap: var(--film-spacing-xs);
+    gap: 6px;
     flex: 1;
 }
 
@@ -259,11 +264,11 @@
 
 .roll-select-button {
     flex: 1;
-    padding: var(--film-spacing-sm) var(--film-spacing-md);
+    padding: 8px 16px;
     background-color: var(--film-primary);
     color: white;
     border: none;
-    border-radius: var(--film-border-radius);
+    border-radius: 8px;
     font-size: 14px;
     font-weight: 500;
     cursor: pointer;
@@ -271,7 +276,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: var(--film-spacing-xs);
+    gap: 8px;
 }
 
 .roll-select-button:hover {
@@ -284,10 +289,10 @@
 }
 
 .roll-info-button {
-    padding: var(--film-spacing-sm);
-    background-color: var(--film-surface);
+    padding: 8px;
+    background-color: var(--film-background);
     border: 1px solid var(--film-border);
-    border-radius: var(--film-border-radius);
+    border-radius: 8px;
     color: var(--film-text-light);
     cursor: pointer;
     transition: var(--film-transition);
@@ -308,9 +313,9 @@
 .directory-status {
     display: flex;
     align-items: center;
-    gap: var(--film-spacing-xs);
+    gap: 6px;
     font-size: 12px;
-    margin-top: var(--film-spacing-xs);
+    margin-top: 6px;
 }
 
 .directory-status.exists {
@@ -332,7 +337,7 @@
     left: 0;
     right: 0;
     height: 4px;
-    background-color: var(--film-border);
+    background-color: var(--film-surface);
     overflow: hidden;
 }
 
@@ -367,59 +372,56 @@
 /* Roll empty state */
 .rolls-empty-state {
     text-align: center;
-    padding: 60px 20px;
+    padding: 40px 20px;
     color: var(--film-text-light);
 }
 
 .rolls-empty-state i {
-    font-size: 48px;
-    margin-bottom: var(--film-spacing-md);
+    font-size: 40px;
+    margin-bottom: 16px;
     opacity: 0.6;
 }
 
 .rolls-empty-state h3 {
     font-size: 18px;
-    margin-bottom: var(--film-spacing-sm);
+    margin-bottom: 8px;
     color: var(--film-text);
+    font-weight: 500;
 }
 
 .rolls-empty-state p {
     font-size: 14px;
-    margin-bottom: var(--film-spacing-md);
+    margin-bottom: 16px;
 }
 
 /* Responsive design for rolls */
 @media (max-width: 768px) {
     .rolls-grid {
         grid-template-columns: 1fr;
-        gap: var(--film-spacing-md);
+        gap: 16px;
     }
     
     .roll-card {
-        padding: var(--film-spacing-md);
+        padding: 16px;
     }
     
     .roll-header {
         flex-direction: column;
-        gap: var(--film-spacing-sm);
+        gap: 8px;
     }
     
     .roll-actions {
         flex-direction: column;
+        gap: 8px;
     }
 }
 
 @media (max-width: 576px) {
     .roll-film-number {
-        font-size: 16px;
+        font-size: 15px;
     }
     
     .roll-detail-item {
         font-size: 13px;
-    }
-    
-    .roll-select-button {
-        padding: var(--film-spacing-md);
-        font-size: 16px;
     }
 } 

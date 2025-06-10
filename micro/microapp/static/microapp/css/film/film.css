@@ -21,14 +21,35 @@
 
 /* Additional film-specific overrides and customizations */
 
+/* 
+ * Standardized indicators:
+ * - Small circular indicators: 12px × 12px
+ * - Large circular indicators: 40px × 40px
+ * - Rectangular indicators (status-badge): min-width 120px, min-height 32px, padding 6px 12px
+ * - Connected status: green border, light green background (#30d158 with transparency)
+ */
+
 /* Ensure proper card spacing and flow */
 .filming-card + .filming-card {
-    margin-top: var(--film-spacing-xl);
+    margin-top: 30px;
 }
 
 /* Smooth transitions for card visibility */
 .filming-card {
-    transition: opacity 0.3s ease, transform 0.3s ease;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    background-color: var(--color-background);
+    border-radius: 12px;
+    box-shadow: 0 1px 3px var(--color-shadow), 
+                0 2px 8px var(--color-shadow);
+    border: 1px solid var(--color-border);
+    overflow: hidden;
+}
+
+.dark-mode .filming-card {
+    background-color: var(--color-dark-surface);
+    border-color: var(--color-dark-border);
+    box-shadow: 0 1px 3px var(--color-dark-shadow), 
+                0 2px 8px var(--color-dark-shadow);
 }
 
 .filming-card.hidden {
@@ -39,14 +60,109 @@
 
 /* Focus management for accessibility */
 .filming-card:focus-within {
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    box-shadow: 0 0 0 2px rgba(0, 113, 227, 0.2);
+}
+
+.dark-mode .filming-card:focus-within {
+    box-shadow: 0 0 0 2px rgba(0, 113, 227, 0.4);
+}
+
+/* Card header styling */
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.dark-mode .card-header {
+    border-color: var(--color-dark-border);
+}
+
+.card-header h2 {
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--color-text);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.dark-mode .card-header h2 {
+    color: var(--color-dark-text);
+}
+
+.card-header h2 i {
+    color: var(--color-primary);
+}
+
+/* Card content styling */
+.card-content {
+    padding: 20px 24px;
+}
+
+/* Status badges */
+.status-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    min-width: 90px;
+    min-height: 28px;
+    line-height: 1.2;
+}
+
+.status-badge.ready {
+    background-color: rgba(0, 113, 227, 0.2);
+    color: #0071e3;
+}
+
+.status-badge.in-progress {
+    background-color: rgba(255, 204, 0, 0.2);
+    color: #ffcc00;
+}
+
+.status-badge.completed {
+    background-color: rgba(48, 209, 88, 0.2);
+    color: #30d158;
+}
+
+.status-badge.error {
+    background-color: rgba(255, 69, 58, 0.2);
+    color: #ff453a;
+}
+
+.dark-mode .status-badge.ready {
+    background-color: rgba(0, 113, 227, 0.3);
+}
+
+.dark-mode .status-badge.in-progress {
+    background-color: rgba(255, 204, 0, 0.3);
+}
+
+.dark-mode .status-badge.completed {
+    background-color: rgba(48, 209, 88, 0.3);
+}
+
+.dark-mode .status-badge.error {
+    background-color: rgba(255, 69, 58, 0.3);
 }
 
 /* Print styles for film controller */
 @media print {
     .filming-card {
         break-inside: avoid;
-        margin-bottom: var(--film-spacing-lg);
+        margin-bottom: 24px;
+        box-shadow: none;
+        border: 1px solid #e5e5ea;
     }
     
     .filming-controls,
@@ -57,5 +173,38 @@
     
     #toast-container {
         display: none;
+    }
+}
+
+/* CSS variables */
+:root {
+    --color-background: #ffffff;
+    --color-background-secondary: #f5f5f7;
+    --color-surface: #ffffff;
+    --color-border: #e5e5ea;
+    --color-shadow: rgba(0, 0, 0, 0.05);
+    
+    --color-text: #1d1d1f;
+    --color-text-secondary: #86868b;
+    --color-text-tertiary: #98989d;
+    
+    --color-primary: #0071e3;
+    --color-primary-dark: #0058b9;
+    --color-primary-rgb: 0, 113, 227;
+    
+    --transition-speed: 0.2s;
+}
+
+/* Dark mode variables */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --color-dark-surface: #1c1c1e;
+        --color-dark-background: #000000;
+        --color-dark-background-secondary: #2c2c2e;
+        --color-dark-border: #38383a;
+        --color-dark-shadow: rgba(0, 0, 0, 0.2);
+        
+        --color-dark-text: #f5f5f7;
+        --color-dark-text-secondary: #98989d;
     }
 } 

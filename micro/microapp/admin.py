@@ -67,25 +67,50 @@ class DocumentDimensionAdmin(admin.ModelAdmin):
     search_fields = ('document__doc_id',)
     list_filter = ('document',)
     readonly_fields = ('id',)
+    fieldsets = (
+        ('Identification', {
+            'fields': ('id', 'document', 'page_idx')
+        }),
+        ('Dimensions', {
+            'fields': ('width', 'height', 'percent_over')
+        }),
+    )
 
 class DocumentRangeAdmin(admin.ModelAdmin):
     list_display = ('id', 'document', 'start_page', 'end_page')
     search_fields = ('document__doc_id',)
     list_filter = ('document',)
     readonly_fields = ('id',)
+    fieldsets = (
+        ('Identification', {
+            'fields': ('id', 'document')
+        }),
+        ('Range', {
+            'fields': ('start_page', 'end_page')
+        }),
+    )
 
 class ReferencePageAdmin(admin.ModelAdmin):
     list_display = ('id', 'document', 'position')
     search_fields = ('document__doc_id',)
     list_filter = ('document',)
     readonly_fields = ('id',)
+    fieldsets = (
+        ('Identification', {
+            'fields': ('id', 'document')
+        }),
+        ('Position', {
+            'fields': ('position',)
+        }),
+    )
 
 class RollAdmin(admin.ModelAdmin):
     list_display = ('id', 'roll_id', 'project', 'roll_number', 'film_number', 'film_type', 'capacity', 'pages_used', 
                     'pages_remaining', 'status', 'filming_status', 'filming_progress_percent', 'development_status',
-                    'development_progress_percent', 'has_split_documents', 'creation_date',
+                    'development_progress_percent', 'has_split_documents', 'creation_date', 'filmed_at',
                     'is_partial', 'remaining_capacity', 'usable_capacity', 'film_number_source',
-                    'source_temp_roll', 'created_temp_roll', 'output_directory')
+                    'source_temp_roll', 'created_temp_roll', 'output_directory', 'filming_session_id',
+                    'filming_started_at', 'filming_completed_at', 'development_started_at', 'development_completed_at')
     search_fields = ('film_number', 'roll_number', 'project__archive_id', 'output_directory', 'filming_session_id')
     list_filter = ('film_type', 'status', 'filming_status', 'development_status', 'is_partial', 'has_split_documents', 'film_number_source')
     readonly_fields = ('roll_id', 'creation_date')
@@ -164,18 +189,45 @@ class RollReferenceInfoAdmin(admin.ModelAdmin):
     search_fields = ('roll__film_number',)
     list_filter = ('is_new_roll',)
     readonly_fields = ('id',)
+    fieldsets = (
+        ('Identification', {
+            'fields': ('id', 'roll')
+        }),
+        ('Reference Information', {
+            'fields': ('is_new_roll', 'previous_project', 'last_blipend', 'last_frame_position')
+        }),
+    )
 
 class DocumentReferenceInfoAdmin(admin.ModelAdmin):
     list_display = ('id', 'document', 'roll', 'is_split')
     search_fields = ('document__doc_id', 'roll__film_number')
     list_filter = ('is_split',)
     readonly_fields = ('id',)
+    fieldsets = (
+        ('Identification', {
+            'fields': ('id', 'document', 'roll')
+        }),
+        ('Reference Information', {
+            'fields': ('is_split',)
+        }),
+    )
 
 class RangeReferenceInfoAdmin(admin.ModelAdmin):
     list_display = ('id', 'document_reference', 'range_start', 'range_end', 
                    'position', 'frame_start', 'blip', 'blipend')
     search_fields = ('document_reference__document__doc_id',)
     readonly_fields = ('id',)
+    fieldsets = (
+        ('Identification', {
+            'fields': ('id', 'document_reference', 'position')
+        }),
+        ('Range Information', {
+            'fields': ('range_start', 'range_end', 'frame_start')
+        }),
+        ('Blip Information', {
+            'fields': ('blip', 'blipend')
+        }),
+    )
 
 class FilmAllocationAdmin(admin.ModelAdmin):
     list_display = ('id', 'project', 'total_rolls_16mm', 'total_pages_16mm',
@@ -206,6 +258,14 @@ class DocumentAllocationRequest35mmAdmin(admin.ModelAdmin):
     search_fields = ('document__doc_id', 'project__archive_id')
     list_filter = ('processed',)
     readonly_fields = ('id',)
+    fieldsets = (
+        ('Identification', {
+            'fields': ('id', 'project', 'document')
+        }),
+        ('Allocation Information', {
+            'fields': ('pages', 'start_page', 'end_page', 'processed')
+        }),
+    )
 
 class DistributionResultAdmin(admin.ModelAdmin):
     list_display = ('id', 'project', 'processed_count', 'error_count', 'output_dir',
@@ -262,6 +322,14 @@ class ReadablePageDescriptionAdmin(admin.ModelAdmin):
     search_fields = ('document__doc_id', 'description')
     list_filter = ('document',)
     readonly_fields = ('id',)
+    fieldsets = (
+        ('Identification', {
+            'fields': ('id', 'document', 'range_index')
+        }),
+        ('Description', {
+            'fields': ('description',)
+        }),
+    )
 
 class AdjustedRangeAdmin(admin.ModelAdmin):
     list_display = ('id', 'document', 'original_start', 'original_end', 
@@ -269,6 +337,17 @@ class AdjustedRangeAdmin(admin.ModelAdmin):
     search_fields = ('document__doc_id',)
     list_filter = ('document',)
     readonly_fields = ('id',)
+    fieldsets = (
+        ('Identification', {
+            'fields': ('id', 'document')
+        }),
+        ('Original Range', {
+            'fields': ('original_start', 'original_end')
+        }),
+        ('Adjusted Range', {
+            'fields': ('adjusted_start', 'adjusted_end')
+        }),
+    )
 
 class ProcessedDocumentAdmin(admin.ModelAdmin):
     list_display = ('id', 'document', 'processing_type', 'path', 
@@ -293,9 +372,9 @@ class ProcessedDocumentAdmin(admin.ModelAdmin):
     )
 
 class FilmingSessionAdmin(admin.ModelAdmin):
-    list_display = ('id', 'session_id', 'project', 'roll', 'film_type', 'status', 'workflow_state', 
+    list_display = ('id', 'session_id', 'project', 'roll', 'user', 'film_type', 'status', 'workflow_state', 
                     'progress_percent', 'total_documents', 'processed_documents', 'recovery_mode',
-                    'started_at', 'completed_at', 'created_at', 'updated_at')
+                    'started_at', 'completed_at', 'duration', 'error_message', 'created_at', 'updated_at')
     search_fields = ('session_id', 'project__archive_id', 'roll__film_number', 'roll__roll_number')
     list_filter = ('status', 'workflow_state', 'film_type', 'recovery_mode', 'created_at')
     readonly_fields = ('id', 'created_at', 'updated_at')
@@ -335,9 +414,9 @@ class FilmingSessionLogAdmin(admin.ModelAdmin):
     )
 
 class DevelopmentSessionAdmin(admin.ModelAdmin):
-    list_display = ('id', 'session_id', 'roll', 'status', 'progress_percent', 
+    list_display = ('id', 'session_id', 'roll', 'user', 'status', 'progress_percent', 
                     'development_duration_minutes', 'started_at', 'completed_at', 
-                    'estimated_completion', 'user', 'created_at')
+                    'estimated_completion', 'chemical_usage_area', 'created_at', 'updated_at')
     search_fields = ('session_id', 'roll__film_number', 'roll__roll_number', 'user__username')
     list_filter = ('status', 'roll__film_type', 'created_at', 'started_at', 'completed_at')
     readonly_fields = ('id', 'session_id', 'created_at', 'updated_at', 'duration_display')
@@ -350,6 +429,9 @@ class DevelopmentSessionAdmin(admin.ModelAdmin):
         }),
         ('Status & Progress', {
             'fields': ('status', 'progress_percent')
+        }),
+        ('Chemical Usage', {
+            'fields': ('chemical_usage_area',)
         }),
         ('Timing', {
             'fields': ('started_at', 'completed_at')
@@ -371,8 +453,8 @@ class DevelopmentSessionAdmin(admin.ModelAdmin):
     duration_display.short_description = "Actual Duration"
 
 class ChemicalBatchAdmin(admin.ModelAdmin):
-    list_display = ('id', 'batch_id', 'chemical_type', 'capacity_display', 'usage_display', 
-                    'status_display', 'is_active', 'created_at', 'replaced_at')
+    list_display = ('id', 'batch_id', 'chemical_type', 'max_area', 'used_area', 'used_16mm_rolls', 'used_35mm_rolls',
+                    'capacity_display', 'usage_display', 'status_display', 'is_active', 'created_at', 'replaced_at')
     search_fields = ('batch_id', 'chemical_type')
     list_filter = ('chemical_type', 'is_active', 'created_at', 'replaced_at')
     readonly_fields = ('id', 'created_at', 'capacity_display', 'usage_display', 'status_display')
@@ -457,8 +539,8 @@ class DevelopmentLogAdmin(admin.ModelAdmin):
         return super().get_queryset(request).select_related('session', 'session__roll')
 
 class DensityMeasurementAdmin(admin.ModelAdmin):
-    list_display = ('id', 'session', 'measurement_time_minutes', 'density_value', 
-                    'quality_status_display', 'is_within_optimal_range', 'user', 'created_at')
+    list_display = ('id', 'session', 'user', 'measurement_time_minutes', 'density_value', 
+                    'quality_status_display', 'is_within_optimal_range', 'notes', 'created_at')
     search_fields = ('session__session_id', 'session__roll__film_number', 'user__username', 'notes')
     list_filter = ('is_within_optimal_range', 'measurement_time_minutes', 'created_at')
     readonly_fields = ('id', 'created_at', 'is_within_optimal_range', 'quality_status_display')
@@ -497,17 +579,17 @@ class DensityMeasurementAdmin(admin.ModelAdmin):
     quality_status_display.allow_tags = True
 
 class FilmLabelAdmin(admin.ModelAdmin):
-    list_display = ('id', 'label_id', 'roll', 'project', 'film_number', 'archive_id', 
-                    'status', 'generated_at', 'downloaded_at', 'printed_at', 
-                    'download_count', 'print_count', 'user')
+    list_display = ('id', 'label_id', 'roll', 'project', 'user', 'version', 'film_number', 'archive_id', 'doc_type',
+                    'pdf_path', 'cache_key', 'status', 'generated_at', 'downloaded_at', 'queued_at', 'printed_at', 'completed_at',
+                    'download_count', 'print_count')
     search_fields = ('label_id', 'film_number', 'archive_id', 'roll__film_number', 
                      'project__archive_id', 'user__username')
-    list_filter = ('status', 'generated_at', 'downloaded_at', 'printed_at')
+    list_filter = ('status', 'version', 'generated_at', 'downloaded_at', 'printed_at')
     readonly_fields = ('id', 'label_id', 'generated_at', 'downloaded_at', 'queued_at', 
                        'printed_at', 'completed_at', 'download_count', 'print_count')
     fieldsets = (
         ('Identification', {
-            'fields': ('id', 'label_id', 'roll', 'project', 'user')
+            'fields': ('id', 'label_id', 'roll', 'project', 'user', 'version')
         }),
         ('Label Content', {
             'fields': ('film_number', 'archive_id', 'doc_type')
