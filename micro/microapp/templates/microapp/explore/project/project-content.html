@@ -1,0 +1,170 @@
+<!-- Project-specific content views -->
+
+<!-- Table view (default) -->
+<div id="projects-table-view" class="result-view entity-content active" data-entity="projects">
+    <div class="results-table-wrapper">
+        <table class="results-table">
+            <thead>
+                <tr>
+                    <th>
+                        <input type="checkbox" id="select-all-projects" class="batch-checkbox">
+                    </th>
+                    <th class="sortable" data-sort="id">
+                        ID <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="archive_id">
+                        Archive ID <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="location">
+                        Location <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="doc_type">
+                        Document Type <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="project_path">
+                        Project Path <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="project_folder_name">
+                        Project Folder Name <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="pdf_folder_path">
+                        PDF Folder Path <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="comlist_path">
+                        Comlist Path <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="output_dir">
+                        Output Dir <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="has_pdf_folder">
+                        Has PDF Folder <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="processing_complete">
+                        Processing Complete <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="retain_sources">
+                        Retain Sources <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="add_to_database">
+                        Add to Database <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="has_oversized">
+                        Has Oversized <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="total_pages">
+                        Total Pages <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="total_pages_with_refs">
+                        Pages with Refs <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="documents_with_oversized">
+                        Docs with Oversized <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="total_oversized">
+                        Total Oversized <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="created_at">
+                        Created At <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="updated_at">
+                        Updated At <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="owner">
+                        Owner <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="index_path">
+                        Index Path <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="data_dir">
+                        Data Dir <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="film_allocation_complete">
+                        Film Allocation Complete <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="distribution_complete">
+                        Distribution Complete <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="projects-results-body">
+                <!-- This will be populated by JavaScript -->
+                <tr class="empty-row">
+                    <td colspan="26">No data available. Apply filters to see results.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="pagination">
+        <button id="projects-prev-page" disabled>
+            <i class="fas fa-chevron-left"></i> Previous
+        </button>
+        <div id="projects-page-numbers">
+            <span class="page-number active">1</span>
+        </div>
+        <button id="projects-next-page" disabled>
+            Next <i class="fas fa-chevron-right"></i>
+        </button>
+    </div>
+</div>
+
+<!-- Card view -->
+<div id="projects-cards-view" class="result-view entity-content" data-entity="projects" style="display: none;">
+    <div id="projects-results-cards" class="cards-container">
+        <!-- This will be populated by JavaScript -->
+        <div class="empty-state">
+            <i class="fas fa-search"></i>
+            <p>No data available. Apply filters to see results.</p>
+        </div>
+    </div>
+    
+    <div class="pagination">
+        <button id="projects-prev-page-cards" disabled>
+            <i class="fas fa-chevron-left"></i> Previous
+        </button>
+        <div id="projects-page-numbers-cards">
+            <span class="page-number active">1</span>
+        </div>
+        <button id="projects-next-page-cards" disabled>
+            Next <i class="fas fa-chevron-right"></i>
+        </button>
+    </div>
+</div>
+
+<!-- Visualization view -->
+<div id="projects-visualization-view" class="result-view entity-content" data-entity="projects" style="display: none;">
+    <div class="visualization-container">
+        <div class="visualization-controls">
+            <div class="viz-control">
+                <label for="projects-chart-type">Chart Type:</label>
+                <select id="projects-chart-type">
+                    <option value="bar">Bar Chart</option>
+                    <option value="pie">Pie Chart</option>
+                    <option value="line">Line Chart</option>
+                </select>
+            </div>
+            <div class="viz-control">
+                <label for="projects-x-axis">X-Axis:</label>
+                <select id="projects-x-axis">
+                    <option value="doc_type">Document Type</option>
+                    <option value="location">Location</option>
+                    <option value="creation_date">Creation Date</option>
+                    <option value="status">Status</option>
+                </select>
+            </div>
+            <div class="viz-control">
+                <label for="projects-y-axis">Y-Axis:</label>
+                <select id="projects-y-axis">
+                    <option value="count">Count</option>
+                    <option value="total_pages">Total Pages</option>
+                    <option value="avg_pages">Average Pages</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="chart-container">
+            <canvas id="projects-results-chart"></canvas>
+        </div>
+    </div>
+</div> 

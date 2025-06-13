@@ -1,0 +1,242 @@
+<!-- Temp Roll Entity Content -->
+
+<!-- Table view (default) -->
+<div id="temp-rolls-table-view" class="result-view entity-content active" data-entity="temp-rolls" style="display: none;">
+    <div class="results-table-wrapper">
+        <table class="results-table">
+            <thead>
+                <tr>
+                    <th>
+                        <input type="checkbox" id="select-all-temp-rolls" class="batch-checkbox">
+                    </th>
+                    <th class="sortable" data-sort="temp_roll_id">
+                        Temp Roll ID <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="film_type">
+                        Film Type <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="capacity">
+                        Total Capacity <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="usable_capacity">
+                        Usable Capacity <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="status">
+                        Status <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="source_roll">
+                        Source Roll <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="used_by_roll">
+                        Used By Roll <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="creation_date">
+                        Creation Date <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="temp-rolls-results-body">
+                <!-- This will be populated by JavaScript -->
+                <tr class="empty-row">
+                    <td colspan="10">No data available. Apply filters to see results.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="pagination">
+        <button id="temp-rolls-prev-page" disabled>
+            <i class="fas fa-chevron-left"></i> Previous
+        </button>
+        <div id="temp-rolls-page-numbers">
+            <span class="page-number active">1</span>
+        </div>
+        <button id="temp-rolls-next-page" disabled>
+            Next <i class="fas fa-chevron-right"></i>
+        </button>
+    </div>
+</div>
+
+<!-- Card view -->
+<div id="temp-rolls-cards-view" class="result-view entity-content" data-entity="temp-rolls" style="display: none;">
+    <div id="temp-rolls-results-cards" class="cards-container">
+        <!-- This will be populated by JavaScript -->
+        <div class="empty-state">
+            <i class="fas fa-clock"></i>
+            <p>No data available. Apply filters to see results.</p>
+        </div>
+    </div>
+    
+    <div class="pagination">
+        <button id="temp-rolls-prev-page-cards" disabled>
+            <i class="fas fa-chevron-left"></i> Previous
+        </button>
+        <div id="temp-rolls-page-numbers-cards">
+            <span class="page-number active">1</span>
+        </div>
+        <button id="temp-rolls-next-page-cards" disabled>
+            Next <i class="fas fa-chevron-right"></i>
+        </button>
+    </div>
+</div>
+
+<!-- Visualization view -->
+<div id="temp-rolls-visualization-view" class="result-view entity-content" data-entity="temp-rolls" style="display: none;">
+    <div class="visualization-container">
+        <div class="visualization-controls">
+            <div class="viz-control">
+                <label for="temp-rolls-chart-type">Chart Type:</label>
+                <select id="temp-rolls-chart-type">
+                    <option value="bar">Bar Chart</option>
+                    <option value="pie">Pie Chart</option>
+                    <option value="line">Line Chart</option>
+                </select>
+            </div>
+            <div class="viz-control">
+                <label for="temp-rolls-x-axis">X-Axis:</label>
+                <select id="temp-rolls-x-axis">
+                    <option value="film_type">Film Type</option>
+                    <option value="status">Status</option>
+                    <option value="creation_date">Creation Date</option>
+                </select>
+            </div>
+            <div class="viz-control">
+                <label for="temp-rolls-y-axis">Y-Axis:</label>
+                <select id="temp-rolls-y-axis">
+                    <option value="count">Count</option>
+                    <option value="capacity">Total Capacity</option>
+                    <option value="avg_capacity">Average Capacity</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="chart-container">
+            <canvas id="temp-rolls-results-chart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Loading state -->
+<div id="temp-roll-loading" class="loading-state" style="display: none;">
+    <div class="loading-spinner">
+        <i class="fas fa-spinner fa-spin"></i>
+        <span>Loading temp rolls...</span>
+    </div>
+</div>
+
+<!-- Empty state -->
+<div id="temp-roll-empty" class="empty-state" style="display: none;">
+    <div class="empty-icon">
+        <i class="fas fa-clock"></i>
+    </div>
+    <h3>No Temp Rolls Found</h3>
+    <p>No temp rolls match your current filters.</p>
+    <button id="create-first-temp-roll" class="primary-button">
+        <i class="fas fa-plus"></i> Create First Temp Roll
+    </button>
+</div>
+
+<!-- Temp Roll Edit Modal -->
+<div id="temp-roll-edit-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="temp-roll-edit-modal-title">Create Temp Roll</h2>
+            <button class="close-modal" onclick="document.getElementById('temp-roll-edit-modal').style.display='none'">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="temp-roll-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="temp-roll-film-type">Film Type *</label>
+                        <select id="temp-roll-film-type" required>
+                            <option value="">Select Film Type</option>
+                            <option value="16mm">16mm</option>
+                            <option value="35mm">35mm</option>
+                            <option value="105mm">105mm</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="temp-roll-status">Status</label>
+                        <select id="temp-roll-status">
+                            <option value="available">Available</option>
+                            <option value="used">Used</option>
+                            <option value="damaged">Damaged</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="temp-roll-capacity">Total Capacity (pages) *</label>
+                        <input type="number" id="temp-roll-capacity" min="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="temp-roll-usable-capacity">Usable Capacity (pages) *</label>
+                        <input type="number" id="temp-roll-usable-capacity" min="1" required>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="temp-roll-source-roll">Source Roll</label>
+                        <select id="temp-roll-source-roll">
+                            <option value="">No Source Roll</option>
+                            <!-- Options will be populated by JavaScript -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="temp-roll-used-by-roll">Used By Roll</label>
+                        <select id="temp-roll-used-by-roll">
+                            <option value="">Not Used Yet</option>
+                            <!-- Options will be populated by JavaScript -->
+                        </select>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="secondary-button" onclick="document.getElementById('temp-roll-edit-modal').style.display='none'">Cancel</button>
+            <button id="save-temp-roll" class="primary-button">Save Temp Roll</button>
+        </div>
+    </div>
+</div>
+
+<!-- Temp Roll Details Modal -->
+<div id="temp-roll-detail-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="temp-roll-modal-title">Temp Roll Details</h2>
+            <button class="close-modal" onclick="document.getElementById('temp-roll-detail-modal').style.display='none'">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="detail-tabs">
+                <button class="tab-button active" data-tab="details">Details</button>
+                <button class="tab-button" data-tab="related">Related Items</button>
+                <button class="tab-button" data-tab="history">History</button>
+            </div>
+            
+            <div id="temp-roll-details-tab" class="tab-pane active">
+                <div class="detail-properties">
+                    <!-- This will be populated by JavaScript -->
+                </div>
+            </div>
+            
+            <div id="temp-roll-related-tab" class="tab-pane">
+                <div class="related-items">
+                    <!-- This will be populated by JavaScript -->
+                </div>
+            </div>
+            
+            <div id="temp-roll-history-tab" class="tab-pane">
+                <div class="history-timeline">
+                    <!-- This will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="secondary-button" onclick="document.getElementById('temp-roll-detail-modal').style.display='none'">Close</button>
+            <button class="primary-button" id="edit-temp-roll">Edit</button>
+        </div>
+    </div>
+</div> 

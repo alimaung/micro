@@ -26,6 +26,21 @@ async function showItemDetails(id, type) {
             const response = await dbService.getProject(id);
             const item = response.project;
             
+            // Get status text and class
+            let statusClass = 'draft';
+            let statusText = 'Draft';
+            
+            if (item.processing_complete) {
+                statusClass = 'complete';
+                statusText = 'Complete';
+            } else if (item.film_allocation_complete) {
+                statusClass = 'in-process';
+                statusText = 'Film Allocated';
+            } else if (item.has_pdf_folder) {
+                statusClass = 'pending';
+                statusText = 'Processing';
+            }
+            
             // Populate details tab
             detailProperties.innerHTML = `
                 <div class="detail-property">
@@ -45,12 +60,26 @@ async function showItemDetails(id, type) {
                     <span class="detail-value">${item.doc_type || 'N/A'}</span>
                 </div>
                 <div class="detail-property">
+                    <span class="detail-label">Status:</span>
+                    <span class="detail-value">
+                        <span class="status-badge ${statusClass}">${statusText}</span>
+                    </span>
+                </div>
+                <div class="detail-property">
                     <span class="detail-label">Path:</span>
                     <span class="detail-value">${item.project_path}</span>
                 </div>
                 <div class="detail-property">
                     <span class="detail-label">Folder Name:</span>
                     <span class="detail-value">${item.project_folder_name}</span>
+                </div>
+                <div class="detail-property">
+                    <span class="detail-label">PDF Folder:</span>
+                    <span class="detail-value">${item.pdf_folder_path || 'Not Set'}</span>
+                </div>
+                <div class="detail-property">
+                    <span class="detail-label">Has PDF Folder:</span>
+                    <span class="detail-value">${item.has_pdf_folder ? 'Yes' : 'No'}</span>
                 </div>
                 <div class="detail-property">
                     <span class="detail-label">Oversized:</span>
@@ -69,8 +98,20 @@ async function showItemDetails(id, type) {
                     <span class="detail-value">${item.date_created}</span>
                 </div>
                 <div class="detail-property">
+                    <span class="detail-label">Last Updated:</span>
+                    <span class="detail-value">${item.updated_at || 'N/A'}</span>
+                </div>
+                <div class="detail-property">
                     <span class="detail-label">Processing Complete:</span>
                     <span class="detail-value">${item.processing_complete ? 'Yes' : 'No'}</span>
+                </div>
+                <div class="detail-property">
+                    <span class="detail-label">Film Allocation Complete:</span>
+                    <span class="detail-value">${item.film_allocation_complete ? 'Yes' : 'No'}</span>
+                </div>
+                <div class="detail-property">
+                    <span class="detail-label">Distribution Complete:</span>
+                    <span class="detail-value">${item.distribution_complete ? 'Yes' : 'No'}</span>
                 </div>
                 <div class="detail-property">
                     <span class="detail-label">Retain Sources:</span>
@@ -78,27 +119,130 @@ async function showItemDetails(id, type) {
                 </div>
             `;
             
-            // For this version, related items and history are placeholders
-            relatedItems.innerHTML = `
-                <p>No related rolls found. This will be expanded in future updates.</p>
-            `;
+            // Try to fetch related items
+            try {
+                const relatedRolls = await dbService.getProjectRolls(id);
+                if (relatedRolls && relatedRolls.length > 0) {
+                    let rollsHtml = '<h3>Rolls</h3><div class="related-list">';
+                    relatedRolls.forEach(roll => {
+                        rollsHtml += `
+                            <div class="related-item">
+                                <span class="related-item-id">${roll.roll_id}</span>
+                                <span class="related-item-name">${roll.film_number || 'No Film Number'}</span>
+                                <span class="related-item-meta">${roll.film_type} / ${roll.pages_used} pages</span>
+                                <span class="status-badge ${roll.status}">${roll.status}</span>
+                                <button class="view-related" data-id="${roll.roll_id}" data-type="roll">View</button>
+                            </div>
+                        `;
+                    });
+                    rollsHtml += '</div>';
+                    relatedItems.innerHTML = rollsHtml;
+                    
+                    // Add event listeners to view roll buttons
+                    document.querySelectorAll('.view-related').forEach(button => {
+                        button.addEventListener('click', function() {
+                            showItemDetails(this.getAttribute('data-id'), this.getAttribute('data-type'));
+                        });
+                    });
+                } else {
+                    relatedItems.innerHTML = `
+                        <div class="empty-related">
+                            <p>No rolls have been allocated to this project yet.</p>
+                            <button id="allocate-films" class="primary-button" data-id="${id}">
+                                <i class="fas fa-film"></i> Allocate Films
+                            </button>
+                        </div>
+                    `;
+                    
+                    // Add event listener to allocate films button
+                    document.getElementById('allocate-films').addEventListener('click', function() {
+                        allocateFilms(this.getAttribute('data-id'));
+                    });
+                }
+            } catch (error) {
+                console.error("Error fetching related items:", error);
+                relatedItems.innerHTML = `
+                    <div class="error-message">
+                        <p>Error loading related items: ${error.message}</p>
+                    </div>
+                `;
+            }
             
-            historyTimeline.innerHTML = `
-                <div class="timeline-item">
-                    <div class="timeline-date">${item.date_created}</div>
-                    <div class="timeline-content">
-                        <div class="timeline-title">Created</div>
-                        <div class="timeline-description">Project was created</div>
+            // Try to fetch project history
+            try {
+                const history = await dbService.getProjectHistory(id);
+                if (history && history.length > 0) {
+                    let historyHtml = '';
+                    history.forEach(event => {
+                        historyHtml += `
+                            <div class="timeline-item">
+                                <div class="timeline-date">${event.timestamp}</div>
+                                <div class="timeline-content">
+                                    <div class="timeline-title">${event.action}</div>
+                                    <div class="timeline-description">${event.description}</div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    historyTimeline.innerHTML = historyHtml;
+                } else {
+                    historyTimeline.innerHTML = `
+                        <div class="timeline-item">
+                            <div class="timeline-date">${item.date_created}</div>
+                            <div class="timeline-content">
+                                <div class="timeline-title">Created</div>
+                                <div class="timeline-description">Project was created</div>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-date">${item.updated_at || item.date_created}</div>
+                            <div class="timeline-content">
+                                <div class="timeline-title">Last Modified</div>
+                                <div class="timeline-description">Project was updated</div>
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error("Error fetching project history:", error);
+                historyTimeline.innerHTML = `
+                    <div class="timeline-item">
+                        <div class="timeline-date">${item.date_created}</div>
+                        <div class="timeline-content">
+                            <div class="timeline-title">Created</div>
+                            <div class="timeline-description">Project was created</div>
+                        </div>
                     </div>
-                </div>
-                <div class="timeline-item">
-                    <div class="timeline-date">${item.updated_at}</div>
-                    <div class="timeline-content">
-                        <div class="timeline-title">Last Modified</div>
-                        <div class="timeline-description">Project was updated</div>
+                    <div class="timeline-item">
+                        <div class="timeline-date">${item.updated_at || item.date_created}</div>
+                        <div class="timeline-content">
+                            <div class="timeline-title">Last Modified</div>
+                            <div class="timeline-description">Project was updated</div>
+                        </div>
                     </div>
-                </div>
-            `;
+                `;
+            }
+            
+            // Add process button if not already processed
+            const modalFooter = document.querySelector('.modal-footer');
+            if (!item.processing_complete) {
+                if (!document.getElementById('process-project-btn')) {
+                    const processButton = document.createElement('button');
+                    processButton.id = 'process-project-btn';
+                    processButton.className = 'primary-button';
+                    processButton.innerHTML = '<i class="fas fa-cogs"></i> Process Project';
+                    processButton.dataset.id = id;
+                    
+                    modalFooter.insertBefore(processButton, document.getElementById('edit-item'));
+                    
+                    processButton.addEventListener('click', function() {
+                        processProject(this.dataset.id);
+                        modal.style.display = 'none';
+                    });
+                }
+            } else if (document.getElementById('process-project-btn')) {
+                document.getElementById('process-project-btn').remove();
+            }
             
             // Set edit button action
             document.getElementById('edit-item').onclick = () => {
@@ -139,6 +283,47 @@ async function showItemDetails(id, type) {
             document.getElementById(`${tab}-tab`).classList.add('active');
         });
     });
+}
+
+// Process project from details view
+async function processProject(id) {
+    try {
+        const confirmed = confirm(`Start processing for Project #${id}?`);
+        if (confirmed) {
+            const dbService = new DatabaseService();
+            await dbService.processProject(id);
+            alert("Project processing started successfully!");
+            
+            // Refresh data in the main view
+            const selectedEntity = document.querySelector('.entity-option.selected').getAttribute('data-entity');
+            updateResults(selectedEntity);
+        }
+    } catch (error) {
+        console.error("Error processing project:", error);
+        alert(`Error processing project: ${error.message}`);
+    }
+}
+
+// Allocate films to project
+async function allocateFilms(id) {
+    try {
+        const confirmed = confirm(`Start film allocation for Project #${id}?`);
+        if (confirmed) {
+            const dbService = new DatabaseService();
+            await dbService.allocateFilms(id);
+            alert("Film allocation started successfully!");
+            
+            // Refresh data in the main view
+            const selectedEntity = document.querySelector('.entity-option.selected').getAttribute('data-entity');
+            updateResults(selectedEntity);
+            
+            // Close the modal
+            document.getElementById('detail-modal').style.display = 'none';
+        }
+    } catch (error) {
+        console.error("Error allocating films:", error);
+        alert(`Error allocating films: ${error.message}`);
+    }
 }
 
 // Edit item

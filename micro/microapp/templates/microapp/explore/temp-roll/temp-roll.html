@@ -1,0 +1,335 @@
+<!-- Temp Roll Entity Template -->
+<div class="entity-container" id="temp-roll-container">
+    <div class="entity-header">
+        <div class="entity-title">
+            <div class="entity-icon">
+                <i class="fas fa-clock"></i>
+            </div>
+            <h2>Temp Rolls</h2>
+            <span class="entity-count" id="temp-roll-count">0</span>
+        </div>
+        <div class="entity-actions">
+            <div class="view-toggle">
+                <button class="view-btn active" data-view="table" title="Table View">
+                    <i class="fas fa-table"></i>
+                </button>
+                <button class="view-btn" data-view="cards" title="Card View">
+                    <i class="fas fa-th-large"></i>
+                </button>
+            </div>
+            <div class="entity-controls">
+                <button class="btn btn-secondary" id="refresh-temp-rolls" title="Refresh">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+                <button class="btn btn-primary" id="create-temp-roll" title="Create Temp Roll">
+                    <i class="fas fa-plus"></i>
+                    Create
+                </button>
+                <div class="dropdown">
+                    <button class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" title="Export">
+                        <i class="fas fa-download"></i>
+                        Export
+                    </button>
+                    <div class="dropdown-menu">
+                        <a class="dropdown-item" href="#" data-format="csv">
+                            <i class="fas fa-file-csv"></i> CSV
+                        </a>
+                        <a class="dropdown-item" href="#" data-format="excel">
+                            <i class="fas fa-file-excel"></i> Excel
+                        </a>
+                        <a class="dropdown-item" href="#" data-format="pdf">
+                            <i class="fas fa-file-pdf"></i> PDF
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="entity-filters">
+        <div class="filter-group">
+            <label for="temp-roll-film-type-filter">Film Type:</label>
+            <select id="temp-roll-film-type-filter" class="form-control">
+                <option value="">All Types</option>
+                <option value="16mm">16mm</option>
+                <option value="35mm">35mm</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label for="temp-roll-status-filter">Status:</label>
+            <select id="temp-roll-status-filter" class="form-control">
+                <option value="">All Status</option>
+                <option value="available">Available</option>
+                <option value="used">Used</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label for="temp-roll-capacity-filter">Min Capacity:</label>
+            <input type="number" id="temp-roll-capacity-filter" class="form-control" placeholder="Pages" min="0">
+        </div>
+        <div class="filter-group">
+            <label for="temp-roll-search">Search:</label>
+            <input type="text" id="temp-roll-search" class="form-control" placeholder="Search temp rolls...">
+        </div>
+        <div class="filter-actions">
+            <button class="btn btn-secondary" id="clear-temp-roll-filters">
+                <i class="fas fa-times"></i>
+                Clear
+            </button>
+            <button class="btn btn-primary" id="apply-temp-roll-filters">
+                <i class="fas fa-filter"></i>
+                Apply
+            </button>
+        </div>
+    </div>
+
+    <!-- Table View -->
+    <div class="entity-content" id="temp-roll-table-view">
+        <div class="table-container">
+            <table class="entity-table" id="temp-roll-table">
+                <thead>
+                    <tr>
+                        <th class="sortable" data-sort="temp_roll_id">
+                            <input type="checkbox" id="select-all-temp-rolls" title="Select All">
+                        </th>
+                        <th class="sortable" data-sort="temp_roll_id">
+                            ID
+                            <i class="fas fa-sort"></i>
+                        </th>
+                        <th class="sortable" data-sort="film_type">
+                            Film Type
+                            <i class="fas fa-sort"></i>
+                        </th>
+                        <th class="sortable" data-sort="capacity">
+                            Total Capacity
+                            <i class="fas fa-sort"></i>
+                        </th>
+                        <th class="sortable" data-sort="usable_capacity">
+                            Usable Capacity
+                            <i class="fas fa-sort"></i>
+                        </th>
+                        <th class="sortable" data-sort="status">
+                            Status
+                            <i class="fas fa-sort"></i>
+                        </th>
+                        <th class="sortable" data-sort="source_roll">
+                            Source Roll
+                            <i class="fas fa-sort"></i>
+                        </th>
+                        <th class="sortable" data-sort="used_by_roll">
+                            Used By Roll
+                            <i class="fas fa-sort"></i>
+                        </th>
+                        <th class="sortable" data-sort="creation_date">
+                            Created
+                            <i class="fas fa-sort"></i>
+                        </th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="temp-roll-table-body">
+                    <!-- Temp roll rows will be populated here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Card View -->
+    <div class="entity-content" id="temp-roll-cards-view" style="display: none;">
+        <div class="cards-container" id="temp-roll-cards-container">
+            <!-- Temp roll cards will be populated here -->
+        </div>
+    </div>
+
+    <!-- Loading State -->
+    <div class="loading-state" id="temp-roll-loading" style="display: none;">
+        <div class="loading-spinner">
+            <i class="fas fa-spinner fa-spin"></i>
+        </div>
+        <p>Loading temp rolls...</p>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" id="temp-roll-empty" style="display: none;">
+        <div class="empty-icon">
+            <i class="fas fa-clock"></i>
+        </div>
+        <h3>No Temp Rolls Found</h3>
+        <p>No temporary rolls match your current filters.</p>
+        <button class="btn btn-primary" id="create-first-temp-roll">
+            <i class="fas fa-plus"></i>
+            Create First Temp Roll
+        </button>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination-container" id="temp-roll-pagination">
+        <div class="pagination-info">
+            <span id="temp-roll-pagination-info">Showing 0 of 0 temp rolls</span>
+        </div>
+        <div class="pagination-controls">
+            <button class="btn btn-secondary" id="temp-roll-prev-page" disabled>
+                <i class="fas fa-chevron-left"></i>
+                Previous
+            </button>
+            <span class="pagination-pages" id="temp-roll-pagination-pages">
+                <!-- Page numbers will be populated here -->
+            </span>
+            <button class="btn btn-secondary" id="temp-roll-next-page" disabled>
+                Next
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+        <div class="pagination-size">
+            <label for="temp-roll-page-size">Show:</label>
+            <select id="temp-roll-page-size" class="form-control">
+                <option value="10">10</option>
+                <option value="25" selected>25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- Temp Roll Details Modal -->
+<div class="modal fade" id="temp-roll-detail-modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="temp-roll-modal-title">Temp Roll Details</h5>
+                <button type="button" class="close close-modal" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="detail-tabs">
+                    <ul class="nav nav-tabs">
+                        <li class="nav-item">
+                            <button class="nav-link tab-button active" data-tab="details">
+                                <i class="fas fa-info-circle"></i>
+                                Details
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link tab-button" data-tab="related">
+                                <i class="fas fa-link"></i>
+                                Related Items
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link tab-button" data-tab="history">
+                                <i class="fas fa-history"></i>
+                                History
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="tab-content">
+                    <!-- Details Tab -->
+                    <div class="tab-pane active" id="temp-roll-details-tab">
+                        <div class="detail-properties">
+                            <!-- Temp roll details will be populated here -->
+                        </div>
+                    </div>
+                    
+                    <!-- Related Items Tab -->
+                    <div class="tab-pane" id="temp-roll-related-tab">
+                        <div class="related-items">
+                            <!-- Related items will be populated here -->
+                        </div>
+                    </div>
+                    
+                    <!-- History Tab -->
+                    <div class="tab-pane" id="temp-roll-history-tab">
+                        <div class="history-timeline">
+                            <!-- History will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary close-modal" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="edit-temp-roll">
+                    <i class="fas fa-edit"></i>
+                    Edit
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create/Edit Temp Roll Modal -->
+<div class="modal fade" id="temp-roll-edit-modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="temp-roll-edit-modal-title">Create Temp Roll</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="temp-roll-form">
+                    <div class="form-grid">
+                        <div class="form-section">
+                            <h3>Basic Information</h3>
+                            <div class="form-group">
+                                <label for="temp-roll-film-type">Film Type *</label>
+                                <select id="temp-roll-film-type" class="form-control" required>
+                                    <option value="">Select Film Type</option>
+                                    <option value="16mm">16mm</option>
+                                    <option value="35mm">35mm</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="temp-roll-capacity">Total Capacity (pages) *</label>
+                                <input type="number" id="temp-roll-capacity" class="form-control" required min="1">
+                            </div>
+                            <div class="form-group">
+                                <label for="temp-roll-usable-capacity">Usable Capacity (pages) *</label>
+                                <input type="number" id="temp-roll-usable-capacity" class="form-control" required min="1">
+                            </div>
+                            <div class="form-group">
+                                <label for="temp-roll-status">Status</label>
+                                <select id="temp-roll-status" class="form-control">
+                                    <option value="available">Available</option>
+                                    <option value="used">Used</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-section">
+                            <h3>Roll Relationships</h3>
+                            <div class="form-group">
+                                <label for="temp-roll-source-roll">Source Roll</label>
+                                <select id="temp-roll-source-roll" class="form-control">
+                                    <option value="">No Source Roll</option>
+                                    <!-- Options will be populated dynamically -->
+                                </select>
+                                <small class="form-text text-muted">The roll that created this temp roll</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="temp-roll-used-by-roll">Used By Roll</label>
+                                <select id="temp-roll-used-by-roll" class="form-control">
+                                    <option value="">Not Used Yet</option>
+                                    <!-- Options will be populated dynamically -->
+                                </select>
+                                <small class="form-text text-muted">The roll that used this temp roll</small>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="save-temp-roll">
+                    <i class="fas fa-save"></i>
+                    Save
+                </button>
+            </div>
+        </div>
+    </div>
+</div> 

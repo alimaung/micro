@@ -27,6 +27,13 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Update results based on selected entity
             updateResults(entity);
+            
+            // Show/hide batch operations based on entity
+            if (entity === 'projects') {
+                document.getElementById('batch-operations').style.display = 'flex';
+            } else {
+                document.getElementById('batch-operations').style.display = 'none';
+            }
         });
     });
     
@@ -163,14 +170,27 @@ document.addEventListener('DOMContentLoaded', function() {
         // Add appropriate headers based on entity
         if (entity === 'projects') {
             tableHead.innerHTML = `
+                <th>
+                    <input type="checkbox" id="select-all-projects" class="batch-checkbox">
+                </th>
                 <th>ID</th>
                 <th>Archive ID</th>
                 <th>Location</th>
                 <th>Document Type</th>
                 <th>Total Pages</th>
+                <th>Status</th>
                 <th>Date Created</th>
                 <th>Actions</th>
             `;
+            
+            // Add select all functionality
+            document.getElementById('select-all-projects').addEventListener('change', function() {
+                const checkboxes = document.querySelectorAll('.project-checkbox');
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = this.checked;
+                });
+                updateBatchCount();
+            });
         } else if (entity === 'rolls') {
             tableHead.innerHTML = `
                 <th>ID</th>
@@ -211,7 +231,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const resultCount = document.getElementById('result-count');
         
         // Show loading state
-        tableBody.innerHTML = `<tr><td colspan="7" class="text-center">Loading data...</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="9" class="text-center">Loading data...</td></tr>`;
         cardsContainer.innerHTML = `<div class="loading-spinner">Loading data...</div>`;
         
         try {
@@ -303,9 +323,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 initializeChart(data, entity);
             }
             
+            // Reset batch selection
+            updateBatchCount();
+            
         } catch (error) {
             console.error("Error fetching data:", error);
-            tableBody.innerHTML = `<tr><td colspan="7" class="text-center">Error loading data: ${error.message}</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="9" class="text-center">Error loading data: ${error.message}</td></tr>`;
             cardsContainer.innerHTML = `<div class="error-message">Error loading data: ${error.message}</div>`;
         }
     }
@@ -345,6 +368,21 @@ document.addEventListener('DOMContentLoaded', function() {
             const location = document.getElementById('location').value;
             if (location) {
                 filters.location = location;
+            }
+            
+            const status = document.getElementById('project-status').value;
+            if (status) {
+                filters.status = status;
+            }
+            
+            const oversized = document.getElementById('has-oversized').value;
+            if (oversized !== '') {
+                filters.has_oversized = oversized === 'true';
+            }
+            
+            const processingComplete = document.getElementById('processing-complete').value;
+            if (processingComplete !== '') {
+                filters.processing_complete = processingComplete === 'true';
             }
         } 
         // Add other entity filters when those entity types are implemented
@@ -412,7 +450,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!data || data.length === 0) {
             tableBody.innerHTML = `
                 <tr class="empty-row">
-                    <td colspan="7">No data available. Try adjusting your filters.</td>
+                    <td colspan="9">No data available. Try adjusting your filters.</td>
                 </tr>
             `;
             return;
@@ -423,21 +461,43 @@ document.addEventListener('DOMContentLoaded', function() {
             const row = document.createElement('tr');
             
             if (entity === 'projects') {
+                // Get status badge class
+                let statusClass = 'draft';
+                let statusText = 'Draft';
+                
+                if (item.processing_complete) {
+                    statusClass = 'complete';
+                    statusText = 'Complete';
+                } else if (item.film_allocation_complete) {
+                    statusClass = 'in-process';
+                    statusText = 'Film Allocated';
+                } else if (item.has_pdf_folder) {
+                    statusClass = 'pending';
+                    statusText = 'Processing';
+                }
+                
                 row.innerHTML = `
+                    <td>
+                        <input type="checkbox" class="batch-checkbox project-checkbox" data-id="${item.project_id}">
+                    </td>
                     <td>${item.project_id}</td>
                     <td>${item.archive_id}</td>
                     <td>${item.location}</td>
                     <td>${item.doc_type || 'N/A'}</td>
                     <td>${item.total_pages || 0}</td>
+                    <td><span class="status-badge ${statusClass}">${statusText}</span></td>
                     <td>${item.date_created}</td>
                     <td>
-                        <button class="action-icon view-details" data-id="${item.project_id}" data-type="project">
+                        <button class="action-icon view-details" data-id="${item.project_id}" data-type="project" title="View Details">
                             <i class="fas fa-eye"></i>
                         </button>
-                        <button class="action-icon edit-item" data-id="${item.project_id}" data-type="project">
+                        <button class="action-icon edit-item" data-id="${item.project_id}" data-type="project" title="Edit Project">
                             <i class="fas fa-edit"></i>
                         </button>
-                        <button class="action-icon delete-item" data-id="${item.project_id}" data-type="project">
+                        <button class="action-icon process-project" data-id="${item.project_id}" title="Process Project">
+                            <i class="fas fa-cogs"></i>
+                        </button>
+                        <button class="action-icon delete-item" data-id="${item.project_id}" data-type="project" title="Delete Project">
                             <i class="fas fa-trash"></i>
                         </button>
                     </td>
@@ -446,6 +506,13 @@ document.addEventListener('DOMContentLoaded', function() {
             // Other entity types will be added later
             
             tableBody.appendChild(row);
+        });
+        
+        // Add event listeners to checkboxes
+        document.querySelectorAll('.project-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                updateBatchCount();
+            });
         });
         
         // Add event listeners to view details buttons
@@ -459,6 +526,13 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.edit-item').forEach(button => {
             button.addEventListener('click', function() {
                 editItem(this.getAttribute('data-id'), this.getAttribute('data-type'));
+            });
+        });
+        
+        // Add event listeners to process buttons
+        document.querySelectorAll('.process-project').forEach(button => {
+            button.addEventListener('click', function() {
+                processProject(this.getAttribute('data-id'));
             });
         });
         
@@ -494,6 +568,21 @@ document.addEventListener('DOMContentLoaded', function() {
             card.className = 'item-card';
             
             if (entity === 'projects') {
+                // Get status badge class
+                let statusClass = 'draft';
+                let statusText = 'Draft';
+                
+                if (item.processing_complete) {
+                    statusClass = 'complete';
+                    statusText = 'Complete';
+                } else if (item.film_allocation_complete) {
+                    statusClass = 'in-process';
+                    statusText = 'Film Allocated';
+                } else if (item.has_pdf_folder) {
+                    statusClass = 'pending';
+                    statusText = 'Processing';
+                }
+                
                 card.innerHTML = `
                     <div class="card-header">
                         <h3>${item.project_folder_name || 'Unnamed Project'}</h3>
@@ -511,6 +600,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="card-property">
                             <span class="property-label">Pages:</span>
                             <span class="property-value">${item.total_pages || 0}</span>
+                        </div>
+                        <div class="card-property">
+                            <span class="property-label">Status:</span>
+                            <span class="property-value">
+                                <span class="status-badge ${statusClass}">${statusText}</span>
+                            </span>
                         </div>
                         <div class="card-property">
                             <span class="property-label">Date:</span>
@@ -687,6 +782,122 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    // Process project
+    async function processProject(id) {
+        try {
+            const confirmed = confirm(`Start processing for Project #${id}?`);
+            if (confirmed) {
+                const dbService = new DatabaseService();
+                await dbService.processProject(id);
+                alert("Project processing started successfully!");
+                
+                // Refresh data
+                const selectedEntity = document.querySelector('.entity-option.selected').getAttribute('data-entity');
+                updateResults(selectedEntity);
+            }
+        } catch (error) {
+            console.error("Error processing project:", error);
+            alert(`Error processing project: ${error.message}`);
+        }
+    }
+    
+    // Update batch operation counter
+    function updateBatchCount() {
+        const selectedCount = document.querySelectorAll('.project-checkbox:checked').length;
+        const batchCounter = document.getElementById('batch-counter');
+        const batchButtons = document.querySelectorAll('.batch-action');
+        
+        if (selectedCount > 0) {
+            batchCounter.textContent = selectedCount;
+            batchCounter.style.display = 'inline-block';
+            batchButtons.forEach(button => button.disabled = false);
+        } else {
+            batchCounter.style.display = 'none';
+            batchButtons.forEach(button => button.disabled = true);
+        }
+    }
+    
+    // Handle batch operations
+    function initializeBatchOperations() {
+        const batchUpdateStatus = document.getElementById('batch-update-status');
+        const batchDelete = document.getElementById('batch-delete');
+        const batchProcess = document.getElementById('batch-process');
+        
+        batchUpdateStatus.addEventListener('click', async function() {
+            const selectedIds = Array.from(document.querySelectorAll('.project-checkbox:checked'))
+                .map(checkbox => checkbox.getAttribute('data-id'));
+            
+            if (selectedIds.length === 0) return;
+            
+            const newStatus = prompt("Enter new status (processing_complete): true/false");
+            if (newStatus !== null) {
+                try {
+                    const dbService = new DatabaseService();
+                    await Promise.all(selectedIds.map(id => {
+                        return dbService.updateProject(id, { processing_complete: newStatus === 'true' });
+                    }));
+                    
+                    alert(`Updated status for ${selectedIds.length} projects`);
+                    
+                    // Refresh data
+                    const selectedEntity = document.querySelector('.entity-option.selected').getAttribute('data-entity');
+                    updateResults(selectedEntity);
+                } catch (error) {
+                    console.error("Error updating projects:", error);
+                    alert(`Error updating projects: ${error.message}`);
+                }
+            }
+        });
+        
+        batchDelete.addEventListener('click', async function() {
+            const selectedIds = Array.from(document.querySelectorAll('.project-checkbox:checked'))
+                .map(checkbox => checkbox.getAttribute('data-id'));
+            
+            if (selectedIds.length === 0) return;
+            
+            const confirmed = confirm(`Are you sure you want to delete ${selectedIds.length} projects? This action cannot be undone.`);
+            if (confirmed) {
+                try {
+                    const dbService = new DatabaseService();
+                    await Promise.all(selectedIds.map(id => dbService.deleteProject(id)));
+                    
+                    alert(`Deleted ${selectedIds.length} projects successfully`);
+                    
+                    // Refresh data
+                    const selectedEntity = document.querySelector('.entity-option.selected').getAttribute('data-entity');
+                    updateResults(selectedEntity);
+                } catch (error) {
+                    console.error("Error deleting projects:", error);
+                    alert(`Error deleting projects: ${error.message}`);
+                }
+            }
+        });
+        
+        batchProcess.addEventListener('click', async function() {
+            const selectedIds = Array.from(document.querySelectorAll('.project-checkbox:checked'))
+                .map(checkbox => checkbox.getAttribute('data-id'));
+            
+            if (selectedIds.length === 0) return;
+            
+            const confirmed = confirm(`Start processing for ${selectedIds.length} projects?`);
+            if (confirmed) {
+                try {
+                    const dbService = new DatabaseService();
+                    await Promise.all(selectedIds.map(id => dbService.processProject(id)));
+                    
+                    alert(`Started processing for ${selectedIds.length} projects`);
+                    
+                    // Refresh data
+                    const selectedEntity = document.querySelector('.entity-option.selected').getAttribute('data-entity');
+                    updateResults(selectedEntity);
+                } catch (error) {
+                    console.error("Error processing projects:", error);
+                    alert(`Error processing projects: ${error.message}`);
+                }
+            }
+        });
+    }
+    
     // Export buttons functionality
     const exportButtons = document.querySelectorAll('.export-button');
     exportButtons.forEach(button => {
@@ -706,5 +917,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Initialize event handlers for modals
         initializeModals();
+        
+        // Initialize batch operations
+        initializeBatchOperations();
     }
 });

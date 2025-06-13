@@ -1,0 +1,57 @@
+<!-- Roll-specific filters -->
+<div id="rolls-filters" class="entity-filters" data-entity="rolls" style="display: none;">
+    <div class="filter-row">
+        <label for="film-type">Film Type:</label>
+        <select id="film-type">
+            <option value="">All Types</option>
+            <option value="16mm">16mm</option>
+            <option value="35mm">35mm</option>
+        </select>
+    </div>
+    <div class="filter-row">
+        <label for="roll-status">Status:</label>
+        <select id="roll-status">
+            <option value="">All Statuses</option>
+            <option value="active">Active</option>
+            <option value="full">Full</option>
+            <option value="partial">Partial</option>
+            <option value="used">Used</option>
+            <option value="archived">Archived</option>
+        </select>
+    </div>
+    <div class="filter-row">
+        <label for="project-filter">Project:</label>
+        <select id="project-filter">
+            <option value="">All Projects</option>
+            <!-- Will be populated by JavaScript -->
+        </select>
+    </div>
+    <div class="filter-row">
+        <label for="film-number">Film Number:</label>
+        <input type="text" id="film-number" placeholder="Enter film number...">
+    </div>
+    <div class="filter-row">
+        <label for="has-split-documents">Has Split Documents:</label>
+        <select id="has-split-documents">
+            <option value="">All</option>
+            <option value="true">Yes</option>
+            <option value="false">No</option>
+        </select>
+    </div>
+    <div class="filter-row">
+        <label for="is-partial">Is Partial:</label>
+        <select id="is-partial">
+            <option value="">All</option>
+            <option value="true">Yes</option>
+            <option value="false">No</option>
+        </select>
+    </div>
+    <div class="filter-row">
+        <label for="utilization-range">Utilization Range:</label>
+        <div class="range-inputs">
+            <input type="number" id="utilization-min" placeholder="Min %" min="0" max="100">
+            <span>to</span>
+            <input type="number" id="utilization-max" placeholder="Max %" min="0" max="100">
+        </div>
+    </div>
+</div> 

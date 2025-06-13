@@ -1,0 +1,165 @@
+<!-- Roll-specific content views -->
+
+<!-- Table view (default) -->
+<div id="rolls-table-view" class="result-view entity-content" data-entity="rolls" style="display: none;">
+    <div class="results-table-wrapper">
+        <table class="results-table">
+            <thead>
+                <tr>
+                    <th>
+                        <input type="checkbox" id="select-all-rolls" class="batch-checkbox">
+                    </th>
+                    <th class="sortable" data-sort="id">
+                        Roll ID <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="roll_id">
+                        Roll Number <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="project_archive_id">
+                        Project Archive ID <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="film_number">
+                        Film Number <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="film_type">
+                        Film Type <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="capacity">
+                        Capacity <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="pages_used">
+                        Pages Used <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="pages_remaining">
+                        Pages Remaining <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="utilization">
+                        Utilization <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="status">
+                        Status <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="has_split_documents">
+                        Has Split Documents <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="is_partial">
+                        Is Partial <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="remaining_capacity">
+                        Remaining Capacity <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="usable_capacity">
+                        Usable Capacity <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="film_number_source">
+                        Film Number Source <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="creation_date">
+                        Creation Date <i class="fas fa-sort sort-icon"></i>
+                    </th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="rolls-results-body">
+                <!-- This will be populated by JavaScript -->
+                <tr class="empty-row">
+                    <td colspan="18">No data available. Apply filters to see results.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="pagination">
+        <button id="rolls-prev-page" disabled>
+            <i class="fas fa-chevron-left"></i> Previous
+        </button>
+        <div id="rolls-page-numbers">
+            <span class="page-number active">1</span>
+        </div>
+        <button id="rolls-next-page" disabled>
+            Next <i class="fas fa-chevron-right"></i>
+        </button>
+    </div>
+</div>
+
+<!-- Card view -->
+<div id="rolls-cards-view" class="result-view entity-content" data-entity="rolls" style="display: none;">
+    <div id="rolls-results-cards" class="cards-container">
+        <!-- This will be populated by JavaScript -->
+        <div class="empty-state">
+            <i class="fas fa-film"></i>
+            <p>No data available. Apply filters to see results.</p>
+        </div>
+    </div>
+    
+    <div class="pagination">
+        <button id="rolls-prev-page-cards" disabled>
+            <i class="fas fa-chevron-left"></i> Previous
+        </button>
+        <div id="rolls-page-numbers-cards">
+            <span class="page-number active">1</span>
+        </div>
+        <button id="rolls-next-page-cards" disabled>
+            Next <i class="fas fa-chevron-right"></i>
+        </button>
+    </div>
+</div>
+
+<!-- Visualization view -->
+<div id="rolls-visualization-view" class="result-view entity-content" data-entity="rolls" style="display: none;">
+    <div class="visualization-container">
+        <div class="visualization-controls">
+            <div class="viz-control">
+                <label for="rolls-chart-type">Chart Type:</label>
+                <select id="rolls-chart-type">
+                    <option value="bar">Bar Chart</option>
+                    <option value="pie">Pie Chart</option>
+                    <option value="line">Line Chart</option>
+                    <option value="utilization">Utilization Chart</option>
+                </select>
+            </div>
+            <div class="viz-control">
+                <label for="rolls-x-axis">X-Axis:</label>
+                <select id="rolls-x-axis">
+                    <option value="film_type">Film Type</option>
+                    <option value="status">Status</option>
+                    <option value="creation_date">Creation Date</option>
+                    <option value="project_archive_id">Project</option>
+                </select>
+            </div>
+            <div class="viz-control">
+                <label for="rolls-y-axis">Y-Axis:</label>
+                <select id="rolls-y-axis">
+                    <option value="count">Count</option>
+                    <option value="capacity">Total Capacity</option>
+                    <option value="pages_used">Pages Used</option>
+                    <option value="utilization">Average Utilization</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="chart-container">
+            <canvas id="rolls-results-chart"></canvas>
+        </div>
+        
+        <!-- Roll statistics -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number" id="rolls-total-rolls-stat">0</div>
+                <div class="stat-label">Total Rolls</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="rolls-avg-utilization-stat">0%</div>
+                <div class="stat-label">Avg Utilization</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="rolls-total-capacity-stat">0</div>
+                <div class="stat-label">Total Capacity</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="rolls-pages-used-stat">0</div>
+                <div class="stat-label">Pages Used</div>
+            </div>
+        </div>
+    </div>
+</div> 
