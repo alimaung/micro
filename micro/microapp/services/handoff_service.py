@@ -13,19 +13,21 @@ from dataclasses import dataclass
 from datetime import datetime
 import pandas as pd
 import win32com.client as win32
-import requests
-import random
+import uuid
+
 
 # Django imports for template rendering
 from django.template.loader import render_to_string
 from django.template import Context, Template
+from django.contrib.auth.models import User
 
 logger = logging.getLogger(__name__)
 
 # Default email recipients
 DEFAULT_EMAIL_RECIPIENTS = {
-    'to': 'dilek.kursun@rolls-royce.com',
-    'cc': 'thomas.lux@rolls-royce.com, jan.becker@rolls-royce.com'
+    'to': 'ali.maung@rolls-royce.com',
+    'cc': 'ali.maung@rolls-royce.com',
+    'bcc': 'ali.maung@rolls-royce.com, microfilm.rollsroyce@gmail.com'
 }
 
 @dataclass
@@ -82,14 +84,59 @@ class HandoffService:
             Tuple of (ValidationSummary, List[ValidationResult])
         """
         try:
+            # Debug: Log incoming validation data
+            self.logger.info(f"=== VALIDATION DEBUG START for project {project.archive_id} ===")
+            self.logger.info(f"Received {len(validation_data)} validation entries")
+            
+            # Check for NaN values in incoming data
+            nan_count = 0
+            for i, item in enumerate(validation_data):
+                com_id = item.get('com_id')
+                if com_id is not None:
+                    if pd.isna(com_id):
+                        nan_count += 1
+                        self.logger.warning(f"NaN com_id found in validation_data[{i}]: {item}")
+                    elif isinstance(com_id, float) and (com_id == float('inf') or com_id == float('-inf')):
+                        self.logger.warning(f"INF com_id found in validation_data[{i}]: {item}")
+                else:
+                    self.logger.debug(f"NULL com_id found in validation_data[{i}]: {item}")
+            
+            if nan_count > 0:
+                self.logger.warning(f"Found {nan_count} NaN com_id values in incoming validation data")
+            
             # Parse film log files
             film_logs = self._parse_film_logs(project)
             
-            # Create lookup dictionary for fast access
+            # Create lookup dictionary for fast access with multiple key variations
             film_log_lookup = {}
             for log_entry in film_logs:
-                key = f"{log_entry.roll_number}_{log_entry.document_id}"
-                film_log_lookup[key] = log_entry
+                # Get original document ID
+                doc_id = log_entry.document_id
+                
+                # Create primary key with original format
+                key_original = f"{log_entry.roll_number}_{doc_id}"
+                film_log_lookup[key_original] = log_entry
+                
+                # Create key with lowercase document ID
+                key_lower = f"{log_entry.roll_number}_{doc_id.lower()}"
+                if key_lower != key_original:
+                    film_log_lookup[key_lower] = log_entry
+                
+                # Create key with document ID without extension (case insensitive)
+                doc_id_no_ext = doc_id
+                if doc_id_no_ext.lower().endswith('.pdf'):
+                    doc_id_no_ext = doc_id_no_ext[:-4]
+                key_no_ext = f"{log_entry.roll_number}_{doc_id_no_ext}"
+                if key_no_ext != key_original and key_no_ext != key_lower:
+                    film_log_lookup[key_no_ext] = log_entry
+                
+                # Create key with lowercase document ID without extension
+                key_lower_no_ext = f"{log_entry.roll_number}_{doc_id_no_ext.lower()}"
+                if key_lower_no_ext != key_original and key_lower_no_ext != key_lower and key_lower_no_ext != key_no_ext:
+                    film_log_lookup[key_lower_no_ext] = log_entry
+            
+            # Debug lookup dictionary
+            self.logger.info(f"Created lookup dictionary with {len(film_log_lookup)} keys from {len(film_logs)} log entries")
             
             # Validate each entry
             results = []
@@ -101,9 +148,22 @@ class HandoffService:
                 pending=0
             )
             
-            for item in validation_data:
+            for i, item in enumerate(validation_data):
+                # Debug: Log each item being validated
+                com_id = item.get('com_id')
+                com_id_type = type(com_id).__name__
+                com_id_is_nan = pd.isna(com_id) if com_id is not None else False
+                
+                if i < 5 or com_id_is_nan:  # Log first 5 items and any with NaN
+                    self.logger.debug(f"Validating item {i}: doc_id={item.get('document_id')}, "
+                                    f"com_id={com_id} (type: {com_id_type}, isNaN: {com_id_is_nan})")
+                
                 result = self._validate_single_entry(item, film_log_lookup)
                 results.append(result)
+                
+                # Debug: Check if result has NaN values
+                if pd.isna(result.com_id) if result.com_id is not None else False:
+                    self.logger.warning(f"ValidationResult {i} has NaN com_id: {result}")
                 
                 # Update summary
                 if result.status == 'validated':
@@ -117,6 +177,17 @@ class HandoffService:
             
             self.logger.info(f"Validation complete for project {project.archive_id}: "
                            f"{summary.validated} validated, {summary.warnings} warnings, {summary.errors} errors")
+            self.logger.info(f"=== VALIDATION DEBUG END ===")
+            
+            # Store validation results for handoff record creation
+            validation_results_dict = {
+                'total': summary.total,
+                'validated': summary.validated,
+                'warnings': summary.warnings,
+                'errors': summary.errors,
+                'pending': summary.pending
+            }
+            self.store_validation_results(validation_results_dict, validation_data)
             
             return summary, results
             
@@ -222,7 +293,7 @@ class HandoffService:
             page_entries = []
             
             for line in lines[3:]:  # Skip header lines
-                if not line.strip() or not pdf_pattern.match(line):
+                if not line.strip() or not (pdf_pattern.match(line.lower()) or '.pdf;' in line.lower()):
                     continue
                     
                 parts = line.strip().split(";")
@@ -232,13 +303,16 @@ class HandoffService:
                 document_filename = parts[0]  # e.g., "1427004807000278.pdf"
                 blip_position = parts[1]      # e.g., "0-1-0"
                 
-                # Extract document ID (remove .pdf extension)
-                barcode = document_filename.split(".")[0]
+                # Extract document ID (remove .pdf extension, case-insensitive)
+                barcode = document_filename
+                if barcode.lower().endswith('.pdf'):
+                    barcode = barcode[:-4]  # Remove .pdf or .PDF
                 
                 page_entries.append({
                     'barcode': barcode,
                     'blip': blip_position,
-                    'filename': document_filename
+                    'filename': document_filename,
+                    'roll': roll  # Ensure roll number is associated with each entry
                 })
             
             # Process blips using the same logic as indexer_v2.py
@@ -249,6 +323,7 @@ class HandoffService:
                 # Get document info
                 barcode = processed_entry['barcode']
                 processed_blip = processed_entry['blip']  # e.g., "0-2-21"
+                document_roll = processed_entry.get('roll', roll)  # Get roll from entry or use header roll
                 
                 # Count pages for this document in original entries
                 doc_pages = len([e for e in page_entries if e['barcode'] == barcode])
@@ -259,18 +334,18 @@ class HandoffService:
                     try:
                         doc_num = int(blip_parts[1])
                         page_num = int(blip_parts[2])
-                        formatted_blip = f"{roll}-{doc_num:04}.{page_num:05}"
+                        formatted_blip = f"{document_roll}-{doc_num:04d}.{page_num:05d}"
                     except ValueError:
-                        formatted_blip = f"{roll}-{processed_blip}"
+                        formatted_blip = f"{document_roll}-{processed_blip}"
                 else:
-                    formatted_blip = f"{roll}-{processed_blip}"
+                    formatted_blip = f"{document_roll}-{processed_blip}"
                 
                 # Calculate frame range (approximate)
                 start_frame = (page_num - 1) * doc_pages + 1 if page_num > 0 else 1
                 end_frame = start_frame + doc_pages - 1
                 
                 entry = FilmLogEntry(
-                    roll_number=roll,
+                    roll_number=document_roll,
                     document_id=barcode,
                     barcode=barcode,
                     blip=formatted_blip,
@@ -307,25 +382,25 @@ class HandoffService:
         for entry in page_entries:
             barcode_groups[entry['barcode']].append(entry)
         
-        # Process each document group (same as indexer_v2.py)
+        # Process each document group with sequential document numbering
+        doc_index = 1  # Start document numbering from 1
+        
         for barcode, doc_entries in barcode_groups.items():
-            first_entry = doc_entries[0]
             try:
-                blip_parts = first_entry['blip'].split('-')
-                if len(blip_parts) < 2:
-                    self.logger.warning(f"Invalid blip format for barcode {barcode}: {first_entry['blip']}")
-                    continue
-                    
-                doc_num = int(blip_parts[1])
-                # Create new blip with cumulative page numbering (same as indexer_v2.py)
-                new_blip = f"0-{doc_num}-{total_pages + 1}"
+                # Get roll number from the first entry of this document
+                roll = doc_entries[0].get('roll', '')
+                
+                # Create new blip with sequential document numbering and cumulative page numbering
+                new_blip = f"0-{doc_index}-{total_pages + 1}"
                 
                 processed_entries.append({
                     'barcode': barcode,
-                    'blip': new_blip
+                    'blip': new_blip,
+                    'roll': roll  # Preserve roll number from original entry
                 })
                 
                 total_pages += len(doc_entries)
+                doc_index += 1  # Increment document index for next document
                 
             except (IndexError, ValueError) as e:
                 self.logger.error(f"Error processing blip for barcode {barcode}: {e}")
@@ -350,16 +425,62 @@ class HandoffService:
         com_id = temp_entry.get('com_id', '')
         temp_blip = temp_entry.get('temp_blip', '')
         
-        # Normalize document ID - remove .pdf extension if present for consistent matching
-        normalized_doc_id = document_id.replace('.pdf', '') if document_id.endswith('.pdf') else document_id
+        # Enhanced normalization of document ID:
+        # 1. Convert to lowercase for case-insensitive comparison
+        # 2. Remove both .pdf and .PDF extensions
+        normalized_doc_id = document_id.lower()
+        if normalized_doc_id.endswith('.pdf'):
+            normalized_doc_id = normalized_doc_id[:-4]
         
-        # Create lookup key using normalized document ID
+        # Create normalized lookup key
         lookup_key = f"{roll}_{normalized_doc_id}"
+        
+        # Try alternate keys if the main one isn't found
+        alternate_keys = []
+        
+        # Check if main key exists in lookup
+        key_found = lookup_key in film_log_lookup
+        
+        # If not found, try some alternate variations
+        if not key_found:
+            # Try with uppercase barcode if it's not already
+            if barcode and barcode.lower() != normalized_doc_id:
+                alt_key = f"{roll}_{barcode.lower()}"
+                if alt_key != lookup_key:
+                    alternate_keys.append(alt_key)
+            
+            # Try with the document ID without normalization
+            alt_key2 = f"{roll}_{document_id}"
+            if alt_key2 != lookup_key:
+                alternate_keys.append(alt_key2)
+            
+            # Try with just the numeric part if it's a numeric ID
+            if normalized_doc_id.isdigit():
+                alt_key3 = f"{roll}_{normalized_doc_id}"
+                alternate_keys.append(alt_key3)
+            
+            # Check all alternate keys
+            for alt_key in alternate_keys:
+                if alt_key in film_log_lookup:
+                    lookup_key = alt_key
+                    key_found = True
+                    self.logger.info(f"Found document using alternate key: {alt_key}")
+                    break
         
         self.logger.debug(f"Looking up key: {lookup_key} (original doc_id: {document_id})")
         
         # Check if entry exists in film logs
-        if lookup_key not in film_log_lookup:
+        if not key_found:
+            # Get list of document IDs in film logs for this roll to help with debugging
+            roll_docs = [key.split('_')[1] for key in film_log_lookup.keys() if key.startswith(f"{roll}_")]
+            close_matches = self._find_close_matches(normalized_doc_id, roll_docs, n=3)
+            
+            debug_msg = f'Document {document_id} not found in film logs for roll {roll}'
+            if close_matches:
+                debug_msg += f". Close matches: {', '.join(close_matches)}"
+            
+            self.logger.warning(debug_msg)
+            
             # Log available keys for debugging
             available_keys = list(film_log_lookup.keys())[:5]  # Show first 5 keys
             self.logger.debug(f"Key not found. Available keys (first 5): {available_keys}")
@@ -372,7 +493,7 @@ class HandoffService:
                 temp_blip=temp_blip,
                 film_blip=None,
                 status='error',
-                message=f'Document {normalized_doc_id} not found in film logs for roll {roll}'
+                message=f'Document {document_id} not found in film logs for roll {roll}'
             )
         
         film_entry = film_log_lookup[lookup_key]
@@ -394,6 +515,44 @@ class HandoffService:
                 pages=film_entry.pages
             )
         else:
+            # Extract document and page numbers for comparison
+            try:
+                # Parse temp_blip and film_blip
+                temp_pattern = r'^(\d+)-(\d{4})\.(\d{5})$'
+                film_pattern = r'^(\d+)-(\d{4})\.(\d{5})$'
+                
+                temp_match = re.match(temp_pattern, temp_blip)
+                film_match = re.match(film_pattern, film_entry.blip)
+                
+                # If both match the pattern, do structured comparison
+                if temp_match and film_match:
+                    temp_roll, temp_doc, temp_page = temp_match.groups()
+                    film_roll, film_doc, film_page = film_match.groups()
+                    
+                    # If rolls match but document numbers differ by 1 and page numbers are close,
+                    # consider it a minor difference (common with sequential vs. non-sequential doc numbering)
+                    if temp_roll == film_roll:
+                        doc_diff = abs(int(temp_doc) - int(film_doc))
+                        
+                        # If document numbers differ by just 1 (common when doc numbering schemes differ)
+                        if doc_diff <= 1:
+                            return ValidationResult(
+                                document_id=document_id,
+                                roll=roll,
+                                barcode=barcode,
+                                com_id=com_id,
+                                temp_blip=temp_blip,
+                                film_blip=film_entry.blip,
+                                status='warning',
+                                message=f'Minor blip numbering difference: expected {temp_blip}, found {film_entry.blip}',
+                                start_frame=film_entry.start_frame,
+                                end_frame=film_entry.end_frame,
+                                pages=film_entry.pages
+                            )
+            except Exception as e:
+                self.logger.debug(f"Error parsing blips for structured comparison: {e}")
+                # Continue with regular similarity check
+            
             # Check if it's a minor difference (warning) or major difference (error)
             similarity = self._calculate_blip_similarity(temp_blip, film_entry.blip)
             
@@ -426,6 +585,15 @@ class HandoffService:
                     pages=film_entry.pages
                 )
     
+    def _find_close_matches(self, doc_id: str, candidates: list, n: int = 3) -> list:
+        """Find close string matches in a list of candidates."""
+        try:
+            import difflib
+            return difflib.get_close_matches(doc_id, candidates, n=n, cutoff=0.7)
+        except Exception as e:
+            self.logger.debug(f"Error finding close matches: {e}")
+            return []
+    
     def _calculate_blip_similarity(self, blip1: str, blip2: str) -> float:
         """
         Calculate similarity between two blip strings.
@@ -445,14 +613,14 @@ class HandoffService:
             return 0.0
         
         # Check if they have the same structure (roll-doc.frame format)
-        pattern = r'^(\d+)-(\d+)\.(\d+)\.(\d+)$'
+        pattern = r'^(\d+)-(\d{4})\.(\d{5})$'
         match1 = re.match(pattern, blip1)
         match2 = re.match(pattern, blip2)
         
         if match1 and match2:
             # Compare components
-            roll1, doc1, frame1, subframe1 = match1.groups()
-            roll2, doc2, frame2, subframe2 = match2.groups()
+            roll1, doc1, frame1 = match1.groups()
+            roll2, doc2, frame2 = match2.groups()
             
             # Same roll and document, different frame numbers = high similarity
             if roll1 == roll2 and doc1 == doc2:
@@ -463,6 +631,16 @@ class HandoffService:
                     return 0.8
                 else:
                     return 0.5
+            
+            # Same roll, different document, similar frame = medium similarity
+            if roll1 == roll2:
+                doc_diff = abs(int(doc1) - int(doc2))
+                if doc_diff == 1:  # Adjacent document numbers
+                    return 0.7
+                elif doc_diff <= 2:  # Nearby document numbers
+                    return 0.6
+                else:
+                    return 0.4
         
         # Fallback: simple string similarity
         common_chars = sum(1 for a, b in zip(blip1, blip2) if a == b)
@@ -533,55 +711,249 @@ class HandoffService:
         archive_id = project.archive_id or 'PROJECT'
         excel_path = export_dir / f'{archive_id}_blips_{timestamp}.xlsx'
         
+        self.logger.info(f"=== EXCEL GENERATION DEBUG START for {archive_id} ===")
+        self.logger.info(f"Processing {len(entries)} validation results for Excel export")
+        
         # Prepare data for DataFrame with only required columns
         data = []
-        for entry in entries:
-            # Remove .pdf extension from barcode if present
-            barcode = entry.barcode.replace('.pdf', '') if entry.barcode.endswith('.pdf') else entry.barcode
+        nan_entries = []
+        
+        for i, entry in enumerate(entries):
+            # Debug: Check for NaN values in ValidationResult
+            com_id_is_nan = pd.isna(entry.com_id) if entry.com_id is not None else False
+            if com_id_is_nan:
+                nan_entries.append(i)
+                self.logger.warning(f"NaN com_id in ValidationResult[{i}]: "
+                                  f"doc_id={entry.document_id}, com_id={entry.com_id}, "
+                                  f"barcode={entry.barcode}, status={entry.status}")
+            
+            # Remove .pdf extension from barcode if present (case-insensitive)
+            barcode = entry.barcode
+            if barcode.lower().endswith('.pdf'):
+                barcode = barcode[:-4]  # Remove last 4 characters (.pdf or .PDF)
+            
+            # Clean and validate data to prevent NaN/INF issues
+            clean_barcode = str(barcode) if barcode is not None else ''
+            clean_com_id = entry.com_id if entry.com_id is not None and pd.notna(entry.com_id) else ''
+            clean_blip = entry.film_blip or entry.temp_blip or ''
+            
+            # Convert com_id to string if it's a number to avoid NaN issues
+            if isinstance(clean_com_id, (int, float)):
+                if pd.isna(clean_com_id) or clean_com_id == float('inf') or clean_com_id == float('-inf'):
+                    clean_com_id = ''
+                    self.logger.debug(f"Cleaned NaN/INF com_id for entry {i}: {entry.com_id} -> '{clean_com_id}'")
+                else:
+                    clean_com_id = str(int(clean_com_id))
             
             data.append({
-                'Barcode': barcode,
-                'Bildnummer': entry.com_id,
-                'Blipindex': entry.film_blip or entry.temp_blip
+                'Barcode': clean_barcode,
+                'Bildnummer': clean_com_id,
+                'Blipindex': clean_blip
             })
+        
+        if nan_entries:
+            self.logger.warning(f"Found NaN com_id values in {len(nan_entries)} entries: {nan_entries}")
         
         # Create DataFrame
         df = pd.DataFrame(data)
         
+        # Debug: Check DataFrame for NaN values
+        nan_count_before = df.isna().sum().sum()
+        if nan_count_before > 0:
+            self.logger.warning(f"DataFrame contains {nan_count_before} NaN values before cleaning")
+            for col in df.columns:
+                col_nan_count = df[col].isna().sum()
+                if col_nan_count > 0:
+                    self.logger.warning(f"Column '{col}' has {col_nan_count} NaN values")
+        
+        # Additional data cleaning to ensure no NaN/INF values
+        df = df.fillna('')  # Replace NaN with empty strings
+        df = df.replace([float('inf'), float('-inf')], '')  # Replace INF with empty strings
+        
+        # Debug: Check DataFrame after cleaning
+        nan_count_after = df.isna().sum().sum()
+        if nan_count_after > 0:
+            self.logger.warning(f"DataFrame still contains {nan_count_after} NaN values after cleaning!")
+        else:
+            self.logger.info(f"DataFrame successfully cleaned of NaN values")
+        
         # Sort numerically by barcode (convert to int for proper numeric sorting)
         try:
-            df['barcode_numeric'] = pd.to_numeric(df['Barcode'], errors='coerce')
+            # Create a numeric version for sorting, handling non-numeric barcodes
+            def safe_numeric_convert(x):
+                try:
+                    # Extract numeric part if barcode contains non-numeric characters
+                    numeric_part = ''.join(filter(str.isdigit, str(x)))
+                    return int(numeric_part) if numeric_part else 0
+                except (ValueError, TypeError):
+                    return 0
+            
+            df['barcode_numeric'] = df['Barcode'].apply(safe_numeric_convert)
             df = df.sort_values('barcode_numeric').drop('barcode_numeric', axis=1)
-        except:
+        except Exception as e:
+            self.logger.warning(f"Error in numeric sorting, falling back to string sort: {e}")
             # Fallback to string sorting if numeric conversion fails
             df = df.sort_values('Barcode')
         
         # Save to Excel with specified headers only
-        with pd.ExcelWriter(excel_path, engine='xlsxwriter') as writer:
-            # Write main data sheet with only the required columns
-            df.to_excel(writer, sheet_name='Index', index=False)
+        try:
+            # Create Excel writer with proper options for NaN handling
+            excel_options = {
+                'nan_inf_to_errors': True,
+                'strings_to_numbers': False,
+                'strings_to_formulas': False
+            }
             
-            # Format the sheet
-            workbook = writer.book
-            worksheet = writer.sheets['Index']
+            with pd.ExcelWriter(excel_path, engine='xlsxwriter', options=excel_options) as writer:
+                # Write main data sheet with only the required columns
+                df.to_excel(writer, sheet_name='Index', index=False)
+                
+                # Get workbook and worksheet objects for formatting
+                workbook = writer.book
+                worksheet = writer.sheets['Index']
+                
+                # Add header formatting - nice blue background, white font, centered, 30 row height
+                header_format = workbook.add_format({
+                    'bold': True,
+                    'font_color': 'white',
+                    'bg_color': '#10069F',  # Nice blue color
+                    'align': 'center',
+                    'valign': 'vcenter',
+                    'text_wrap': True,
+                    'border': 1,
+                    'border_color': '#FFFFFF',
+                    'font_name': 'Arial',
+                    'font_size': 11
+                })
+                
+                # Add data formatting - left aligned
+                data_format = workbook.add_format({
+                    'align': 'left',
+                    'valign': 'vcenter',
+                    'border': 1,
+                    'border_color': '#D3D3D3',
+                    'font_name': 'Arial',
+                    'font_size': 10
+                })
+                
+                # Set header row height to 30
+                worksheet.set_row(0, 30)
+                
+                # Apply header formatting to all header cells
+                for col_num, value in enumerate(df.columns.values):
+                    worksheet.write(0, col_num, value, header_format)
+                
+                # Apply data formatting to all data rows
+                for row_num in range(1, len(df) + 1):
+                    for col_num in range(len(df.columns)):
+                        cell_value = df.iloc[row_num - 1, col_num]
+                        
+                        # Ensure cell value is clean and properly formatted
+                        if pd.isna(cell_value) or cell_value in [float('inf'), float('-inf')]:
+                            cell_value = ''
+                            self.logger.debug(f"Cleaned NaN/INF cell value at row {row_num}, col {col_num}")
+                        
+                        # Convert to string to ensure consistent formatting
+                        if isinstance(cell_value, (int, float)) and not pd.isna(cell_value):
+                            cell_value = str(int(cell_value)) if isinstance(cell_value, float) and cell_value.is_integer() else str(cell_value)
+                        
+                        worksheet.write(row_num, col_num, cell_value, data_format)
+                
+                # Auto-adjust column widths with better sizing
+                for i, col in enumerate(df.columns):
+                    # Calculate max width needed
+                    max_length = max(
+                        df[col].astype(str).map(len).max(),  # Max data length
+                        len(col)  # Header length
+                    )
+                    # Set column width with padding, but cap at reasonable maximum
+                    adjusted_width = min(max_length + 3, 50)
+                    worksheet.set_column(i, i, adjusted_width)
+                
+                # Add some additional formatting touches
+                # Freeze the header row
+                worksheet.freeze_panes(1, 0)
+                
+                # Set print options
+                worksheet.set_landscape()
+                worksheet.set_paper(9)  # A4 paper
+                worksheet.fit_to_pages(1, 0)  # Fit to 1 page wide, any number of pages tall
+                
+                # Add print margins
+                worksheet.set_margins(0.7, 0.7, 0.75, 0.75)  # left, right, top, bottom
             
-            # Add header formatting
-            header_format = workbook.add_format({
-                'bold': True,
-                'text_wrap': True,
-                'valign': 'top',
-                'fg_color': '#D7E4BC',
-                'border': 1
-            })
-            
-            # Apply header formatting
-            for col_num, value in enumerate(df.columns.values):
-                worksheet.write(0, col_num, value, header_format)
-            
-            # Auto-adjust column widths
-            for i, col in enumerate(df.columns):
-                max_length = max(df[col].astype(str).map(len).max(), len(col))
-                worksheet.set_column(i, i, min(max_length + 2, 50))
+            self.logger.info(f"Excel file successfully created with formatting: {excel_path}")
+            self.logger.info(f"=== EXCEL GENERATION DEBUG END ===")
+        
+        except Exception as e:
+            self.logger.error(f"Error writing Excel file with xlsxwriter: {e}")
+            # Fallback: try with openpyxl engine but with basic formatting
+            try:
+                self.logger.info("Attempting fallback with openpyxl engine")
+                
+                with pd.ExcelWriter(excel_path, engine='openpyxl') as writer:
+                    df.to_excel(writer, sheet_name='Index', index=False)
+                    
+                    # Try to add basic formatting with openpyxl
+                    try:
+                        from openpyxl.styles import Font, PatternFill, Border, Side, Alignment
+                        
+                        worksheet = writer.sheets['Index']
+                        
+                        # Header formatting
+                        header_font = Font(bold=True, color='FFFFFF', name='Arial', size=11)
+                        header_fill = PatternFill(start_color='10069F', end_color='10069F', fill_type='solid')
+                        header_alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+                        border = Border(
+                            left=Side(style='thin', color='FFFFFF'),
+                            right=Side(style='thin', color='FFFFFF'),
+                            top=Side(style='thin', color='FFFFFF'),
+                            bottom=Side(style='thin', color='FFFFFF')
+                        )
+                        
+                        # Apply header formatting
+                        for col in range(1, len(df.columns) + 1):
+                            cell = worksheet.cell(row=1, column=col)
+                            cell.font = header_font
+                            cell.fill = header_fill
+                            cell.alignment = header_alignment
+                            cell.border = border
+                        
+                        # Set header row height
+                        worksheet.row_dimensions[1].height = 30
+                        
+                        # Data formatting
+                        data_font = Font(name='Arial', size=10)
+                        data_alignment = Alignment(horizontal='left', vertical='center')
+                        data_border = Border(
+                            left=Side(style='thin', color='D3D3D3'),
+                            right=Side(style='thin', color='D3D3D3'),
+                            top=Side(style='thin', color='D3D3D3'),
+                            bottom=Side(style='thin', color='D3D3D3')
+                        )
+                        
+                        # Apply data formatting
+                        for row in range(2, len(df) + 2):
+                            for col in range(1, len(df.columns) + 1):
+                                cell = worksheet.cell(row=row, column=col)
+                                cell.font = data_font
+                                cell.alignment = data_alignment
+                                cell.border = data_border
+                        
+                        # Auto-adjust column widths
+                        for i, col in enumerate(df.columns, 1):
+                            max_length = max(df[col].astype(str).map(len).max(), len(col))
+                            worksheet.column_dimensions[worksheet.cell(row=1, column=i).column_letter].width = min(max_length + 3, 50)
+                        
+                    except ImportError:
+                        self.logger.warning("openpyxl styling not available, creating basic Excel file")
+                    except Exception as style_error:
+                        self.logger.warning(f"Could not apply openpyxl styling: {style_error}")
+                
+                self.logger.info("Successfully created Excel file with openpyxl fallback")
+            except Exception as fallback_error:
+                self.logger.error(f"Fallback Excel creation also failed: {fallback_error}")
+                raise
         
         return excel_path
     
@@ -602,23 +974,53 @@ class HandoffService:
         archive_id = project.archive_id or 'PROJECT'
         dat_path = export_dir / f'{archive_id}_scan_{timestamp}.dat'
         
-        # Prepare entries for sorting
+        # Prepare entries for sorting with data cleaning
         entries_for_sorting = []
         for entry in entries:
-            # Remove .pdf extension from barcode if present
-            barcode = entry.barcode.replace('.pdf', '') if entry.barcode.endswith('.pdf') else entry.barcode
+            # Remove .pdf extension from barcode if present (case-insensitive)
+            barcode = entry.barcode
+            if barcode.lower().endswith('.pdf'):
+                barcode = barcode[:-4]  # Remove last 4 characters (.pdf or .PDF)
+            
+            # Clean and validate data to prevent issues
+            clean_barcode = str(barcode) if barcode is not None else ''
+            
+            # Handle com_id with NaN/INF checking
+            clean_com_id = entry.com_id
+            if clean_com_id is None or pd.isna(clean_com_id):
+                clean_com_id = ''
+            elif isinstance(clean_com_id, (int, float)):
+                if clean_com_id == float('inf') or clean_com_id == float('-inf'):
+                    clean_com_id = ''
+                else:
+                    clean_com_id = str(int(clean_com_id))
+            else:
+                clean_com_id = str(clean_com_id)
+            
+            clean_blip = entry.film_blip or entry.temp_blip or ''
+            
             entries_for_sorting.append({
-                'barcode': barcode,
-                'com_id': entry.com_id,
-                'blip': entry.film_blip or entry.temp_blip
+                'barcode': clean_barcode,
+                'com_id': clean_com_id,
+                'blip': clean_blip
             })
         
-        # Sort numerically by barcode
+        # Sort numerically by barcode with improved error handling
         try:
-            sorted_entries = sorted(entries_for_sorting, key=lambda x: int(x['barcode']) if x['barcode'].isdigit() else float('inf'))
-        except:
+            def safe_barcode_sort_key(entry):
+                try:
+                    barcode = entry['barcode']
+                    # Extract numeric part if barcode contains non-numeric characters
+                    numeric_part = ''.join(filter(str.isdigit, str(barcode)))
+                    return int(numeric_part) if numeric_part else 0
+                except (ValueError, TypeError):
+                    return 0
+            
+            sorted_entries = sorted(entries_for_sorting, key=safe_barcode_sort_key)
+        except Exception as e:
+            self.logger.warning(f"Error in numeric sorting for DAT file, falling back to string sort: {e}")
             # Fallback to string sorting if numeric conversion fails
-            sorted_entries = sorted(entries_for_sorting, key=lambda x: x['barcode'])
+            sorted_entries = sorted(entries_for_sorting, key=lambda x: str(x['barcode']))
         
         with open(dat_path, 'w', encoding='utf-8') as f:
             # Write only data lines in fixed-width format (no header comments)
@@ -627,32 +1029,39 @@ class HandoffService:
                 # Ensure com_id and barcode are strings before calling ljust
                 com_id = str(entry['com_id'] or '').ljust(13)[:13]
                 barcode = str(entry['barcode'] or '').ljust(48)[:48]
-                blip = entry['blip'] or ''
+                blip = str(entry['blip'] or '')
                 
                 line = f"{com_id}{barcode}{blip}\n"
                 f.write(line)
         
         return dat_path
     
-    def send_handoff_email(self, project, email_data: Dict[str, Any], file_paths: Dict[str, Any]) -> Dict[str, Any]:
+    def send_handoff_email(self, project, email_data: Dict[str, Any], file_paths: Dict[str, Any], user: User = None) -> Dict[str, Any]:
         """
         Send handoff email using form data to populate signature placeholders.
         
         Args:
             project: Django Project model instance
-            email_data: Dictionary with form data (to, cc, subject, archive_id, film_numbers, custom_message, use_form_data)
+            email_data: Dictionary with form data (to, cc, bcc, subject, archive_id, film_numbers, custom_message, use_form_data)
             file_paths: Dictionary with file paths from generate_handoff_files
+            user: User who initiated the handoff
             
         Returns:
             Dictionary with send result
         """
         try:
+            # Create handoff record to track this email
+            handoff_record = self._create_handoff_record(project, email_data, file_paths, user)
+            
             # Handle default recipients
             if not email_data.get('to'):
-                email_data['to'] = 'dilek.kursun@rolls-royce.com'
+                email_data['to'] = 'ali.maung@rolls-royce.com'
             
             if not email_data.get('cc'):
-                email_data['cc'] = 'thomas.lux@rolls-royce.com, jan.becker@rolls-royce.com'
+                email_data['cc'] = 'ali.maung@rolls-royce.com'
+            
+            if not email_data.get('bcc'):
+                email_data['bcc'] = 'ali.maung@rolls-royce.com, microfilm.rollsroyce@gmail.com'
 
             # Validate email addresses before proceeding
             def validate_email_list(email_string):
@@ -672,9 +1081,10 @@ class HandoffService:
             
             to_emails = validate_email_list(email_data['to'])
             cc_emails = validate_email_list(email_data.get('cc', ''))
+            bcc_emails = validate_email_list(email_data.get('bcc', ''))
             
             # Log email processing for debugging
-            self.logger.info(f"Processing emails - TO: {to_emails}, CC: {cc_emails}")
+            self.logger.info(f"Processing emails - TO: {to_emails}, CC: {cc_emails}, BCC: {bcc_emails}")
             
             if not to_emails:
                 raise ValueError("No valid TO email addresses provided")
@@ -687,6 +1097,13 @@ class HandoffService:
             else:
                 email_data['cc'] = ''
                 self.logger.info("No CC emails provided")
+            
+            if bcc_emails:
+                email_data['bcc'] = '; '.join(bcc_emails)
+                self.logger.info(f"BCC emails processed: {len(bcc_emails)} recipients - {email_data['bcc']}")
+            else:
+                email_data['bcc'] = ''
+                self.logger.info("No BCC emails provided")
 
             # Initialize Outlook
             try:
@@ -709,6 +1126,8 @@ class HandoffService:
                 mail.To = email_data['to']
                 if email_data.get('cc'):
                     mail.CC = email_data['cc']
+                if email_data.get('bcc'):
+                    mail.BCC = email_data['bcc']
                 mail.Subject = email_data['subject']
                 
                 # Try to resolve recipients before proceeding
@@ -742,6 +1161,16 @@ class HandoffService:
                                 recipient.Resolve()  # Try to resolve individual recipient
                                 self.logger.debug(f"Added CC recipient: {email_addr}")
                         
+                        # Add BCC recipients
+                        if email_data.get('bcc'):
+                            bcc_emails = [email.strip() for email in email_data['bcc'].replace(';', ',').split(',') if email.strip()]
+                            self.logger.info(f"Adding {len(bcc_emails)} BCC recipients: {bcc_emails}")
+                            for email_addr in bcc_emails:
+                                recipient = mail.Recipients.Add(email_addr)
+                                recipient.Type = 3  # olBCC
+                                recipient.Resolve()  # Try to resolve individual recipient
+                                self.logger.debug(f"Added BCC recipient: {email_addr}")
+                        
                         self.logger.info("Recipients added manually")
                     except Exception as manual_error:
                         self.logger.warning(f"Manual recipient resolution also failed: {manual_error}")
@@ -749,6 +1178,8 @@ class HandoffService:
                         mail.To = email_data['to']
                         if email_data.get('cc'):
                             mail.CC = email_data['cc']
+                        if email_data.get('bcc'):
+                            mail.BCC = email_data['bcc']
                 
                 # Get signature with placeholders using GetInspector trick
                 mail.GetInspector  # This triggers Outlook to add the default signature
@@ -769,9 +1200,6 @@ class HandoffService:
                 # Generate timestamp for filenames
                 timestamp = datetime.now().strftime('%d%m%y%H%M')
                 
-                # Get random quote
-                random_quote = self._get_random_quote()
-                
                 # Replace signature placeholders
                 if signature_html:
                     # Replace XXX with archive_id (appears in multiple places)
@@ -783,8 +1211,8 @@ class HandoffService:
                     # Replace DDMMYYHHMM with actual timestamp
                     signature_html = signature_html.replace('DDMMYYHHMM', timestamp)
                     
-                    # Replace QQQ with random quote
-                    signature_html = signature_html.replace('QQQ', random_quote)
+                    # Replace QQQ with empty string (remove quote placeholder)
+                    signature_html = signature_html.replace('QQQ', '')
                     
                     # Replace CCC with custom message or em dash if empty
                     if custom_message and custom_message.strip():
@@ -795,7 +1223,7 @@ class HandoffService:
                         # Replace CCC placeholder with em dash if no custom message
                         signature_html = signature_html.replace('CCC', '—')
                     
-                    self.logger.debug(f"Replaced signature placeholders: XXX→{archive_id}, YYY→{film_numbers}, DDMMYYHHMM→{timestamp}, QQQ→{random_quote[:50]}..., CCC→{custom_message[:30] if custom_message else 'em dash'}...")
+                    self.logger.debug(f"Replaced signature placeholders: XXX→{archive_id}, YYY→{film_numbers}, DDMMYYHHMM→{timestamp}, QQQ→(removed), CCC→{custom_message[:30] if custom_message else 'em dash'}...")
                     
                     mail.HTMLBody = signature_html
                 
@@ -825,29 +1253,90 @@ class HandoffService:
                                     mail.Attachments.Add(file_info)
                                     self.logger.info(f"Added string path attachment: {file_info}")
                 
+                # Debug mail object properties before sending
+                try:
+                    # Log mail properties to help diagnose the issue
+                    self.logger.info(f"=== MAIL OBJECT DIAGNOSTIC INFO (GREEN) ===")
+                    self.logger.info(f"To: {mail.To}")
+                    self.logger.info(f"CC: {mail.CC}")
+                    self.logger.info(f"BCC: {mail.BCC}")
+                    self.logger.info(f"Subject: {mail.Subject}")
+                    self.logger.info(f"Attachment count: {mail.Attachments.Count}")
+                    
+                    # Get list of attachments
+                    attachments_list = []
+                    for i in range(1, mail.Attachments.Count + 1):
+                        att = mail.Attachments.Item(i)
+                        attachments_list.append(f"{att.DisplayName} ({att.Type})")
+                    self.logger.info(f"Attachments: {attachments_list}")
+                    
+                    # Check recipients
+                    recipients_count = mail.Recipients.Count
+                    self.logger.info(f"Recipients count: {recipients_count}")
+                    resolved_count = 0
+                    unresolved_count = 0
+                    for i in range(1, recipients_count + 1):
+                        recipient = mail.Recipients.Item(i)
+                        status = "Resolved" if recipient.Resolved else "Unresolved"
+                        if recipient.Resolved:
+                            resolved_count += 1
+                        else:
+                            unresolved_count += 1
+                    self.logger.info(f"Recipients resolved: {resolved_count}, unresolved: {unresolved_count}")
+                    
+                    # Log mail delivery options
+                    self.logger.info(f"Importance: {mail.Importance}")
+                    self.logger.info(f"Sensitivity: {mail.Sensitivity}")
+                    
+                    # Try to get message size
+                    try:
+                        html_length = len(mail.HTMLBody) if mail.HTMLBody else 0
+                        text_length = len(mail.Body) if mail.Body else 0
+                        self.logger.info(f"HTML body length: {html_length}, Text body length: {text_length}")
+                    except Exception as size_error:
+                        self.logger.info(f"Could not determine message size: {size_error}")
+                    
+                    self.logger.info(f"=== END MAIL DIAGNOSTIC INFO ===")
+                except Exception as diag_error:
+                    self.logger.warning(f"Error collecting mail diagnostics: {diag_error}")
+                
                 # Send the email
                 try:
+                    self.logger.info(f"Attempting to send email directly...")
+                    mail.Display()
                     mail.Send()
-                    #mail.Display(True)
                     self.logger.info(f"Email sent successfully for project {project.archive_id}")
                     send_method = "sent"
                 except Exception as send_error:
                     self.logger.warning(f"Failed to send email directly: {send_error}")
+                    # Log the error details
+                    if hasattr(send_error, 'excepinfo'):
+                        self.logger.warning(f"Exception info: {send_error.excepinfo}")
+                    
                     # Fallback: Display the email for manual sending
                     try:
-                        mail.Display(True)  # True = modal dialog
+                        self.logger.info(f"Falling back to displaying email for manual sending...")
+                        mail.Display()
                         self.logger.info(f"Email displayed for manual sending for project {project.archive_id}")
                         send_method = "displayed"
                     except Exception as display_error:
                         self.logger.error(f"Failed to display email: {display_error}")
                         raise Exception(f"Could not send or display email: {send_error}")
 
+                # Mark handoff as sent
+                if send_method == "sent":
+                    handoff_record.mark_sent()
+                else:
+                    # For displayed emails, we'll mark as sent since user will likely send it
+                    handoff_record.mark_sent()
+                
                 return {
                     'success': True,
                     'message': f'Email {"sent automatically" if send_method == "sent" else "opened in Outlook for manual sending"} to {email_data["to"]}',
                     'method': send_method,
                     'archive_id': archive_id,
-                    'film_numbers': film_numbers
+                    'film_numbers': film_numbers,
+                    'handoff_id': handoff_record.handoff_id
                 }
                 
             except Exception as outlook_error:
@@ -865,6 +1354,14 @@ class HandoffService:
         except Exception as e:
             error_msg = f"Failed to send email for project {project.archive_id}: {str(e)}"
             self.logger.error(error_msg, exc_info=True)
+            
+            # Mark handoff as failed if record was created
+            try:
+                if 'handoff_record' in locals():
+                    handoff_record.mark_failed(error_msg)
+            except Exception as record_error:
+                self.logger.error(f"Failed to update handoff record: {record_error}")
+            
             return {
                 'success': False,
                 'error': error_msg
@@ -909,11 +1406,7 @@ class HandoffService:
             
             # Replace DDMMYYHHMM with actual timestamp
             customized_html = customized_html.replace('DDMMYYHHMM', timestamp)
-            
-            # Replace QQQ with random quote
-            random_quote = self._get_random_quote()
-            customized_html = customized_html.replace('QQQ', random_quote)
-            
+                        
             # Replace CCC with custom message or em dash if empty
             if custom_message and custom_message.strip():
                 # Convert line breaks to HTML breaks for proper display
@@ -923,7 +1416,7 @@ class HandoffService:
                 # Replace CCC placeholder with em dash if no custom message
                 customized_html = customized_html.replace('CCC', '—')
             
-            self.logger.debug(f"Customized signature placeholders: XXX -> {archive_id}, YYY -> {film_numbers or 'N/A'}, DDMMYYHHMM -> {timestamp}, QQQ -> {random_quote[:50]}..., CCC -> {custom_message[:30] if custom_message else 'em dash'}...")
+            self.logger.debug(f"Customized signature placeholders: XXX -> {archive_id}, YYY -> {film_numbers or 'N/A'}, DDMMYYHHMM -> {timestamp}, QQQ -> (removed), CCC -> {custom_message[:30] if custom_message else 'em dash'}...")
             
             return customized_html
             
@@ -1042,121 +1535,179 @@ Iron Mountain Microfilm Team
 This email was generated automatically by the Microfilm Processing System.
 """
 
-    def _get_random_quote(self) -> str:
+    def _create_handoff_record(self, project, email_data: Dict[str, Any], file_paths: Dict[str, Any], user: User = None) -> 'HandoffRecord':
         """
-        Fetch a random inspirational quote from an API or fallback to local quotes.
-        Supports both English and German with specific categories and length limits.
+        Create a handoff record to track the email being sent.
         
+        Args:
+            project: Django Project model instance
+            email_data: Dictionary with email form data
+            file_paths: Dictionary with file paths from generate_handoff_files
+            user: User who initiated the handoff
+            
         Returns:
-            Random quote string
+            HandoffRecord instance
         """
-        # Randomly choose language
-        language = random.choice(['en', 'de'])
-        
-        # Define categories mapping
-        categories = [
-            'business', 'success', 'motivational', 'inspirational', 
-            'wisdom', 'philosophy', 'work', 'productivity', 'famous-people',
-            'humor', 'education', 'learning'
-        ]
-        
         try:
-            # Try quotable.io for English quotes
-            if language == 'en':
-                category = random.choice(['wisdom', 'success', 'motivational', 'famous-quotes'])
-                max_length = random.choice([50, 150])  # short or medium
-                
-                response = requests.get(
-                    'https://api.quotable.io/random',
-                    params={
-                        'tags': category,
-                        'maxLength': max_length
-                    },
-                    timeout=3
+            # Import here to avoid circular imports
+            from ..models import HandoffRecord, HandoffValidationSnapshot
+            
+            # Generate unique handoff ID
+            handoff_id = f"HO-{project.archive_id}-{datetime.now().strftime('%Y%m%d%H%M%S')}-{str(uuid.uuid4())[:8]}"
+            
+            # Create handoff record
+            handoff_record = HandoffRecord.objects.create(
+                project=project,
+                user=user,
+                handoff_id=handoff_id,
+                recipient_email=email_data.get('to', ''),
+                recipient_name=self._extract_recipient_name(email_data.get('to', '')),
+                subject=email_data.get('subject', ''),
+                custom_message=email_data.get('custom_message', ''),
+                status='pending'
+            )
+            
+            # Update validation summary if available
+            validation_results = getattr(self, '_last_validation_results', None)
+            if validation_results:
+                handoff_record.update_validation_summary(validation_results)
+            
+            # Update file information
+            if file_paths:
+                handoff_record.update_file_info(
+                    excel_path=file_paths.get('excel_path'),
+                    dat_path=file_paths.get('dat_path')
                 )
-                
-                if response.status_code == 200:
-                    data = response.json()
-                    quote = f'"{data["content"]}" - {data["author"]}'
-                    self.logger.debug(f"Fetched English quote from API: {quote}")
-                    return quote
             
-            # Try alternative API for German quotes
-            else:
-                # For German, we'll use a different approach or fallback faster
-                pass
-                
-        except Exception as api_error:
-            self.logger.warning(f"Failed to fetch quote from API: {api_error}")
-        
-        # Enhanced fallback quotes in both languages
-        english_quotes = [
-            '"The only way to do great work is to love what you do." - Steve Jobs',
-            '"Innovation distinguishes between a leader and a follower." - Steve Jobs',
-            '"Quality is not an act, it is a habit." - Aristotle',
-            '"Excellence is never an accident." - Aristotle',
-            '"Success is not final, failure is not fatal." - Winston Churchill',
-            '"The only impossible journey is the one you never begin." - Tony Robbins',
-            '"In the middle of difficulty lies opportunity." - Albert Einstein',
-            '"Believe you can and you\'re halfway there." - Theodore Roosevelt',
-            '"Knowledge is power." - Francis Bacon',
-            '"The best investment you can make is in yourself." - Warren Buffett',
-            '"Productivity is never an accident." - Paul J. Meyer',
-            '"Laughter is the best medicine." - Proverb',
-            '"A goal without a plan is just a wish." - Antoine de Saint-Exupéry',
-            '"The expert in anything was once a beginner." - Helen Hayes'
-        ]
-        
-        german_quotes = [
-            '"Erfolg ist die Fähigkeit, von einem Misserfolg zum anderen zu gehen, ohne seine Begeisterung zu verlieren." - Winston Churchill',
-            '"Das Geheimnis des Erfolgs ist anzufangen." - Mark Twain',
-            '"Wissen ist Macht." - Francis Bacon',
-            '"Qualität ist kein Zufall." - Aristoteles',
-            '"Innovation unterscheidet zwischen einem Anführer und einem Nachfolger." - Steve Jobs',
-            '"Der beste Weg, die Zukunft vorherzusagen, ist, sie zu erschaffen." - Peter Drucker',
-            '"Bildung ist die mächtigste Waffe, um die Welt zu verändern." - Nelson Mandela',
-            '"Lachen ist die beste Medizin." - Sprichwort',
-            '"Ein Ziel ohne Plan ist nur ein Wunsch." - Antoine de Saint-Exupéry',
-            '"Produktivität ist niemals ein Zufall." - Paul J. Meyer',
-            '"In der Mitte der Schwierigkeit liegt die Möglichkeit." - Albert Einstein',
-            '"Weisheit ist nicht das Ergebnis der Schulbildung, sondern des lebenslangen Versuchs, sie zu erwerben." - Albert Einstein',
-            '"Der Experte in allem war einmal ein Anfänger." - Helen Hayes',
-            '"Glaube an dich selbst und du bist schon zur Hälfte da." - Theodore Roosevelt',
-            # Business/Success quotes
-            '"Geschäfte sind wie ein Rad - sie müssen sich bewegen oder sie fallen um." - Henry Ford',
-            '"Der Kunde ist König, aber der Service ist das Königreich." - Unbekannt',
-            '"Erfolg besteht darin, dass man genau die Fähigkeiten hat, die im Moment gefragt sind." - Henry Ford',
-            '"Wer aufhört zu werben, um Geld zu sparen, kann ebenso seine Uhr anhalten, um Zeit zu sparen." - Henry Ford',
-            # Motivational/Inspirational quotes
-            '"Träume nicht dein Leben, sondern lebe deinen Traum." - Mark Twain',
-            '"Was uns nicht umbringt, macht uns stärker." - Friedrich Nietzsche',
-            '"Mut ist nicht die Abwesenheit von Furcht, sondern die Erkenntnis, dass etwas anderes wichtiger ist als die Furcht." - Ambrose Redmoon',
-            '"Der Weg ist das Ziel." - Konfuzius',
-            # Wisdom/Philosophy quotes
-            '"Ich weiß, dass ich nichts weiß." - Sokrates',
-            '"Die Zeit heilt alle Wunden." - Sprichwort',
-            '"Wer anderen eine Grube gräbt, fällt selbst hinein." - Sprichwort',
-            '"Aller Anfang ist schwer." - Sprichwort',
-            # Work/Productivity quotes
-            '"Arbeit ist das halbe Leben, und die andere Hälfte auch." - Unbekannt',
-            '"Fleiß ist des Glückes Vater." - Sprichwort',
-            '"Ohne Fleiß kein Preis." - Sprichwort',
-            '"Übung macht den Meister." - Sprichwort',
-            # Famous People quotes
-            '"Phantasie ist wichtiger als Wissen." - Albert Einstein',
-            '"Habe Mut, dich deines eigenen Verstandes zu bedienen!" - Immanuel Kant',
-            '"Die Musik drückt das aus, was nicht gesagt werden kann und worüber zu schweigen unmöglich ist." - Victor Hugo',
-            # Humor quotes
-            '"Humor ist der Knopf, der verhindert, dass uns der Kragen platzt." - Joachim Ringelnatz',
-            '"Lächeln ist die eleganteste Art, seinen Gegnern die Zähne zu zeigen." - Werner Finck'
-        ]
-        
-        # Choose quotes based on intended language
-        if language == 'de':
-            quote = random.choice(german_quotes)
-            self.logger.debug(f"Using fallback German quote: {quote}")
-        else:
-            quote = random.choice(english_quotes)
-            self.logger.debug(f"Using fallback English quote: {quote}")
+            # Set film numbers
+            film_numbers = email_data.get('film_numbers', '')
+            if not film_numbers:
+                film_numbers = self._get_project_roll_numbers(project)
             
-        return quote 
+            if film_numbers:
+                handoff_record.film_numbers = film_numbers
+                # Count rolls
+                handoff_record.total_rolls = len([fn.strip() for fn in film_numbers.split(',') if fn.strip()])
+            
+            handoff_record.save()
+            
+            # Create validation snapshots if validation data is available
+            validation_data = getattr(self, '_last_validation_data', None)
+            if validation_data:
+                self._create_validation_snapshots(handoff_record, validation_data)
+            
+            self.logger.info(f"Created handoff record {handoff_id} for project {project.archive_id}")
+            return handoff_record
+            
+        except Exception as e:
+            self.logger.error(f"Failed to create handoff record for project {project.archive_id}: {e}")
+            # Create a minimal record to avoid breaking the email process
+            try:
+                from ..models import HandoffRecord
+                return HandoffRecord.objects.create(
+                    project=project,
+                    user=user,
+                    handoff_id=f"HO-{project.archive_id}-{datetime.now().strftime('%Y%m%d%H%M%S')}-ERROR",
+                    recipient_email=email_data.get('to', ''),
+                    subject=email_data.get('subject', ''),
+                    status='pending'
+                )
+            except Exception as fallback_error:
+                self.logger.error(f"Failed to create fallback handoff record: {fallback_error}")
+                raise e
+    
+    def _extract_recipient_name(self, email_address: str) -> str:
+        """
+        Extract recipient name from email address.
+        
+        Args:
+            email_address: Email address string
+            
+        Returns:
+            Extracted name or empty string
+        """
+        try:
+            # Handle format like "Name <email@domain.com>"
+            if '<' in email_address and '>' in email_address:
+                name_part = email_address.split('<')[0].strip()
+                return name_part.strip('"').strip("'")
+            
+            # Handle format like "name@domain.com"
+            # Extract name from email local part
+            local_part = email_address.split('@')[0]
+            # Convert dots and underscores to spaces and title case
+            name = local_part.replace('.', ' ').replace('_', ' ').title()
+            return name
+            
+        except Exception:
+            return ''
+    
+    def _create_validation_snapshots(self, handoff_record: 'HandoffRecord', validation_data: List[Dict]) -> None:
+        """
+        Create validation snapshots for audit purposes.
+        
+        Args:
+            handoff_record: HandoffRecord instance
+            validation_data: List of validation data dictionaries
+        """
+        try:
+            from ..models import HandoffValidationSnapshot
+            
+            snapshots = []
+            for item in validation_data:
+                # Determine validation status and issues
+                missing_com_id = not item.get('com_id') or item.get('com_id') == ''
+                missing_film_blip = not item.get('film_blip') or item.get('film_blip') == ''
+                
+                # Determine overall status
+                if missing_com_id:
+                    status = 'error'
+                    message = 'Missing COM ID'
+                elif missing_film_blip:
+                    status = 'pending'
+                    message = 'Film blip not found in logs'
+                elif item.get('status') == 'validated':
+                    status = 'validated'
+                    message = 'Validation successful'
+                elif item.get('status') == 'warning':
+                    status = 'warning'
+                    message = item.get('message', 'Minor validation issue')
+                else:
+                    status = 'error'
+                    message = item.get('message', 'Validation failed')
+                
+                snapshot = HandoffValidationSnapshot(
+                    handoff_record=handoff_record,
+                    document_id=item.get('document_id', ''),
+                    roll_number=item.get('roll', ''),
+                    barcode=item.get('barcode', ''),
+                    com_id=str(item.get('com_id', '')) if item.get('com_id') else None,
+                    temp_blip=item.get('temp_blip', ''),
+                    film_blip=item.get('film_blip', ''),
+                    validation_status=status,
+                    validation_message=message,
+                    missing_com_id=missing_com_id,
+                    missing_film_blip=missing_film_blip,
+                    blip_mismatch=(item.get('temp_blip') != item.get('film_blip')) if item.get('temp_blip') and item.get('film_blip') else False
+                )
+                snapshots.append(snapshot)
+            
+            # Bulk create snapshots
+            HandoffValidationSnapshot.objects.bulk_create(snapshots)
+            self.logger.info(f"Created {len(snapshots)} validation snapshots for handoff {handoff_record.handoff_id}")
+            
+        except Exception as e:
+            self.logger.error(f"Failed to create validation snapshots: {e}")
+
+    def store_validation_results(self, validation_results: Dict, validation_data: List[Dict]) -> None:
+        """
+        Store validation results for later use in handoff record creation.
+        
+        Args:
+            validation_results: Validation summary results
+            validation_data: List of validation data dictionaries
+        """
+        self._last_validation_results = validation_results
+        self._last_validation_data = validation_data
+
+ 

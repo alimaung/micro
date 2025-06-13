@@ -31,11 +31,23 @@
                 <i class="fas fa-search"></i>
                 <input type="text" id="project-search" placeholder="Search projects by archive ID or name..." autocomplete="off">
             </div>
-            <select id="status-filter" class="filter-select" aria-label="Filter projects by status">
-                <option value="all">All Projects</option>
-                <option value="ready" selected>Ready for Handoff</option>
-                <option value="completed">Handoff Complete</option>
-            </select>
+            <div class="filter-sort-controls">
+                <select id="status-filter" class="filter-select" aria-label="Filter projects by status">
+                    <option value="all">All Projects</option>
+                    <option value="ready" selected>Ready for Handoff</option>
+                    <option value="completed">Handoff Complete</option>
+                </select>
+                <select id="sort-projects" class="sort-select" aria-label="Sort projects by">
+                    <option value="film_number_desc" selected>Film Number (Desc)</option>
+                    <option value="film_number_asc">Film Number (Asc)</option>
+                    <option value="archive_id_asc">Archive ID (A-Z)</option>
+                    <option value="archive_id_desc">Archive ID (Z-A)</option>
+                    <option value="doc_type_asc">Document Type (A-Z)</option>
+                    <option value="doc_type_desc">Document Type (Z-A)</option>
+                    <option value="date_desc">Date (Newest)</option>
+                    <option value="date_asc">Date (Oldest)</option>
+                </select>
+            </div>
         </div>
 
         <div class="project-cards" id="project-cards-container" role="list">
@@ -129,7 +141,7 @@
                 <div class="email-field">
                     <label for="email-to">To: <span class="required">*</span></label>
                     <div class="input-with-buttons">
-                        <input type="email" id="email-to" value="dilek.kursun@rolls-royce.com" multiple required aria-describedby="to-help">
+                        <input type="email" id="email-to" value="ali.maung@rolls-royce.com" multiple required aria-describedby="to-help">
                         <button type="button" class="add-recipient-btn" id="add-recipient" aria-label="Add recipient">
                             <i class="fas fa-plus"></i> Add Recipient
                         </button>
@@ -140,13 +152,26 @@
                 <div class="email-field">
                     <label for="email-cc">CC:</label>
                     <div class="input-with-buttons">
-                        <input type="email" id="email-cc" value="thomas.lux@rolls-royce.com; jan.becker@rolls-royce.com" multiple aria-describedby="cc-help">
+                        <input type="email" id="email-cc" value="ali.maung@rolls-royce.com" multiple aria-describedby="cc-help">
                         <button type="button" class="clear-cc-btn" id="clear-cc-btn" title="Clear CC recipients" aria-label="Clear CC recipients">
                             <i class="fas fa-times"></i> Clear CC
                         </button>
                     </div>
                     <small id="cc-help" class="field-help">
                         Separate multiple emails with semicolons (;) or commas (,). Leave empty to send without CC recipients.
+                    </small>
+                </div>
+                
+                <div class="email-field">
+                    <label for="email-bcc">BCC:</label>
+                    <div class="input-with-buttons">
+                        <input type="email" id="email-bcc" value="ali.maung@rolls-royce.com; microfilm.rollsroyce@gmail.com" multiple aria-describedby="bcc-help">
+                        <button type="button" class="clear-bcc-btn" id="clear-bcc-btn" title="Clear BCC recipients" aria-label="Clear BCC recipients">
+                            <i class="fas fa-times"></i> Clear BCC
+                        </button>
+                    </div>
+                    <small id="bcc-help" class="field-help">
+                        Separate multiple emails with semicolons (;) or commas (,). Leave empty to send without BCC recipients.
                     </small>
                 </div>
                 
@@ -301,6 +326,11 @@
                     <i class="fas fa-film" aria-hidden="true"></i>
                     <dt class="detail-label">Rolls:</dt>
                     <dd class="detail-value roll-count"></dd>
+                </div>
+                <div class="detail-item">
+                    <i class="fas fa-sort-numeric-up" aria-hidden="true"></i>
+                    <dt class="detail-label">Roll Range:</dt>
+                    <dd class="detail-value roll-range"></dd>
                 </div>
                 <div class="detail-item">
                     <i class="fas fa-calendar" aria-hidden="true"></i>

@@ -10,6 +10,7 @@ const FolderPicker = {
     selectButton: null,
     folders: [],
     files: [],
+    existingProjects: {}, // Store information about existing projects
     _resolve: null,
     _reject: null,
     currentPath: 'Y:\\',
@@ -130,6 +131,7 @@ const FolderPicker = {
             // Reset state
             this.selectedFolder = null;
             this.selectedFile = null;
+            this.existingProjects = {}; // Reset existing projects data
             this.mode = mode;
             this.fileTypes = fileTypes;
             this.showAllFiles = false; // Default to filtered view when filter is provided
@@ -383,6 +385,7 @@ const FolderPicker = {
 
             this.folders = data.folders;
             this.files = data.files;
+            this.existingProjects = data.existingProjects || {};
             
             // If subdirectories were scanned, store the full structure
             if (scanSubdirectories && data.fullStructure) {
@@ -463,6 +466,7 @@ const FolderPicker = {
         this.selectButton.disabled = true;
         this.selectedFolder = null;
         this.selectedFile = null;
+        this.existingProjects = {}; // Reset existing projects data when navigating
         this.hideNewFolderForm();
     },
 
@@ -521,7 +525,25 @@ const FolderPicker = {
         this.folders.forEach(folder => {
             const item = document.createElement('div');
             item.className = 'folder-item';
-            item.innerHTML = '<i class="fas fa-folder"></i><span>' + folder + '</span>';
+            
+            // Check if this folder has an existing project
+            const hasExistingProject = this.existingProjects && this.existingProjects[folder];
+            
+            if (hasExistingProject) {
+                item.classList.add('existing-project');
+                const projectInfo = this.existingProjects[folder];
+                
+                // Create folder content with project indicator
+                item.innerHTML = `
+                    <i class="fas fa-folder"></i>
+                    <span class="folder-name">${folder}</span>
+                    <span class="project-indicator" title="Used in project: ${projectInfo.archive_id}${projectInfo.name ? ' - ' + projectInfo.name : ''}">
+                        <i class="fas fa-database"></i>
+                    </span>
+                `;
+            } else {
+                item.innerHTML = '<i class="fas fa-folder"></i><span>' + folder + '</span>';
+            }
             
             item.addEventListener('click', (event) => {
                 if (event.detail === 1) {

@@ -5,11 +5,13 @@ These views handle browsing, creating, and managing files and folders.
 
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.db.models import Q
 import json
 import os
 import subprocess
 import win32api
 import win32con
+from ..models import Project
 
 def _folder_is_hidden(p):
     """
@@ -226,10 +228,43 @@ def list_drive_contents(request):
             # Sort files alphabetically
             files.sort()
             
+            # Check for existing projects in the database
+            existing_projects = {}
+            try:
+                # Look for projects that match any of the folder paths
+                for folder in folders:
+                    folder_path = os.path.join(path, folder)
+                    # Normalize path separators for database comparison
+                    normalized_path = folder_path.replace('/', '\\')
+                    
+                    # Check if this path exists in any project field
+                    matching_projects = Project.objects.filter(
+                        Q(project_path__icontains=normalized_path) |
+                        Q(folder_path__icontains=normalized_path) |
+                        Q(pdf_folder_path__icontains=normalized_path) |
+                        Q(output_dir__icontains=normalized_path)
+                    ).values('archive_id', 'name', 'project_path', 'folder_path', 'created_at')
+                    
+                    if matching_projects.exists():
+                        # Store the first matching project info
+                        project_info = matching_projects.first()
+                        existing_projects[folder] = {
+                            'archive_id': project_info['archive_id'],
+                            'name': project_info['name'],
+                            'project_path': project_info['project_path'],
+                            'folder_path': project_info['folder_path'],
+                            'created_at': project_info['created_at'].isoformat() if project_info['created_at'] else None
+                        }
+            except Exception as e:
+                # If database lookup fails, continue without project info
+                print(f"Warning: Failed to lookup existing projects: {e}")
+                existing_projects = {}
+            
             response_data = {
                 'currentPath': path,
                 'folders': folders,
-                'files': files
+                'files': files,
+                'existingProjects': existing_projects
             }
             
             # If we should scan subdirectories, add them to the response

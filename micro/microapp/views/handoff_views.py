@@ -13,6 +13,7 @@ from django.db.models import Q, Count, Case, When, IntegerField
 from django.utils import timezone
 from ..models import Project, Roll, FilmLabel
 from django.template.loader import render_to_string
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 
@@ -30,15 +31,27 @@ def get_projects_for_handoff(request):
     (have filming_status = 'completed') as a fallback.
     """
     try:
+        logger.info("=== HANDOFF PROJECT QUERY DEBUG START ===")
+        
         # Get all projects with their roll completion status
+        from django.db.models import Exists, OuterRef
+        from ..models import FilmLabel
+        
         projects = Project.objects.annotate(
-            total_rolls=Count('rolls'),
-            filmed_rolls=Count('rolls', filter=Q(rolls__filming_status='completed')),
-            developed_rolls=Count('rolls', filter=Q(rolls__development_status='completed')),
-            labeled_rolls=Count('rolls', filter=Q(rolls__film_labels__status='completed'))
+            total_rolls=Count('rolls', filter=Q(rolls__film_type='16mm')),
+            filmed_rolls=Count('rolls', filter=Q(rolls__filming_status='completed', rolls__film_type='16mm')),
+            developed_rolls=Count('rolls', filter=Q(rolls__development_status='completed', rolls__film_type='16mm')),
+            labeled_rolls=Count('rolls', filter=Q(rolls__film_type='16mm') & Exists(
+                FilmLabel.objects.filter(
+                    roll=OuterRef('rolls'),
+                    status='completed'
+                )
+            ))
         ).filter(
-            total_rolls__gt=0  # Only projects with rolls
+            total_rolls__gt=0  # Only projects with 16mm rolls
         ).select_related().prefetch_related('rolls__film_labels')
+        
+        logger.info(f"Found {projects.count()} projects with rolls for handoff evaluation")
         
         ready_projects = []
         filmed_projects = []
@@ -49,12 +62,51 @@ def get_projects_for_handoff(request):
             all_developed = project.developed_rolls == project.total_rolls
             all_labeled = project.labeled_rolls >= project.total_rolls  # At least one label per roll
             
-            # Get the latest completion date
+            # Debug logging for project status determination
+            logger.info(f"=== PROJECT STATUS DEBUG: {project.archive_id} ===")
+            logger.info(f"Total rolls: {project.total_rolls}")
+            logger.info(f"Filmed rolls: {project.filmed_rolls} (all_filmed: {all_filmed})")
+            logger.info(f"Developed rolls: {project.developed_rolls} (all_developed: {all_developed})")
+            logger.info(f"Labeled rolls: {project.labeled_rolls} (all_labeled: {all_labeled})")
+            
+            # Double-check labeled rolls calculation manually (16mm only)
+            manual_labeled_count = 0
+            for roll in project.rolls.filter(film_type='16mm'):
+                completed_labels = roll.film_labels.filter(status='completed').count()
+                if completed_labels > 0:
+                    manual_labeled_count += 1
+            logger.info(f"Manual labeled count: {manual_labeled_count} (should match annotation: {project.labeled_rolls})")
+            
+            if manual_labeled_count != project.labeled_rolls:
+                logger.warning(f"⚠️ MISMATCH: Manual count ({manual_labeled_count}) != annotation ({project.labeled_rolls})")
+            
+            # Check individual roll statuses for detailed debugging (16mm only)
+            for roll in project.rolls.filter(film_type='16mm'):
+                logger.info(f"  Roll {roll.film_number}: filming={roll.filming_status}, "
+                           f"development={roll.development_status}")
+                
+                # Check labels for this roll
+                labels = roll.film_labels.all()
+                label_statuses = [label.status for label in labels]
+                completed_labels = [label for label in labels if label.status == 'completed']
+                logger.info(f"    Labels: {len(labels)} total, statuses={label_statuses}, "
+                           f"completed={len(completed_labels)}")
+                
+                # Check if roll has any issues
+                if roll.filming_status != 'completed':
+                    logger.warning(f"    ⚠️ Roll {roll.film_number} filming not completed: {roll.filming_status}")
+                if roll.development_status != 'completed':
+                    logger.warning(f"    ⚠️ Roll {roll.film_number} development not completed: {roll.development_status}")
+                if len(completed_labels) == 0:
+                    logger.warning(f"    ⚠️ Roll {roll.film_number} has no completed labels")
+            
+            # Get the latest completion date (16mm only)
             latest_completion = None
             if all_labeled:
                 # Get the latest label completion date
                 latest_label = FilmLabel.objects.filter(
                     project=project,
+                    roll__film_type='16mm',
                     status='completed'
                 ).order_by('-completed_at').first()
                 if latest_label and latest_label.completed_at:
@@ -62,6 +114,7 @@ def get_projects_for_handoff(request):
             elif all_developed:
                 # Get the latest development completion date
                 latest_roll = project.rolls.filter(
+                    film_type='16mm',
                     development_status='completed'
                 ).order_by('-development_completed_at').first()
                 if latest_roll and latest_roll.development_completed_at:
@@ -69,11 +122,27 @@ def get_projects_for_handoff(request):
             elif all_filmed:
                 # Get the latest filming completion date
                 latest_roll = project.rolls.filter(
+                    film_type='16mm',
                     filming_status='completed'
                 ).order_by('-filming_completed_at').first()
                 if latest_roll and latest_roll.filming_completed_at:
                     latest_completion = latest_roll.filming_completed_at
             
+            # Get first and last roll film numbers (16mm only)
+            roll_range = ""
+            try:
+                roll_numbers = list(project.rolls.filter(film_type='16mm').order_by('film_number').values_list('film_number', flat=True))
+                if roll_numbers:
+                    first_roll = roll_numbers[0]
+                    last_roll = roll_numbers[-1]
+                    if first_roll == last_roll:
+                        roll_range = first_roll
+                    else:
+                        roll_range = f"{first_roll} - {last_roll}"
+            except Exception as roll_error:
+                logger.warning(f"Error getting roll range for project {project.id}: {roll_error}")
+                roll_range = "N/A"
+                
             project_data = {
                 'id': project.id,
                 'name': project.name or f"Project {project.archive_id}",
@@ -84,6 +153,7 @@ def get_projects_for_handoff(request):
                 'filmed_rolls': project.filmed_rolls,
                 'developed_rolls': project.developed_rolls,
                 'labeled_rolls': project.labeled_rolls,
+                'roll_range': roll_range,
                 'all_filmed': all_filmed,
                 'all_developed': all_developed,
                 'all_labeled': all_labeled,
@@ -97,14 +167,37 @@ def get_projects_for_handoff(request):
                 project_data['status'] = 'ready'
                 project_data['status_text'] = 'Ready for Handoff'
                 ready_projects.append(project_data)
+                logger.info(f"✅ Project {project.archive_id} categorized as READY FOR HANDOFF")
             elif all_filmed:
                 project_data['status'] = 'filmed'
                 project_data['status_text'] = 'Filming Complete'
                 filmed_projects.append(project_data)
+                logger.info(f"🎬 Project {project.archive_id} categorized as FILMING COMPLETE")
+                
+                # Log why it's not ready for handoff
+                if not all_developed:
+                    missing_dev = project.total_rolls - project.developed_rolls
+                    logger.info(f"    Reason: {missing_dev} roll(s) not developed")
+                if not all_labeled:
+                    missing_labels = project.total_rolls - project.labeled_rolls
+                    logger.info(f"    Reason: {missing_labels} roll(s) missing completed labels")
+            else:
+                logger.info(f"❌ Project {project.archive_id} not included - filming not complete")
+                logger.info(f"    Missing filming: {project.total_rolls - project.filmed_rolls} roll(s)")
+            
+            logger.info(f"=== END PROJECT STATUS DEBUG: {project.archive_id} ===\n")
         
         # Sort by completion date (most recent first)
         ready_projects.sort(key=lambda x: x['completion_date'] or '', reverse=True)
         filmed_projects.sort(key=lambda x: x['completion_date'] or '', reverse=True)
+        
+        logger.info("=== HANDOFF PROJECT QUERY SUMMARY ===")
+        logger.info(f"Total projects evaluated: {projects.count()}")
+        logger.info(f"Ready for handoff: {len(ready_projects)}")
+        logger.info(f"Filming complete: {len(filmed_projects)}")
+        logger.info(f"Ready projects: {[p['archive_id'] for p in ready_projects]}")
+        logger.info(f"Filmed projects: {[p['archive_id'] for p in filmed_projects]}")
+        logger.info("=== HANDOFF PROJECT QUERY DEBUG END ===\n")
         
         return JsonResponse({
             'success': True,
@@ -132,17 +225,40 @@ def get_project_validation_data(request, project_id):
     try:
         project = get_object_or_404(Project, pk=project_id)
         
-        # Get all document segments for this project with their blip information
+        # Get all document segments for this project with their blip information (16mm only)
         from ..models import DocumentSegment, Document
         
         segments = DocumentSegment.objects.filter(
-            roll__project=project
+            roll__project=project,
+            roll__film_type='16mm'  # Only include 16mm rolls for handoff validation
         ).select_related(
             'document', 'roll'
         ).order_by('roll__film_number', 'document_index')
         
+        logger.info(f"=== VALIDATION DATA DEBUG START for project {project.archive_id} ===")
+        logger.info(f"Found {segments.count()} document segments (16mm rolls only)")
+        
         validation_data = []
-        for segment in segments:
+        nan_count = 0
+        null_count = 0
+        
+        for i, segment in enumerate(segments):
+            com_id = segment.document.com_id
+            
+            # Debug: Check for NaN/null values in database
+            if com_id is None:
+                null_count += 1
+                if i < 5:  # Log first 5 null values
+                    logger.debug(f"NULL com_id in segment {i}: doc_id={segment.document.doc_id}, "
+                               f"document_id={segment.document.id}")
+            elif pd.isna(com_id):
+                nan_count += 1
+                logger.warning(f"NaN com_id in segment {i}: doc_id={segment.document.doc_id}, "
+                             f"com_id={com_id}, document_id={segment.document.id}")
+            elif isinstance(com_id, float) and (com_id == float('inf') or com_id == float('-inf')):
+                logger.warning(f"INF com_id in segment {i}: doc_id={segment.document.doc_id}, "
+                             f"com_id={com_id}, document_id={segment.document.id}")
+            
             validation_data.append({
                 'document_id': segment.document.doc_id,
                 'roll': segment.roll.film_number,
@@ -155,6 +271,17 @@ def get_project_validation_data(request, project_id):
                 'end_frame': segment.end_frame,
                 'pages': segment.pages
             })
+        
+        logger.info(f"Validation data summary: {len(validation_data)} entries, "
+                   f"{null_count} NULL com_ids, {nan_count} NaN com_ids")
+        
+        if nan_count > 0:
+            logger.warning(f"Found {nan_count} NaN com_id values in database segments!")
+        
+        if null_count > 0:
+            logger.info(f"Found {null_count} NULL com_id values in database segments")
+        
+        logger.info(f"=== VALIDATION DATA DEBUG END ===")
         
         return JsonResponse({
             'success': True,
@@ -186,17 +313,40 @@ def validate_project_index(request, project_id):
         data = json.loads(request.body)
         project = get_object_or_404(Project, pk=project_id)
         
-        # Get validation data directly (instead of calling get_project_validation_data)
+        # Get validation data directly (16mm rolls only)
         from ..models import DocumentSegment, Document
         
         segments = DocumentSegment.objects.filter(
-            roll__project=project
+            roll__project=project,
+            roll__film_type='16mm'  # Only include 16mm rolls for handoff validation
         ).select_related(
             'document', 'roll'
         ).order_by('roll__film_number', 'document_index')
         
+        logger.info(f"=== VALIDATION INDEX DEBUG START for project {project.archive_id} ===")
+        logger.info(f"Found {segments.count()} document segments for validation (16mm rolls only)")
+        
         validation_data = []
-        for segment in segments:
+        nan_count = 0
+        null_count = 0
+        
+        for i, segment in enumerate(segments):
+            com_id = segment.document.com_id
+            
+            # Debug: Check for NaN/null values in database
+            if com_id is None:
+                null_count += 1
+                if i < 5:  # Log first 5 null values
+                    logger.debug(f"NULL com_id in validation segment {i}: doc_id={segment.document.doc_id}, "
+                               f"document_id={segment.document.id}")
+            elif pd.isna(com_id):
+                nan_count += 1
+                logger.warning(f"NaN com_id in validation segment {i}: doc_id={segment.document.doc_id}, "
+                             f"com_id={com_id}, document_id={segment.document.id}")
+            elif isinstance(com_id, float) and (com_id == float('inf') or com_id == float('-inf')):
+                logger.warning(f"INF com_id in validation segment {i}: doc_id={segment.document.doc_id}, "
+                             f"com_id={com_id}, document_id={segment.document.id}")
+            
             validation_data.append({
                 'document_id': segment.document.doc_id,
                 'roll': segment.roll.film_number,
@@ -210,6 +360,12 @@ def validate_project_index(request, project_id):
                 'pages': segment.pages
             })
         
+        logger.info(f"Validation index data summary: {len(validation_data)} entries, "
+                   f"{null_count} NULL com_ids, {nan_count} NaN com_ids")
+        
+        if nan_count > 0:
+            logger.warning(f"Found {nan_count} NaN com_id values in validation segments!")
+        
         # Try to use HandoffService, fallback to mock if there are import issues
         try:
             from ..services.handoff_service import HandoffService
@@ -218,7 +374,14 @@ def validate_project_index(request, project_id):
             
             # Convert results to dictionaries for JSON response
             validated_data = []
-            for result in results:
+            result_nan_count = 0
+            
+            for i, result in enumerate(results):
+                # Debug: Check for NaN values in results
+                if pd.isna(result.com_id) if result.com_id is not None else False:
+                    result_nan_count += 1
+                    logger.warning(f"NaN com_id in validation result {i}: {result}")
+                
                 validated_data.append({
                     'document_id': result.document_id,
                     'roll': result.roll,
@@ -233,12 +396,17 @@ def validate_project_index(request, project_id):
                     'pages': result.pages
                 })
             
+            if result_nan_count > 0:
+                logger.warning(f"Found {result_nan_count} NaN com_id values in validation results!")
+            
             validation_results = {
                 'total': summary.total,
                 'validated': summary.validated,
                 'warnings': summary.warnings,
                 'errors': summary.errors
             }
+            
+            logger.info(f"=== VALIDATION INDEX DEBUG END ===")
             
             return JsonResponse({
                 'success': True,
@@ -394,10 +562,11 @@ def send_handoff_email(request, project_id):
                 # Get validation data from the request or generate mock data
                 validated_data = data.get('validated_data', [])
                 if not validated_data:
-                    # Generate mock validation data for testing
+                    # Generate mock validation data for testing (16mm only)
                     from ..models import DocumentSegment
                     segments = DocumentSegment.objects.filter(
-                        roll__project=project
+                        roll__project=project,
+                        roll__film_type='16mm'  # Only include 16mm rolls for handoff
                     ).select_related('document', 'roll')
                     
                     validated_data = []

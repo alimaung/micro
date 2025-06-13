@@ -32,7 +32,7 @@ from sma.sma_workflow import (
 # Configuration
 DOCUFILE_PATH = r"Y:\SMA\file-converter-64\docufile.ini"
 TEMPLATE_PATH = r"Y:\SMA\file-converter-64\TEMPLATES\16mm-Test.TPL"
-SOURCE_FOLDER = r"Y:\quality\focustest\source"
+SOURCE_FOLDER = r"Y:\.quality\focustest\source"
 SMA_EXE_PATH = r"Y:\SMA\file-converter-64\file-sma.exe"
 
 # Test settings
