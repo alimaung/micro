@@ -156,7 +156,12 @@ class Command(BaseCommand):
                     continue
                 
                 # Try to find COM ID for this document
-                doc_id_base = document.doc_id.replace('.pdf', '') if document.doc_id.endswith('.pdf') else document.doc_id
+                # Remove PDF extension (case-insensitive) to get the barcode for COM ID lookup
+                doc_id_lower = document.doc_id.lower()
+                if doc_id_lower.endswith('.pdf'):
+                    doc_id_base = document.doc_id[:-4]  # Remove last 4 characters (.pdf or .PDF)
+                else:
+                    doc_id_base = document.doc_id
                 
                 # Look up COM ID in mappings
                 com_id = com_id_mappings.get(doc_id_base)

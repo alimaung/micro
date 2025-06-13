@@ -545,7 +545,12 @@ def process_index_initialization(task_id, project_id, allocation_results=None):
                 frame_range = segment.frame_range
                 
                 # Create index entry with document index
-                doc_id_base = doc_id.replace('.pdf', '') if doc_id.endswith('.pdf') else doc_id
+                # Remove PDF extension (case-insensitive) to get the barcode for COM ID lookup
+                doc_id_lower = doc_id.lower()
+                if doc_id_lower.endswith('.pdf'):
+                    doc_id_base = doc_id[:-4]  # Remove last 4 characters (.pdf or .PDF)
+                else:
+                    doc_id_base = doc_id
                 
                 # Get COM ID from the mapping or use a placeholder
                 com_id = com_id_mappings.get(doc_id_base, None)

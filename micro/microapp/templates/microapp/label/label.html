@@ -15,13 +15,13 @@
     <!-- Header -->
     <div class="label-header">
         <h1>Label Management</h1>
-        <p>Generate new labels for uncompleted rolls, or view and manage existing labels for completed rolls. Each section handles different workflows for optimal organization.</p>
+        <p>Generate new labels for uncompleted rolls, or view and manage existing labels for completed rolls.</p>
     </div>
 
     <!-- Notifications Container -->
     <div id="notifications-container" class="notifications-container"></div>
 
-    <!-- Roll Labels Section -->
+    <!-- Generate New Labels Section -->
     <div class="label-section">
         <div class="section-header">
             <h2>
@@ -44,7 +44,7 @@
         <div class="selection-info">
             <span id="uncompleted-selection-count">0 rolls selected</span>
             <button id="generate-uncompleted" class="btn btn-primary" disabled>
-                <i class="fas fa-file-pdf"></i> Generate Labels (Both Versions)
+                <i class="fas fa-file-pdf"></i> Generate Labels
             </button>
         </div>
         
@@ -57,7 +57,7 @@
         </div>
     </div>
 
-    <!-- Completed Labels Management Section -->
+    <!-- View Existing Labels Section -->
     <div class="label-section">
         <div class="section-header">
             <h2>
@@ -102,10 +102,10 @@
             </h2>
             <div class="section-actions">
                 <button id="show-all-labels" class="btn btn-secondary btn-small">
-                    <i class="fas fa-list"></i> Show All Labels
+                    <i class="fas fa-list"></i> Show All
                 </button>
                 <button id="clear-generated" class="btn btn-outline btn-small">
-                    <i class="fas fa-trash"></i> Clear All
+                    <i class="fas fa-trash"></i> Clear
                 </button>
             </div>
         </div>
@@ -132,14 +132,13 @@
         <div class="print-info">
             <div class="printer-status">
                 <i class="fas fa-printer"></i>
-                <span id="printer-status-text">Printing Method: Server-Side Direct Printing</span>
+                <span id="printer-status-text">Server-Side Direct Printing</span>
                 <small id="printer-details">Checking printer status...</small>
             </div>
             <div class="print-instructions">
-                <h4>Server-Side Printing Features:</h4>
+                <h4>Printing Features</h4>
                 <ul>
                     <li><strong>Direct Printing:</strong> Labels print automatically to the default printer</li>
-                    <li><strong>No User Interaction:</strong> No print dialogs or manual printer selection required</li>
                     <li><strong>Automatic Status:</strong> Labels are marked as printed automatically</li>
                     <li><strong>Individual Control:</strong> Download and print each version separately</li>
                     <li><strong>Version Support:</strong> Both Normal and Angled versions available per roll</li>

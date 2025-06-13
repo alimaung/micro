@@ -2,25 +2,29 @@
 
 /* CSS Variables for consistent theming */
 :root {
-    --film-primary: #2563eb;
-    --film-primary-dark: #1d4ed8;
-    --film-primary-light: #3b82f6;
-    --film-success: #10b981;
-    --film-success-dark: #059669;
-    --film-warning: #f59e0b;
-    --film-warning-dark: #d97706;
-    --film-danger: #ef4444;
-    --film-danger-dark: #dc2626;
+    /* Primary colors */
+    --film-primary: #0071e3;
+    --film-primary-dark: #0058b9;
+    --film-primary-light: #409cff;
+    --film-success: #30d158;
+    --film-success-dark: #26aa47;
+    --film-warning: #ffcc00;
+    --film-warning-dark: #e6b800;
+    --film-danger: #ff453a;
+    --film-danger-dark: #e53935;
     
-    --film-text: #1f2937;
-    --film-text-light: #6b7280;
-    --film-text-muted: #9ca3af;
+    /* Text colors */
+    --film-text: #1d1d1f;
+    --film-text-light: #86868b;
+    --film-text-muted: #98989d;
     
+    /* Interface colors */
     --film-background: #ffffff;
-    --film-surface: #f9fafb;
-    --film-border: #e5e7eb;
-    --film-shadow: rgba(0, 0, 0, 0.1);
+    --film-surface: #f5f5f7;
+    --film-border: #e5e5ea;
+    --film-shadow: rgba(0, 0, 0, 0.05);
     
+    /* Spacing & Sizing */
     --film-border-radius: 8px;
     --film-border-radius-lg: 12px;
     --film-spacing-xs: 4px;
@@ -29,20 +33,29 @@
     --film-spacing-lg: 24px;
     --film-spacing-xl: 32px;
     
+    /* Transitions */
     --film-transition: all 0.2s ease;
     --film-transition-slow: all 0.3s ease;
+    
+    /* Color values as RGB for opacity operations */
+    --film-primary-rgb: 0, 113, 227;
+    --film-success-rgb: 48, 209, 88;
+    --film-warning-rgb: 255, 204, 0;
+    --film-danger-rgb: 255, 69, 58;
 }
 
 /* Dark mode variables */
 .dark-mode {
-    --film-text: #f9fafb;
-    --film-text-light: #d1d5db;
-    --film-text-muted: #9ca3af;
+    /* Text colors */
+    --film-text: #f5f5f7;
+    --film-text-light: #aeaeb2;
+    --film-text-muted: #8e8e93;
     
-    --film-background: #111827;
-    --film-surface: #1f2937;
-    --film-border: #374151;
-    --film-shadow: rgba(0, 0, 0, 0.3);
+    /* Interface colors */
+    --film-background: #1c1c1e;
+    --film-surface: #2c2c2e;
+    --film-border: #38383a;
+    --film-shadow: rgba(0, 0, 0, 0.2);
 }
 
 /* Main container */
@@ -63,10 +76,10 @@
 }
 
 .header-content h1 {
-    font-size: 28px;
+    font-size: 24px;
     margin-bottom: var(--film-spacing-sm);
     color: var(--film-text);
-    font-weight: 600;
+    font-weight: 500;
 }
 
 .subtitle {
@@ -84,23 +97,24 @@
 .stat-item {
     text-align: center;
     padding: var(--film-spacing-md);
-    background-color: var(--film-surface);
+    background-color: var(--film-background);
     border-radius: var(--film-border-radius);
     min-width: 120px;
-    box-shadow: 0 2px 4px var(--film-shadow);
+    box-shadow: 0 1px 3px var(--film-shadow), 
+                0 2px 8px var(--film-shadow);
     transition: var(--film-transition);
     border: 1px solid var(--film-border);
 }
 
 .stat-item:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px var(--film-shadow);
+    box-shadow: 0 4px 12px var(--film-shadow);
 }
 
 .stat-value {
     display: block;
     font-size: 24px;
-    font-weight: 600;
+    font-weight: 500;
     margin-bottom: var(--film-spacing-xs);
     color: var(--film-primary);
 }
@@ -248,7 +262,6 @@
     padding: var(--film-spacing-lg);
     background-color: var(--film-danger);
     color: white;
-    border-radius: var(--film-border-radius-lg) var(--film-border-radius-lg) 0 0;
 }
 
 .error-header i {
@@ -256,9 +269,9 @@
 }
 
 .error-header h3 {
-    margin: 0;
     font-size: 18px;
-    font-weight: 600;
+    margin: 0;
+    font-weight: 500;
 }
 
 .error-body {
@@ -267,67 +280,69 @@
 
 .error-message {
     font-size: 16px;
-    font-weight: 600;
-    color: var(--film-danger);
+    color: var(--film-text);
     margin-bottom: var(--film-spacing-lg);
-    padding: var(--film-spacing-md);
-    background-color: rgba(239, 68, 68, 0.1);
-    border-radius: var(--film-border-radius);
-    border: 1px solid rgba(239, 68, 68, 0.2);
+    line-height: 1.5;
+    font-weight: 500;
 }
 
 .error-details {
-    color: var(--film-text);
-    line-height: 1.6;
+    background-color: var(--film-surface);
+    padding: var(--film-spacing-md);
+    border-radius: var(--film-border-radius);
 }
 
 .error-details p {
-    margin-bottom: var(--film-spacing-md);
+    font-size: 14px;
+    margin: 0 0 var(--film-spacing-sm) 0;
+    color: var(--film-text-light);
 }
 
 .error-details ul {
-    margin: var(--film-spacing-md) 0;
+    margin: 0;
     padding-left: var(--film-spacing-lg);
 }
 
 .error-details li {
-    margin-bottom: var(--film-spacing-sm);
-    color: var(--film-text-light);
+    font-size: 14px;
+    margin-bottom: var(--film-spacing-xs);
+    color: var(--film-text);
 }
 
 .modal-actions {
     display: flex;
+    justify-content: flex-end;
     gap: var(--film-spacing-md);
     padding: var(--film-spacing-lg);
     border-top: 1px solid var(--film-border);
-    justify-content: flex-end;
-    flex-wrap: wrap;
 }
 
 .modal-actions .primary-button,
 .modal-actions .secondary-button {
-    min-width: 120px;
-    padding: var(--film-spacing-md) var(--film-spacing-lg);
+    padding: var(--film-spacing-sm) var(--film-spacing-lg);
     font-size: 14px;
+    font-weight: 500;
+    border-radius: var(--film-border-radius);
+    border: none;
+    cursor: pointer;
 }
 
-/* Focus and accessibility */
 button:focus-visible,
-input:focus-visible,
-select:focus-visible {
-    outline: 2px solid var(--film-primary);
-    outline-offset: 2px;
+.primary-button:focus-visible,
+.secondary-button:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(var(--film-primary-rgb), 0.4);
 }
 
-/* Print styles */
 @media print {
     .film-container {
-        max-width: none;
         padding: 0;
+        max-width: none;
+        width: 100%;
     }
     
     .film-header {
-        border-bottom: 2px solid #000;
+        display: none;
     }
     
     .quick-stats {
@@ -335,21 +350,20 @@ select:focus-visible {
     }
 }
 
-/* Responsive modal styles */
 @media (max-width: 768px) {
     .modal-content {
         width: 95%;
-        margin: var(--film-spacing-md);
+        max-height: 95vh;
     }
     
     .modal-actions {
-        flex-direction: column;
+        flex-direction: column-reverse;
     }
     
     .modal-actions .primary-button,
     .modal-actions .secondary-button {
         width: 100%;
-        min-width: auto;
+        padding: var(--film-spacing-md);
     }
     
     .error-header {
@@ -361,10 +375,10 @@ select:focus-visible {
     }
     
     .error-message {
-        font-size: 14px;
+        font-size: 15px;
     }
     
     .error-details {
-        font-size: 14px;
+        padding: var(--film-spacing-sm);
     }
 } 

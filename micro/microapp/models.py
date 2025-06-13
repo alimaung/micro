@@ -1042,3 +1042,231 @@ class FilmLabel(models.Model):
             self.completed_at = timezone.now()
         self.status = 'completed'
         self.save(update_fields=['completed_at', 'status'])
+
+
+class HandoffRecord(models.Model):
+    """Tracks handoff emails sent for projects with validation results and status."""
+    HANDOFF_STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('sent', 'Sent Successfully'),
+        ('failed', 'Send Failed'),
+        ('acknowledged', 'Acknowledged by Recipient'),
+        ('completed', 'Handoff Completed'),
+    ]
+    
+    VALIDATION_STATUS_CHOICES = [
+        ('not_validated', 'Not Validated'),
+        ('validated', 'Validated'),
+        ('has_warnings', 'Has Warnings'),
+        ('has_errors', 'Has Errors'),
+    ]
+    
+    # Relationships
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='handoff_records')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='handoff_records', 
+                           help_text="User who initiated the handoff")
+    
+    # Handoff identification
+    handoff_id = models.CharField(max_length=100, unique=True, help_text="Unique handoff identifier")
+    
+    # Email details
+    recipient_email = models.EmailField(help_text="Email address of the recipient")
+    recipient_name = models.CharField(max_length=255, blank=True, null=True, help_text="Name of the recipient")
+    subject = models.CharField(max_length=500, help_text="Email subject line")
+    custom_message = models.TextField(blank=True, null=True, help_text="Custom message added to the email")
+    
+    # Validation summary at time of handoff
+    validation_status = models.CharField(max_length=20, choices=VALIDATION_STATUS_CHOICES, default='not_validated')
+    total_documents = models.IntegerField(default=0, help_text="Total documents in handoff")
+    validated_documents = models.IntegerField(default=0, help_text="Documents that passed validation")
+    warning_documents = models.IntegerField(default=0, help_text="Documents with warnings")
+    error_documents = models.IntegerField(default=0, help_text="Documents with errors")
+    
+    # Film roll summary (16mm only as per filtering)
+    total_rolls = models.IntegerField(default=0, help_text="Total 16mm rolls included")
+    film_numbers = models.TextField(blank=True, null=True, help_text="Comma-separated list of film numbers")
+    
+    # File attachments
+    excel_file_path = models.CharField(max_length=500, blank=True, null=True, help_text="Path to generated Excel file")
+    dat_file_path = models.CharField(max_length=500, blank=True, null=True, help_text="Path to generated DAT file")
+    excel_file_size = models.BigIntegerField(default=0, help_text="Size of Excel file in bytes")
+    dat_file_size = models.BigIntegerField(default=0, help_text="Size of DAT file in bytes")
+    
+    # Status and tracking
+    status = models.CharField(max_length=20, choices=HANDOFF_STATUS_CHOICES, default='pending')
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True, help_text="When handoff was initiated")
+    sent_at = models.DateTimeField(null=True, blank=True, help_text="When email was successfully sent")
+    acknowledged_at = models.DateTimeField(null=True, blank=True, help_text="When recipient acknowledged receipt")
+    completed_at = models.DateTimeField(null=True, blank=True, help_text="When handoff was marked as completed")
+    
+    # Error tracking
+    error_message = models.TextField(blank=True, null=True, help_text="Error message if handoff failed")
+    retry_count = models.IntegerField(default=0, help_text="Number of retry attempts")
+    last_retry_at = models.DateTimeField(null=True, blank=True, help_text="When last retry was attempted")
+    
+    # Metadata
+    outlook_message_id = models.CharField(max_length=255, blank=True, null=True, 
+                                        help_text="Outlook message ID for tracking")
+    ip_address = models.GenericIPAddressField(null=True, blank=True, help_text="IP address of sender")
+    user_agent = models.TextField(blank=True, null=True, help_text="User agent string")
+    
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['handoff_id']),
+            models.Index(fields=['project', 'status']),
+            models.Index(fields=['status']),
+            models.Index(fields=['created_at']),
+            models.Index(fields=['sent_at']),
+            models.Index(fields=['recipient_email']),
+            models.Index(fields=['validation_status']),
+        ]
+    
+    def __str__(self):
+        return f"Handoff {self.handoff_id} - {self.project.archive_id} to {self.recipient_email} ({self.status})"
+    
+    @property
+    def is_successful(self):
+        """Check if the handoff was sent successfully."""
+        return self.status in ['sent', 'acknowledged', 'completed']
+    
+    @property
+    def has_validation_issues(self):
+        """Check if there were validation issues at time of handoff."""
+        return self.validation_status in ['has_warnings', 'has_errors']
+    
+    @property
+    def validation_summary(self):
+        """Get a human-readable validation summary."""
+        if self.validation_status == 'not_validated':
+            return "Not validated"
+        elif self.validation_status == 'validated':
+            return f"All {self.total_documents} documents validated"
+        elif self.validation_status == 'has_warnings':
+            return f"{self.warning_documents} warnings, {self.validated_documents} validated"
+        elif self.validation_status == 'has_errors':
+            return f"{self.error_documents} errors, {self.warning_documents} warnings, {self.validated_documents} validated"
+        return "Unknown status"
+    
+    @property
+    def total_file_size_mb(self):
+        """Get total file size in MB."""
+        total_bytes = (self.excel_file_size or 0) + (self.dat_file_size or 0)
+        return round(total_bytes / (1024 * 1024), 2)
+    
+    def mark_sent(self, outlook_message_id=None):
+        """Mark the handoff as successfully sent."""
+        self.status = 'sent'
+        self.sent_at = timezone.now()
+        if outlook_message_id:
+            self.outlook_message_id = outlook_message_id
+        self.save(update_fields=['status', 'sent_at', 'outlook_message_id'])
+    
+    def mark_failed(self, error_message):
+        """Mark the handoff as failed with error message."""
+        self.status = 'failed'
+        self.error_message = error_message
+        self.retry_count += 1
+        self.last_retry_at = timezone.now()
+        self.save(update_fields=['status', 'error_message', 'retry_count', 'last_retry_at'])
+    
+    def mark_acknowledged(self):
+        """Mark the handoff as acknowledged by recipient."""
+        self.status = 'acknowledged'
+        self.acknowledged_at = timezone.now()
+        self.save(update_fields=['status', 'acknowledged_at'])
+    
+    def mark_completed(self):
+        """Mark the handoff as completed."""
+        self.status = 'completed'
+        self.completed_at = timezone.now()
+        self.save(update_fields=['status', 'completed_at'])
+    
+    def get_film_numbers_list(self):
+        """Get film numbers as a list."""
+        if self.film_numbers:
+            return [fn.strip() for fn in self.film_numbers.split(',') if fn.strip()]
+        return []
+    
+    def set_film_numbers_list(self, film_numbers_list):
+        """Set film numbers from a list."""
+        self.film_numbers = ', '.join(str(fn) for fn in film_numbers_list if fn)
+    
+    def update_validation_summary(self, validation_results):
+        """Update validation summary from validation results."""
+        if not validation_results:
+            self.validation_status = 'not_validated'
+            return
+        
+        self.total_documents = validation_results.get('total', 0)
+        self.validated_documents = validation_results.get('validated', 0)
+        self.warning_documents = validation_results.get('warnings', 0)
+        self.error_documents = validation_results.get('errors', 0)
+        
+        # Determine validation status
+        if self.error_documents > 0:
+            self.validation_status = 'has_errors'
+        elif self.warning_documents > 0:
+            self.validation_status = 'has_warnings'
+        elif self.validated_documents > 0:
+            self.validation_status = 'validated'
+        else:
+            self.validation_status = 'not_validated'
+    
+    def update_file_info(self, excel_path=None, dat_path=None):
+        """Update file paths and sizes."""
+        if excel_path:
+            self.excel_file_path = excel_path
+            try:
+                self.excel_file_size = Path(excel_path).stat().st_size
+            except (OSError, FileNotFoundError):
+                self.excel_file_size = 0
+        
+        if dat_path:
+            self.dat_file_path = dat_path
+            try:
+                self.dat_file_size = Path(dat_path).stat().st_size
+            except (OSError, FileNotFoundError):
+                self.dat_file_size = 0
+
+
+class HandoffValidationSnapshot(models.Model):
+    """Stores detailed validation results at the time of handoff for audit purposes."""
+    # Relationships
+    handoff_record = models.ForeignKey(HandoffRecord, on_delete=models.CASCADE, related_name='validation_snapshots')
+    
+    # Document details
+    document_id = models.CharField(max_length=100, help_text="Document ID (filename)")
+    roll_number = models.CharField(max_length=50, help_text="Roll/film number")
+    barcode = models.CharField(max_length=100, help_text="Document barcode")
+    com_id = models.CharField(max_length=50, blank=True, null=True, help_text="COM ID at time of handoff")
+    temp_blip = models.CharField(max_length=50, blank=True, null=True, help_text="Temporary blip code")
+    film_blip = models.CharField(max_length=50, blank=True, null=True, help_text="Film log blip code")
+    
+    # Validation status
+    validation_status = models.CharField(max_length=20, help_text="Validation status (validated, warning, error)")
+    validation_message = models.TextField(blank=True, null=True, help_text="Validation message or error details")
+    
+    # Issues identified
+    missing_com_id = models.BooleanField(default=False, help_text="Whether COM ID was missing")
+    missing_film_blip = models.BooleanField(default=False, help_text="Whether film blip was missing")
+    blip_mismatch = models.BooleanField(default=False, help_text="Whether blips didn't match")
+    other_issues = models.TextField(blank=True, null=True, help_text="Other validation issues")
+    
+    # Metadata
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['handoff_record', 'document_id']
+        indexes = [
+            models.Index(fields=['handoff_record', 'validation_status']),
+            models.Index(fields=['validation_status']),
+            models.Index(fields=['missing_com_id']),
+            models.Index(fields=['missing_film_blip']),
+            models.Index(fields=['blip_mismatch']),
+        ]
+    
+    def __str__(self):
+        return f"{self.document_id} - {self.validation_status} (Handoff {self.handoff_record.handoff_id})"

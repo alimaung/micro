@@ -4,23 +4,25 @@
 .completion-content {
     display: flex;
     flex-direction: column;
-    gap: var(--film-spacing-xl);
+    gap: 32px;
     text-align: center;
 }
 
 .completion-summary {
-    padding: var(--film-spacing-xl);
-    background-color: var(--film-surface);
-    border-radius: var(--film-border-radius);
+    padding: 24px;
+    background-color: var(--film-background);
+    border-radius: 12px;
     border: 1px solid var(--film-border);
+    box-shadow: 0 1px 3px var(--film-shadow), 
+                0 2px 8px var(--film-shadow);
 }
 
 .completion-icon {
-    margin-bottom: var(--film-spacing-lg);
+    margin-bottom: 24px;
 }
 
 .completion-icon i {
-    font-size: 64px;
+    font-size: 56px;
     color: var(--film-success);
     animation: bounceIn 0.6s ease-out;
 }
@@ -44,15 +46,15 @@
 
 .completion-summary h3 {
     font-size: 24px;
-    font-weight: 600;
+    font-weight: 500;
     color: var(--film-text);
-    margin-bottom: var(--film-spacing-md);
+    margin-bottom: 16px;
 }
 
 .completion-summary p {
     font-size: 16px;
     color: var(--film-text-light);
-    line-height: 1.6;
+    line-height: 1.5;
     max-width: 600px;
     margin: 0 auto;
 }
@@ -61,31 +63,33 @@
 .completion-stats {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: var(--film-spacing-lg);
-    padding: var(--film-spacing-lg);
-    background-color: var(--film-surface);
-    border-radius: var(--film-border-radius);
+    gap: 24px;
+    padding: 24px;
+    background-color: var(--film-background);
+    border-radius: 12px;
     border: 1px solid var(--film-border);
+    box-shadow: 0 1px 3px var(--film-shadow), 
+                0 2px 8px var(--film-shadow);
 }
 
 .completion-stats .stat-item {
-    padding: var(--film-spacing-lg);
-    background-color: var(--film-background);
-    border-radius: var(--film-border-radius);
+    padding: 20px;
+    background-color: var(--film-surface);
+    border-radius: 12px;
     border: 1px solid var(--film-border);
     transition: var(--film-transition);
 }
 
 .completion-stats .stat-item:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px var(--film-shadow);
+    box-shadow: 0 4px 12px var(--film-shadow);
 }
 
 .completion-stats .stat-value {
     font-size: 32px;
-    font-weight: 700;
+    font-weight: 500;
     color: var(--film-success);
-    margin-bottom: var(--film-spacing-xs);
+    margin-bottom: 4px;
     display: block;
 }
 
@@ -99,30 +103,33 @@
 .completion-actions {
     display: flex;
     justify-content: center;
-    gap: var(--film-spacing-lg);
-    padding-top: var(--film-spacing-lg);
+    gap: 24px;
+    padding-top: 24px;
     border-top: 1px solid var(--film-border);
 }
 
 .completion-actions .primary-button,
 .completion-actions .secondary-button {
     min-width: 180px;
-    padding: var(--film-spacing-md) var(--film-spacing-xl);
+    padding: 12px 24px;
     font-size: 16px;
+    border-radius: 8px;
+    font-weight: 500;
 }
 
 /* Temp Roll Instructions */
 .temp-roll-instructions {
-    margin: var(--film-spacing-xl) 0;
+    margin: 32px 0;
 }
 
 .temp-roll-instruction-card {
-    background-color: var(--film-surface);
-    border-radius: var(--film-border-radius);
+    background-color: var(--film-background);
+    border-radius: 12px;
     border: 1px solid var(--film-border);
-    padding: var(--film-spacing-lg);
+    padding: 24px;
     text-align: left;
-    box-shadow: 0 2px 4px var(--film-shadow);
+    box-shadow: 0 1px 3px var(--film-shadow), 
+                0 2px 8px var(--film-shadow);
 }
 
 .temp-roll-instruction-card.discard {
@@ -136,9 +143,9 @@
 .instruction-header {
     display: flex;
     align-items: center;
-    gap: var(--film-spacing-md);
-    margin-bottom: var(--film-spacing-md);
-    padding-bottom: var(--film-spacing-md);
+    gap: 16px;
+    margin-bottom: 16px;
+    padding-bottom: 16px;
     border-bottom: 1px solid var(--film-border);
 }
 
@@ -153,7 +160,7 @@
 
 .instruction-header h4 {
     font-size: 18px;
-    font-weight: 600;
+    font-weight: 500;
     color: var(--film-text);
     margin: 0;
 }
@@ -161,21 +168,22 @@
 .instruction-content p {
     font-size: 16px;
     color: var(--film-text);
-    margin-bottom: var(--film-spacing-md);
+    margin-bottom: 16px;
     font-weight: 500;
+    line-height: 1.5;
 }
 
 .instruction-list {
     list-style: none;
     padding: 0;
-    margin: var(--film-spacing-md) 0;
+    margin: 16px 0;
 }
 
 .instruction-list li {
-    padding: var(--film-spacing-sm) 0;
+    padding: 8px 0;
     font-size: 14px;
     color: var(--film-text-light);
-    border-bottom: 1px solid var(--film-border-light);
+    border-bottom: 1px solid var(--film-border);
 }
 
 .instruction-list li:last-child {
@@ -184,7 +192,7 @@
 
 .instruction-list li strong {
     color: var(--film-text);
-    font-weight: 600;
+    font-weight: 500;
     display: inline-block;
     min-width: 140px;
 }
@@ -192,12 +200,12 @@
 .instruction-note {
     display: flex;
     align-items: center;
-    gap: var(--film-spacing-sm);
-    padding: var(--film-spacing-md);
-    background-color: var(--film-background);
-    border-radius: var(--film-border-radius);
-    border: 1px solid var(--film-border-light);
-    margin-top: var(--film-spacing-md);
+    gap: 8px;
+    padding: 16px;
+    background-color: var(--film-surface);
+    border-radius: 8px;
+    border: 1px solid var(--film-border);
+    margin-top: 16px;
 }
 
 .instruction-note i {
@@ -223,19 +231,19 @@
     z-index: 9999;
     display: flex;
     flex-direction: column;
-    gap: var(--film-spacing-sm);
+    gap: 8px;
     max-width: 400px;
 }
 
 .toast {
     background-color: var(--film-background);
     border: 1px solid var(--film-border);
-    border-radius: var(--film-border-radius);
-    padding: var(--film-spacing-md);
+    border-radius: 12px;
+    padding: 16px;
     box-shadow: 0 4px 12px var(--film-shadow);
     display: flex;
     align-items: flex-start;
-    gap: var(--film-spacing-md);
+    gap: 16px;
     animation: slideInRight 0.3s ease-out;
     position: relative;
     overflow: hidden;
@@ -295,9 +303,9 @@
 
 .toast-title {
     font-size: 14px;
-    font-weight: 600;
+    font-weight: 500;
     color: var(--film-text);
-    margin-bottom: var(--film-spacing-xs);
+    margin-bottom: 4px;
 }
 
 .toast-message {
@@ -323,7 +331,7 @@
 }
 
 .toast-close:hover {
-    background-color: var(--film-border);
+    background-color: var(--film-surface);
     color: var(--film-text);
 }
 
@@ -367,11 +375,11 @@
 /* Responsive design for completion */
 @media (max-width: 768px) {
     .completion-content {
-        gap: var(--film-spacing-lg);
+        gap: 24px;
     }
     
     .completion-summary {
-        padding: var(--film-spacing-lg);
+        padding: 24px;
     }
     
     .completion-icon i {
@@ -388,8 +396,8 @@
     
     .completion-stats {
         grid-template-columns: 1fr;
-        gap: var(--film-spacing-md);
-        padding: var(--film-spacing-md);
+        gap: 16px;
+        padding: 16px;
     }
     
     .completion-stats .stat-value {
@@ -398,7 +406,7 @@
     
     .completion-actions {
         flex-direction: column;
-        gap: var(--film-spacing-md);
+        gap: 16px;
     }
     
     .completion-actions .primary-button,
@@ -421,7 +429,7 @@
 
 @media (max-width: 576px) {
     .completion-summary {
-        padding: var(--film-spacing-md);
+        padding: 16px;
     }
     
     .completion-icon i {
@@ -437,7 +445,7 @@
     }
     
     .completion-stats .stat-item {
-        padding: var(--film-spacing-md);
+        padding: 16px;
     }
     
     .completion-stats .stat-value {
