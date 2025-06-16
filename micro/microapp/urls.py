@@ -88,6 +88,9 @@ urlpatterns = [
     # Project history endpoint
     path('api/projects/<int:project_id>/history/', views.get_project_history, name='get_project_history'),
     
+    # Project documents endpoint
+    path('api/projects/<int:project_id>/documents/', views.get_project_documents, name='get_project_documents'),
+    
     path('api/documents/analyze', views.analyze_documents, name='analyze_documents'),
     
     # New API endpoints for document analysis
@@ -107,9 +110,9 @@ urlpatterns = [
     path('api/index/index-status', views.get_index_status, name='get_index_status'),
     path('api/index/index-results', views.get_index_results, name='get_index_results'),
     
-    # Project endpoints
-    path('api/projects/', api.get_projects, name='api_get_projects'),
-    path('api/projects/<int:project_id>/', api.get_project, name='api_get_project'),
+    # Project endpoints (API module - alternative endpoints)
+    # path('api/projects/', api.get_projects, name='api_get_projects'),
+    # path('api/projects/<int:project_id>/', api.get_project, name='api_get_project'),
     path('api/projects/create/', api.create_project, name='api_create_project'),
     path('api/projects/<int:project_id>/process/', api.process_project, name='api_process_project'),
     path('api/projects/<int:project_id>/import-documents/', api.import_documents, name='api_import_documents'),
@@ -235,10 +238,25 @@ urlpatterns = [
     path('api/notifications/settings/', views.notification_settings, name='notification_settings'),
     path('api/notifications/settings/update/', views.update_notification_settings, name='update_notification_settings'),
     
-    # Roll API Endpoints
+    # Roll API Endpoints (filming operations)
     path('api/projects/<int:project_id>/rolls/', views.get_project_rolls, name='get_project_rolls'),
     path('api/rolls/<int:roll_id>/', views.get_roll_details, name='get_roll_details'),
     path('api/rolls/<int:roll_id>/filming-status/', views.update_roll_filming_status, name='update_roll_filming_status'),
+    
+    # Explore Roll API Endpoints (CRUD operations)
+    path('api/explore/rolls/create/', views.create_roll, name='explore_create_roll'),
+    path('api/explore/rolls/', views.list_rolls, name='explore_list_rolls'),
+    path('api/explore/rolls/<int:roll_id>/', views.get_roll, name='explore_get_roll'),
+    path('api/explore/rolls/<int:roll_id>/update/', views.update_roll, name='explore_update_roll'),
+    path('api/explore/rolls/<int:roll_id>/delete/', views.delete_roll, name='explore_delete_roll'),
+    path('api/explore/rolls/export/excel/', views.export_rolls_excel, name='explore_export_rolls_excel'),
+    path('api/explore/rolls/export/pdf/', views.export_rolls_pdf, name='explore_export_rolls_pdf'),
+    
+    # Roll batch operations (using regular endpoints for now)
+    path('api/rolls/batch-import/', views.create_roll, name='batch_import_rolls'),  # Placeholder
+    path('api/rolls/batch-update/', views.update_roll, name='batch_update_rolls'),  # Placeholder  
+    path('api/rolls/batch-delete/', views.delete_roll, name='batch_delete_rolls'),  # Placeholder
+    path('api/rolls/search/', views.list_rolls, name='search_rolls'),  # Placeholder
     
     # Development API Endpoints
     path('api/development/rolls/', views.get_rolls_for_development, name='api_development_rolls'),

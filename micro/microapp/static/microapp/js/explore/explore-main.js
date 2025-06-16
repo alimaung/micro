@@ -525,7 +525,7 @@ class ExploreMain {
         // Listen for entity-specific detail events
         document.addEventListener('showProjectDetails', (event) => {
             const { projectId } = event.detail;
-            this.projectDetails.showDetails(projectId);
+            this.projectDetails.showProjectDetails(projectId);
         });
         
         document.addEventListener('editProject', (event) => {

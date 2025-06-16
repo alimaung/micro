@@ -524,7 +524,7 @@ class RollExport {
         };
         
         // Send to backend for Excel generation
-        const response = await fetch('/api/rolls/export/excel/', {
+        const response = await fetch('/api/explore/rolls/export/excel/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -556,7 +556,7 @@ class RollExport {
         };
         
         // Send to backend for PDF generation
-        const response = await fetch('/api/rolls/export/pdf/', {
+        const response = await fetch('/api/explore/rolls/export/pdf/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

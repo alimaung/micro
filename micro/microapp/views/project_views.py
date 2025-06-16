@@ -625,7 +625,6 @@ def get_project_rolls(request, project_id):
             'message': str(e)
         }, status=400)
 
-@login_required
 def get_project_documents(request, project_id):
     """
     API endpoint to get documents associated with a project.
@@ -637,7 +636,7 @@ def get_project_documents(request, project_id):
         JSON response with list of documents
     """
     try:
-        project = Project.objects.get(id=project_id, owner=request.user)
+        project = Project.objects.get(id=project_id)
         
         # Import Document model and get documents for this project
         try:

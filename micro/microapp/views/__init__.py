@@ -36,8 +36,7 @@ from .project_views import (
 )
 
 from .roll_views import (
-    create_roll, list_rolls, get_roll, update_roll, delete_roll,
-    export_rolls_excel, export_rolls_pdf
+    get_project_rolls, update_roll_filming_status, get_roll_details
 )
 
 from .document_views import (
@@ -116,4 +115,10 @@ from .handoff_views import (
     get_projects_for_handoff, get_project_validation_data, validate_project_index,
     generate_handoff_files, send_handoff_email, test_handoff_endpoint, test_post_endpoint,
     preview_email_template, preview_original_template
+)
+
+# Import explore views for CRUD operations used by the explore page
+from .explore_views import (
+    create_roll, list_rolls, get_roll, update_roll, delete_roll,
+    export_rolls_excel, export_rolls_pdf
 )

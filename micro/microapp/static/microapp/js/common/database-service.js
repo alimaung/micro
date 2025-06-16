@@ -681,7 +681,7 @@ window.DatabaseService = class DatabaseService {
      * @returns {Promise<Object>} - Roll data
      */
     async getRoll(rollId) {
-        return await this._apiRequest(`rolls/${rollId}/`);
+        return await this._apiRequest(`explore/rolls/${rollId}/`);
     }
 
     /**
@@ -710,7 +710,7 @@ window.DatabaseService = class DatabaseService {
      * @returns {Promise<Object>} - Response object
      */
     async createRoll(rollData) {
-        return await this._apiRequest('rolls/create/', 'POST', rollData);
+        return await this._apiRequest('explore/rolls/create/', 'POST', rollData);
     }
 
     /**
@@ -720,7 +720,7 @@ window.DatabaseService = class DatabaseService {
      * @returns {Promise<Object>} - Response object
      */
     async updateRoll(rollId, rollData) {
-        return await this._apiRequest(`rolls/${rollId}/update/`, 'PUT', rollData);
+        return await this._apiRequest(`explore/rolls/${rollId}/update/`, 'PUT', rollData);
     }
 
     /**
@@ -729,7 +729,7 @@ window.DatabaseService = class DatabaseService {
      * @returns {Promise<Object>} - Response object
      */
     async deleteRoll(rollId) {
-        return await this._apiRequest(`rolls/${rollId}/delete/`, 'DELETE');
+        return await this._apiRequest(`explore/rolls/${rollId}/delete/`, 'DELETE');
     }
 
     /**
@@ -746,7 +746,7 @@ window.DatabaseService = class DatabaseService {
             ...filters
         }).toString();
         
-        return await this._apiRequest(`rolls/?${queryParams}`);
+        return await this._apiRequest(`explore/rolls/?${queryParams}`);
     }
 
     /**
