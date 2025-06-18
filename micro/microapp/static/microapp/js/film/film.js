@@ -959,6 +959,10 @@ Directory Exists: ${roll.output_directory_exists ? 'Yes' : 'No'}`;
         // Log expansion handler
         document.getElementById('expand-log').addEventListener('click', toggleExpandLog);
         
+        // Completion handlers
+        document.getElementById('film-another-roll').addEventListener('click', filmAnotherRoll);
+        document.getElementById('finish-session').addEventListener('click', finishSession);
+        
         // Checklist handlers
         const checkboxes = document.querySelectorAll('.checklist-item input[type="checkbox"]');
         checkboxes.forEach(checkbox => {
@@ -1550,12 +1554,18 @@ Directory Exists: ${roll.output_directory_exists ? 'Yes' : 'No'}`;
     
     // Validation functions
     function updateValidationStatus() {
-        const checkboxes = document.querySelectorAll('.checklist-item input[type="checkbox"]');
-        const checkedCount = document.querySelectorAll('.checklist-item input[type="checkbox"]:checked').length;
-        const totalCount = checkboxes.length;
+        // Only count visible checkboxes (exclude hidden re-filming checkbox when not applicable)
+        const allCheckboxes = document.querySelectorAll('.checklist-item input[type="checkbox"]');
+        const visibleCheckboxes = Array.from(allCheckboxes).filter(checkbox => {
+            const checklistItem = checkbox.closest('.checklist-item');
+            return checklistItem && checklistItem.style.display !== 'none';
+        });
+        
+        const checkedCount = visibleCheckboxes.filter(checkbox => checkbox.checked).length;
+        const totalCount = visibleCheckboxes.length;
         
         // Update checklist item states
-        checkboxes.forEach(checkbox => {
+        visibleCheckboxes.forEach(checkbox => {
             const item = checkbox.closest('.checklist-item');
             if (item) {
                 if (checkbox.checked) {
@@ -2054,6 +2064,46 @@ Directory Exists: ${roll.output_directory_exists ? 'Yes' : 'No'}`;
                 logContainer.scrollTop = logContainer.scrollHeight;
             }, 350); // Wait for transition to complete
         }
+    }
+    
+    // Completion action handlers
+    function filmAnotherRoll() {
+        // Reset to roll selection to film another roll
+        addLogEntry('Starting new roll selection...', 'info');
+        showNotification('info', 'New Roll', 'Selecting another roll for filming');
+        
+        // Reset to roll selection
+        resetToRollSelection();
+    }
+    
+    function finishSession() {
+        // Finish the filming session and return to main interface
+        addLogEntry('Finishing filming session...', 'info');
+        showNotification('success', 'Session Complete', 'Filming session finished successfully');
+        
+        // Clean up session state
+        isFilmingActive = false;
+        currentSessionId = null;
+        sessionStartTime = null;
+        currentStep = 'initialization';
+        currentRollId = null;
+        selectedRollData = null;
+        
+        // Disconnect WebSocket session subscription
+        if (websocketClient && currentSessionId) {
+            websocketClient.unsubscribeFromSession(currentSessionId);
+        }
+        
+        // Clear saved state
+        clearRollSelectionState();
+        
+        // Return to roll selection
+        resetToRollSelection();
+        
+        // Show completion message
+        setTimeout(() => {
+            showNotification('info', 'Ready for Next Session', 'You can now start a new filming session');
+        }, 1000);
     }
     
     // Automatically restore an active session
