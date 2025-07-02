@@ -27,7 +27,25 @@ class FilmLabelGenerator:
             img_dir: Optional path to images directory. If not provided, will use default path.
         """
         self.logger = logger or logging.getLogger(__name__)
-        self.logo_path = r"Y:\micro\micro\microapp\static\microapp\img\branding\IRM_Logo.png"
+        
+        # Build image paths relative to this file
+        if img_dir:
+            self.img_dir = Path(img_dir)
+        else:
+            # Get the directory where this service file is located
+            service_dir = Path(__file__).resolve().parent
+            # Navigate to the static images directory from services directory
+            # Path structure: services -> microapp -> static -> microapp -> img
+            self.img_dir = service_dir.parent / 'static' / 'microapp' / 'img'
+        
+        # Set specific image paths
+        self.logo_path = self.img_dir / 'branding' / 'IRM_Logo.png'
+        self.hero_image_path = self.img_dir / 'branding' / 'IRM_Hero.jpg'
+        
+        # Log the paths for debugging
+        self.logger.debug(f"Image directory: {self.img_dir}")
+        self.logger.debug(f"Logo path: {self.logo_path}")
+        self.logger.debug(f"Hero image path: {self.hero_image_path}")
 
     def create_film_label(self, film_number, archive_id, doc_type, version="normal"):
         """
@@ -282,9 +300,8 @@ class FilmLabelGenerator:
         current_y -= 60*mm
         
         # Add background image to fourth table area (draw first, before table)
-        hero_image_path = r"Y:\micro\micro\microapp\static\microapp\img\branding\IRM_Hero.jpg"
         try:
-            if os.path.exists(hero_image_path):
+            if os.path.exists(self.hero_image_path):
                 # Position in fourth table area
                 # Original image dimensions: 1920x550 pixels
                 original_width, original_height = 1119, 257
@@ -295,7 +312,7 @@ class FilmLabelGenerator:
                 hero_x = margins['left'] 
                 hero_y = current_y - 15*mm  # Bottom of fourth table
                 
-                c.drawImage(hero_image_path, hero_x, hero_y, width=hero_width, height=hero_height, mask='auto')
+                c.drawImage(self.hero_image_path, hero_x, hero_y, width=hero_width, height=hero_height, mask='auto')
         except Exception as e:
             self.logger.warning(f"Could not add hero background image: {str(e)}")
         
