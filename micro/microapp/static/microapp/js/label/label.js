@@ -9,6 +9,7 @@ class LabelManager {
         this.printQueue = [];
         this.uncompletedRolls = [];
         this.completedRolls = [];
+        this.customLabels = { normal: null, angled: null }; // Store custom generated labels
         this.init();
     }
     
@@ -19,6 +20,94 @@ class LabelManager {
     }
     
     bindEvents() {
+        // Custom Label Section
+        const openCustomLabelBtn = document.getElementById('open-custom-label');
+        if (openCustomLabelBtn) {
+            openCustomLabelBtn.addEventListener('click', () => {
+                this.toggleCustomLabelSection(true);
+            });
+        }
+        
+        const closeCustomLabelBtn = document.getElementById('close-custom-label');
+        if (closeCustomLabelBtn) {
+            closeCustomLabelBtn.addEventListener('click', () => {
+                this.toggleCustomLabelSection(false);
+            });
+        }
+        
+        // Custom Label Form Inputs
+        const customOrderId = document.getElementById('custom-order-id');
+        if (customOrderId) {
+            customOrderId.addEventListener('input', () => {
+                this.formatOrderId(customOrderId);
+                this.validateCustomForm();
+            });
+        }
+        
+        const customFilmNumber = document.getElementById('custom-film-number');
+        if (customFilmNumber) {
+            customFilmNumber.addEventListener('input', this.validateCustomForm.bind(this));
+        }
+        
+        const customDocType = document.getElementById('custom-doc-type');
+        if (customDocType) {
+            customDocType.addEventListener('input', () => {
+                this.updateDocTypeCharCount();
+                this.validateCustomForm();
+            });
+        }
+        
+        // Generate Custom Label Button
+        const generateCustomLabelBtn = document.getElementById('generate-custom-label');
+        if (generateCustomLabelBtn) {
+            generateCustomLabelBtn.addEventListener('click', () => {
+                this.generateCustomLabels();
+            });
+        }
+        
+        // Custom Label Actions
+        const viewCustomNormalBtn = document.getElementById('view-custom-normal');
+        if (viewCustomNormalBtn) {
+            viewCustomNormalBtn.addEventListener('click', () => {
+                this.viewCustomLabel('normal');
+            });
+        }
+        
+        const downloadCustomNormalBtn = document.getElementById('download-custom-normal');
+        if (downloadCustomNormalBtn) {
+            downloadCustomNormalBtn.addEventListener('click', () => {
+                this.downloadCustomLabel('normal');
+            });
+        }
+        
+        const printCustomNormalBtn = document.getElementById('print-custom-normal');
+        if (printCustomNormalBtn) {
+            printCustomNormalBtn.addEventListener('click', () => {
+                this.printCustomLabel('normal');
+            });
+        }
+        
+        const viewCustomAngledBtn = document.getElementById('view-custom-angled');
+        if (viewCustomAngledBtn) {
+            viewCustomAngledBtn.addEventListener('click', () => {
+                this.viewCustomLabel('angled');
+            });
+        }
+        
+        const downloadCustomAngledBtn = document.getElementById('download-custom-angled');
+        if (downloadCustomAngledBtn) {
+            downloadCustomAngledBtn.addEventListener('click', () => {
+                this.downloadCustomLabel('angled');
+            });
+        }
+        
+        const printCustomAngledBtn = document.getElementById('print-custom-angled');
+        if (printCustomAngledBtn) {
+            printCustomAngledBtn.addEventListener('click', () => {
+                this.printCustomLabel('angled');
+            });
+        }
+        
         // Refresh buttons
         const refreshUncompletedBtn = document.getElementById('refresh-uncompleted-rolls');
         if (refreshUncompletedBtn) {
@@ -151,6 +240,303 @@ class LabelManager {
                 this.printLabel(e.target.closest('.print-label').dataset.labelId, e.target.closest('.print-label').dataset.version);
             }
         });
+    }
+    
+    // Custom Label Methods
+    toggleCustomLabelSection(show) {
+        const section = document.getElementById('custom-label-section');
+        if (section) {
+            section.style.display = show ? 'block' : 'none';
+            
+            // Reset form and preview when opening
+            if (show) {
+                this.resetCustomLabelForm();
+            }
+        }
+    }
+    
+    resetCustomLabelForm() {
+        const orderIdInput = document.getElementById('custom-order-id');
+        const filmNumberInput = document.getElementById('custom-film-number');
+        const docTypeInput = document.getElementById('custom-doc-type');
+        const preview = document.getElementById('custom-label-preview');
+        
+        if (orderIdInput) orderIdInput.value = '';
+        if (filmNumberInput) filmNumberInput.value = '';
+        if (docTypeInput) docTypeInput.value = '';
+        if (preview) preview.style.display = 'none';
+        
+        this.updateDocTypeCharCount();
+        this.validateCustomForm();
+        
+        // Reset stored custom labels
+        this.customLabels = { normal: null, angled: null };
+    }
+    
+    updateDocTypeCharCount() {
+        const docTypeInput = document.getElementById('custom-doc-type');
+        const charCountSpan = document.getElementById('doc-type-char-count');
+        
+        if (docTypeInput && charCountSpan) {
+            const currentLength = docTypeInput.value.length;
+            charCountSpan.textContent = currentLength;
+            
+            // Add visual feedback if approaching limit
+            if (currentLength > 200) {
+                charCountSpan.style.color = 'var(--color-warning)';
+            } else {
+                charCountSpan.style.color = '';
+            }
+        }
+    }
+    
+    validateCustomForm() {
+        const orderIdInput = document.getElementById('custom-order-id');
+        const filmNumberInput = document.getElementById('custom-film-number');
+        const docTypeInput = document.getElementById('custom-doc-type');
+        const generateBtn = document.getElementById('generate-custom-label');
+        
+        let isValid = true;
+        
+        // Order ID validation (RRD followed by XXX-YYYY format)
+        if (orderIdInput) {
+            const orderIdPattern = /^RRD[0-9]{3}-[0-9]{4}$/;
+            const isOrderIdValid = orderIdPattern.test(orderIdInput.value);
+            orderIdInput.classList.toggle('invalid', !isOrderIdValid);
+            isValid = isValid && isOrderIdValid;
+        }
+        
+        // Film Number validation (must be either 8 digits starting with 1 or 3, or 6 digits)
+        if (filmNumberInput) {
+            const filmNumberPattern = /^([13][0-9]{7}|[0-9]{6})$/;
+            const isFilmNumberValid = filmNumberPattern.test(filmNumberInput.value);
+            filmNumberInput.classList.toggle('invalid', !isFilmNumberValid);
+            isValid = isValid && isFilmNumberValid;
+        }
+        
+        // Document Type validation (must not be empty and <= 250 chars)
+        if (docTypeInput) {
+            const isDocTypeValid = docTypeInput.value.trim().length > 0 && 
+                                  docTypeInput.value.length <= 250;
+            docTypeInput.classList.toggle('invalid', !isDocTypeValid);
+            isValid = isValid && isDocTypeValid;
+        }
+        
+        // Enable/disable generate button based on validation
+        if (generateBtn) {
+            generateBtn.disabled = !isValid;
+        }
+        
+        return isValid;
+    }
+    
+    // Add a new method to format the order ID field
+    formatOrderId(input) {
+        // If the input doesn't start with "RRD", add it
+        if (!input.value.startsWith('RRD')) {
+            input.value = 'RRD' + input.value.replace(/^RRD/, '');
+        }
+        
+        // Extract just the digits
+        const digits = input.value.replace(/[^0-9]/g, '');
+        
+        // Format as RRDxxx-yyyy if we have enough digits
+        if (digits.length > 3) {
+            const part1 = digits.substring(0, 3);
+            const part2 = digits.substring(3, 7);
+            input.value = `RRD${part1}-${part2}`;
+        } else if (digits.length > 0) {
+            // Just add RRD prefix to the digits
+            input.value = `RRD${digits}`;
+        }
+    }
+    
+    async generateCustomLabels() {
+        if (!this.validateCustomForm()) {
+            this.showNotification('warning', 'Invalid Input', 'Please check the form fields and try again.');
+            return;
+        }
+        
+        const orderIdInput = document.getElementById('custom-order-id');
+        const filmNumberInput = document.getElementById('custom-film-number');
+        const docTypeInput = document.getElementById('custom-doc-type');
+        
+        // Use the order ID value directly (RRD is already included)
+        const archiveId = orderIdInput.value;
+        const filmNumber = filmNumberInput.value;
+        const docType = docTypeInput.value;
+        
+        try {
+            this.showNotification('info', 'Generating Labels', 'Creating custom labels...');
+            
+            const response = await fetch('/api/labels/generate-custom/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.getCSRFToken()
+                },
+                body: JSON.stringify({
+                    archive_id: archiveId,
+                    film_number: filmNumber,
+                    doc_type: docType
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                this.showNotification('success', 'Labels Generated', 'Custom labels created successfully');
+                
+                // Store the generated labels
+                this.customLabels = {
+                    normal: data.labels.normal,
+                    angled: data.labels.angled
+                };
+                
+                // Show the preview section
+                const previewSection = document.getElementById('custom-label-preview');
+                if (previewSection) {
+                    previewSection.style.display = 'block';
+                }
+            } else {
+                throw new Error(data.error || 'Failed to generate custom labels');
+            }
+        } catch (error) {
+            console.error('Error generating custom labels:', error);
+            this.showNotification('error', 'Generation Failed', `Failed to generate custom labels: ${error.message}`);
+        }
+    }
+    
+    async viewCustomLabel(version) {
+        if (!this.customLabels[version]) {
+            this.showNotification('warning', 'No Label', `No ${version} label has been generated yet.`);
+            return;
+        }
+        
+        try {
+            const labelData = this.customLabels[version];
+            
+            // Open the PDF in a new tab
+            const blob = this.base64ToBlob(labelData.content, 'application/pdf');
+            const url = URL.createObjectURL(blob);
+            window.open(url, '_blank');
+            
+            // Clean up URL object after a delay
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+            
+        } catch (error) {
+            console.error(`Error viewing ${version} custom label:`, error);
+            this.showNotification('error', 'View Error', `Failed to view ${version} label: ${error.message}`);
+        }
+    }
+    
+    async downloadCustomLabel(version) {
+        if (!this.customLabels[version]) {
+            this.showNotification('warning', 'No Label', `No ${version} label has been generated yet.`);
+            return;
+        }
+        
+        try {
+            const labelData = this.customLabels[version];
+            const orderIdInput = document.getElementById('custom-order-id');
+            const filmNumberInput = document.getElementById('custom-film-number');
+            
+            // Create filename based on input values (RRD is already in orderIdInput.value)
+            const archiveId = orderIdInput.value;
+            const filmNumber = filmNumberInput.value;
+            const filename = `custom_label_${archiveId}_${filmNumber}_${version}.pdf`;
+            
+            // Download the PDF
+            const blob = this.base64ToBlob(labelData.content, 'application/pdf');
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            
+            // Clean up URL object
+            URL.revokeObjectURL(url);
+            
+            this.showNotification('success', 'Downloaded', `${version} label downloaded successfully`);
+            
+        } catch (error) {
+            console.error(`Error downloading ${version} custom label:`, error);
+            this.showNotification('error', 'Download Error', `Failed to download ${version} label: ${error.message}`);
+        }
+    }
+    
+    async printCustomLabel(version) {
+        if (!this.customLabels[version]) {
+            this.showNotification('warning', 'No Label', `No ${version} label has been generated yet.`);
+            return;
+        }
+        
+        try {
+            const labelData = this.customLabels[version];
+            
+            // Convert base64 to Blob
+            const blob = this.base64ToBlob(labelData.content, 'application/pdf');
+            const url = URL.createObjectURL(blob);
+            
+            // Create an iframe to load the PDF
+            const printFrame = document.createElement('iframe');
+            printFrame.className = 'print-frame';
+            printFrame.src = url;
+            
+            // When the iframe loads, print it and then remove it
+            printFrame.onload = () => {
+                try {
+                    // Wait a moment for the PDF to render in the iframe
+                    setTimeout(() => {
+                        printFrame.contentWindow.focus();
+                        printFrame.contentWindow.print();
+                        
+                        // Clean up after printing dialog closes
+                        setTimeout(() => {
+                            document.body.removeChild(printFrame);
+                            URL.revokeObjectURL(url);
+                        }, 1000);
+                    }, 500);
+                } catch (err) {
+                    console.error('Error during printing:', err);
+                    this.showNotification('error', 'Print Error', 'Failed to open print dialog. Try downloading the PDF instead.');
+                    document.body.removeChild(printFrame);
+                    URL.revokeObjectURL(url);
+                }
+            };
+            
+            // Add iframe to document to trigger load
+            document.body.appendChild(printFrame);
+            
+            this.showNotification('info', 'Opening Print Dialog', 'The print dialog should open shortly.');
+            
+        } catch (error) {
+            console.error(`Error printing ${version} custom label:`, error);
+            this.showNotification('error', 'Print Error', `Failed to print ${version} label: ${error.message}`);
+        }
+    }
+    
+    // Utility method to convert base64 to Blob
+    base64ToBlob(base64, mimeType) {
+        const byteCharacters = atob(base64);
+        const byteArrays = [];
+        
+        for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+            const slice = byteCharacters.slice(offset, offset + 512);
+            
+            const byteNumbers = new Array(slice.length);
+            for (let i = 0; i < slice.length; i++) {
+                byteNumbers[i] = slice.charCodeAt(i);
+            }
+            
+            const byteArray = new Uint8Array(byteNumbers);
+            byteArrays.push(byteArray);
+        }
+        
+        return new Blob(byteArrays, { type: mimeType });
     }
     
     async loadInitialData() {

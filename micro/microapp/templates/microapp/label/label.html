@@ -16,10 +16,96 @@
     <div class="label-header">
         <h1>Label Management</h1>
         <p>Generate new labels for uncompleted rolls, or view and manage existing labels for completed rolls.</p>
+        <button id="open-custom-label" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Generate Custom Label
+        </button>
     </div>
 
     <!-- Notifications Container -->
     <div id="notifications-container" class="notifications-container"></div>
+
+    <!-- Custom Label Section (initially hidden) -->
+    <div id="custom-label-section" class="label-section" style="display: none;">
+        <div class="section-header">
+            <h2>
+                <i class="fas fa-tag"></i>
+                Custom Label Generator
+            </h2>
+            <div class="section-actions">
+                <button id="close-custom-label" class="btn btn-outline btn-small">
+                    <i class="fas fa-times"></i> Close
+                </button>
+            </div>
+        </div>
+        
+        <div class="custom-label-form">
+            <div class="form-group">
+                <label for="custom-order-id">Order ID:</label>
+                <div class="input-group">
+                    <input type="text" id="custom-order-id" placeholder="RRD099-2099" class="form-control">
+                </div>
+                <small class="form-text">Format: RRD followed by 3 digits, hyphen, and 4 digits</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="custom-film-number">Film Number:</label>
+                <input type="text" id="custom-film-number" placeholder="1XXXXXXX, 3XXXXXXX, or XXXXXX" class="form-control">
+                <small class="form-text">Must be 8 digits starting with 1 or 3, or 6 digits</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="custom-doc-type">Document Type:</label>
+                <textarea id="custom-doc-type" placeholder="Enter document type (up to 250 characters)" maxlength="250" class="form-control"></textarea>
+                <small class="form-text"><span id="doc-type-char-count">0</span>/250 characters</small>
+            </div>
+            
+            <div class="form-actions">
+                <button id="generate-custom-label" class="btn btn-primary">
+                    <i class="fas fa-file-pdf"></i> Generate Labels
+                </button>
+            </div>
+        </div>
+        
+        <div id="custom-label-preview" class="custom-label-preview" style="display: none;">
+            <h3>Generated Custom Labels</h3>
+            
+            <div class="version-containers">
+                <div class="version-container normal">
+                    <div class="version-header">
+                        <h5><i class="fas fa-table"></i> Normal Version</h5>
+                    </div>
+                    <div class="version-actions">
+                        <button id="view-custom-normal" class="btn btn-info btn-small">
+                            <i class="fas fa-eye"></i> View
+                        </button>
+                        <button id="download-custom-normal" class="btn btn-secondary btn-small">
+                            <i class="fas fa-download"></i> Download
+                        </button>
+                        <button id="print-custom-normal" class="btn btn-primary btn-small">
+                            <i class="fas fa-print"></i> Print
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="version-container angled">
+                    <div class="version-header">
+                        <h5><i class="fas fa-drafting-compass"></i> Angled Version</h5>
+                    </div>
+                    <div class="version-actions">
+                        <button id="view-custom-angled" class="btn btn-info btn-small">
+                            <i class="fas fa-eye"></i> View
+                        </button>
+                        <button id="download-custom-angled" class="btn btn-secondary btn-small">
+                            <i class="fas fa-download"></i> Download
+                        </button>
+                        <button id="print-custom-angled" class="btn btn-primary btn-small">
+                            <i class="fas fa-print"></i> Print
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Generate New Labels Section -->
     <div class="label-section">

@@ -7,6 +7,7 @@ import json
 import uuid
 import logging
 import os
+import base64
 from pathlib import Path
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import get_object_or_404
@@ -660,6 +661,143 @@ def reveal_label_in_explorer(request, label_id):
         }, status=404)
     except Exception as e:
         logger.error(f"Error revealing label in explorer: {e}")
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def generate_custom_film_labels(request):
+    """
+    Generate custom film labels based on user input parameters.
+    This endpoint doesn't create database records, just generates PDFs.
+    """
+    try:
+        data = json.loads(request.body)
+        archive_id = data.get('archive_id')
+        film_number = data.get('film_number')
+        doc_type = data.get('doc_type')
+        
+        # Validate required parameters
+        if not archive_id or not film_number or not doc_type:
+            return JsonResponse({
+                'success': False,
+                'error': 'Missing required parameters (archive_id, film_number, doc_type)'
+            }, status=400)
+        
+        # Validate format of film number (should start with 1 or 3 and have 8 digits, or be 6 digits)
+        if not ((len(film_number) == 8 and (film_number.startswith('1') or film_number.startswith('3'))) or 
+                (len(film_number) == 6 and film_number.isdigit())):
+            return JsonResponse({
+                'success': False,
+                'error': 'Film number must be either 8 digits starting with 1 or 3, or 6 digits'
+            }, status=400)
+        
+        # Initialize the label generator
+        generator = FilmLabelGenerator()
+        
+        # Generate labels for both versions
+        labels = {}
+        for version in ['normal', 'angled']:
+            # Generate the label PDF
+            pdf_content = generator.create_film_label(
+                film_number=film_number,
+                archive_id=archive_id,
+                doc_type=doc_type,
+                version=version
+            )
+            
+            # Generate a unique label ID for this custom label
+            label_id = f"custom_label_{uuid.uuid4().hex[:8]}_{version}"
+            
+            # Store the PDF content in cache for immediate access (expires in 1 hour)
+            cache_key = f"custom_label_pdf_{label_id}"
+            cache.set(cache_key, pdf_content, 3600)  # 1 hour expiration
+            
+            # Convert PDF content to base64 for sending in response
+            pdf_base64 = base64.b64encode(pdf_content).decode('utf-8')
+            
+            labels[version] = {
+                'label_id': label_id,
+                'cache_key': cache_key,
+                'content': pdf_base64,
+                'version': version
+            }
+            
+            logger.info(f"Generated custom {version} label for {archive_id}")
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Generated custom labels successfully',
+            'labels': labels
+        })
+        
+    except Exception as e:
+        logger.error(f"Error generating custom labels: {e}")
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def print_custom_label(request):
+    """
+    Print a custom label directly from provided PDF data.
+    """
+    try:
+        data = json.loads(request.body)
+        label_data_base64 = data.get('label_data')
+        version = data.get('version', 'normal')
+        
+        if not label_data_base64:
+            return JsonResponse({
+                'success': False,
+                'error': 'Missing label data'
+            }, status=400)
+        
+        # Convert base64 back to binary
+        try:
+            pdf_content = base64.b64decode(label_data_base64)
+        except Exception as e:
+            logger.error(f"Error decoding base64 data: {e}")
+            return JsonResponse({
+                'success': False,
+                'error': 'Invalid label data format'
+            }, status=400)
+        
+        # Create a temporary file for printing
+        temp_file_path = Path(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'tmp', f'custom_label_{uuid.uuid4().hex[:8]}.pdf'))
+        os.makedirs(os.path.dirname(temp_file_path), exist_ok=True)
+        
+        with open(temp_file_path, 'wb') as f:
+            f.write(pdf_content)
+        
+        # Print the PDF
+        print_result = printer_service.print_pdf(temp_file_path)
+        
+        # Clean up the temporary file
+        try:
+            os.remove(temp_file_path)
+        except Exception as e:
+            logger.warning(f"Failed to remove temporary file {temp_file_path}: {e}")
+        
+        if print_result.get('success'):
+            return JsonResponse({
+                'success': True,
+                'message': f'Custom {version} label sent to printer',
+                'printer': print_result.get('printer', 'Default'),
+                'method': print_result.get('method', 'Direct')
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'error': print_result.get('error', 'Unknown printing error')
+            }, status=500)
+        
+    except Exception as e:
+        logger.error(f"Error printing custom label: {e}")
         return JsonResponse({
             'success': False,
             'error': str(e)

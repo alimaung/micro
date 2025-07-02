@@ -274,6 +274,8 @@ urlpatterns = [
     # Label API Endpoints
     path('api/labels/rolls/', views.get_rolls_for_labels, name='api_get_rolls_for_labels'),
     path('api/labels/generate/', views.generate_film_labels, name='api_generate_film_labels'),
+    path('api/labels/generate-custom/', views.generate_custom_film_labels, name='api_generate_custom_film_labels'),
+    path('api/labels/print-custom/', views.print_custom_label, name='api_print_custom_label'),
     path('api/labels/download/<str:label_id>/', views.download_label_pdf, name='api_download_label_pdf'),
     path('api/labels/reveal/<str:label_id>/', views.reveal_label_in_explorer, name='api_reveal_label_in_explorer'),
     path('api/labels/print-queue/', views.get_print_queue, name='api_get_print_queue'),

@@ -107,7 +107,8 @@ from .label_views import (
     get_rolls_for_labels, generate_film_labels, download_label_pdf,
     get_print_queue, add_to_print_queue, remove_from_print_queue,
     get_generated_labels, mark_label_printed, print_label_server_side,
-    get_printer_status, print_multiple_labels, reveal_label_in_explorer
+    get_printer_status, print_multiple_labels, reveal_label_in_explorer,
+    generate_custom_film_labels, print_custom_label
 )
 
 # Import handoff views

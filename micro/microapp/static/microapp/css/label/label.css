@@ -18,6 +18,7 @@
     transition: background-color var(--transition-speed) ease,
                 color var(--transition-speed) ease,
                 box-shadow var(--transition-speed) ease;
+    position: relative; /* For positioning the custom label button */
 }
 
 .dark-mode .label-header {
@@ -41,6 +42,24 @@
     margin: 0;
     max-width: 800px;
     margin: 0 auto;
+}
+
+/* Custom Label Button in Header */
+#open-custom-label {
+    position: absolute;
+    right: 24px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+@media (max-width: 768px) {
+    #open-custom-label {
+        position: relative;
+        right: auto;
+        top: auto;
+        transform: none;
+        margin-top: 16px;
+    }
 }
 
 .label-content {
@@ -68,6 +87,129 @@
     border-color: var(--color-dark-border);
     box-shadow: 0 1px 3px var(--color-dark-shadow), 
                 0 2px 8px var(--color-dark-shadow);
+}
+
+/* Custom Label Form Styles */
+.custom-label-form {
+    padding: 24px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: var(--color-text);
+}
+
+.dark-mode .form-group label {
+    color: var(--color-dark-text);
+}
+
+.form-control {
+    display: block;
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--color-text);
+    background-color: var(--color-background);
+    background-clip: padding-box;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.dark-mode .form-control {
+    background-color: var(--color-dark-background);
+    color: var(--color-dark-text);
+    border-color: var(--color-dark-border);
+}
+
+.form-control:focus {
+    border-color: var(--color-primary);
+    outline: 0;
+    box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.25);
+}
+
+.form-control.invalid {
+    border-color: #ff453a;
+}
+
+.form-control.invalid:focus {
+    box-shadow: 0 0 0 2px rgba(255, 69, 58, 0.25);
+}
+
+.form-text {
+    display: block;
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--color-text-secondary);
+}
+
+.dark-mode .form-text {
+    color: var(--color-dark-text-secondary);
+}
+
+.input-group {
+    display: flex;
+    align-items: stretch;
+}
+
+.input-prefix {
+    display: flex;
+    align-items: center;
+    padding: 10px 12px;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.5;
+    color: var(--color-text);
+    background-color: var(--color-background-secondary);
+    border: 1px solid var(--color-border);
+    border-right: none;
+    border-radius: 8px 0 0 8px;
+}
+
+.dark-mode .input-prefix {
+    background-color: var(--color-dark-background-secondary);
+    color: var(--color-dark-text);
+    border-color: var(--color-dark-border);
+}
+
+.input-group .form-control {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    flex: 1;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 24px;
+}
+
+/* Custom Label Preview */
+.custom-label-preview {
+    padding: 24px;
+    border-top: 1px solid var(--color-border);
+}
+
+.dark-mode .custom-label-preview {
+    border-color: var(--color-dark-border);
+}
+
+.custom-label-preview h3 {
+    font-size: 18px;
+    font-weight: 500;
+    margin: 0 0 20px 0;
+    color: var(--color-text);
+}
+
+.dark-mode .custom-label-preview h3 {
+    color: var(--color-dark-text);
 }
 
 .section-header {
@@ -166,14 +308,18 @@
     border-color: var(--color-text-secondary);
 }
 
-.dark-mode .btn-outline:hover:not(:disabled) {
-    background-color: var(--color-dark-background-secondary);
-    border-color: var(--color-dark-text-secondary);
-}
-
 .btn-small {
     padding: 6px 12px;
-    font-size: 12px;
+    font-size: 13px;
+}
+
+.btn-info {
+    background-color: #5ac8fa;
+    color: white;
+}
+
+.btn-info:hover:not(:disabled) {
+    background-color: #4db8e8;
 }
 
 /* Rolls Container */
@@ -941,4 +1087,13 @@
         --color-dark-text: #f5f5f7;
         --color-dark-text-secondary: #98989d;
     }
+}
+
+/* Hidden print iframe */
+iframe.print-frame {
+    display: none;
+    width: 0;
+    height: 0;
+    position: absolute;
+    left: -9999px;
 } 
