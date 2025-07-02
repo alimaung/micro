@@ -492,11 +492,11 @@ class LabelManager {
                             printWindow.focus();
                             printWindow.print();
                             
-                            // Clean up after print dialog
+                            // Don't automatically close - let user close when done
+                            // Just clean up the URL after a delay
                             setTimeout(() => {
-                                printWindow.close();
                                 URL.revokeObjectURL(url);
-                            }, 1000);
+                            }, 5000);
                         } catch (err) {
                             console.error('Error during printing:', err);
                             this.showNotification('error', 'Print Error', 'Failed to open print dialog. The PDF has been opened in a new tab - you can print it from there.');
@@ -505,14 +505,12 @@ class LabelManager {
                     }, 1000); // Give more time for PDF to render
                 });
                 
-                // Fallback: if load event doesn't fire, still clean up
+                // Fallback: clean up URL after longer delay
                 setTimeout(() => {
-                    if (!printWindow.closed) {
-                        URL.revokeObjectURL(url);
-                    }
-                }, 10000); // Clean up after 10 seconds regardless
+                    URL.revokeObjectURL(url);
+                }, 30000); // Clean up after 30 seconds
                 
-                this.showNotification('info', 'Opening Print Dialog', 'The PDF will open in a new window. Print dialog should appear shortly.');
+                this.showNotification('info', 'Print Dialog Opening', 'The PDF will open in a new window with the print dialog. You can close the window when finished.');
             } else {
                 // Popup was blocked
                 this.showNotification('warning', 'Popup Blocked', 'Please allow popups for this site and try again, or download the PDF to print it manually.');
