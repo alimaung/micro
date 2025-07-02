@@ -481,37 +481,43 @@ class LabelManager {
             const blob = this.base64ToBlob(labelData.content, 'application/pdf');
             const url = URL.createObjectURL(blob);
             
-            // Create an iframe to load the PDF
-            const printFrame = document.createElement('iframe');
-            printFrame.className = 'print-frame';
-            printFrame.src = url;
+            // Open PDF in a new window for printing
+            const printWindow = window.open(url, '_blank', 'width=800,height=600');
             
-            // When the iframe loads, print it and then remove it
-            printFrame.onload = () => {
-                try {
-                    // Wait a moment for the PDF to render in the iframe
+            if (printWindow) {
+                // Wait for the PDF to load, then trigger print
+                printWindow.addEventListener('load', () => {
                     setTimeout(() => {
-                        printFrame.contentWindow.focus();
-                        printFrame.contentWindow.print();
-                        
-                        // Clean up after printing dialog closes
-                        setTimeout(() => {
-                            document.body.removeChild(printFrame);
+                        try {
+                            printWindow.focus();
+                            printWindow.print();
+                            
+                            // Clean up after print dialog
+                            setTimeout(() => {
+                                printWindow.close();
+                                URL.revokeObjectURL(url);
+                            }, 1000);
+                        } catch (err) {
+                            console.error('Error during printing:', err);
+                            this.showNotification('error', 'Print Error', 'Failed to open print dialog. The PDF has been opened in a new tab - you can print it from there.');
                             URL.revokeObjectURL(url);
-                        }, 1000);
-                    }, 500);
-                } catch (err) {
-                    console.error('Error during printing:', err);
-                    this.showNotification('error', 'Print Error', 'Failed to open print dialog. Try downloading the PDF instead.');
-                    document.body.removeChild(printFrame);
-                    URL.revokeObjectURL(url);
-                }
-            };
-            
-            // Add iframe to document to trigger load
-            document.body.appendChild(printFrame);
-            
-            this.showNotification('info', 'Opening Print Dialog', 'The print dialog should open shortly.');
+                        }
+                    }, 1000); // Give more time for PDF to render
+                });
+                
+                // Fallback: if load event doesn't fire, still clean up
+                setTimeout(() => {
+                    if (!printWindow.closed) {
+                        URL.revokeObjectURL(url);
+                    }
+                }, 10000); // Clean up after 10 seconds regardless
+                
+                this.showNotification('info', 'Opening Print Dialog', 'The PDF will open in a new window. Print dialog should appear shortly.');
+            } else {
+                // Popup was blocked
+                this.showNotification('warning', 'Popup Blocked', 'Please allow popups for this site and try again, or download the PDF to print it manually.');
+                URL.revokeObjectURL(url);
+            }
             
         } catch (error) {
             console.error(`Error printing ${version} custom label:`, error);
