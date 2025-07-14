@@ -3005,5 +3005,16 @@
         "height": 1588.75
       }
     ]
+  },
+  {
+    "timestamp": "2025-07-14T12:56:36.197075",
+    "directories": [
+      "X:/RRD093-2023_OU_Sonderuntersuchungen"
+    ],
+    "total_pdf_files": 1267,
+    "total_pages": 27754,
+    "oversized_pages_count": 0,
+    "rolls_needed": 9.570344827586206,
+    "oversized_pages_details": []
   }
 ]

@@ -73,10 +73,142 @@
         {% block content %}{% endblock %}
     </div>
     
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-links">
+                <div class="footer-column">
+                    <h3>
+                        {% trans "About Us" %}
+                        <i class="fas fa-chevron-down"></i>
+                    </h3>
+                    <ul>
+                        <li><a href="#">{% trans "Documentation" %}</a></li>
+                        <li><a href="#">{% trans "System Info" %}</a></li>
+                        <li><a href="#">{% trans "Contact" %}</a></li>
+                        <li><a href="#">{% trans "Support" %}</a></li>
+                        <li><a href="#">{% trans "Updates" %}</a></li>
+                        <li><a href="#">{% trans "Release Notes" %}</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-column">
+                    <h3>
+                        {% trans "Features" %}
+                        <i class="fas fa-chevron-down"></i>
+                    </h3>
+                    <ul>
+                        <li><a href="{% url 'transfer' %}">{% trans "Transfer" %}</a></li>
+                        <li><a href="{% url 'register' %}">{% trans "Register" %}</a></li>
+                        <li><a href="{% url 'film' %}">{% trans "Film" %}</a></li>
+                        <li><a href="{% url 'control' %}">{% trans "Control" %}</a></li>
+                        <li><a href="{% url 'develop' %}">{% trans "Develop" %}</a></li>
+                        <li><a href="{% url 'label' %}">{% trans "Label" %}</a></li>
+                        <li><a href="{% url 'handoff' %}">{% trans "Handoff" %}</a></li>
+                        <li><a href="{% url 'explore' %}">{% trans "Explore" %}</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-column">
+                    <h3>
+                        {% trans "Tools & Resources" %}
+                        <i class="fas fa-chevron-down"></i>
+                    </h3>
+                    <ul>
+                        <li><a href="#">{% trans "API Documentation" %}</a></li>
+                        <li><a href="#">{% trans "User Guide" %}</a></li>
+                        <li><a href="#">{% trans "Troubleshooting" %}</a></li>
+                        <li><a href="#">{% trans "Best Practices" %}</a></li>
+                        <li><a href="#">{% trans "Training Materials" %}</a></li>
+                        <li><a href="#">{% trans "Community" %}</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-column">
+                    <h3>
+                        {% trans "System" %}
+                        <i class="fas fa-chevron-down"></i>
+                    </h3>
+                    <ul>
+                        <li><a href="{% url 'settings' %}">{% trans "Settings" %}</a></li>
+                        <li><a href="#">{% trans "Security" %}</a></li>
+                        <li><a href="#">{% trans "Backup" %}</a></li>
+                        <li><a href="#">{% trans "Maintenance" %}</a></li>
+                        <li><a href="#">{% trans "Monitoring" %}</a></li>
+                        <li><a href="#">{% trans "Logs" %}</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <div class="footer-logo">
+                    <img src="{% static 'microapp/img/logo-light.png' %}" alt="Micro Logo">
+                    <span>micro</span>
+                </div>
+                
+                <div class="footer-legal">
+                    <a href="#">{% trans "Privacy Policy" %}</a>
+                    <a href="#">{% trans "Terms of Service" %}</a>
+                    <a href="#">{% trans "License" %}</a>
+                </div>
+                
+                <div class="footer-extra">
+                    <a href="#" class="footer-help">
+                        <i class="fas fa-question-circle"></i>
+                        {% trans "Help" %}
+                    </a>
+                    <select class="footer-lang-selector">
+                        <option value="en" {% if LANGUAGE_CODE == 'en' %}selected{% endif %}>English</option>
+                        <option value="de" {% if LANGUAGE_CODE == 'de' %}selected{% endif %}>Deutsch</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
     <!-- Main JavaScript file -->
     <script src="{% static 'microapp/js/main.js' %}"></script>
+    <!-- Footer JavaScript -->
+    <script>
+        // Footer mobile toggle functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const footerColumns = document.querySelectorAll('.footer-column h3');
+            
+            function toggleColumn(column) {
+                const parent = column.parentElement;
+                parent.classList.toggle('expanded');
+            }
+            
+            footerColumns.forEach(column => {
+                column.addEventListener('click', function() {
+                    if (window.innerWidth <= 768) {
+                        toggleColumn(this);
+                    }
+                });
+            });
+            
+            // Handle window resize
+            window.addEventListener('resize', function() {
+                if (window.innerWidth > 768) {
+                    document.querySelectorAll('.footer-column').forEach(col => {
+                        col.classList.remove('expanded');
+                    });
+                }
+            });
+            
+            // Language selector change
+            const langSelector = document.querySelector('.footer-lang-selector');
+            if (langSelector) {
+                langSelector.addEventListener('change', function() {
+                    const selectedLang = this.value;
+                    // You can implement language switching logic here
+                    console.log('Language changed to:', selectedLang);
+                });
+            }
+        });
+    </script>
     {% block extra_js %}{% endblock %}
 </body>
 </html> 
