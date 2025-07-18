@@ -13,18 +13,18 @@ class RECT(ctypes.Structure):
                 ("right", ctypes.c_long),
                 ("bottom", ctypes.c_long)]
 
-# Define Monitor 2 (Left) boundaries **with padding**
-MARGIN = 20  # Shrinking the boundary by 20px on each side
-LEFT_MONITOR_BOUNDS = RECT(0 + MARGIN, 0 + MARGIN, 1920 - MARGIN, 1080 - MARGIN)
+# Define Monitor boundaries - only restrict right side to prevent going to other monitor
+RIGHT_MARGIN = 20  # Safety margin to prevent accidental movement to right monitor
+MONITOR_BOUNDS = RECT(0, 0, 1920 - RIGHT_MARGIN, 1080)  # Only right side has margin
 
 # Global variable to control the monitoring thread
 monitoring_active = False
 monitor_thread = None
 
 def lock_mouse_to_monitor():
-    """ Restricts the mouse to only Monitor 2 (with a safety margin) """
-    user32.ClipCursor(ctypes.byref(LEFT_MONITOR_BOUNDS))
-    print(f"[INFO] Mouse locked inside adjusted area: {LEFT_MONITOR_BOUNDS.left}-{LEFT_MONITOR_BOUNDS.right}, {LEFT_MONITOR_BOUNDS.top}-{LEFT_MONITOR_BOUNDS.bottom}")
+    """ Restricts the mouse to prevent movement to right monitor only """
+    user32.ClipCursor(ctypes.byref(MONITOR_BOUNDS))
+    print(f"[INFO] Mouse locked to left monitor area: {MONITOR_BOUNDS.left}-{MONITOR_BOUNDS.right}, {MONITOR_BOUNDS.top}-{MONITOR_BOUNDS.bottom}")
 
 def release_mouse_lock():
     """ Releases the mouse restriction """
@@ -33,14 +33,14 @@ def release_mouse_lock():
     print("[INFO] Mouse lock released")
 
 def check_mouse_position():
-    """ Monitors if the mouse escapes and brings it back """
+    """ Monitors if the mouse tries to go to right monitor and brings it back """
     global monitoring_active
     while monitoring_active:
         x, y = pyautogui.position()
 
-        if x < LEFT_MONITOR_BOUNDS.left or x > LEFT_MONITOR_BOUNDS.right - 1 or \
-           y < LEFT_MONITOR_BOUNDS.top or y > LEFT_MONITOR_BOUNDS.bottom - 1:
-            print(f"[WARNING] Mouse tried to escape! ({x}, {y}) - Bringing it back.")
+        # Only check if mouse goes too far right (to other monitor)
+        if x > MONITOR_BOUNDS.right:
+            print(f"[WARNING] Mouse tried to go to right monitor! ({x}, {y}) - Bringing it back.")
             lock_mouse_to_monitor()  # Reapply the lock
 
         time.sleep(0.05)  # Check every 50ms (faster reaction)
