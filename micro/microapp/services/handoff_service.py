@@ -20,6 +20,7 @@ import uuid
 from django.template.loader import render_to_string
 from django.template import Context, Template
 from django.contrib.auth.models import User
+from microapp.models import HandoffRecord
 
 logger = logging.getLogger(__name__)
 
@@ -272,15 +273,44 @@ class HandoffService:
                     
             self.logger.debug(f"Successfully read {log_file} with encoding: {encoding}")
 
-            # Extract metadata from header (same as indexer_v2.py)
+            # Detect if header exists by checking first few lines
+            has_header = False
+            header_lines = 0
             roll = date = user = ""
-            for line in lines[:10]:  # Check more lines for metadata
+            
+            # Check first 4 lines for header patterns
+            for i, line in enumerate(lines[:4]):
+                if not line.strip():
+                    continue
                 if "Rollennummer=" in line:
                     roll = line.split("=")[1].strip()
+                    has_header = True
                 elif "Datum/Zeit=" in line:
                     date = line.split("=")[1].strip()
+                    has_header = True
                 elif "Benutzer=" in line:
                     user = line.split("=")[1].strip()
+                    has_header = True
+                elif "Computer=" in line:
+                    has_header = True
+            
+            # Determine how many lines to skip
+            if has_header:
+                # Count actual header lines (usually 4: Rollennummer, Datum/Zeit, Benutzer, Computer)
+                header_lines = 0
+                for line in lines[:6]:  # Check up to 6 lines to be safe
+                    if any(keyword in line for keyword in ["Rollennummer=", "Datum/Zeit=", "Benutzer=", "Computer="]):
+                        header_lines += 1
+                    elif line.strip() and header_lines > 0:
+                        # Found a non-header line after seeing header lines
+                        break
+                
+                # Ensure we skip at least 4 lines if we detected a header
+                header_lines = max(header_lines, 4)
+                self.logger.debug(f"Header detected in {log_file}, skipping {header_lines} lines")
+            else:
+                header_lines = 0
+                self.logger.debug(f"No header detected in {log_file}, starting from line 0")
             
             if not roll:
                 self.logger.warning(f"Could not extract roll number from {log_file}")
@@ -292,7 +322,7 @@ class HandoffService:
             # Process page entries (same logic as indexer_v2.py)
             page_entries = []
             
-            for line in lines[3:]:  # Skip header lines
+            for line in lines[header_lines:]:
                 if not line.strip() or not (pdf_pattern.match(line.lower()) or '.pdf;' in line.lower()):
                     continue
                     
@@ -302,6 +332,10 @@ class HandoffService:
                     
                 document_filename = parts[0]  # e.g., "1427004807000278.pdf"
                 blip_position = parts[1]      # e.g., "0-1-0"
+                
+                # Remove BOM character if present (common in UTF-16 files)
+                if document_filename.startswith('\ufeff'):
+                    document_filename = document_filename[1:]
                 
                 # Extract document ID (remove .pdf extension, case-insensitive)
                 barcode = document_filename

@@ -610,7 +610,7 @@ def send_handoff_email(request, project_id):
             # Legacy: Get file paths from attachments data
             file_paths = data.get('attachments', {})
         
-        result = handoff_service.send_handoff_email(project, email_data, file_paths)
+        result = handoff_service.send_handoff_email(project, email_data, file_paths, request.user)
         
         return JsonResponse(result)
         
