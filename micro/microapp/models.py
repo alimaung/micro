@@ -90,7 +90,7 @@ class Document(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='documents')
     doc_id = models.CharField(max_length=100, help_text="Document ID (usually numeric, extracted from filename)")
     path = models.CharField(max_length=500, help_text="Full path to the PDF file")
-    com_id = models.IntegerField(blank=True, null=True, help_text="COM ID from comlist Excel file")
+    com_id = models.CharField(max_length=50, blank=True, null=True, help_text="COM ID from comlist Excel file")
     
     # Page information
     pages = models.IntegerField(default=0, help_text="Total number of pages in the document")

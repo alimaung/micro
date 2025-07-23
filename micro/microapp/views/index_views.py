@@ -490,14 +490,16 @@ def process_index_initialization(task_id, project_id, allocation_results=None):
                             
                             print(f"DEBUG: Extracted barcode: {barcode_raw} -> original: {barcode_original}, normalized: {barcode_normalized}, com_id: {com_id}")
                             
-                            # Convert ComID to integer if possible
+                            # Keep ComID in original format (preserve leading zeros and any formatting)
                             if com_id is not None:
                                 try:
-                                    # Handle case where Excel returns a float
+                                    # Convert to string to preserve original format
                                     if isinstance(com_id, float) and com_id.is_integer():
-                                        com_id = int(com_id)
+                                        # Handle case where Excel returns a float like 6006767.0
+                                        com_id = str(int(com_id))
                                     else:
-                                        com_id = int(com_id)
+                                        # Keep as string to preserve any leading zeros or formatting
+                                        com_id = str(com_id)
                                     
                                     # Store both formats in the mappings dictionary
                                     if barcode_original and com_id:
