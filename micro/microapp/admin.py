@@ -14,9 +14,9 @@ class ProjectAdmin(admin.ModelAdmin):
                     'folder_path', 'pdf_folder_path', 'comlist_path', 'output_dir', 'has_pdf_folder', 'processing_complete',
                     'retain_sources', 'add_to_database', 'has_oversized', 'total_pages', 'total_pages_with_refs',
                     'documents_with_oversized', 'total_oversized', 'created_at', 'updated_at', 'owner',
-                    'index_path', 'data_dir', 'film_allocation_complete', 'distribution_complete')
+                    'index_path', 'data_dir', 'film_allocation_complete', 'distribution_complete', 'handoff_complete')
     search_fields = ('archive_id', 'name', 'location', 'project_folder_name')
-    list_filter = ('processing_complete', 'has_pdf_folder', 'has_oversized', 'location', 'film_allocation_complete', 'distribution_complete')
+    list_filter = ('processing_complete', 'has_pdf_folder', 'has_oversized', 'location', 'film_allocation_complete', 'distribution_complete', 'handoff_complete')
     readonly_fields = ('id', 'created_at', 'updated_at')
     fieldsets = (
         ('Identification', {
@@ -27,7 +27,7 @@ class ProjectAdmin(admin.ModelAdmin):
                        'index_path', 'data_dir')
         }),
         ('Status', {
-            'fields': ('has_pdf_folder', 'processing_complete', 'film_allocation_complete', 'distribution_complete')
+            'fields': ('has_pdf_folder', 'processing_complete', 'film_allocation_complete', 'distribution_complete', 'handoff_complete')
         }),
         ('Processing Settings', {
             'fields': ('retain_sources', 'add_to_database')

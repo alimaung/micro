@@ -1342,27 +1342,251 @@ class DevelopmentDashboard {
     
     // Modal and other UI methods
     showChemicalResetModal(chemicalType) {
-        // Implementation for chemical reset modal
+        const modal = document.getElementById('chemical-reset-modal');
+        const chemicalNameElement = document.getElementById('reset-chemical-name');
+        const newBatchIdInput = document.getElementById('new-batch-id');
+        const maxAreaInput = document.getElementById('max-area');
+        
+        if (modal && chemicalNameElement) {
+            // Set the chemical type name
+            const chemicalNames = {
+                'developer': 'Developer',
+                'fixer': 'Fixer',
+                'cleaner1': 'Cleaner 1',
+                'cleaner2': 'Cleaner 2'
+            };
+            
+            chemicalNameElement.textContent = chemicalNames[chemicalType] || chemicalType;
+            
+            // Generate a default batch ID
+            const now = new Date();
+            const timestamp = now.toISOString().slice(0, 19).replace(/[-:]/g, '').replace('T', '_');
+            newBatchIdInput.value = `${chemicalType}_${timestamp}`;
+            
+            // Set default max area
+            maxAreaInput.value = '10.0';
+            
+            // Store the chemical type for later use
+            modal.dataset.chemicalType = chemicalType;
+            
+            // Show the modal
+            modal.style.display = 'flex';
+            modal.style.opacity = '0';
+            setTimeout(() => {
+                modal.style.opacity = '1';
+            }, 10);
+        }
     }
     
     hideModal() {
-        // Implementation for hiding modals
+        const modals = [
+            document.getElementById('chemical-reset-modal'),
+            document.getElementById('chemical-insertion-modal')
+        ];
+        
+        modals.forEach(modal => {
+            if (modal) {
+                modal.style.opacity = '0';
+                setTimeout(() => {
+                    modal.style.display = 'none';
+                }, 300);
+            }
+        });
     }
     
-    confirmChemicalReset() {
-        // Implementation for chemical reset confirmation
+    async confirmChemicalReset() {
+        const modal = document.getElementById('chemical-reset-modal');
+        const chemicalType = modal?.dataset.chemicalType;
+        const newBatchIdInput = document.getElementById('new-batch-id');
+        const maxAreaInput = document.getElementById('max-area');
+        
+        if (!chemicalType || !newBatchIdInput || !maxAreaInput) {
+            this.showNotification('error', 'Error', 'Missing required information for chemical reset');
+            return;
+        }
+        
+        const batchId = newBatchIdInput.value.trim();
+        const maxArea = parseFloat(maxAreaInput.value);
+        
+        if (!batchId) {
+            this.showNotification('error', 'Error', 'Please enter a batch ID');
+            return;
+        }
+        
+        if (isNaN(maxArea) || maxArea <= 0) {
+            this.showNotification('error', 'Error', 'Please enter a valid maximum area');
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/api/development/chemicals/reset/${chemicalType}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.getCSRFToken()
+                },
+                body: JSON.stringify({
+                    batch_id: batchId,
+                    max_area: maxArea
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                this.showNotification('success', 'Chemical Reset Complete', 
+                    `${chemicalType} batch has been reset with new batch ID: ${batchId}`);
+                
+                // Hide modal and refresh chemical status
+                this.hideModal();
+                this.loadChemicalStatus();
+            } else {
+                this.showNotification('error', 'Reset Failed', data.error || 'Failed to reset chemical batch');
+            }
+        } catch (error) {
+            console.error('Error resetting chemical batch:', error);
+            this.showNotification('error', 'Error', 'Failed to reset chemical batch');
+        }
     }
     
     showChemicalInsertionModal() {
-        // Implementation for chemical insertion modal
+        const modal = document.getElementById('chemical-insertion-modal');
+        const batchDateInput = document.getElementById('batch-date');
+        const batchCapacityInput = document.getElementById('batch-capacity');
+        const confirmButton = document.getElementById('confirm-chemical-insertion');
+        
+        if (modal) {
+            // Set today's date
+            if (batchDateInput) {
+                const today = new Date().toISOString().split('T')[0];
+                batchDateInput.value = today;
+            }
+            
+            // Set default capacity
+            if (batchCapacityInput) {
+                batchCapacityInput.value = '10.0';
+            }
+            
+            // Reset all checkboxes
+            const checkboxes = modal.querySelectorAll('.chemical-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            
+            // Disable confirm button initially
+            if (confirmButton) {
+                confirmButton.disabled = true;
+            }
+            
+            // Show the modal
+            modal.style.display = 'flex';
+            modal.style.opacity = '0';
+            setTimeout(() => {
+                modal.style.opacity = '1';
+            }, 10);
+        }
     }
     
     updateChemicalChecklist() {
-        // Implementation for chemical checklist
+        const modal = document.getElementById('chemical-insertion-modal');
+        const confirmButton = document.getElementById('confirm-chemical-insertion');
+        
+        if (!modal || !confirmButton) return;
+        
+        // Check if all four chemicals are checked
+        const checkboxes = modal.querySelectorAll('.chemical-checkbox');
+        const allChecked = Array.from(checkboxes).every(checkbox => checkbox.checked);
+        
+        // Enable/disable confirm button based on whether all chemicals are checked
+        confirmButton.disabled = !allChecked;
+        
+        if (allChecked) {
+            confirmButton.innerHTML = '<i class="fas fa-check"></i> Confirm Installation Complete';
+            confirmButton.className = 'btn btn-success';
+        } else {
+            confirmButton.innerHTML = '<i class="fas fa-check"></i> Confirm Installation Complete';
+            confirmButton.className = 'btn btn-success';
+        }
     }
     
-    confirmChemicalInsertion() {
-        // Implementation for chemical insertion confirmation
+    async confirmChemicalInsertion() {
+        const modal = document.getElementById('chemical-insertion-modal');
+        const batchCapacityInput = document.getElementById('batch-capacity');
+        const batchNotesInput = document.getElementById('batch-notes');
+        const confirmButton = document.getElementById('confirm-chemical-insertion');
+        
+        if (!modal || !batchCapacityInput) {
+            this.showNotification('error', 'Error', 'Missing required modal elements');
+            return;
+        }
+        
+        // Validate that all chemicals are checked
+        const checkboxes = modal.querySelectorAll('.chemical-checkbox');
+        const allChecked = Array.from(checkboxes).every(checkbox => checkbox.checked);
+        
+        if (!allChecked) {
+            this.showNotification('error', 'Incomplete Installation', 
+                'Please check all four chemical types to confirm they have been installed');
+            return;
+        }
+        
+        const capacity = parseFloat(batchCapacityInput.value);
+        const notes = batchNotesInput?.value?.trim() || '';
+        
+        if (isNaN(capacity) || capacity <= 0) {
+            this.showNotification('error', 'Error', 'Please enter a valid capacity value');
+            return;
+        }
+        
+        try {
+            // Show loading state
+            const originalText = confirmButton.innerHTML;
+            confirmButton.disabled = true;
+            confirmButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Installing Chemicals...';
+            
+            const response = await fetch('/api/development/chemicals/insert/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.getCSRFToken()
+                },
+                body: JSON.stringify({
+                    capacity: capacity,
+                    notes: notes
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                this.showNotification('success', 'Chemical Installation Complete', 
+                    `Successfully installed ${data.batches?.length || 4} chemical batches with ${capacity}m² capacity each`);
+                
+                // Hide modal and refresh chemical status
+                this.hideModal();
+                this.loadChemicalStatus();
+                
+                // Show detailed results if available
+                if (data.batches && data.batches.length > 0) {
+                    console.log('New chemical batches created:', data.batches);
+                }
+            } else {
+                this.showNotification('error', 'Installation Failed', data.error || 'Failed to install chemical batches');
+                
+                // Reset button
+                confirmButton.disabled = false;
+                confirmButton.innerHTML = originalText;
+            }
+        } catch (error) {
+            console.error('Error installing chemicals:', error);
+            this.showNotification('error', 'Error', 'Failed to install chemical batches');
+            
+            // Reset button
+            if (confirmButton) {
+                confirmButton.disabled = false;
+                confirmButton.innerHTML = '<i class="fas fa-check"></i> Confirm Installation Complete';
+            }
+        }
     }
     
     startAutoRefresh() {

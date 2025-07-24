@@ -55,6 +55,7 @@ class Project(models.Model):
     # Film allocation status flags
     film_allocation_complete = models.BooleanField(default=False)
     distribution_complete = models.BooleanField(default=False)
+    handoff_complete = models.BooleanField(default=False, help_text="Whether the project has been successfully handed off via email")
     
     class Meta:
         ordering = ['-created_at']
@@ -999,8 +1000,8 @@ class FilmLabel(models.Model):
     
     @property
     def is_completed(self):
-        """Check if the label process is completed (generated and printed)."""
-        return self.status == 'completed' or (self.printed_at is not None)
+        """Check if the label process is completed (labels have been generated)."""
+        return self.status in ['generated', 'downloaded', 'queued', 'printed', 'completed']
     
     @property
     def labels_directory(self):

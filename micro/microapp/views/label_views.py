@@ -106,11 +106,11 @@ def generate_film_labels(request):
         with transaction.atomic():
             for roll in rolls:
                 try:
-                    # Check if labels already exist for this roll
+                    # Check if labels already exist for this roll and delete them
                     existing_labels = FilmLabel.objects.filter(roll=roll)
                     if existing_labels.exists():
-                        logger.info(f"Labels already exist for roll {roll.film_number}, skipping")
-                        continue
+                        logger.info(f"Labels already exist for roll {roll.film_number}, deleting existing labels to regenerate")
+                        existing_labels.delete()
                     
                     # Determine which versions to generate
                     versions_to_generate = ['normal', 'angled'] if generate_both_versions else ['normal']

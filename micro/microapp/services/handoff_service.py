@@ -1364,6 +1364,15 @@ class HandoffService:
                     # For displayed emails, we'll mark as sent since user will likely send it
                     handoff_record.mark_sent()
                 
+                # Mark project as handed off when email is successfully sent/displayed
+                try:
+                    project.handoff_complete = True
+                    project.save(update_fields=['handoff_complete'])
+                    self.logger.info(f"Marked project {project.archive_id} as handed off (handoff_complete=True)")
+                except Exception as project_update_error:
+                    self.logger.error(f"Failed to update project handoff status: {project_update_error}")
+                    # Don't fail the entire handoff if project update fails
+                
                 return {
                     'success': True,
                     'message': f'Email {"sent automatically" if send_method == "sent" else "opened in Outlook for manual sending"} to {email_data["to"]}',

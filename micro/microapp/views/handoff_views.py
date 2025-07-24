@@ -31,13 +31,15 @@ def get_projects_for_handoff(request):
     (have filming_status = 'completed') as a fallback.
     """
     try:
-        logger.info("=== HANDOFF PROJECT QUERY DEBUG START ===")
+        # Check for status filter parameter
+        status_filter = request.GET.get('status', 'ready')  # Default to 'ready'
+        logger.info(f"=== HANDOFF PROJECT QUERY DEBUG START (status_filter: {status_filter}) ===")
         
         # Get all projects with their roll completion status
         from django.db.models import Exists, OuterRef
         from ..models import FilmLabel
         
-        projects = Project.objects.annotate(
+        base_query = Project.objects.annotate(
             total_rolls=Count('rolls', filter=Q(rolls__film_type='16mm')),
             filmed_rolls=Count('rolls', filter=Q(rolls__filming_status='completed', rolls__film_type='16mm')),
             developed_rolls=Count('rolls', filter=Q(rolls__development_status='completed', rolls__film_type='16mm')),
@@ -49,9 +51,22 @@ def get_projects_for_handoff(request):
             ))
         ).filter(
             total_rolls__gt=0  # Only projects with 16mm rolls
-        ).select_related().prefetch_related('rolls__film_labels')
+        )
         
-        logger.info(f"Found {projects.count()} projects with rolls for handoff evaluation")
+        # Apply status-based filtering
+        if status_filter == 'ready':
+            # Projects ready for handoff (not yet handed off)
+            projects = base_query.filter(handoff_complete=False)
+        elif status_filter == 'completed':
+            # Projects that have been handed off
+            projects = base_query.filter(handoff_complete=True)
+        else:
+            # All projects (for 'all' status or invalid status)
+            projects = base_query
+        
+        projects = projects.select_related().prefetch_related('rolls__film_labels')
+        
+        logger.info(f"Found {projects.count()} projects with rolls for handoff evaluation (status_filter: {status_filter})")
         
         ready_projects = []
         filmed_projects = []

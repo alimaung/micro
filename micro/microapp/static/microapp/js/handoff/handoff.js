@@ -253,7 +253,10 @@ document.addEventListener('DOMContentLoaded', function() {
             projectSearchInput.addEventListener('input', filterProjects);
         }
         if (statusFilter) {
-            statusFilter.addEventListener('change', filterProjects);
+            statusFilter.addEventListener('change', () => {
+                // Reload projects from server when status filter changes
+                loadProjects();
+            });
         }
         
         // Project sorting
@@ -399,8 +402,14 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function loadProjects() {
-        // Load projects from API
-        fetch('/api/handoff/projects/')
+        // Get current status filter
+        const statusFilter = document.getElementById('status-filter')?.value || 'ready';
+        
+        // Load projects from API with status filter
+        const url = new URL('/api/handoff/projects/', window.location.origin);
+        url.searchParams.append('status', statusFilter);
+        
+        fetch(url)
             .then(response => response.json())
             .then(data => {
                 if (data.success) {

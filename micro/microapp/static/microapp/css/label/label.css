@@ -975,7 +975,7 @@
 
 /* Printer section */
 .print-info {
-    padding: 20px 24px;
+    /* padding: 20px 24px; */
     background-color: var(--color-background);
 }
 
