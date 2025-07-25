@@ -197,7 +197,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     emailCc.value = emailFormData.cc || 'ali.maung@rolls-royce.com';
                 }
                 if (emailBcc) {
-                    emailBcc.value = emailFormData.bcc || 'ali.maung@rolls-royce.com; microfilm.rollsroyce@gmail.com';
+                    emailBcc.value = emailFormData.bcc || 'ali.maung@rolls-royce.com';
                 }
                 if (emailSubject) {
                     emailSubject.value = emailFormData.subject || `Microfilm Project Handoff - ${selectedProject?.archive_id || '[Archive ID]'}`;
@@ -859,7 +859,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         if (!emailBcc.value && !emailBcc.hasAttribute('data-user-modified')) {
-            emailBcc.value = 'ali.maung@rolls-royce.com; microfilm.rollsroyce@gmail.com';
+            emailBcc.value = 'ali.maung@rolls-royce.com';
         }
         
         // Update subject with archive ID and date
@@ -1503,7 +1503,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         if (emailBcc) {
-            emailBcc.value = 'ali.maung@rolls-royce.com; microfilm.rollsroyce@gmail.com';
+            emailBcc.value = 'ali.maung@rolls-royce.com';
         }
         
         if (emailSubject) {

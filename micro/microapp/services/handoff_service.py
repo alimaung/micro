@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 DEFAULT_EMAIL_RECIPIENTS = {
     'to': 'ali.maung@rolls-royce.com',
     'cc': 'ali.maung@rolls-royce.com',
-    'bcc': 'ali.maung@rolls-royce.com, microfilm.rollsroyce@gmail.com'
+    'bcc': 'ali.maung@rolls-royce.com'
 }
 
 @dataclass
@@ -1095,7 +1095,7 @@ class HandoffService:
                 email_data['cc'] = 'ali.maung@rolls-royce.com'
             
             if not email_data.get('bcc'):
-                email_data['bcc'] = 'ali.maung@rolls-royce.com, microfilm.rollsroyce@gmail.com'
+                email_data['bcc'] = 'ali.maung@rolls-royce.com'
 
             # Validate email addresses before proceeding
             def validate_email_list(email_string):

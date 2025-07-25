@@ -1,14 +1,14 @@
- 1. [] 
- 2. [] 
- 3. [] 
- 4. [] 
- 5. [] 
- 6. [] 
- 7. [] 
- 8. [] 
- 9. [] 
-10. [] 
-11. [] 
+ 1. [] Index list scroll container 
+ 2. [] Film list scroll container
+ 3. [] Fixed light mode toggle key (control)
+ 4. [] Label list scroll container
+ 5. [] Handoff list scroll container
+ 6. [] Fix Film localstorage
+ 7. [] Fix Filming session restoration
+ 8. [] Fix Developer session duration (add 0,5-1m working time)
+ 9. [] Fix Label generation card (show recently generated and historical seperate)
+10. [] Feat Quality (Compare original documents with film and blipindex (maybe with MFDWin integration))
+11. [] Implement offline transfer module
 12. [] 
 13. [] 
 14. [] 
