@@ -534,6 +534,270 @@ function formatFileSize(bytes) {
 }
 
 /**
+ * Analyze folder without registering it
+ */
+function analyzeFolder(folderPath) {
+    console.log('Analyzing folder:', folderPath);
+    
+    showLoadingModal();
+    
+    fetch('/api/analyze/folder/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken()
+        },
+        body: JSON.stringify({
+            folder_path: folderPath,
+            force_reanalyze: false
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoadingModal();
+        if (data.status === 'success') {
+            showNotification('Folder analyzed successfully', 'success');
+            // Reload the page to show the analyzed folder in the analyzed section
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        } else {
+            showNotification(data.message || 'Failed to analyze folder', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Analyze error:', error);
+        hideLoadingModal();
+        showNotification('Failed to analyze folder', 'error');
+    });
+}
+
+/**
+ * Register an analyzed folder as a project
+ */
+function registerAnalyzedFolder(analyzedFolderId, projectData) {
+    console.log('Registering analyzed folder:', analyzedFolderId, 'with data:', projectData);
+    
+    showLoadingModal();
+    
+    fetch('/api/analyze/register-folder/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken()
+        },
+        body: JSON.stringify({
+            analyzed_folder_id: analyzedFolderId,
+            project_data: projectData
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoadingModal();
+        if (data.status === 'success') {
+            showNotification('Folder registered as project successfully', 'success');
+            // Reload the page to show the project in the registered section
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        } else {
+            showNotification(data.message || 'Failed to register folder', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Register error:', error);
+        hideLoadingModal();
+        showNotification('Failed to register folder', 'error');
+    });
+}
+
+/**
+ * Get basic folder information
+ */
+function getFolderInfo(folderPath) {
+    return fetch(`/api/analyze/folder-info/?folder_path=${encodeURIComponent(folderPath)}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                return data.data;
+            } else {
+                throw new Error(data.message || 'Failed to get folder info');
+            }
+        });
+}
+
+/**
+ * Switch between sections
+ */
+function switchSection(sectionName) {
+    const url = new URL(window.location);
+    url.searchParams.set('section', sectionName);
+    if (url.searchParams.get('page')) {
+        url.searchParams.delete('page'); // Reset to first page when switching sections
+    }
+    window.location.href = url.toString();
+}
+
+/**
+ * Show registration modal for analyzed folder
+ */
+function showRegistrationModal(analyzedFolderId, folderName) {
+    const modal = document.createElement('div');
+    modal.className = 'registration-modal';
+    modal.innerHTML = `
+        <div class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Register Folder as Project</h3>
+                    <button class="modal-close" onclick="this.parentElement.parentElement.parentElement.parentElement.remove()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="registration-form">
+                        <div class="form-group">
+                            <label for="archive-id">Archive ID *</label>
+                            <input type="text" id="archive-id" required placeholder="e.g., RRD123-2024">
+                        </div>
+                        <div class="form-group">
+                            <label for="location">Location *</label>
+                            <select id="location" required>
+                                <option value="">Select Location</option>
+                                <option value="OU">OU</option>
+                                <option value="DW">DW</option>
+                                <option value="OTHER">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="project-name">Project Name</label>
+                            <input type="text" id="project-name" value="${folderName}" placeholder="Project name">
+                        </div>
+                        <div class="form-group">
+                            <label for="doc-type">Document Type</label>
+                            <input type="text" id="doc-type" placeholder="e.g., Correspondence, Reports">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="this.parentElement.parentElement.parentElement.parentElement.remove()">
+                        Cancel
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="submitRegistration(${analyzedFolderId})">
+                        Register Project
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Add styles
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    `;
+    
+    document.body.appendChild(modal);
+    document.body.style.overflow = 'hidden';
+}
+
+/**
+ * Submit registration form
+ */
+function submitRegistration(analyzedFolderId) {
+    const form = document.getElementById('registration-form');
+    const formData = new FormData(form);
+    
+    const projectData = {
+        archive_id: document.getElementById('archive-id').value,
+        location: document.getElementById('location').value,
+        name: document.getElementById('project-name').value,
+        doc_type: document.getElementById('doc-type').value
+    };
+    
+    // Validate required fields
+    if (!projectData.archive_id || !projectData.location) {
+        showNotification('Archive ID and Location are required', 'error');
+        return;
+    }
+    
+    // Close modal
+    document.querySelector('.registration-modal').remove();
+    document.body.style.overflow = '';
+    
+    // Register the folder
+    registerAnalyzedFolder(analyzedFolderId, projectData);
+}
+
+/**
+ * Show analyze confirmation modal
+ */
+function showAnalyzeModal(folderPath, folderName) {
+    const modal = document.createElement('div');
+    modal.className = 'analyze-modal';
+    modal.innerHTML = `
+        <div class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Analyze Folder</h3>
+                    <button class="modal-close" onclick="this.parentElement.parentElement.parentElement.parentElement.remove()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to analyze the folder:</p>
+                    <p><strong>${folderName}</strong></p>
+                    <p><small>${folderPath}</small></p>
+                    <p>This will scan the folder and estimate document counts, page counts, and roll requirements.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="this.parentElement.parentElement.parentElement.parentElement.remove()">
+                        Cancel
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="confirmAnalyze('${folderPath}')">
+                        Analyze Folder
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Add styles
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    `;
+    
+    document.body.appendChild(modal);
+    document.body.style.overflow = 'hidden';
+}
+
+/**
+ * Confirm analyze action
+ */
+function confirmAnalyze(folderPath) {
+    // Close modal
+    document.querySelector('.analyze-modal').remove();
+    document.body.style.overflow = '';
+    
+    // Start analysis
+    analyzeFolder(folderPath);
+}
+
+/**
  * Debug utility functions
  */
 window.analyzeDebug = {
@@ -545,7 +809,13 @@ window.analyzeDebug = {
     refreshProjectData,
     exportProjectData,
     formatNumber,
-    formatFileSize
+    formatFileSize,
+    analyzeFolder,
+    registerAnalyzedFolder,
+    getFolderInfo,
+    switchSection,
+    showRegistrationModal,
+    showAnalyzeModal
 };
 
 // Add CSS animations

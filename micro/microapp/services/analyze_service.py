@@ -8,7 +8,8 @@ import logging
 from pathlib import Path
 from django.conf import settings
 from django.core.cache import cache
-from ..models import Project
+from django.contrib.auth.models import User
+from ..models import Project, AnalyzedFolder
 
 logger = logging.getLogger(__name__)
 
@@ -196,4 +197,436 @@ class AnalyzeService:
         i = int(math.floor(math.log(size_bytes, 1024)))
         p = math.pow(1024, i)
         s = round(size_bytes / p, 2)
-        return f"{s} {size_names[i]}" 
+        return f"{s} {size_names[i]}"
+    
+    def discover_unregistered_folders(self, base_path="X:\\"):
+        """
+        Discover folders that haven't been registered or analyzed yet.
+        
+        Args:
+            base_path: Base directory to scan for potential projects (default X:)
+            
+        Returns:
+            List of folder information for unregistered folders
+        """
+        unregistered_folders = []
+        
+        try:
+            base_path_obj = Path(base_path)
+            if not base_path_obj.exists():
+                logger.warning(f"Base path does not exist: {base_path}")
+                return unregistered_folders
+            
+            # Define exclusion patterns
+            excluded_folders = {
+                '.management',
+                'tiftopdf',
+                '$recycle.bin',
+                'system volume information',
+                'recycler'
+            }
+            
+            # Get all subdirectories
+            for folder_path in base_path_obj.iterdir():
+                if not folder_path.is_dir():
+                    continue
+                
+                folder_name = folder_path.name.lower()
+                
+                # Skip excluded folders
+                if folder_name in excluded_folders:
+                    continue
+                
+                # Skip folders starting with RRD9
+                if folder_path.name.startswith('RRD9'):
+                    continue
+                
+                # Skip hidden/system folders
+                if folder_path.name.startswith('.') or folder_path.name.startswith('$'):
+                    continue
+                
+                # Check if this folder is already registered (has .data folder)
+                data_folder = folder_path / '.data'
+                is_registered = data_folder.exists() and data_folder.is_dir()
+                
+                # Check if this folder is already analyzed
+                is_analyzed = AnalyzedFolder.objects.filter(
+                    folder_path=str(folder_path)
+                ).exists()
+                
+                if not is_registered and not is_analyzed:
+                    # Get basic folder info
+                    folder_info = self._get_basic_folder_info(folder_path)
+                    if folder_info:
+                        unregistered_folders.append(folder_info)
+                        
+        except Exception as e:
+            logger.error(f"Error discovering unregistered folders: {e}")
+            
+        return unregistered_folders
+    
+    def get_registered_projects_with_data(self):
+        """
+        Get all registered projects (those with .data folders) without filtering.
+        
+        Returns:
+            List of projects with their analysis data
+        """
+        projects = Project.objects.all().order_by('-updated_at')
+        projects_with_data = []
+        
+        for project in projects:
+            project_data = self.get_project_summary_data(project)
+            projects_with_data.append({
+                'project': project,
+                'data': project_data or {}
+            })
+        
+        return projects_with_data
+    
+    def _get_basic_folder_info(self, folder_path):
+        """
+        Get basic information about a folder without full analysis.
+        
+        Args:
+            folder_path: Path to the folder
+            
+        Returns:
+            Dict with basic folder information
+        """
+        try:
+            folder_path = Path(folder_path)
+            
+            # Count files and calculate size
+            file_count = 0
+            total_size = 0
+            pdf_count = 0
+            
+            for file_path in folder_path.rglob('*'):
+                if file_path.is_file():
+                    file_count += 1
+                    total_size += file_path.stat().st_size
+                    if file_path.suffix.lower() == '.pdf':
+                        pdf_count += 1
+            
+            return {
+                'folder_path': str(folder_path),
+                'folder_name': folder_path.name,
+                'file_count': file_count,
+                'total_size': total_size,
+                'total_size_formatted': self.format_file_size(total_size),
+                'pdf_count': pdf_count,
+                'has_pdfs': pdf_count > 0
+            }
+            
+        except Exception as e:
+            logger.error(f"Error getting basic folder info for {folder_path}: {e}")
+            return None
+    
+    def analyze_folder_standalone(self, folder_path, user, force_reanalyze=False):
+        """
+        Analyze a folder without registering it as a project.
+        
+        Args:
+            folder_path: Path to the folder to analyze
+            user: User performing the analysis
+            force_reanalyze: Whether to reanalyze if already analyzed
+            
+        Returns:
+            AnalyzedFolder instance or None if analysis failed
+        """
+        try:
+            folder_path = str(folder_path)
+            
+            # Check if already analyzed
+            existing_analysis = AnalyzedFolder.objects.filter(folder_path=folder_path).first()
+            if existing_analysis and not force_reanalyze:
+                logger.info(f"Folder already analyzed: {folder_path}")
+                return existing_analysis
+            
+            # Run the analysis (this would call your existing analysis logic)
+            analysis_results = self._run_folder_analysis(folder_path)
+            
+            if not analysis_results:
+                logger.error(f"Analysis failed for folder: {folder_path}")
+                return None
+            
+            # Create or update AnalyzedFolder record
+            analyzed_folder, created = AnalyzedFolder.objects.update_or_create(
+                folder_path=folder_path,
+                defaults={
+                    'folder_name': Path(folder_path).name,
+                    'total_documents': analysis_results.get('total_documents', 0),
+                    'total_pages': analysis_results.get('total_pages', 0),
+                    'oversized_count': analysis_results.get('oversized_count', 0),
+                    'has_oversized': analysis_results.get('has_oversized', False),
+                    'estimated_rolls_16mm': analysis_results.get('estimated_rolls_16mm', 0),
+                    'estimated_rolls_35mm': analysis_results.get('estimated_rolls_35mm', 0),
+                    'total_estimated_rolls': analysis_results.get('total_estimated_rolls', 0),
+                    'file_count': analysis_results.get('file_count', 0),
+                    'total_size': analysis_results.get('total_size', 0),
+                    'total_size_formatted': analysis_results.get('total_size_formatted', '0 B'),
+                    'pdf_folder_found': analysis_results.get('pdf_folder_found', False),
+                    'pdf_folder_path': analysis_results.get('pdf_folder_path'),
+                    'analysis_data_path': analysis_results.get('analysis_data_path'),
+                    'recommended_workflow': analysis_results.get('recommended_workflow', 'unknown'),
+                    'analyzed_by': user
+                }
+            )
+            
+            logger.info(f"Successfully analyzed folder: {folder_path}")
+            return analyzed_folder
+            
+        except Exception as e:
+            logger.error(f"Error analyzing folder {folder_path}: {e}")
+            return None
+    
+    def _run_folder_analysis(self, folder_path):
+        """
+        Run the actual analysis on a folder.
+        This integrates with the existing document analysis logic.
+        
+        Args:
+            folder_path: Path to analyze
+            
+        Returns:
+            Dict with analysis results
+        """
+        try:
+            folder_path = Path(folder_path)
+            
+            # Look for PDF folder first
+            pdf_folder_path = None
+            pdf_files = []
+            
+            # Check if there's a dedicated PDF subfolder
+            for subfolder in folder_path.iterdir():
+                if subfolder.is_dir():
+                    pdf_count = len([f for f in subfolder.iterdir() 
+                                   if f.is_file() and f.suffix.lower() == '.pdf'])
+                    if pdf_count > 0:
+                        # Use the first subfolder with PDFs as PDF folder
+                        pdf_folder_path = str(subfolder)
+                        pdf_files = [f for f in subfolder.iterdir() 
+                                   if f.is_file() and f.suffix.lower() == '.pdf']
+                        break
+            
+            # If no PDF subfolder found, look in root
+            if not pdf_files:
+                pdf_files = [f for f in folder_path.iterdir() 
+                           if f.is_file() and f.suffix.lower() == '.pdf']
+                if pdf_files:
+                    pdf_folder_path = str(folder_path)
+            
+            if not pdf_files:
+                # No PDFs found - return basic folder info
+                file_count = len([f for f in folder_path.rglob('*') if f.is_file()])
+                total_size = sum(f.stat().st_size for f in folder_path.rglob('*') if f.is_file())
+                
+                return {
+                    'total_documents': 0,
+                    'total_pages': 0,
+                    'oversized_count': 0,
+                    'has_oversized': False,
+                    'estimated_rolls_16mm': 0,
+                    'estimated_rolls_35mm': 0,
+                    'total_estimated_rolls': 0,
+                    'file_count': file_count,
+                    'total_size': total_size,
+                    'total_size_formatted': self.format_file_size(total_size),
+                    'pdf_folder_found': False,
+                    'pdf_folder_path': None,
+                    'analysis_data_path': None,
+                    'recommended_workflow': 'no_documents'
+                }
+            
+            # Perform actual document analysis
+            analysis_results = self._analyze_pdf_documents(pdf_files, Path(pdf_folder_path))
+            
+            # Calculate roll estimates based on actual page counts
+            total_pages = analysis_results['total_pages']
+            estimated_rolls_16mm = max(1, total_pages // 1500) if total_pages > 0 else 0
+            estimated_rolls_35mm = max(1, total_pages // 800) if total_pages > 0 else 0
+            
+            # Determine recommended workflow
+            has_oversized = analysis_results['has_oversized']
+            if has_oversized:
+                recommended_workflow = 'mixed_format'  # Requires both 16mm and 35mm
+            else:
+                recommended_workflow = 'standard_16mm'  # Can use 16mm only
+            
+            # Calculate total folder size
+            total_size = sum(f.stat().st_size for f in folder_path.rglob('*') if f.is_file())
+            file_count = len([f for f in folder_path.rglob('*') if f.is_file()])
+            
+            return {
+                'total_documents': analysis_results['document_count'],
+                'total_pages': analysis_results['total_pages'],
+                'oversized_count': analysis_results['oversized_count'],
+                'has_oversized': analysis_results['has_oversized'],
+                'estimated_rolls_16mm': estimated_rolls_16mm,
+                'estimated_rolls_35mm': estimated_rolls_35mm,
+                'total_estimated_rolls': estimated_rolls_16mm + estimated_rolls_35mm,
+                'file_count': file_count,
+                'total_size': total_size,
+                'total_size_formatted': self.format_file_size(total_size),
+                'pdf_folder_found': pdf_folder_path is not None,
+                'pdf_folder_path': pdf_folder_path,
+                'analysis_data_path': None,  # Would be set by actual analysis
+                'recommended_workflow': recommended_workflow,
+                'documents': analysis_results['documents']  # Detailed document info
+            }
+            
+        except Exception as e:
+            logger.error(f"Error running folder analysis: {e}")
+            return None
+    
+    def _analyze_pdf_documents(self, pdf_files, pdf_folder_path):
+        """
+        Analyze PDF documents for page counts and oversized pages.
+        Integrates with existing document analysis logic.
+        
+        Args:
+            pdf_files: List of PDF file paths
+            pdf_folder_path: Path to the PDF folder
+            
+        Returns:
+            Dict with analysis results
+        """
+        import PyPDF2
+        
+        # Constants for oversized page detection (from document_views.py)
+        OVERSIZE_THRESHOLD_WIDTH = 842  # A3 width in points
+        OVERSIZE_THRESHOLD_HEIGHT = 1191  # A3 height in points
+        
+        results = {
+            'document_count': 0,
+            'total_pages': 0,
+            'oversized_count': 0,
+            'has_oversized': False,
+            'documents': []
+        }
+        
+        try:
+            for pdf_file in pdf_files:
+                if not pdf_file.suffix.lower() == '.pdf':
+                    continue
+                
+                doc_result = {
+                    'name': pdf_file.name,
+                    'path': str(pdf_file),
+                    'pages': 0,
+                    'has_oversized': False,
+                    'total_oversized': 0,
+                    'oversized_pages': []
+                }
+                
+                try:
+                    # Read the PDF file
+                    pdf_reader = PyPDF2.PdfReader(str(pdf_file))
+                    page_count = len(pdf_reader.pages)
+                    doc_result['pages'] = page_count
+                    results['total_pages'] += page_count
+                    
+                    # Check each page for oversized dimensions
+                    for i, page in enumerate(pdf_reader.pages):
+                        try:
+                            # Get page dimensions from mediabox
+                            mediabox = page.mediabox
+                            width, height = float(mediabox[2]), float(mediabox[3])
+                            
+                            # Check if page is oversized
+                            is_oversized = ((width > OVERSIZE_THRESHOLD_WIDTH and height > OVERSIZE_THRESHOLD_HEIGHT) or
+                                          (width > OVERSIZE_THRESHOLD_HEIGHT and height > OVERSIZE_THRESHOLD_WIDTH))
+                            
+                            if is_oversized:
+                                doc_result['has_oversized'] = True
+                                doc_result['total_oversized'] += 1
+                                doc_result['oversized_pages'].append(i + 1)  # 1-based page number
+                                results['has_oversized'] = True
+                        except Exception as page_e:
+                            # Skip problematic pages
+                            logger.debug(f"Error analyzing page {i+1} in {pdf_file.name}: {page_e}")
+                            continue
+                    
+                    # Count documents with oversized pages
+                    if doc_result['has_oversized']:
+                        results['oversized_count'] += 1
+                    
+                    results['documents'].append(doc_result)
+                    results['document_count'] += 1
+                    
+                except Exception as doc_e:
+                    # Log error but continue with other documents
+                    logger.warning(f"Error analyzing document {pdf_file.name}: {doc_e}")
+                    continue
+            
+            return results
+            
+        except Exception as e:
+            logger.error(f"Error in PDF document analysis: {e}")
+            return {
+                'document_count': len(pdf_files),
+                'total_pages': len(pdf_files) * 10,  # Fallback estimate
+                'oversized_count': 0,
+                'has_oversized': False,
+                'documents': []
+            }
+    
+    def get_analyzed_folders(self):
+        """
+        Get all folders that have been analyzed but not yet registered.
+        
+        Returns:
+            QuerySet of AnalyzedFolder instances that aren't registered
+        """
+        return AnalyzedFolder.objects.filter(registered_as_project__isnull=True).order_by('-analyzed_at')
+    
+    def register_analyzed_folder_as_project(self, analyzed_folder_id, project_data):
+        """
+        Convert an analyzed folder into a registered project.
+        
+        Args:
+            analyzed_folder_id: ID of the AnalyzedFolder to register
+            project_data: Dict with project registration data
+            
+        Returns:
+            Project instance or None if registration failed
+        """
+        try:
+            analyzed_folder = AnalyzedFolder.objects.get(id=analyzed_folder_id)
+            
+            if analyzed_folder.is_registered:
+                logger.warning(f"Folder already registered: {analyzed_folder.folder_path}")
+                return analyzed_folder.registered_as_project
+            
+            # Create new project from analyzed folder data
+            project = Project.objects.create(
+                archive_id=project_data.get('archive_id'),
+                name=project_data.get('name', analyzed_folder.folder_name),
+                location=project_data.get('location'),
+                doc_type=project_data.get('doc_type'),
+                project_path=analyzed_folder.folder_path,
+                folder_path=analyzed_folder.folder_path,
+                project_folder_name=analyzed_folder.folder_name,
+                pdf_folder_path=analyzed_folder.pdf_folder_path,
+                has_pdf_folder=analyzed_folder.pdf_folder_found,
+                has_oversized=analyzed_folder.has_oversized,
+                total_pages=analyzed_folder.total_pages,
+                owner=analyzed_folder.analyzed_by,
+                data_dir=analyzed_folder.analysis_data_path
+            )
+            
+            # Link the analyzed folder to the project
+            analyzed_folder.registered_as_project = project
+            analyzed_folder.save()
+            
+            logger.info(f"Successfully registered analyzed folder as project: {project.archive_id}")
+            return project
+            
+        except AnalyzedFolder.DoesNotExist:
+            logger.error(f"AnalyzedFolder not found: {analyzed_folder_id}")
+            return None
+        except Exception as e:
+            logger.error(f"Error registering analyzed folder as project: {e}")
+            return None 

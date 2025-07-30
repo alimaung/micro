@@ -6,7 +6,7 @@ from .models import (
     DistributionResult, ReferenceSheet, ReadablePageDescription, AdjustedRange,
     ProcessedDocument, FilmingSession, FilmingSessionLog,
     DevelopmentSession, ChemicalBatch, DevelopmentLog, DensityMeasurement,
-    FilmLabel
+    FilmLabel, AnalyzedFolder
 )
 
 class ProjectAdmin(admin.ModelAdmin):
@@ -608,6 +608,40 @@ class FilmLabelAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('roll', 'project', 'user')
 
+class AnalyzedFolderAdmin(admin.ModelAdmin):
+    list_display = ('id', 'folder_name', 'folder_path', 'total_documents', 'total_pages', 
+                    'oversized_count', 'has_oversized', 'total_estimated_rolls', 'is_registered',
+                    'analyzed_at', 'analyzed_by')
+    search_fields = ('folder_name', 'folder_path', 'registered_as_project__archive_id')
+    list_filter = ('has_oversized', 'pdf_folder_found', 'recommended_workflow', 'analyzed_at', 'registered_as_project')
+    readonly_fields = ('id', 'analyzed_at', 'updated_at', 'is_registered')
+    fieldsets = (
+        ('Folder Information', {
+            'fields': ('id', 'folder_path', 'folder_name', 'analyzed_by')
+        }),
+        ('Analysis Results', {
+            'fields': ('total_documents', 'total_pages', 'oversized_count', 'has_oversized')
+        }),
+        ('Roll Estimates', {
+            'fields': ('estimated_rolls_16mm', 'estimated_rolls_35mm', 'total_estimated_rolls')
+        }),
+        ('Folder Statistics', {
+            'fields': ('file_count', 'total_size', 'total_size_formatted')
+        }),
+        ('PDF Discovery', {
+            'fields': ('pdf_folder_found', 'pdf_folder_path')
+        }),
+        ('Analysis Metadata', {
+            'fields': ('analysis_data_path', 'recommended_workflow')
+        }),
+        ('Registration', {
+            'fields': ('registered_as_project', 'is_registered')
+        }),
+        ('Timestamps', {
+            'fields': ('analyzed_at', 'updated_at')
+        }),
+    )
+
 # Register all models
 admin.site.register(Project, ProjectAdmin)
 admin.site.register(Document, DocumentAdmin)
@@ -634,3 +668,4 @@ admin.site.register(ChemicalBatch, ChemicalBatchAdmin)
 admin.site.register(DevelopmentLog, DevelopmentLogAdmin)
 admin.site.register(DensityMeasurement, DensityMeasurementAdmin)
 admin.site.register(FilmLabel, FilmLabelAdmin)
+admin.site.register(AnalyzedFolder, AnalyzedFolderAdmin)

@@ -15,77 +15,258 @@
         <div class="header-content">
             <div class="header-text">
                 <h1>{% trans "Project Analysis Dashboard" %}</h1>
-                <p class="analyze-description">{% trans "Analyze registered projects and their data" %}</p>
+                <p class="analyze-description">{% trans "Discover, analyze, and register projects" %}</p>
             </div>
             <div class="header-stats">
                 <div class="stat-card">
-                    <div class="stat-number">{{ summary_stats.total_projects }}</div>
-                    <div class="stat-label">{% trans "Projects" %}</div>
+                    <div class="stat-number">{{ summary_stats.total_unregistered }}</div>
+                    <div class="stat-label">{% trans "Unregistered" %}</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-number">{{ summary_stats.total_documents|floatformat:0 }}</div>
-                    <div class="stat-label">{% trans "Documents" %}</div>
+                    <div class="stat-number">{{ summary_stats.total_analyzed }}</div>
+                    <div class="stat-label">{% trans "Analyzed" %}</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-number">{{ summary_stats.total_pages|floatformat:0 }}</div>
-                    <div class="stat-label">{% trans "Pages" %}</div>
+                    <div class="stat-number">{{ summary_stats.total_registered }}</div>
+                    <div class="stat-label">{% trans "Registered" %}</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-number">{{ summary_stats.projects_with_oversized }}</div>
-                    <div class="stat-label">{% trans "With Oversized" %}</div>
+                    <div class="stat-number">{{ summary_stats.analyzed_total_documents|add:summary_stats.registered_total_documents|floatformat:0 }}</div>
+                    <div class="stat-label">{% trans "Total Documents" %}</div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Filters Section -->
-    <div class="analyze-filters">
-        <div class="filter-row">
-            <div class="search-container">
-                <form method="get" id="search-form">
-                    <div class="search-input-wrapper">
-                        <i class="fas fa-search search-icon"></i>
-                        <input type="text" name="search" placeholder="{% trans 'Search projects...' %}" 
-                               value="{{ search_query }}" class="search-input">
-                        <input type="hidden" name="status" value="{{ status_filter }}">
+    <!-- Section Navigation -->
+    <div class="section-navigation">
+        <div class="section-tabs">
+            <button class="section-tab {% if section_filter == 'all' %}active{% endif %}" 
+                    onclick="switchSection('all')">
+                <i class="fas fa-th-large"></i>
+                {% trans "All" %}
+            </button>
+            <button class="section-tab {% if section_filter == 'unregistered' %}active{% endif %}" 
+                    onclick="switchSection('unregistered')">
+                <i class="fas fa-folder"></i>
+                {% trans "Unregistered" %} ({{ summary_stats.total_unregistered }})
+            </button>
+            <button class="section-tab {% if section_filter == 'analyzed' %}active{% endif %}" 
+                    onclick="switchSection('analyzed')">
+                <i class="fas fa-chart-line"></i>
+                {% trans "Analyzed" %} ({{ summary_stats.total_analyzed }})
+            </button>
+            <button class="section-tab {% if section_filter == 'registered' %}active{% endif %}" 
+                    onclick="switchSection('registered')">
+                <i class="fas fa-check-circle"></i>
+                {% trans "Registered" %} ({{ summary_stats.total_registered }})
+            </button>
+        </div>
+        
+        <!-- Search and Filters -->
+        <div class="search-container">
+            <form method="get" id="search-form">
+                <div class="search-input-wrapper">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" name="search" placeholder="{% trans 'Search folders and projects...' %}" 
+                           value="{{ search_query }}" class="search-input">
+                    <input type="hidden" name="section" value="{{ section_filter }}">
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Content Sections -->
+    {% if section_filter == 'all' or section_filter == 'unregistered' %}
+    {% if sections_data.unregistered %}
+    <div class="section-container unregistered-section">
+        <div class="section-header">
+            <h2><i class="fas fa-folder"></i> {% trans "Unregistered Folders" %}</h2>
+            <p class="section-description">{% trans "Folders that haven't been analyzed or registered yet" %}</p>
+        </div>
+        
+        <div class="cards-grid">
+            {% for folder in sections_data.unregistered %}
+            <div class="folder-card unregistered">
+                <div class="card-header">
+                    <div class="card-title">
+                        <h3>{{ folder.folder_name }}</h3>
+                        <div class="card-meta">
+                            <span class="status-badge status-unregistered">{% trans "Unregistered" %}</span>
+                        </div>
                     </div>
-                </form>
-            </div>
-            <div class="filter-buttons">
-                <div class="status-filters">
-                    <a href="?status=registered&search={{ search_query }}" 
-                       class="filter-btn {% if status_filter == 'registered' %}active{% endif %}">
-                        {% trans "Registered Only" %}
-                    </a>
-                    <a href="?status=all&search={{ search_query }}" 
-                       class="filter-btn {% if status_filter == 'all' %}active{% endif %}">
-                        {% trans "All Projects" %}
-                    </a>
                 </div>
-                <button class="refresh-btn" onclick="refreshAllData()">
-                    <i class="fas fa-sync-alt"></i>
-                    {% trans "Refresh" %}
-                </button>
+
+                <div class="card-body">
+                    <div class="folder-path">
+                        <i class="fas fa-folder-open"></i>
+                        <span title="{{ folder.folder_path }}">{{ folder.folder_path|truncatechars:50 }}</span>
+                    </div>
+                    
+                    <div class="key-metrics">
+                        <div class="metric">
+                            <i class="fas fa-files-o metric-icon"></i>
+                            <div class="metric-content">
+                                <div class="metric-value">{{ folder.file_count }}</div>
+                                <div class="metric-label">{% trans "Files" %}</div>
+                            </div>
+                        </div>
+                        <div class="metric">
+                            <i class="fas fa-file-pdf-o metric-icon"></i>
+                            <div class="metric-content">
+                                <div class="metric-value">{{ folder.pdf_count }}</div>
+                                <div class="metric-label">{% trans "PDFs" %}</div>
+                            </div>
+                        </div>
+                        <div class="metric">
+                            <i class="fas fa-hdd metric-icon"></i>
+                            <div class="metric-content">
+                                <div class="metric-value">{{ folder.total_size_formatted }}</div>
+                                <div class="metric-label">{% trans "Size" %}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-footer">
+                    <div class="card-actions">
+                        <button class="btn btn-primary" 
+                                onclick="showAnalyzeModal('{{ folder.folder_path|escapejs }}', '{{ folder.folder_name|escapejs }}')">
+                            <i class="fas fa-chart-line"></i>
+                            {% trans "Analyze" %}
+                        </button>
+                    </div>
+                </div>
             </div>
+            {% endfor %}
         </div>
     </div>
+    {% endif %}
+    {% endif %}
 
-    <!-- Projects Grid -->
-    <div class="projects-grid">
-        {% for item in page_obj %}
+    {% if section_filter == 'all' or section_filter == 'analyzed' %}
+    {% if sections_data.analyzed %}
+    <div class="section-container analyzed-section">
+        <div class="section-header">
+            <h2><i class="fas fa-chart-line"></i> {% trans "Analyzed Folders" %}</h2>
+            <p class="section-description">{% trans "Folders that have been analyzed but not yet registered" %}</p>
+        </div>
+        
+        <div class="cards-grid">
+            {% for folder in sections_data.analyzed %}
+            <div class="folder-card analyzed">
+                <div class="card-header">
+                    <div class="card-title">
+                        <h3>{{ folder.folder_name }}</h3>
+                        <div class="card-meta">
+                            <span class="status-badge status-analyzed">{% trans "Analyzed" %}</span>
+                            {% if folder.recommended_workflow != 'unknown' %}
+                                <span class="workflow-badge">{{ folder.recommended_workflow|title }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    <div class="folder-path">
+                        <i class="fas fa-folder-open"></i>
+                        <span title="{{ folder.folder_path }}">{{ folder.folder_path|truncatechars:50 }}</span>
+                    </div>
+                    
+                    <div class="key-metrics">
+                        <div class="metric">
+                            <i class="fas fa-file-alt metric-icon"></i>
+                            <div class="metric-content">
+                                <div class="metric-value">{{ folder.total_documents }}</div>
+                                <div class="metric-label">{% trans "Documents" %}</div>
+                            </div>
+                        </div>
+                        <div class="metric">
+                            <i class="fas fa-copy metric-icon"></i>
+                            <div class="metric-content">
+                                <div class="metric-value">{{ folder.total_pages }}</div>
+                                <div class="metric-label">{% trans "Pages" %}</div>
+                            </div>
+                        </div>
+                        <div class="metric">
+                            <i class="fas fa-film metric-icon"></i>
+                            <div class="metric-content">
+                                <div class="metric-value">{{ folder.estimated_rolls }}</div>
+                                <div class="metric-label">{% trans "Est. Rolls" %}</div>
+                            </div>
+                        </div>
+                        <div class="metric">
+                            <i class="fas fa-hdd metric-icon"></i>
+                            <div class="metric-content">
+                                <div class="metric-value">{{ folder.total_size_formatted }}</div>
+                                <div class="metric-label">{% trans "Size" %}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if folder.has_oversized %}
+                    <div class="oversized-alert">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        {% trans "Contains oversized documents" %} ({{ folder.oversized_count }})
+                    </div>
+                    {% endif %}
+
+                    {% if folder.pdf_folder_found %}
+                    <div class="pdf-folder-info">
+                        <i class="fas fa-check-circle"></i>
+                        {% trans "PDF folder found" %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="card-footer">
+                    <div class="analysis-info">
+                        <small>{% trans "Analyzed" %}: {{ folder.analyzed_at|date:"M d, Y H:i" }}</small>
+                        <small>{% trans "By" %}: {{ folder.analyzed_by.username }}</small>
+                    </div>
+                    <div class="card-actions">
+                        <button class="btn btn-secondary" 
+                                onclick="showAnalyzeModal('{{ folder.folder_path|escapejs }}', '{{ folder.folder_name|escapejs }}')">
+                            <i class="fas fa-sync-alt"></i>
+                            {% trans "Re-analyze" %}
+                        </button>
+                        <button class="btn btn-primary" 
+                                onclick="showRegistrationModal({{ folder.id }}, '{{ folder.folder_name|escapejs }}')">
+                            <i class="fas fa-plus-circle"></i>
+                            {% trans "Register" %}
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    {% endif %}
+
+    {% if section_filter == 'all' or section_filter == 'registered' %}
+    {% if sections_data.registered %}
+    <div class="section-container registered-section">
+        <div class="section-header">
+            <h2><i class="fas fa-check-circle"></i> {% trans "Registered Projects" %}</h2>
+            <p class="section-description">{% trans "Projects that have been registered and are in the workflow" %}</p>
+        </div>
+        
+        <div class="cards-grid">
+            {% for item in sections_data.registered %}
             {% with project=item.project data=item.data %}
-            <div class="project-card" onclick="viewProjectDetail({{ project.id }})">
-                <div class="project-card-header">
-                    <div class="project-title">
+            <div class="project-card registered" onclick="viewProjectDetail({{ project.id }})">
+                <div class="card-header">
+                    <div class="card-title">
                         <h3>{{ project.archive_id }}</h3>
-                        <div class="project-meta">
+                        <div class="card-meta">
                             <span class="location-badge location-{{ project.location|lower }}">{{ project.location }}</span>
                             {% if project.doc_type %}
                                 <span class="doc-type-badge">{{ project.doc_type }}</span>
                             {% endif %}
                         </div>
                     </div>
-                    <div class="project-status">
+                    <div class="card-status">
                         {% if project.processing_complete %}
                             <span class="status-badge status-completed">{% trans "Completed" %}</span>
                         {% elif project.film_allocation_complete %}
@@ -98,7 +279,7 @@
                     </div>
                 </div>
 
-                <div class="project-card-body">
+                <div class="card-body">
                     <div class="key-metrics">
                         <div class="metric">
                             <i class="fas fa-file-alt metric-icon"></i>
@@ -136,25 +317,14 @@
                         {% trans "Contains oversized documents" %} ({{ data.oversized_count }})
                     </div>
                     {% endif %}
-
-                    {% if data.temp_rolls %}
-                    <div class="temp-rolls-info">
-                        <i class="fas fa-clock"></i>
-                        {% trans "Temp rolls" %}: {{ data.temp_rolls }}
-                    </div>
-                    {% endif %}
                 </div>
 
-                <div class="project-card-footer">
+                <div class="card-footer">
                     <div class="project-dates">
-                        <div class="date-info">
-                            <small>{% trans "Created" %}: {{ project.created_at|date:"M d, Y" }}</small>
-                        </div>
-                        <div class="date-info">
-                            <small>{% trans "Updated" %}: {{ project.updated_at|date:"M d, Y" }}</small>
-                        </div>
+                        <small>{% trans "Created" %}: {{ project.created_at|date:"M d, Y" }}</small>
+                        <small>{% trans "Updated" %}: {{ project.updated_at|date:"M d, Y" }}</small>
                     </div>
-                    <div class="project-actions">
+                    <div class="card-actions">
                         <button class="action-btn" onclick="event.stopPropagation(); exportProjectData({{ project.id }})">
                             <i class="fas fa-download"></i>
                         </button>
@@ -165,27 +335,39 @@
                 </div>
             </div>
             {% endwith %}
-        {% empty %}
-            <div class="no-projects">
-                <div class="no-projects-content">
-                    <i class="fas fa-chart-bar no-projects-icon"></i>
-                    <h3>{% trans "No Projects Found" %}</h3>
-                    <p>{% trans "No projects with analysis data found. Try adjusting your filters or check that projects have been analyzed." %}</p>
-                    <a href="{% url 'register' %}" class="btn btn-primary">
-                        <i class="fas fa-plus"></i>
-                        {% trans "Register New Project" %}
-                    </a>
-                </div>
-            </div>
-        {% endfor %}
+            {% endfor %}
+        </div>
     </div>
+    {% endif %}
+    {% endif %}
+
+    <!-- Empty State -->
+    {% if not sections_data.unregistered and not sections_data.analyzed and not sections_data.registered %}
+    <div class="empty-state">
+        <div class="empty-state-content">
+            <i class="fas fa-search empty-state-icon"></i>
+            <h3>{% trans "No Items Found" %}</h3>
+            <p>{% trans "No folders or projects found matching your criteria." %}</p>
+            <div class="empty-state-actions">
+                <button class="btn btn-primary" onclick="switchSection('all')">
+                    <i class="fas fa-eye"></i>
+                    {% trans "View All" %}
+                </button>
+                <a href="{% url 'register' %}" class="btn btn-secondary">
+                    <i class="fas fa-plus"></i>
+                    {% trans "Register New Project" %}
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
     <!-- Pagination -->
     {% if page_obj.has_other_pages %}
     <div class="pagination-container">
         <div class="pagination">
             {% if page_obj.has_previous %}
-                <a href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}&status={{ status_filter }}" 
+                <a href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}&section={{ section_filter }}" 
                    class="page-link">
                     <i class="fas fa-chevron-left"></i>
                 </a>
@@ -195,13 +377,13 @@
                 {% if page_num == page_obj.number %}
                     <span class="page-link current">{{ page_num }}</span>
                 {% else %}
-                    <a href="?page={{ page_num }}&search={{ search_query }}&status={{ status_filter }}" 
+                    <a href="?page={{ page_num }}&search={{ search_query }}&section={{ section_filter }}" 
                        class="page-link">{{ page_num }}</a>
                 {% endif %}
             {% endfor %}
             
             {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}&search={{ search_query }}&status={{ status_filter }}" 
+                <a href="?page={{ page_obj.next_page_number }}&search={{ search_query }}&section={{ section_filter }}" 
                    class="page-link">
                     <i class="fas fa-chevron-right"></i>
                 </a>
@@ -210,7 +392,7 @@
         
         <div class="pagination-info">
             {% trans "Showing" %} {{ page_obj.start_index }} - {{ page_obj.end_index }} 
-            {% trans "of" %} {{ page_obj.paginator.count }} {% trans "projects" %}
+            {% trans "of" %} {{ page_obj.paginator.count }} {% trans "items" %}
         </div>
     </div>
     {% endif %}
@@ -220,7 +402,7 @@
 <div id="loading-modal" class="modal">
     <div class="modal-content">
         <div class="loading-spinner"></div>
-        <p>{% trans "Loading project data..." %}</p>
+        <p>{% trans "Processing..." %}</p>
     </div>
 </div>
 {% endblock %}

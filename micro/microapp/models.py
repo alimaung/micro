@@ -1233,6 +1233,80 @@ class HandoffRecord(models.Model):
                 self.dat_file_size = 0
 
 
+class AnalyzedFolder(models.Model):
+    """Tracks folders that have been analyzed but not yet registered as projects."""
+    
+    # Folder identification
+    folder_path = models.CharField(max_length=500, unique=True, help_text="Full path to the analyzed folder")
+    folder_name = models.CharField(max_length=255, help_text="Name of the folder")
+    
+    # Analysis results
+    total_documents = models.IntegerField(default=0, help_text="Total number of documents found")
+    total_pages = models.IntegerField(default=0, help_text="Total number of pages across all documents")
+    oversized_count = models.IntegerField(default=0, help_text="Number of oversized documents")
+    has_oversized = models.BooleanField(default=False, help_text="Whether folder contains oversized documents")
+    
+    # Roll estimates
+    estimated_rolls_16mm = models.IntegerField(default=0, help_text="Estimated 16mm rolls needed")
+    estimated_rolls_35mm = models.IntegerField(default=0, help_text="Estimated 35mm rolls needed")
+    total_estimated_rolls = models.IntegerField(default=0, help_text="Total estimated rolls needed")
+    
+    # Folder statistics
+    file_count = models.IntegerField(default=0, help_text="Total files in folder")
+    total_size = models.BigIntegerField(default=0, help_text="Total size in bytes")
+    total_size_formatted = models.CharField(max_length=20, default="0 B", help_text="Human readable size")
+    
+    # PDF folder discovery
+    pdf_folder_found = models.BooleanField(default=False, help_text="Whether a PDF folder was found")
+    pdf_folder_path = models.CharField(max_length=500, blank=True, null=True, help_text="Path to PDF folder if found")
+    
+    # Analysis metadata
+    analysis_data_path = models.CharField(max_length=500, blank=True, null=True, help_text="Path to analysis data files")
+    recommended_workflow = models.CharField(max_length=50, default="unknown", help_text="Recommended workflow based on analysis")
+    
+    # Timestamps and ownership
+    analyzed_at = models.DateTimeField(auto_now_add=True, help_text="When the folder was analyzed")
+    updated_at = models.DateTimeField(auto_now=True, help_text="Last update time")
+    analyzed_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='analyzed_folders')
+    
+    # Registration tracking
+    registered_as_project = models.ForeignKey(Project, on_delete=models.SET_NULL, null=True, blank=True, 
+                                            related_name='source_analyzed_folder',
+                                            help_text="Project created from this analyzed folder")
+    
+    class Meta:
+        ordering = ['-analyzed_at']
+        indexes = [
+            models.Index(fields=['folder_path']),
+            models.Index(fields=['analyzed_at']),
+            models.Index(fields=['has_oversized']),
+            models.Index(fields=['registered_as_project']),
+        ]
+    
+    def __str__(self):
+        return f"{self.folder_name} ({self.total_documents} docs, {self.total_pages} pages)"
+    
+    @property
+    def is_registered(self):
+        """Check if this analyzed folder has been registered as a project."""
+        return self.registered_as_project is not None
+    
+    @property
+    def analysis_summary(self):
+        """Get a summary of analysis results."""
+        return {
+            'total_documents': self.total_documents,
+            'total_pages': self.total_pages,
+            'oversized_count': self.oversized_count,
+            'has_oversized': self.has_oversized,
+            'estimated_rolls': self.total_estimated_rolls,
+            'file_count': self.file_count,
+            'total_size_formatted': self.total_size_formatted,
+            'pdf_folder_found': self.pdf_folder_found,
+            'recommended_workflow': self.recommended_workflow
+        }
+
+
 class HandoffValidationSnapshot(models.Model):
     """Stores detailed validation results at the time of handoff for audit purposes."""
     # Relationships
