@@ -327,7 +327,7 @@ window.TransferUI = class TransferUI {
             folderPicker.classList.add('show');
             
             // Open folder picker, allowing only Excel files
-            const selectedResult = await FolderPicker.show(false, 'files', ['xlsx', 'xls'], 'Select COMList File');
+            const selectedResult = await FolderPicker.show(false, 'files', ['xlsx', 'xls', 'xlsm'], 'Select COMList File');
             folderPicker.classList.remove('show');
             
             if (selectedResult && selectedResult.path) {

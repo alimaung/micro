@@ -102,30 +102,56 @@ class SMAService:
                     # Note: re_filming is tracked at the roll level, not session level
                 )
                 
-                # Handle re-filming roll status reset and temp roll cleanup
+                # Handle re-filming roll status reset and temp roll relationship cleanup
                 if re_filming:
-                    # Reset roll status for re-filming
+                    # Reset roll filming status for re-filming
                     roll.filming_status = 'ready'
                     roll.filming_progress_percent = 0.0
                     roll.filming_session_id = None
                     roll.filming_started_at = None
                     roll.filming_completed_at = None
                     
-                    # Handle temp roll updates for re-filming
-                    # If this roll created a temp roll previously, we need to update/invalidate it
-                    if hasattr(roll, 'created_temp_roll') and roll.created_temp_roll:
-                        # Mark the previous temp roll as invalidated due to re-filming
-                        temp_roll = roll.created_temp_roll
-                        temp_roll.status = 'invalidated_refilm'
-                        temp_roll.save(update_fields=['status'])
-                        logger.info(f"Invalidated temp roll {temp_roll.temp_roll_id} due to re-filming")
+                    # Reset roll development status for re-filming (new filmed roll needs development)
+                    roll.development_status = 'pending'
+                    roll.development_started_at = None
+                    roll.development_completed_at = None
+                    roll.development_progress_percent = 0.0
                     
-                    # Clear the temp roll relationship for fresh calculation
+                    # Cancel any active development sessions for re-filming
+                    active_dev_sessions = roll.development_sessions.filter(
+                        status__in=['pending', 'developing']
+                    )
+                    if active_dev_sessions.exists():
+                        for dev_session in active_dev_sessions:
+                            dev_session.status = 'cancelled'
+                            dev_session.save(update_fields=['status'])
+                            logger.info(f"Re-filming roll {roll.roll_number}: cancelled development session {dev_session.session_id}")
+                    
+                    logger.info(f"Re-filming roll {roll.roll_number}: reset filming and development status to ready/pending")
+                    
+                    # Handle temp roll relationship cleanup for re-filming
+                    # Clear the temp roll relationships and make temp rolls available again
+                    
+                    # If this roll was created from a temp roll, make that temp roll available again
+                    if hasattr(roll, 'source_temp_roll') and roll.source_temp_roll:
+                        source_temp_roll = roll.source_temp_roll
+                        source_temp_roll.status = 'available'
+                        source_temp_roll.used_by_roll = None
+                        source_temp_roll.save(update_fields=['status', 'used_by_roll'])
+                        logger.info(f"Re-filming roll {roll.roll_number}: freed up source temp roll {source_temp_roll.temp_roll_id} for reuse")
+                    
+                    # If this roll created a temp roll, keep it available (it physically still exists)
+                    if hasattr(roll, 'created_temp_roll') and roll.created_temp_roll:
+                        temp_roll = roll.created_temp_roll
+                        logger.info(f"Re-filming roll {roll.roll_number}: keeping created temp roll {temp_roll.temp_roll_id} as available (physical temp roll still exists)")
+                    
+                    # Clear the temp roll relationships for fresh calculation
                     roll.created_temp_roll = None
                     roll.source_temp_roll = None
                     roll.save(update_fields=[
                         'filming_status', 'filming_progress_percent', 'filming_session_id',
-                        'filming_started_at', 'filming_completed_at', 'created_temp_roll', 'source_temp_roll'
+                        'filming_started_at', 'filming_completed_at', 'created_temp_roll', 'source_temp_roll',
+                        'development_status', 'development_started_at', 'development_completed_at', 'development_progress_percent'
                     ])
                 
                 # Update roll status to filming
@@ -881,35 +907,225 @@ class SMAService:
 
     @classmethod
     def mark_roll_as_filmed(cls, session_id: str) -> Dict[str, Any]:
-        """Mark a roll as filmed after successful completion."""
+        """Mark a roll as filmed after successful completion and handle temp roll creation."""
         try:
-            session = FilmingSession.objects.get(session_id=session_id)
+            # Prevent duplicate calls for the same session using database-level transaction
+            from django.db import transaction
             
-            if session.roll:
-                session.roll.filming_status = 'completed'
-                session.roll.filming_completed_at = timezone.now()
-                session.roll.filming_progress_percent = 100.0
-                session.roll.save(update_fields=[
-                    'filming_status', 'filming_completed_at', 'filming_progress_percent'
-                ])
+            with transaction.atomic():
+                # Use select_for_update to prevent concurrent processing
+                session = FilmingSession.objects.select_for_update().get(session_id=session_id)
                 
-                logger.info(f"Marked roll {session.roll.roll_number} as filmed for session {session_id}")
+                # Check if session was already marked as filmed
+                if session.status == 'completed' and session.roll and session.roll.filming_status == 'completed':
+                    logger.warning(f"mark_roll_as_filmed already called for session {session_id}, roll already completed")
+                    return {'success': True, 'message': 'Already processed', 'duplicate_call': True}
                 
-                return {
-                    'success': True,
-                    'message': f'Roll {session.roll.roll_number} marked as filmed'
-                }
-            else:
-                return {
-                    'success': False,
-                    'error': 'No roll associated with session'
-                }
+                # Check if roll is already being marked as completed (prevent race conditions)
+                if session.roll and session.roll.filming_status == 'completed':
+                    logger.warning(f"Roll for session {session_id} already marked as completed")
+                    return {'success': True, 'message': 'Roll already completed', 'duplicate_call': True}
+            
+                if session.roll:
+                    roll = session.roll
+                    
+                    # Mark roll as completed
+                    roll.filming_status = 'completed'
+                    roll.filming_completed_at = timezone.now()
+                    roll.filming_progress_percent = 100.0
+                    
+                    # Determine if this is re-filming by checking cached session info
+                    cached_info = cls._get_cached_session_info(session_id)
+                    is_re_filming = cached_info and cached_info.get('re_filming', False)
+                    
+                    # Handle temp roll creation based on filming type
+                    temp_roll_created = False
+                    if is_re_filming:
+                        # For re-filming, use strategy-based temp roll creation
+                        temp_roll_created = cls._handle_refilming_temp_roll_creation(roll)
+                    else:
+                        # For initial filming, activate any temp rolls that were created during register phase
+                        temp_roll_created = cls._activate_predicted_temp_rolls(roll)
+                    
+                    # Save roll (including any temp roll relationships and updated pages_remaining)
+                    roll.save(update_fields=[
+                        'filming_status', 'filming_completed_at', 'filming_progress_percent', 'created_temp_roll', 'pages_remaining'
+                    ])
+                    
+                    logger.info(f"Marked roll {roll.roll_number} as filmed for session {session_id}")
+                    logger.info(f"Roll stats: capacity={roll.capacity}, pages_used={roll.pages_used}, pages_remaining={roll.pages_remaining}")
+                    logger.info(f"Filming type: {'re-filming' if is_re_filming else 'initial filming'}")
+                    if temp_roll_created:
+                        logger.info(f"Temp roll {'created' if is_re_filming else 'exists'} for roll {roll.roll_number}")
+                    else:
+                        logger.info(f"No temp roll {'created' if is_re_filming else 'exists'} for roll {roll.roll_number}")
+                    
+                    return {
+                        'success': True,
+                        'message': f'Roll {roll.roll_number} marked as filmed',
+                        'temp_roll_created': temp_roll_created,
+                        'is_re_filming': is_re_filming
+                    }
+                else:
+                    return {
+                        'success': False,
+                        'error': 'No roll associated with session'
+                    }
                 
         except FilmingSession.DoesNotExist:
             return {'success': False, 'error': 'Session not found'}
         except Exception as e:
             logger.error(f"Error marking roll as filmed: {e}")
             return {'success': False, 'error': str(e)}
+
+    @classmethod
+    def _activate_predicted_temp_rolls(cls, roll) -> bool:
+        """Activate temp rolls that were created during register phase (change status from 'created' to 'available')."""
+        try:
+            from ..models import TempRoll
+            
+            roll_display = roll.roll_number or roll.film_number or f"Roll {roll.id}"
+            
+            # Find temp rolls that were created for this roll during register phase
+            predicted_temp_rolls = TempRoll.objects.filter(
+                source_roll=roll,
+                status='created'
+            )
+            
+            activated_count = 0
+            for temp_roll in predicted_temp_rolls:
+                # Change status from 'created' to 'available' now that filming is complete
+                temp_roll.status = 'available'
+                temp_roll.save(update_fields=['status'])
+                logger.info(f"Activated temp roll #{temp_roll.temp_roll_id} from register phase for roll {roll_display}")
+                activated_count += 1
+                
+                # Update roll relationship if this is the main temp roll created by this roll
+                if not roll.created_temp_roll:
+                    roll.created_temp_roll = temp_roll
+            
+            if activated_count > 0:
+                logger.info(f"Activated {activated_count} predicted temp roll(s) for roll {roll_display}")
+                return True
+            else:
+                logger.info(f"No predicted temp rolls found for roll {roll_display} (roll fully utilized)")
+                return False
+                
+        except Exception as e:
+            logger.error(f"Error activating predicted temp rolls for roll {roll_display}: {e}")
+            return False
+
+    @classmethod
+    def _handle_refilming_temp_roll_creation(cls, roll) -> bool:
+        """Handle temp roll allocation for re-filming operations using temp roll strategy."""
+        try:
+            from ..models import TempRoll
+            
+            roll_display = roll.roll_number or roll.film_number or f"Roll {roll.id}"
+            pages_needed = roll.pages_used  # Use pages_used as the filming requirement
+            
+            logger.info(f"Re-filming {roll_display}: need to film {pages_needed} pages")
+            
+            # Step 1: Check for available temp rolls that can handle the pages needed
+            available_temp_rolls = TempRoll.objects.filter(
+                film_type=roll.film_type,
+                status='available',
+                usable_capacity__gte=pages_needed
+            ).order_by('usable_capacity')
+            
+            if available_temp_rolls.exists():
+                # Use existing temp roll (like preview shows)
+                temp_roll = available_temp_rolls.first()
+                
+                logger.info(f"Re-filming {roll_display}: using existing temp roll #{temp_roll.temp_roll_id} ({temp_roll.usable_capacity} pages)")
+                
+                # Update temp roll capacity
+                temp_roll.usable_capacity -= pages_needed
+                if temp_roll.usable_capacity <= 0:
+                    temp_roll.status = 'exhausted'
+                temp_roll.used_by_roll = roll
+                temp_roll.save()
+                
+                # Update roll to reflect it was filmed using a temp roll
+                roll.source_temp_roll = temp_roll
+                roll.capacity = pages_needed  # Roll now represents just what was filmed
+                roll.pages_remaining = 0  # All capacity used for filming
+                
+                logger.info(f"Re-filming {roll_display}: updated temp roll #{temp_roll.temp_roll_id}, remaining: {temp_roll.usable_capacity} pages")
+                return True
+                
+            else:
+                # No suitable temp roll found, use new roll capacity
+                logger.info(f"Re-filming {roll_display}: no suitable temp roll found, using new roll")
+                
+                # Standard capacities by film type
+                FILM_CAPACITIES = {'16mm': 2900, '35mm': 1450}
+                new_roll_capacity = FILM_CAPACITIES.get(roll.film_type, 2900)
+                
+                # Update roll to reflect new roll usage
+                roll.capacity = new_roll_capacity
+                roll.pages_remaining = new_roll_capacity - pages_needed
+                roll.source_temp_roll = None  # Clear any previous temp roll relationship
+                
+                # Create temp roll from remaining capacity if sufficient
+                return cls._create_temp_roll_if_needed(roll)
+                
+        except Exception as e:
+            logger.error(f"Error handling re-filming temp roll creation: {e}")
+            return False
+
+    @classmethod
+    def _create_temp_roll_if_needed(cls, roll) -> bool:
+        """Create temp roll if roll has sufficient remaining capacity."""
+        try:
+            from .film_number_manager import (
+                TEMP_ROLL_MIN_USABLE_PAGES, 
+                TEMP_ROLL_PADDING_16MM, 
+                TEMP_ROLL_PADDING_35MM
+            )
+            from ..models import TempRoll, FilmType
+            
+            # Check if roll has enough remaining capacity for a temp roll
+            roll_display = roll.roll_number or roll.film_number or f"Roll {roll.id}"
+            if not roll.pages_remaining:
+                logger.info(f"Roll {roll_display} has no remaining capacity")
+                return False
+            
+            # Determine padding based on film type
+            if roll.film_type == FilmType.FILM_16MM:
+                padding = TEMP_ROLL_PADDING_16MM
+            else:
+                padding = TEMP_ROLL_PADDING_35MM
+            
+            # Check if remaining capacity meets minimum requirements
+            min_capacity_needed = TEMP_ROLL_MIN_USABLE_PAGES + padding
+            if roll.pages_remaining < min_capacity_needed:
+                logger.info(f"Roll {roll_display} has {roll.pages_remaining} pages remaining, but needs {min_capacity_needed} for temp roll")
+                return False
+            
+            # Calculate usable capacity (subtract padding)
+            usable_capacity = roll.pages_remaining - padding
+            
+            logger.info(f"Creating temp roll for roll {roll_display}: total={roll.pages_remaining}, usable={usable_capacity}")
+            
+            # Create temp roll
+            temp_roll = TempRoll.objects.create(
+                film_type=roll.film_type,
+                capacity=roll.pages_remaining,
+                usable_capacity=usable_capacity,
+                status='available',
+                source_roll=roll
+            )
+            
+            # Update roll with created temp roll reference
+            roll.created_temp_roll = temp_roll
+            
+            logger.info(f"Successfully created temp roll #{temp_roll.temp_roll_id} with {usable_capacity} usable pages")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error creating temp roll for roll {roll_display}: {e}")
+            return False
 
     @classmethod
     def _get_temp_roll_reason(cls, roll) -> str:
@@ -949,6 +1165,7 @@ class SMAService:
                     'error': f'Roll {roll_id} not found'
                 }
             
+            # For re-filming, we always consider new rolls or temp rolls - never reuse the existing roll
             # Standard capacities by film type
             FILM_CAPACITIES = {
                 '16mm': 2900,
@@ -1001,7 +1218,7 @@ class SMAService:
                     logger.info(f"Updated temp roll #{best_temp_roll.temp_roll_id}: {best_temp_roll.usable_capacity} pages remaining")
             
             else:
-                # Use new roll
+                # Use new roll (for re-filming, we never reuse the existing roll)
                 remaining_capacity = standard_capacity - required_pages
                 min_temp_roll_threshold = 100  # Minimum pages to create a temp roll
                 

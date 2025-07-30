@@ -62,6 +62,11 @@ def film(request):
     """Film page view."""
     return render(request, 'microapp/film/film.html')
 
+def analyze(request):
+    """Analyze page view."""
+    from .analyze_views import analyze_dashboard
+    return analyze_dashboard(request)
+
 def sma_filming(request):
     """SMA Filming interface view."""
     return render(request, 'microapp/film/sma_filming.html')

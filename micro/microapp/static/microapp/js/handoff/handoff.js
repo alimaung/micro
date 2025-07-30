@@ -231,9 +231,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const restored = restoreState();
         if (!restored) {
             // Load initial data if no state to restore
+            console.log('No state to restore, loading initial projects');
             loadProjects();
         } else {
             // Still load projects to refresh the list, but don't change current section
+            console.log('State restored, refreshing project list');
             loadProjects();
         }
     }
@@ -255,7 +257,14 @@ document.addEventListener('DOMContentLoaded', function() {
         if (statusFilter) {
             statusFilter.addEventListener('change', () => {
                 // Reload projects from server when status filter changes
+                console.log('Status filter changed to:', statusFilter.value);
                 loadProjects();
+                // Apply current search filter to new results after loading
+                setTimeout(() => {
+                    if (projectSearchInput && projectSearchInput.value) {
+                        filterProjects();
+                    }
+                }, 100);
             });
         }
         
@@ -413,11 +422,43 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Combine ready and filmed projects, prioritizing ready ones
-                    const allProjects = [
-                        ...data.projects.ready,
-                        ...data.projects.filmed
-                    ];
+                    // Handle different project categories based on API response structure
+                    let allProjects = [];
+                    
+                    // Check if data.projects is an object with categories
+                    if (data.projects && typeof data.projects === 'object') {
+                        // Handle categorized response (ready, filmed, completed, etc.)
+                        if (statusFilter === 'all') {
+                            // Combine all categories
+                            allProjects = [
+                                ...(data.projects.ready || []),
+                                ...(data.projects.filmed || []),
+                                ...(data.projects.completed || [])
+                            ];
+                        } else {
+                            // Use specific category
+                            if (data.projects[statusFilter] && Array.isArray(data.projects[statusFilter])) {
+                                allProjects = data.projects[statusFilter];
+                            } else {
+                                // Fallback: combine ready and filmed for backward compatibility
+                                allProjects = [
+                                    ...(data.projects.ready || []),
+                                    ...(data.projects.filmed || [])
+                                ];
+                            }
+                        }
+                    } else if (Array.isArray(data.projects)) {
+                        // Handle direct array response
+                        allProjects = data.projects;
+                    } else {
+                        console.warn('Unexpected API response structure:', data);
+                        allProjects = [];
+                    }
+                    
+                    console.log(`Loaded ${allProjects.length} projects for filter: ${statusFilter}`);
+                    
+                    // Store projects for filtering
+                    currentProjects = allProjects;
                     
                     // Sort projects by default (film number descending)
                     const sortedProjects = sortProjects(allProjects);
@@ -438,11 +479,40 @@ document.addEventListener('DOMContentLoaded', function() {
         projectCardsContainer.innerHTML = '';
         
         if (projects.length === 0) {
+            const searchTerm = projectSearchInput ? projectSearchInput.value : '';
+            const statusFilter = document.getElementById('status-filter')?.value || 'ready';
+            
+            let message = '';
+            let subtitle = '';
+            
+            if (searchTerm) {
+                message = 'No Matching Projects';
+                subtitle = 'Try adjusting your search criteria or clear the search field.';
+            } else {
+                switch (statusFilter) {
+                    case 'ready':
+                        message = 'No Projects Ready for Handoff';
+                        subtitle = 'Complete filming, development, and labeling to see projects here.';
+                        break;
+                    case 'completed':
+                        message = 'No Completed Projects';
+                        subtitle = 'Completed handoff projects will appear here.';
+                        break;
+                    case 'all':
+                        message = 'No Projects Available';
+                        subtitle = 'No projects found in the system.';
+                        break;
+                    default:
+                        message = `No ${statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)} Projects`;
+                        subtitle = `No projects with status "${statusFilter}" found.`;
+                }
+            }
+            
             projectCardsContainer.innerHTML = `
                 <div class="no-projects-message">
-                    <i class="fas fa-inbox"></i>
-                    <h3>No Projects Ready for Handoff</h3>
-                    <p>Complete filming, development, and labeling to see projects here.</p>
+                    <i class="fas fa-search"></i>
+                    <h3>${message}</h3>
+                    <p>${subtitle}</p>
                 </div>
             `;
             return;
@@ -953,13 +1023,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     • Auftragsnummer: <span class="highlight">${archiveId}</span><br>
                     • Filmnummern: <span class="highlight">${filmNumbers}</span><br>
                     • Excel file: <span class="highlight">${archiveId}_blips_${timestamp}.xlsx</span><br>
-                    • Scan file: <span class="highlight">${archiveId}_scan_${timestamp}.dat</span>
+                    <!-- DAT file generation disabled -->
                 </div>
                 
                 <div class="preview-section">
                     <strong>Attachments:</strong><br>
                     📎 <span class="highlight">${archiveId}_blips_${timestamp}.xlsx</span> (Excel format)<br>
-                    📎 <span class="highlight">${archiveId}_scan_${timestamp}.dat</span> (Legacy format)
+                    <!-- DAT file attachment disabled -->
                 </div>
             </div>
         `;
@@ -1012,13 +1082,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 size: '~25 KB', 
                 type: 'excel',
                 description: 'Excel format index file'
-            },
-            { 
-                name: `${archiveId}_scan_${timestamp}.dat`, 
-                size: '~18 KB', 
-                type: 'text',
-                description: 'Legacy format index file'
             }
+            // DAT file attachment disabled
+            // { 
+            //     name: `${archiveId}_scan_${timestamp}.dat`, 
+            //     size: '~18 KB', 
+            //     type: 'text',
+            //     description: 'Legacy format index file'
+            // }
         ];
         
         attachmentList.innerHTML = '';
@@ -1352,10 +1423,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Determine icon based on file extension
                 const extension = attachment.split('.').pop().toLowerCase();
                 let icon = 'fas fa-file';
-                if (extension === 'xlsx' || extension === 'xls') {
+                if (extension === 'xlsx' || extension === 'xls' || extension === 'xlsm') {
                     icon = 'fas fa-file-excel';
                 } else if (extension === 'dat' || extension === 'txt') {
-                    icon = 'fas fa-file-alt';
+                    icon = 'fas fa-file-alt';  // Keep for legacy support but DAT files are disabled
                 }
                 
                 tag.innerHTML = `<i class="${icon}"></i> ${attachment}`;
@@ -1640,85 +1711,32 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // Store the current loaded projects for filtering
+    let currentProjects = [];
+    
     function filterProjects() {
         const searchTerm = projectSearchInput.value.toLowerCase();
-        const statusFilter = document.getElementById('status-filter').value;
         
-        // Get all projects data from cards
-        const allProjects = [];
-        const projectCards = projectCardsContainer.querySelectorAll('.project-card');
-        
-        projectCards.forEach(card => {
-            const projectId = card.dataset.projectId;
-            const projectName = card.querySelector('.project-name').textContent;
-            const archiveId = card.querySelector('.archive-id').textContent;
-            const docType = card.querySelector('.doc-type').textContent;
-            const rollRange = card.querySelector('.roll-range')?.textContent || '';
-            const projectStatus = card.querySelector('.project-status').textContent;
-            const completionDate = card.querySelector('.completion-date').textContent;
-            
-            allProjects.push({
-                id: projectId,
-                name: projectName,
-                archive_id: archiveId,
-                doc_type: docType,
-                roll_range: rollRange,
-                status_text: projectStatus,
-                status: projectStatus.toLowerCase().replace(/\s+/g, '_'),
-                completion_date: completionDate !== 'In Progress' ? completionDate : ''
-            });
-        });
-        
-        // Filter projects based on search term and status
-        const filteredProjects = allProjects.filter(project => {
+        // Filter projects based on search term only (status filter is handled by loadProjects)
+        const filteredProjects = currentProjects.filter(project => {
             const matchesSearch = 
                 project.name.toLowerCase().includes(searchTerm) || 
-                project.archive_id.toLowerCase().includes(searchTerm);
-                
-            const matchesStatus = statusFilter === 'all' || project.status === statusFilter;
+                project.archive_id.toLowerCase().includes(searchTerm) ||
+                project.doc_type.toLowerCase().includes(searchTerm);
             
-            return matchesSearch && matchesStatus;
+            return matchesSearch;
         });
+        
+        console.log(`Filtered ${filteredProjects.length} projects from ${currentProjects.length} total`);
         
         // Sort the filtered projects
         const sortedProjects = sortProjects(filteredProjects);
         
         // Re-render only the filtered and sorted projects
-        renderFilteredProjects(sortedProjects);
+        renderProjects(sortedProjects);
     }
     
-    function renderFilteredProjects(projects) {
-        // Clear container but keep original cards in memory
-        const originalCards = Array.from(projectCardsContainer.children);
-        projectCardsContainer.innerHTML = '';
-        
-        if (projects.length === 0) {
-            projectCardsContainer.innerHTML = `
-                <div class="no-projects-message">
-                    <i class="fas fa-search"></i>
-                    <h3>No Matching Projects</h3>
-                    <p>Try adjusting your search or filter criteria.</p>
-                </div>
-            `;
-            return;
-        }
-        
-        // Add sorted/filtered projects to container
-        projects.forEach(project => {
-            // Try to find existing card for this project
-            const existingCard = originalCards.find(card => 
-                card.dataset.projectId === project.id.toString()
-            );
-            
-            if (existingCard) {
-                projectCardsContainer.appendChild(existingCard);
-            } else {
-                // Create new card if not found (should rarely happen)
-                const newCard = createProjectCard(project);
-                projectCardsContainer.appendChild(newCard);
-            }
-        });
-    }
+
     
     function clearValidationData() {
         validationData = [];

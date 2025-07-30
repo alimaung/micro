@@ -242,7 +242,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     const folderPicker = document.querySelector('.folder-picker-modal');
                     folderPicker.classList.add('show');
                     // Allow selection of only Excel files (.xlsx and .xls)
-                    const selectedPath = await FolderPicker.show(false, 'files', ['xlsx', 'xls'], 'Select COMList File');
+                    const selectedPath = await FolderPicker.show(false, 'files', ['xlsx', 'xls', 'xlsm'], 'Select COMList File');
                     folderPicker.classList.remove('show');
                     if (selectedPath) {
                         elements.comlistFile.value = selectedPath;

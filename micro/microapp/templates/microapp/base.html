@@ -32,6 +32,7 @@
             <a href="{% url 'transfer' %}" {% if request.path == '/transfer/' %}class="active"{% endif %}>Transfer</a>
             <a href="{% url 'register' %}" {% if request.path == '/register/' %}class="active"{% endif %}>Register</a>
             <a href="{% url 'film' %}" {% if request.path == '/film/' %}class="active"{% endif %}>Film</a>
+            <a href="{% url 'analyze' %}" {% if request.path == '/analyze/' %}class="active"{% endif %}>Analyze</a>
             <a href="{% url 'control' %}" {% if request.path == '/control/' %}class="active"{% endif %}>Control</a>
             <a href="{% url 'develop' %}" {% if request.path == '/develop/' %}class="active"{% endif %}>Develop</a>
             <a href="{% url 'label' %}" {% if request.path == '/label/' %}class="active"{% endif %}>Label</a>
@@ -101,6 +102,7 @@
                         <li><a href="{% url 'transfer' %}">{% trans "Transfer" %}</a></li>
                         <li><a href="{% url 'register' %}">{% trans "Register" %}</a></li>
                         <li><a href="{% url 'film' %}">{% trans "Film" %}</a></li>
+                        <li><a href="{% url 'analyze' %}">{% trans "Analyze" %}</a></li>
                         <li><a href="{% url 'control' %}">{% trans "Control" %}</a></li>
                         <li><a href="{% url 'develop' %}">{% trans "Develop" %}</a></li>
                         <li><a href="{% url 'label' %}">{% trans "Label" %}</a></li>

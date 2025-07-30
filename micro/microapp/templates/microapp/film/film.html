@@ -65,6 +65,20 @@
                         <option value="16mm">16mm</option>
                         <option value="35mm">35mm</option>
                     </select>
+                    <div class="three-way-toggle">
+                        <span class="toggle-text ou-text">OU</span>
+                        <div class="toggle-switch-container">
+                            <div class="toggle-track">
+                                <div class="toggle-slider" id="toggle-slider"></div>
+                                <div class="toggle-positions">
+                                    <div class="toggle-position left" data-location="ou"></div>
+                                    <div class="toggle-position center active" data-location="all"></div>
+                                    <div class="toggle-position right" data-location="dw"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <span class="toggle-text dw-text">DW</span>
+                    </div>
                 </div>
             </div>
             
@@ -134,7 +148,7 @@
                         </div>
                         <div class="summary-item re-filming-warning" id="re-filming-warning" style="display: none;">
                             <span class="summary-label">Re-filming Notice:</span>
-                            <span class="summary-value warning">This roll has been filmed before. Temp rolls will be updated.</span>
+                            <span class="summary-value warning">This roll has been filmed before. Any existing temp rolls will remain available.</span>
                         </div>
                     </div>
                 </div>

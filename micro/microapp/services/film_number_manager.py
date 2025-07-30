@@ -753,7 +753,7 @@ class FilmNumberManager:
                 film_type=original_temp_roll.film_type,
                 capacity=remaining_capacity,  # This is the actual remaining capacity
                 usable_capacity=usable_capacity,  # This is the capacity after padding
-                status="available",
+                status="created",  # Created but not yet available until filming completes
                 source_roll=roll
             )
             
@@ -785,7 +785,7 @@ class FilmNumberManager:
                 film_type=film_type,
                 capacity=capacity,
                 usable_capacity=usable_capacity,
-                status="available",
+                status="created",  # Created but not yet available until filming completes
                 source_roll=source_roll
             )
             

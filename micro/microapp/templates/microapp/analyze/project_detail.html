@@ -1,0 +1,410 @@
+{% extends 'microapp/base.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% trans "Project Analysis" %} - {{ project.archive_id }} - Microfilm Processing System{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'microapp/css/analyze/analyze.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="analyze-detail-container">
+    <!-- Header with Back Button -->
+    <div class="detail-header">
+        <div class="header-actions">
+            <a href="{% url 'analyze' %}" class="back-btn">
+                <i class="fas fa-arrow-left"></i>
+                {% trans "Back to Dashboard" %}
+            </a>
+            <div class="action-buttons">
+                <button class="btn btn-secondary" onclick="refreshProjectData({{ project.id }})">
+                    <i class="fas fa-sync-alt"></i>
+                    {% trans "Refresh Data" %}
+                </button>
+                <button class="btn btn-primary" onclick="exportProjectData({{ project.id }})">
+                    <i class="fas fa-download"></i>
+                    {% trans "Export Data" %}
+                </button>
+            </div>
+        </div>
+        <div class="project-header-info">
+            <h1>{{ project.archive_id }}</h1>
+            <div class="project-meta-detail">
+                <span class="location-badge location-{{ project.location|lower }}">{{ project.location }}</span>
+                {% if project.doc_type %}
+                    <span class="doc-type-badge">{{ project.doc_type }}</span>
+                {% endif %}
+                <span class="created-date">{% trans "Created" %}: {{ project.created_at|date:"M d, Y H:i" }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overview Stats -->
+    <div class="overview-stats">
+        <div class="stat-grid">
+            <div class="stat-item">
+                <div class="stat-icon">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ analysis_results.documentCount|default:0|floatformat:0 }}</div>
+                    <div class="stat-label">{% trans "Total Documents" %}</div>
+                </div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-icon">
+                    <i class="fas fa-copy"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ analysis_results.pageCount|default:0|floatformat:0 }}</div>
+                    <div class="stat-label">{% trans "Total Pages" %}</div>
+                </div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ analysis_results.oversizedCount|default:0 }}</div>
+                    <div class="stat-label">{% trans "Oversized Pages" %}</div>
+                </div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-icon">
+                    <i class="fas fa-film"></i>
+                </div>
+                <div class="stat-content">
+                                         <div class="stat-number">{{ total_film_rolls|default:0 }}</div>
+                    <div class="stat-label">{% trans "Film Rolls" %}</div>
+                </div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-icon">
+                    <i class="fas fa-hdd"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ source_data.totalSizeFormatted|default:"N/A" }}</div>
+                    <div class="stat-label">{% trans "Total Size" %}</div>
+                </div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-icon">
+                    <i class="fas fa-link"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ analysis_results.totalReferences|default:0 }}</div>
+                    <div class="stat-label">{% trans "References" %}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Sections -->
+    <div class="data-sections">
+        <!-- Project Information -->
+        {% if project_info %}
+        <div class="data-section">
+            <div class="section-header">
+                <h2><i class="fas fa-info-circle"></i> {% trans "Project Information" %}</h2>
+                <button class="toggle-btn" onclick="toggleSection('project-info')">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+            </div>
+            <div class="section-content" id="project-info">
+                <div class="info-grid">
+                    <div class="info-item">
+                        <label>{% trans "Archive ID" %}:</label>
+                        <span>{{ project_info.archiveId|default:project.archive_id }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>{% trans "Location" %}:</label>
+                        <span>{{ project_info.location|default:project.location }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>{% trans "Document Type" %}:</label>
+                        <span>{{ project_info.documentType|default:project.doc_type }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>{% trans "PDF Path" %}:</label>
+                        <span class="path-text">{{ project_info.pdfPath|default:project.pdf_folder_path }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>{% trans "COM List Path" %}:</label>
+                        <span class="path-text">{{ project_info.comlistPath|default:project.comlist_path }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>{% trans "Is Valid" %}:</label>
+                        <span class="{% if project_info.isValid %}text-success{% else %}text-danger{% endif %}">
+                            {% if project_info.isValid %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Source Data Information -->
+        {% if source_data %}
+        <div class="data-section">
+            <div class="section-header">
+                <h2><i class="fas fa-folder-open"></i> {% trans "Source Data" %}</h2>
+                <button class="toggle-btn" onclick="toggleSection('source-data')">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+            </div>
+            <div class="section-content" id="source-data">
+                <div class="info-grid">
+                    <div class="info-item">
+                        <label>{% trans "Source Path" %}:</label>
+                        <span class="path-text">{{ source_data.path }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>{% trans "Folder Name" %}:</label>
+                        <span>{{ source_data.folderName }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>{% trans "File Count" %}:</label>
+                        <span>{{ source_data.fileCount|floatformat:0 }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>{% trans "Total Size" %}:</label>
+                        <span>{{ source_data.totalSizeFormatted }} ({{ source_data.totalSize|floatformat:0 }} bytes)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Film Allocation Results -->
+        {% if rolls_16mm or rolls_35mm %}
+        <div class="data-section">
+            <div class="section-header">
+                <h2><i class="fas fa-film"></i> {% trans "Film Allocation" %}</h2>
+                <button class="toggle-btn" onclick="toggleSection('film-allocation')">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+            </div>
+            <div class="section-content" id="film-allocation">
+                {% if rolls_16mm %}
+                <div class="roll-section">
+                    <h3>{% trans "16mm Rolls" %} ({{ rolls_16mm|length }})</h3>
+                    <div class="rolls-grid">
+                        {% for roll in rolls_16mm %}
+                        <div class="roll-card">
+                            <div class="roll-header">
+                                <h4>{% trans "Roll" %} {{ roll.roll_id }}</h4>
+                                <span class="film-type-badge">{{ roll.film_type }}</span>
+                            </div>
+                            <div class="roll-stats">
+                                <div class="roll-stat">
+                                    <label>{% trans "Capacity" %}:</label>
+                                    <span>{{ roll.capacity }}</span>
+                                </div>
+                                <div class="roll-stat">
+                                    <label>{% trans "Used" %}:</label>
+                                    <span>{{ roll.pages_used }}</span>
+                                </div>
+                                <div class="roll-stat">
+                                    <label>{% trans "Remaining" %}:</label>
+                                    <span>{{ roll.pages_remaining }}</span>
+                                </div>
+                                <div class="roll-stat">
+                                    <label>{% trans "Documents" %}:</label>
+                                    <span>{{ roll.document_segments|length }}</span>
+                                </div>
+                            </div>
+                            <div class="usage-bar">
+                                 <div class="usage-fill" style="width: {{ roll.usage_percentage }}%"></div>
+                             </div>
+                         </div>
+                         {% endfor %}
+                     </div>
+                 </div>
+                 {% endif %}
+
+                 {% if rolls_35mm %}
+                <div class="roll-section">
+                    <h3>{% trans "35mm Rolls" %} ({{ rolls_35mm|length }})</h3>
+                    <div class="rolls-grid">
+                        {% for roll in rolls_35mm %}
+                        <div class="roll-card">
+                            <div class="roll-header">
+                                <h4>{% trans "Roll" %} {{ roll.roll_id }}</h4>
+                                <span class="film-type-badge">{{ roll.film_type }}</span>
+                            </div>
+                            <div class="roll-stats">
+                                <div class="roll-stat">
+                                    <label>{% trans "Capacity" %}:</label>
+                                    <span>{{ roll.capacity }}</span>
+                                </div>
+                                <div class="roll-stat">
+                                    <label>{% trans "Used" %}:</label>
+                                    <span>{{ roll.pages_used }}</span>
+                                </div>
+                                <div class="roll-stat">
+                                    <label>{% trans "Remaining" %}:</label>
+                                    <span>{{ roll.pages_remaining }}</span>
+                                </div>
+                                <div class="roll-stat">
+                                    <label>{% trans "Documents" %}:</label>
+                                    <span>{{ roll.document_segments|length }}</span>
+                                </div>
+                            </div>
+                            <div class="usage-bar">
+                                 <div class="usage-fill" style="width: {{ roll.usage_percentage }}%"></div>
+                             </div>
+                         </div>
+                         {% endfor %}
+                     </div>
+                 </div>
+                 {% endif %}
+
+                 {% if temp_rolls %}
+                <div class="roll-section">
+                    <h3>{% trans "Temporary Rolls" %} ({{ temp_rolls|length }})</h3>
+                    <div class="temp-rolls-info">
+                        <p class="text-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            {% trans "These documents require special handling due to oversized pages." %}
+                        </p>
+                        <div class="temp-rolls-list">
+                            {% for temp_roll in temp_rolls %}
+                            <div class="temp-roll-item">
+                                <span class="temp-roll-id">{{ temp_roll.roll_id }}</span>
+                                <span class="temp-roll-count">{{ temp_roll.document_segments|length }} documents</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Document Analysis -->
+        {% if documents %}
+        <div class="data-section">
+            <div class="section-header">
+                <h2><i class="fas fa-file-alt"></i> {% trans "Document Analysis" %}</h2>
+                <button class="toggle-btn" onclick="toggleSection('document-analysis')">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+            </div>
+            <div class="section-content" id="document-analysis">
+                <div class="documents-header">
+                    <p>{% trans "Showing first 50 documents" %} ({% trans "Total" %}: {{ total_documents_count }})</p>
+                </div>
+                <div class="documents-table">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>{% trans "Document Name" %}</th>
+                                <th>{% trans "Pages" %}</th>
+                                <th>{% trans "Oversized" %}</th>
+                                <th>{% trans "Status" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for doc in documents %}
+                            <tr>
+                                <td class="document-name">{{ doc.name }}</td>
+                                <td>{{ doc.pages }}</td>
+                                <td>
+                                    {% if doc.hasOversized %}
+                                        <span class="badge badge-warning">{{ doc.totalOversized }}</span>
+                                    {% else %}
+                                        <span class="badge badge-success">{% trans "None" %}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if doc.hasOversized %}
+                                        <span class="status-badge status-warning">{% trans "Has Oversized" %}</span>
+                                    {% else %}
+                                        <span class="status-badge status-success">{% trans "Normal" %}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Raw Data Section -->
+        {% if analysis_data %}
+        <div class="data-section">
+            <div class="section-header">
+                <h2><i class="fas fa-code"></i> {% trans "Raw Data" %}</h2>
+                <button class="toggle-btn" onclick="toggleSection('raw-data')">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+            </div>
+            <div class="section-content collapsed" id="raw-data">
+                <div class="raw-data-tabs">
+                    <div class="tab-buttons">
+                        {% if analysis_data.projectstatedata %}
+                        <button class="tab-btn active" onclick="showRawData('project-state')">{% trans "Project State" %}</button>
+                        {% endif %}
+                        {% if analysis_data.analysisdata %}
+                        <button class="tab-btn" onclick="showRawData('analysis')">{% trans "Analysis" %}</button>
+                        {% endif %}
+                        {% if analysis_data.allocationdata %}
+                        <button class="tab-btn" onclick="showRawData('allocation')">{% trans "Allocation" %}</button>
+                        {% endif %}
+                        {% if analysis_data.indexdata %}
+                        <button class="tab-btn" onclick="showRawData('index')">{% trans "Index" %}</button>
+                        {% endif %}
+                        {% if analysis_data.filmnumberresults %}
+                        <button class="tab-btn" onclick="showRawData('film-numbers')">{% trans "Film Numbers" %}</button>
+                        {% endif %}
+                    </div>
+                    <div class="tab-content">
+                        {% if analysis_data.projectstatedata %}
+                        <div class="raw-data-content active" id="raw-project-state">
+                            <pre><code>{{ analysis_data.projectstatedata|pprint }}</code></pre>
+                        </div>
+                        {% endif %}
+                        {% if analysis_data.analysisdata %}
+                        <div class="raw-data-content" id="raw-analysis">
+                            <pre><code>{{ analysis_data.analysisdata|pprint }}</code></pre>
+                        </div>
+                        {% endif %}
+                        {% if analysis_data.allocationdata %}
+                        <div class="raw-data-content" id="raw-allocation">
+                            <pre><code>{{ analysis_data.allocationdata|pprint }}</code></pre>
+                        </div>
+                        {% endif %}
+                        {% if analysis_data.indexdata %}
+                        <div class="raw-data-content" id="raw-index">
+                            <pre><code>{{ analysis_data.indexdata|pprint }}</code></pre>
+                        </div>
+                        {% endif %}
+                        {% if analysis_data.filmnumberresults %}
+                        <div class="raw-data-content" id="raw-film-numbers">
+                            <pre><code>{{ analysis_data.filmnumberresults|pprint }}</code></pre>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Loading Modal -->
+<div id="loading-modal" class="modal">
+    <div class="modal-content">
+        <div class="loading-spinner"></div>
+        <p>{% trans "Loading project data..." %}</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'microapp/js/analyze/analyze.js' %}"></script>
+{% endblock %} 

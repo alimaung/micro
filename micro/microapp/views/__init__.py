@@ -52,3 +52,6 @@ from .handoff_views import *
 
 # Import explore views for CRUD operations used by the explore page
 from .explore_views import *
+
+# Import analyze views
+from .analyze_views import *

@@ -31,6 +31,93 @@ DEFAULT_EMAIL_RECIPIENTS = {
     'bcc': 'ali.maung@rolls-royce.com'
 }
 
+def validate_barcode(barcode: str) -> Tuple[bool, str]:
+    """
+    Validate that barcode is exactly 16 digits.
+    
+    Args:
+        barcode: Barcode string to validate
+        
+    Returns:
+        Tuple of (is_valid, normalized_barcode)
+    """
+    if not barcode:
+        return False, ""
+    
+    # Remove any whitespace and convert to string
+    clean_barcode = str(barcode).strip()
+    
+    # Check if it's exactly 16 digits
+    if re.match(r'^\d{16}$', clean_barcode):
+        return True, clean_barcode
+    
+    # Try to extract 16 consecutive digits
+    digits_only = re.sub(r'\D', '', clean_barcode)
+    if len(digits_only) == 16:
+        return True, digits_only
+    
+    return False, clean_barcode
+
+def validate_com_id(com_id: Any) -> Tuple[bool, str]:
+    """
+    Validate that COM ID is exactly 8 digits.
+    
+    Args:
+        com_id: COM ID to validate (can be string, int, float)
+        
+    Returns:
+        Tuple of (is_valid, normalized_com_id)
+    """
+    if com_id is None or pd.isna(com_id):
+        return False, ""
+    
+    # Handle different input types
+    if isinstance(com_id, (int, float)):
+        if pd.isna(com_id) or com_id == float('inf') or com_id == float('-inf'):
+            return False, ""
+        # Convert to integer if it's a whole number
+        if isinstance(com_id, float) and com_id.is_integer():
+            com_id = int(com_id)
+        clean_com_id = str(com_id)
+    else:
+        clean_com_id = str(com_id).strip()
+    
+    # Remove any non-digit characters
+    digits_only = re.sub(r'\D', '', clean_com_id)
+    
+    # Check if it's exactly 8 digits
+    if len(digits_only) == 8:
+        return True, digits_only
+    
+    # Check if it's less than 8 digits and pad with leading zeros
+    if len(digits_only) <= 8 and len(digits_only) > 0:
+        padded_com_id = digits_only.zfill(8)
+        return True, padded_com_id
+    
+    return False, clean_com_id
+
+def normalize_document_id(doc_id: str) -> str:
+    """
+    Normalize document ID by removing .pdf extension and ensuring proper format.
+    
+    Args:
+        doc_id: Document ID to normalize
+        
+    Returns:
+        Normalized document ID
+    """
+    if not doc_id:
+        return ""
+    
+    # Convert to string and strip whitespace
+    normalized = str(doc_id).strip()
+    
+    # Remove .pdf extension (case-insensitive)
+    if normalized.lower().endswith('.pdf'):
+        normalized = normalized[:-4]
+    
+    return normalized
+
 @dataclass
 class ValidationResult:
     """Result of validating a single document entry."""
@@ -459,15 +546,24 @@ class HandoffService:
         com_id = temp_entry.get('com_id', '')
         temp_blip = temp_entry.get('temp_blip', '')
         
-        # Enhanced normalization of document ID:
-        # 1. Convert to lowercase for case-insensitive comparison
-        # 2. Remove both .pdf and .PDF extensions
-        normalized_doc_id = document_id.lower()
-        if normalized_doc_id.endswith('.pdf'):
-            normalized_doc_id = normalized_doc_id[:-4]
+        # Normalize and validate inputs using our robust utilities
+        normalized_doc_id = normalize_document_id(document_id)
         
-        # Create normalized lookup key
-        lookup_key = f"{roll}_{normalized_doc_id}"
+        # Validate and normalize barcode (should be 16 digits)
+        barcode_valid, normalized_barcode = validate_barcode(barcode)
+        if not barcode_valid and barcode:
+            self.logger.warning(f"Invalid barcode format: '{barcode}' for document {document_id}. Expected 16 digits.")
+        
+        # Validate and normalize COM ID (should be 8 digits)
+        com_id_valid, normalized_com_id = validate_com_id(com_id)
+        if not com_id_valid and com_id:
+            self.logger.warning(f"Invalid COM ID format: '{com_id}' for document {document_id}. Expected 8 digits.")
+        
+        # Use normalized values for lookup
+        lookup_barcode = normalized_barcode if barcode_valid else normalized_doc_id.lower()
+        
+        # Create normalized lookup key using the best available identifier
+        lookup_key = f"{roll}_{lookup_barcode}"
         
         # Try alternate keys if the main one isn't found
         alternate_keys = []
@@ -477,21 +573,26 @@ class HandoffService:
         
         # If not found, try some alternate variations
         if not key_found:
-            # Try with uppercase barcode if it's not already
-            if barcode and barcode.lower() != normalized_doc_id:
+            # Try with original barcode if different from normalized
+            if barcode and barcode != normalized_barcode:
                 alt_key = f"{roll}_{barcode.lower()}"
                 if alt_key != lookup_key:
                     alternate_keys.append(alt_key)
             
-            # Try with the document ID without normalization
-            alt_key2 = f"{roll}_{document_id}"
-            if alt_key2 != lookup_key:
+            # Try with normalized document ID
+            if normalized_doc_id.lower() != lookup_barcode:
+                alt_key2 = f"{roll}_{normalized_doc_id.lower()}"
                 alternate_keys.append(alt_key2)
+            
+            # Try with original document ID
+            alt_key3 = f"{roll}_{document_id.lower()}"
+            if alt_key3 != lookup_key:
+                alternate_keys.append(alt_key3)
             
             # Try with just the numeric part if it's a numeric ID
             if normalized_doc_id.isdigit():
-                alt_key3 = f"{roll}_{normalized_doc_id}"
-                alternate_keys.append(alt_key3)
+                alt_key4 = f"{roll}_{normalized_doc_id}"
+                alternate_keys.append(alt_key4)
             
             # Check all alternate keys
             for alt_key in alternate_keys:
@@ -501,15 +602,15 @@ class HandoffService:
                     self.logger.info(f"Found document using alternate key: {alt_key}")
                     break
         
-        self.logger.debug(f"Looking up key: {lookup_key} (original doc_id: {document_id})")
+        self.logger.debug(f"Looking up key: {lookup_key} (original doc_id: {document_id}, barcode: {barcode})")
         
         # Check if entry exists in film logs
         if not key_found:
             # Get list of document IDs in film logs for this roll to help with debugging
             roll_docs = [key.split('_')[1] for key in film_log_lookup.keys() if key.startswith(f"{roll}_")]
-            close_matches = self._find_close_matches(normalized_doc_id, roll_docs, n=3)
+            close_matches = self._find_close_matches(lookup_barcode, roll_docs, n=3)
             
-            debug_msg = f'Document {document_id} not found in film logs for roll {roll}'
+            debug_msg = f'Document {document_id} (barcode: {barcode}) not found in film logs for roll {roll}'
             if close_matches:
                 debug_msg += f". Close matches: {', '.join(close_matches)}"
             
@@ -522,8 +623,8 @@ class HandoffService:
             return ValidationResult(
                 document_id=document_id,
                 roll=roll,
-                barcode=barcode,
-                com_id=com_id,
+                barcode=normalized_barcode if barcode_valid else barcode,  # Use normalized barcode
+                com_id=normalized_com_id if com_id_valid else com_id,      # Use normalized COM ID
                 temp_blip=temp_blip,
                 film_blip=None,
                 status='error',
@@ -538,8 +639,8 @@ class HandoffService:
             return ValidationResult(
                 document_id=document_id,
                 roll=roll,
-                barcode=barcode,
-                com_id=com_id,
+                barcode=normalized_barcode if barcode_valid else barcode,  # Use normalized barcode
+                com_id=normalized_com_id if com_id_valid else com_id,      # Use normalized COM ID
                 temp_blip=temp_blip,
                 film_blip=film_entry.blip,
                 status='validated',
@@ -570,19 +671,19 @@ class HandoffService:
                         
                         # If document numbers differ by just 1 (common when doc numbering schemes differ)
                         if doc_diff <= 1:
-                            return ValidationResult(
-                                document_id=document_id,
-                                roll=roll,
-                                barcode=barcode,
-                                com_id=com_id,
-                                temp_blip=temp_blip,
-                                film_blip=film_entry.blip,
-                                status='warning',
-                                message=f'Minor blip numbering difference: expected {temp_blip}, found {film_entry.blip}',
-                                start_frame=film_entry.start_frame,
-                                end_frame=film_entry.end_frame,
-                                pages=film_entry.pages
-                            )
+                                                    return ValidationResult(
+                            document_id=document_id,
+                            roll=roll,
+                            barcode=normalized_barcode if barcode_valid else barcode,
+                            com_id=normalized_com_id if com_id_valid else com_id,
+                            temp_blip=temp_blip,
+                            film_blip=film_entry.blip,
+                            status='warning',
+                            message=f'Minor blip numbering difference: expected {temp_blip}, found {film_entry.blip}',
+                            start_frame=film_entry.start_frame,
+                            end_frame=film_entry.end_frame,
+                            pages=film_entry.pages
+                        )
             except Exception as e:
                 self.logger.debug(f"Error parsing blips for structured comparison: {e}")
                 # Continue with regular similarity check
@@ -594,8 +695,8 @@ class HandoffService:
                 return ValidationResult(
                     document_id=document_id,
                     roll=roll,
-                    barcode=barcode,
-                    com_id=com_id,
+                    barcode=normalized_barcode if barcode_valid else barcode,
+                    com_id=normalized_com_id if com_id_valid else com_id,
                     temp_blip=temp_blip,
                     film_blip=film_entry.blip,
                     status='warning',
@@ -608,8 +709,8 @@ class HandoffService:
                 return ValidationResult(
                     document_id=document_id,
                     roll=roll,
-                    barcode=barcode,
-                    com_id=com_id,
+                    barcode=normalized_barcode if barcode_valid else barcode,
+                    com_id=normalized_com_id if com_id_valid else com_id,
                     temp_blip=temp_blip,
                     film_blip=film_entry.blip,
                     status='error',
@@ -683,7 +784,7 @@ class HandoffService:
     
     def generate_handoff_files(self, project, validated_results: List[ValidationResult]) -> Dict[str, Any]:
         """
-        Generate the final handoff files (scan.xlsx and scan.dat).
+        Generate the final handoff files (Excel only - DAT file generation disabled).
         
         Args:
             project: Django Project model instance
@@ -704,22 +805,23 @@ class HandoffService:
             if not valid_entries:
                 raise ValueError("No valid entries to export")
             
-            # Generate files
+            # Generate Excel file only
             excel_path = self._generate_excel_file(export_dir, valid_entries, project)
-            dat_path = self._generate_dat_file(export_dir, valid_entries, project)
+            # DAT file generation commented out
+            # dat_path = self._generate_dat_file(export_dir, valid_entries, project)
             
             # Get file sizes
             excel_size = excel_path.stat().st_size if excel_path.exists() else 0
-            dat_size = dat_path.stat().st_size if dat_path.exists() else 0
+            # dat_size = dat_path.stat().st_size if dat_path.exists() else 0
             
             self.logger.info(f"Generated handoff files for project {project.archive_id}: "
-                           f"Excel ({excel_size} bytes), DAT ({dat_size} bytes)")
+                           f"Excel ({excel_size} bytes)")
             
             return {
                 'excel_path': str(excel_path),
-                'dat_path': str(dat_path),
+                # 'dat_path': str(dat_path),
                 'excel_size': excel_size,
-                'dat_size': dat_size,
+                # 'dat_size': dat_size,
                 'entries_count': len(valid_entries),
                 'generated_at': datetime.now().isoformat()
             }
@@ -761,23 +863,21 @@ class HandoffService:
                                   f"doc_id={entry.document_id}, com_id={entry.com_id}, "
                                   f"barcode={entry.barcode}, status={entry.status}")
             
-            # Remove .pdf extension from barcode if present (case-insensitive)
-            barcode = entry.barcode
-            if barcode.lower().endswith('.pdf'):
-                barcode = barcode[:-4]  # Remove last 4 characters (.pdf or .PDF)
+            # Normalize and validate barcode and COM ID using robust utilities
+            barcode_valid, clean_barcode = validate_barcode(entry.barcode)
+            if not barcode_valid:
+                # Fallback: normalize document ID if barcode is invalid
+                clean_barcode = normalize_document_id(entry.barcode or '')
+                if not clean_barcode:
+                    clean_barcode = str(entry.barcode) if entry.barcode is not None else ''
+                self.logger.warning(f"Invalid barcode format for entry {i}: '{entry.barcode}'. Expected 16 digits.")
             
-            # Clean and validate data to prevent NaN/INF issues
-            clean_barcode = str(barcode) if barcode is not None else ''
-            clean_com_id = entry.com_id if entry.com_id is not None and pd.notna(entry.com_id) else ''
+            # Validate and normalize COM ID (should be 8 digits)
+            com_id_valid, clean_com_id = validate_com_id(entry.com_id)
+            if not com_id_valid and entry.com_id:
+                self.logger.warning(f"Invalid COM ID format for entry {i}: '{entry.com_id}'. Expected 8 digits.")
+            
             clean_blip = entry.film_blip or entry.temp_blip or ''
-            
-            # Convert com_id to string if it's a number to avoid NaN issues
-            if isinstance(clean_com_id, (int, float)):
-                if pd.isna(clean_com_id) or clean_com_id == float('inf') or clean_com_id == float('-inf'):
-                    clean_com_id = ''
-                    self.logger.debug(f"Cleaned NaN/INF com_id for entry {i}: {entry.com_id} -> '{clean_com_id}'")
-                else:
-                    clean_com_id = str(int(clean_com_id))
             
             data.append({
                 'Barcode': clean_barcode,
@@ -991,7 +1091,8 @@ class HandoffService:
         
         return excel_path
     
-    def _generate_dat_file(self, export_dir: Path, entries: List[ValidationResult], project) -> Path:
+    # DAT file generation disabled - function commented out
+    def _generate_dat_file_DISABLED(self, export_dir: Path, entries: List[ValidationResult], project) -> Path:
         """
         Generate fixed-width DAT file for legacy systems.
         
@@ -1008,28 +1109,21 @@ class HandoffService:
         archive_id = project.archive_id or 'PROJECT'
         dat_path = export_dir / f'{archive_id}_scan_{timestamp}.dat'
         
-        # Prepare entries for sorting with data cleaning
+        # Prepare entries for sorting with robust validation
         entries_for_sorting = []
         for entry in entries:
-            # Remove .pdf extension from barcode if present (case-insensitive)
-            barcode = entry.barcode
-            if barcode.lower().endswith('.pdf'):
-                barcode = barcode[:-4]  # Remove last 4 characters (.pdf or .PDF)
+            # Validate and normalize barcode (should be 16 digits)
+            barcode_valid, clean_barcode = validate_barcode(entry.barcode)
+            if not barcode_valid:
+                # Fallback: normalize document ID if barcode is invalid
+                clean_barcode = normalize_document_id(entry.barcode or '')
+                if not clean_barcode:
+                    clean_barcode = str(entry.barcode) if entry.barcode is not None else ''
             
-            # Clean and validate data to prevent issues
-            clean_barcode = str(barcode) if barcode is not None else ''
-            
-            # Handle com_id with NaN/INF checking
-            clean_com_id = entry.com_id
-            if clean_com_id is None or pd.isna(clean_com_id):
-                clean_com_id = ''
-            elif isinstance(clean_com_id, (int, float)):
-                if clean_com_id == float('inf') or clean_com_id == float('-inf'):
-                    clean_com_id = ''
-                else:
-                    clean_com_id = str(int(clean_com_id))
-            else:
-                clean_com_id = str(clean_com_id)
+            # Validate and normalize COM ID (should be 8 digits)
+            com_id_valid, clean_com_id = validate_com_id(entry.com_id)
+            if not com_id_valid and entry.com_id:
+                clean_com_id = ''  # Use empty string for invalid COM IDs in DAT file
             
             clean_blip = entry.film_blip or entry.temp_blip or ''
             
@@ -1261,29 +1355,31 @@ class HandoffService:
                     
                     mail.HTMLBody = signature_html
                 
-                # Add attachments if available
+                # Add attachments if available (Excel only - DAT file disabled)
                 if file_paths:
                     # Handle both old and new file_paths structure
                     if isinstance(file_paths, dict):
-                        # New structure from generate_handoff_files
+                        # New structure from generate_handoff_files - Excel only
                         if 'excel_path' in file_paths and os.path.exists(file_paths['excel_path']):
                             mail.Attachments.Add(file_paths['excel_path'])
                             self.logger.info(f"Added Excel attachment: {file_paths['excel_path']}")
                         
-                        if 'dat_path' in file_paths and os.path.exists(file_paths['dat_path']):
-                            mail.Attachments.Add(file_paths['dat_path'])
-                            self.logger.info(f"Added DAT attachment: {file_paths['dat_path']}")
+                        # DAT file attachment disabled
+                        # if 'dat_path' in file_paths and os.path.exists(file_paths['dat_path']):
+                        #     mail.Attachments.Add(file_paths['dat_path'])
+                        #     self.logger.info(f"Added DAT attachment: {file_paths['dat_path']}")
                         
                         # Only process legacy structure if new structure keys are not present
-                        elif not ('excel_path' in file_paths or 'dat_path' in file_paths):
-                            # Legacy structure support
+                        elif not ('excel_path' in file_paths):  # Removed 'dat_path' check since it's disabled
+                            # Legacy structure support - Excel files only
                             for file_type, file_info in file_paths.items():
                                 if isinstance(file_info, dict) and 'path' in file_info:
                                     file_path = file_info['path']
-                                    if os.path.exists(file_path):
+                                    # Only attach Excel files, skip DAT files
+                                    if os.path.exists(file_path) and not file_path.lower().endswith('.dat'):
                                         mail.Attachments.Add(file_path)
                                         self.logger.info(f"Added legacy attachment: {file_path}")
-                                elif isinstance(file_info, str) and os.path.exists(file_info):
+                                elif isinstance(file_info, str) and os.path.exists(file_info) and not file_info.lower().endswith('.dat'):
                                     mail.Attachments.Add(file_info)
                                     self.logger.info(f"Added string path attachment: {file_info}")
                 
@@ -1567,7 +1663,6 @@ Project Details:
 
 Attached Files:
 - blips.xlsx (Excel format index - {file_paths.get('excel_size', 0)} bytes)
-- scan.dat (Legacy format index - {file_paths.get('dat_size', 0)} bytes)
 
 The project has been successfully filmed, developed, validated, and is ready for final processing.
 
@@ -1615,11 +1710,11 @@ This email was generated automatically by the Microfilm Processing System.
             if validation_results:
                 handoff_record.update_validation_summary(validation_results)
             
-            # Update file information
+            # Update file information (Excel only - DAT file disabled)
             if file_paths:
                 handoff_record.update_file_info(
                     excel_path=file_paths.get('excel_path'),
-                    dat_path=file_paths.get('dat_path')
+                    # dat_path=file_paths.get('dat_path')  # DAT file disabled
                 )
             
             # Set film numbers

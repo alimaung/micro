@@ -1,21 +1,21 @@
 {
   "sourceData": {
-    "path": "X:\\RRD015-2024_OU_FPA-FPD-MVA",
-    "folderName": "RRD015-2024_OU_FPA-FPD-MVA",
-    "fileCount": 225,
-    "totalSize": 5762159678,
-    "totalSizeFormatted": "5.4 GB"
+    "path": "X:\\RRD018-2025_OU_(PILS)",
+    "folderName": "RRD018-2025_OU_(PILS)",
+    "fileCount": 1763,
+    "totalSize": 352921712,
+    "totalSizeFormatted": "336.6 MB"
   },
-  "destinationPath": "Y:\\RRD015-2024_OU_FPA-FPD-MVA\\",
+  "destinationPath": "X:\\RRD018-2025_OU_(PILS)\\",
   "projectInfo": {
-    "archiveId": "RRD015-2024",
+    "archiveId": "RRD018-2025",
     "location": "OU",
-    "documentType": "FPA-FPD-MVA",
-    "pdfPath": "X:\\RRD015-2024_OU_FPA-FPD-MVA\\PDFs zu RRD015-2024",
-    "comlistPath": "X:\\RRD015-2024_OU_FPA-FPD-MVA\\RRD015-2024_FPA_FPD_COM_List.xlsx",
+    "documentType": "PILS",
+    "pdfPath": "X:\\RRD018-2025_OU_(PILS)\\PDFs_RRD018-2025",
+    "comlistPath": "X:\\RRD018-2025_OU_(PILS)\\RRD018-2025_PILS_COM_List.xlsx",
     "isValid": true
   },
-  "projectId": 37,
+  "projectId": "12",
   "uiState": {
     "autoParseEnabled": true,
     "autoSelectPathEnabled": true,
@@ -23,5 +23,5 @@
     "autoFindComlistEnabled": true,
     "createSubfolderEnabled": true
   },
-  "isValidated": 37
+  "isValidated": 12
 }

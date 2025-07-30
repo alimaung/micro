@@ -50,6 +50,11 @@ document.addEventListener('DOMContentLoaded', function() {
         // Initialize lighting mode
         initializeFilmingLightingMode();
         
+        // Initialize toggle position (default to ALL)
+        setTimeout(() => {
+            updateTogglePosition('all');
+        }, 100);
+        
         // Disable start filming button initially (if in normal mode)
         const startFilmingButton = document.getElementById('start-filming');
         if (startFilmingButton && !isFilmingActive) {
@@ -383,7 +388,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     <div class="roll-header">
                         <div class="roll-title">
-                            <div class="roll-film-number">${filmNumber}</div>
+                            <div class="roll-film-number">
+                                ${getLocationIndicator(filmNumber)}${filmNumber}
+                            </div>
                             <div class="roll-film-type">${filmType}</div>
                         </div>
                         ${!isCompleted ? `
@@ -460,6 +467,22 @@ document.addEventListener('DOMContentLoaded', function() {
             case 'completed': return 'completed';
             case 'error': return 'error';
             default: return 'pending';
+        }
+    }
+    
+    // Get location indicator based on film number
+    function getLocationIndicator(filmNumber) {
+        if (!filmNumber || filmNumber.length < 1) {
+            return '<span class="location-indicator unknown"></span>';
+        }
+        
+        const firstDigit = filmNumber.charAt(0);
+        if (firstDigit === '1') {
+            return '<span class="location-indicator ou" title="OU Location"></span>';
+        } else if (firstDigit === '2') {
+            return '<span class="location-indicator dw" title="DW Location"></span>';
+        } else {
+            return '<span class="location-indicator unknown" title="Unknown Location"></span>';
         }
     }
     
@@ -591,13 +614,13 @@ document.addEventListener('DOMContentLoaded', function() {
             if (reFilmingCheckItem) reFilmingCheckItem.style.display = 'block';
             
             // Fetch temp roll preview for re-filming
-            fetchTempRollPreview(rollId, filmType, pageCount);
+            fetchTempRollPreview(rollId, filmType, pageCount, true);
         } else {
             if (reFilmingWarning) reFilmingWarning.style.display = 'none';
             if (reFilmingCheckItem) reFilmingCheckItem.style.display = 'none';
             
-            // For normal filming, show standard roll source
-            updateRollSourceDisplay('New Roll', 'new-roll');
+            // For new filming, also check for available temp rolls (efficient usage)
+            fetchTempRollPreview(rollId, filmType, pageCount, false);
         }
         
         // Update camera head instruction
@@ -613,8 +636,8 @@ document.addEventListener('DOMContentLoaded', function() {
         updateValidationStatus();
     }
     
-    // Fetch temp roll preview for re-filming (preview only, no updates)
-    async function fetchTempRollPreview(rollId, filmType, requiredPages) {
+    // Fetch temp roll preview for filming (preview only, no updates)
+    async function fetchTempRollPreview(rollId, filmType, requiredPages, isReFilming = true) {
         try {
             // Show loading state for roll source
             updateRollSourceDisplay('Checking available temp rolls...', 'loading');
@@ -636,7 +659,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (response.ok) {
                 const data = await response.json();
                 if (data.success) {
-                    displayTempRollPreview(data.temp_roll_strategy);
+                    displayTempRollPreview(data.temp_roll_strategy, isReFilming);
                 } else {
                     console.warn('Temp roll preview failed:', data.error);
                     updateRollSourceDisplay('New Roll (temp roll check failed)', 'new-roll');
@@ -652,7 +675,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Display temp roll preview information
-    function displayTempRollPreview(strategy) {
+    function displayTempRollPreview(strategy, isReFilming = true) {
         if (strategy.use_temp_roll) {
             // Will use existing temp roll
             const tempRoll = strategy.temp_roll;
@@ -668,19 +691,20 @@ document.addEventListener('DOMContentLoaded', function() {
             );
             
             // Show preview of what will happen
-            showTempRollPreviewInfo(strategy);
+            showTempRollPreviewInfo(strategy, isReFilming);
         } else {
             // Will use new roll
-            updateRollSourceDisplay('New Roll', 'new-roll');
+            updateRollSourceDisplay(isReFilming ? 'New Roll (Re-filming)' : 'New Roll', 'new-roll');
             
             // Update temp roll instruction
+            const rollTypeDesc = isReFilming ? 'new roll for re-filming' : 'new roll';
             updateTempRollInstruction(
                 `Insert new ${strategy.film_type} film roll`,
-                `New roll with ${strategy.new_roll_capacity} pages capacity. ${strategy.will_create_temp_roll ? 'Will create temp roll after filming.' : 'Roll will be fully used.'}`
+                `${rollTypeDesc.charAt(0).toUpperCase() + rollTypeDesc.slice(1)} with ${strategy.new_roll_capacity} pages capacity. ${strategy.will_create_temp_roll ? 'Will create temp roll after filming.' : 'Roll will be fully used.'}`
             );
             
             // Show preview of what will happen
-            showTempRollPreviewInfo(strategy);
+            showTempRollPreviewInfo(strategy, isReFilming);
         }
     }
     
@@ -726,7 +750,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Show temp roll preview information
-    function showTempRollPreviewInfo(strategy) {
+    function showTempRollPreviewInfo(strategy, isReFilming = true) {
         // Create or update a preview section in the validation card
         let previewSection = document.getElementById('temp-roll-preview');
         
@@ -744,8 +768,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Build preview content
+        const previewTitle = isReFilming ? 'Temp Roll Strategy Preview' : 'Film Roll Strategy';
         let previewContent = `
-            <h3>Temp Roll Strategy Preview</h3>
+            <h3>${previewTitle}</h3>
             <div class="preview-info">
         `;
         
@@ -864,10 +889,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const searchElement = document.getElementById('roll-search');
         const statusFilterElement = document.getElementById('roll-status-filter');
         const filmTypeFilterElement = document.getElementById('film-type-filter');
+        const activeTogglePosition = document.querySelector('.toggle-position.active');
         
         const searchTerm = searchElement ? searchElement.value.toLowerCase() : '';
         const statusFilter = statusFilterElement ? statusFilterElement.value : 'all';
         const filmTypeFilter = filmTypeFilterElement ? filmTypeFilterElement.value : 'all';
+        const locationFilter = activeTogglePosition ? activeTogglePosition.dataset.location : 'all';
         
         filteredRolls = allRolls.filter(roll => {
             // Search filter
@@ -884,7 +911,18 @@ document.addEventListener('DOMContentLoaded', function() {
             const rollFilmType = roll.film_type || '16mm';
             const matchesFilmType = filmTypeFilter === 'all' || rollFilmType === filmTypeFilter;
             
-            return matchesSearch && matchesStatus && matchesFilmType;
+            // Location filter based on first digit of film number
+            let matchesLocation = true;
+            if (locationFilter !== 'all' && roll.film_number && roll.film_number.length >= 1) {
+                const firstDigit = roll.film_number.charAt(0);
+                if (locationFilter === 'ou') {
+                    matchesLocation = firstDigit === '1';
+                } else if (locationFilter === 'dw') {
+                    matchesLocation = firstDigit === '2';
+                }
+            }
+            
+            return matchesSearch && matchesStatus && matchesFilmType && matchesLocation;
         });
         
         displayRolls(filteredRolls);
@@ -932,6 +970,8 @@ Directory Exists: ${roll.output_directory_exists ? 'Yes' : 'No'}`;
         });
     };
     
+
+    
     // Main functions
     function initializeEventHandlers() {
         // Roll selection handlers
@@ -946,6 +986,38 @@ Directory Exists: ${roll.output_directory_exists ? 'Yes' : 'No'}`;
         document.getElementById('roll-search').addEventListener('input', filterRolls);
         document.getElementById('roll-status-filter').addEventListener('change', filterRolls);
         document.getElementById('film-type-filter').addEventListener('change', filterRolls);
+        
+        // Three-way toggle handlers
+        const togglePositions = document.querySelectorAll('.toggle-position');
+        const toggleSlider = document.getElementById('toggle-slider');
+        const toggleContainer = document.querySelector('.three-way-toggle');
+        
+        togglePositions.forEach(position => {
+            position.addEventListener('click', function() {
+                const location = this.dataset.location;
+                console.log('Toggle position clicked:', location);
+                
+                // Remove active class from all positions
+                togglePositions.forEach(pos => pos.classList.remove('active'));
+                
+                // Add active class to clicked position
+                this.classList.add('active');
+                
+                // Update slider position and container class
+                updateTogglePosition(location);
+                
+                // Filter rolls
+                filterRolls();
+            });
+        });
+        
+        // Also allow clicking on the slider itself to cycle through positions
+        if (toggleSlider) {
+            toggleSlider.addEventListener('click', function(e) {
+                e.stopPropagation();
+                cycleTogglePosition();
+            });
+        }
         
         // Validation handlers
         document.getElementById('cancel-validation').addEventListener('click', resetToRollSelection);
@@ -1183,6 +1255,65 @@ Directory Exists: ${roll.output_directory_exists ? 'Yes' : 'No'}`;
             handleSessionComplete(status);
         } else if (status.status === 'failed') {
             handleSessionError(status);
+        }
+    }
+    
+    // Update toggle position and styling
+    function updateTogglePosition(location) {
+        const toggleSlider = document.getElementById('toggle-slider');
+        const toggleContainer = document.querySelector('.three-way-toggle');
+        
+        if (!toggleSlider || !toggleContainer) return;
+        
+        // Remove all position classes from slider
+        toggleSlider.classList.remove('left', 'center', 'right');
+        
+        // Remove all active classes from container
+        toggleContainer.classList.remove('ou-active', 'all-active', 'dw-active');
+        
+        // Add appropriate classes based on location
+        switch (location) {
+            case 'ou':
+                toggleSlider.classList.add('left');
+                toggleContainer.classList.add('ou-active');
+                break;
+            case 'all':
+                toggleSlider.classList.add('center');
+                toggleContainer.classList.add('all-active');
+                break;
+            case 'dw':
+                toggleSlider.classList.add('right');
+                toggleContainer.classList.add('dw-active');
+                break;
+        }
+    }
+    
+    // Cycle through toggle positions when clicking on slider
+    function cycleTogglePosition() {
+        const activePosition = document.querySelector('.toggle-position.active');
+        const allPositions = document.querySelectorAll('.toggle-position');
+        
+        if (!activePosition || !allPositions.length) return;
+        
+        let nextLocation = 'all'; // default fallback
+        
+        const currentLocation = activePosition.dataset.location;
+        switch (currentLocation) {
+            case 'ou':
+                nextLocation = 'all';
+                break;
+            case 'all':
+                nextLocation = 'dw';
+                break;
+            case 'dw':
+                nextLocation = 'ou';
+                break;
+        }
+        
+        // Find and click the next position
+        const nextPosition = document.querySelector(`[data-location="${nextLocation}"]`);
+        if (nextPosition) {
+            nextPosition.click();
         }
     }
     
@@ -1779,8 +1910,9 @@ Directory Exists: ${roll.output_directory_exists ? 'Yes' : 'No'}`;
             completionStatus.className = 'status-indicator success';
         }
         
-        // Fetch and update temp roll instructions from database
-        fetchTempRollInstructions(data);
+            // Fetch and update temp roll instructions from database
+    console.log('📊 Session completion data being passed to fetchTempRollInstructions:', data);
+    fetchTempRollInstructions(data);
         
         // Show success notification
         showNotification('success', 'Filming Complete', `Roll ${filmNumber} has been successfully filmed`);
@@ -1831,25 +1963,27 @@ Directory Exists: ${roll.output_directory_exists ? 'Yes' : 'No'}`;
     // Fetch temp roll instructions from database
     async function fetchTempRollInstructions(sessionData) {
         try {
+            console.log('🔍 Fetching temp roll instructions, session data:', sessionData);
+            
             // First check if temp roll info is already in session data
             if (sessionData.roll_info && sessionData.roll_info.temp_roll_info) {
-                console.log('Using temp roll info from session data');
+                console.log('✅ Using temp roll info from session data:', sessionData.roll_info.temp_roll_info);
                 updateTempRollInstructionsFromData(sessionData.roll_info.temp_roll_info);
                 return;
             }
             
             // Check if we have roll information for API call
             if (!sessionData.roll_info || !sessionData.roll_info.id) {
-                console.warn('No roll information available for temp roll check');
+                console.warn('⚠️ No roll information available for temp roll check');
                 updateTempRollInstructionsFromData(null);
                 return;
             }
             
             const rollId = sessionData.roll_info.id;
             
-            console.log('Fetching temp roll info from API for roll:', rollId);
+            console.log('🌐 Fetching temp roll info from API for roll:', rollId);
             
-            // Fetch temp roll information from the database
+            // Fetch temp roll information from the database (now uses the correct endpoint with temp roll info)
             const response = await fetch(`/api/rolls/${rollId}/`, {
                 method: 'GET',
                 headers: {
@@ -1860,28 +1994,32 @@ Directory Exists: ${roll.output_directory_exists ? 'Yes' : 'No'}`;
             
             if (response.ok) {
                 const rollData = await response.json();
+                console.log('📥 Received roll data from API:', rollData);
                 
                 if (rollData.success) {
                     // Check if a temp roll was created
                     const tempRollInfo = rollData.roll.temp_roll_info;
+                    console.log('🎯 Extracted temp roll info from API response:', tempRollInfo);
                     updateTempRollInstructionsFromData(tempRollInfo);
                 } else {
-                    console.warn('Failed to fetch roll data:', rollData.error);
+                    console.warn('❌ Failed to fetch roll data:', rollData.error);
                     updateTempRollInstructionsFromData(null);
                 }
             } else {
-                console.warn('Failed to fetch roll data, status:', response.status);
+                console.warn('❌ Failed to fetch roll data, status:', response.status);
                 updateTempRollInstructionsFromData(null);
             }
             
         } catch (error) {
-            console.error('Error fetching temp roll instructions:', error);
+            console.error('❌ Error fetching temp roll instructions:', error);
             updateTempRollInstructionsFromData(null);
         }
     }
     
     // Update temp roll instructions based on database data
     function updateTempRollInstructionsFromData(tempRollInfo) {
+        console.log('🔧 updateTempRollInstructionsFromData called with:', tempRollInfo);
+        
         const instructionsContainer = document.getElementById('temp-roll-instructions');
         
         if (!instructionsContainer) {
@@ -1899,14 +2037,19 @@ Directory Exists: ${roll.output_directory_exists ? 'Yes' : 'No'}`;
                 } else {
                     completionContent.appendChild(instructionsDiv);
                 }
+                console.log('📦 Created temp roll instructions container');
             }
         }
         
         const container = document.getElementById('temp-roll-instructions');
-        if (!container) return;
+        if (!container) {
+            console.error('❌ Could not find or create temp roll instructions container');
+            return;
+        }
         
         // Check if temp roll was created
         if (tempRollInfo && tempRollInfo.created_temp_roll) {
+            console.log('✅ Temp roll was created, displaying instructions');
             const tempRoll = tempRollInfo.created_temp_roll;
             container.innerHTML = `
                 <div class="temp-roll-instruction-card">
@@ -1930,6 +2073,7 @@ Directory Exists: ${roll.output_directory_exists ? 'Yes' : 'No'}`;
                 </div>
             `;
         } else {
+            console.log('ℹ️ No temp roll was created, displaying standard completion message');
             // No temp roll created - check if roll is full or nearly full
             container.innerHTML = `
                 <div class="temp-roll-instruction-card discard">

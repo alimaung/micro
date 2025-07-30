@@ -1004,6 +1004,7 @@ class SMACallbackHandler:
         try:
             from ...models import FilmingSession
             from django.utils import timezone
+            from ...services.sma_service import SMAService
             
             session = FilmingSession.objects.get(session_id=self.session_id)
             session.status = 'completed'
@@ -1015,14 +1016,16 @@ class SMACallbackHandler:
             if session.started_at:
                 session.duration = session.completed_at - session.started_at
             
-            # Update roll status if applicable
+            # Mark roll as filmed and handle temp roll creation
             if session.roll:
-                session.roll.filming_status = 'completed'
-                session.roll.filming_completed_at = session.completed_at
-                session.roll.filming_progress_percent = 100.0
-                session.roll.save(update_fields=[
-                    'filming_status', 'filming_completed_at', 'filming_progress_percent'
-                ])
+                # Use SMAService method which handles temp roll creation
+                result = SMAService.mark_roll_as_filmed(self.session_id)
+                if result.get('success'):
+                    logger.info(f"Successfully processed roll completion for session {self.session_id}")
+                    if result.get('temp_roll_created'):
+                        logger.info("Temp roll was created during filming completion")
+                else:
+                    logger.error(f"Failed to mark roll as filmed: {result.get('error')}")
             
             session.save(update_fields=[
                 'status', 'workflow_state', 'completed_at', 'duration', 'progress_percent', 'updated_at'
@@ -1091,14 +1094,14 @@ class SMACallbackHandler:
     def _trigger_post_completion_tasks(self, completion_data: Dict[str, Any]):
         """Trigger tasks that should run after completion."""
         try:
-            # Mark roll as filmed
-            from ..sma_service import SMAService
-            SMAService.mark_roll_as_filmed(self.session_id)
+            # Note: mark_roll_as_filmed is already called in _update_database_completion
+            # Only include additional post-completion tasks here
             
             # Could trigger other post-completion tasks like:
             # - File cleanup
             # - Notification sending
             # - Report generation
+            logger.info(f"Post-completion tasks completed for session {self.session_id}")
             
         except Exception as e:
             logger.error(f"Error in post-completion tasks: {e}")

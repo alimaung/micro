@@ -14,12 +14,98 @@ import uuid
 import threading
 import openpyxl
 import xlrd
+import re
 from pathlib import Path
 from datetime import datetime
 from ..models import Project, Document
 
 # Dictionary to store index tasks and their progress
 index_tasks = {}
+
+def validate_barcode(barcode: str) -> tuple[bool, str]:
+    """
+    Validate that barcode is exactly 16 digits.
+    
+    Args:
+        barcode: Barcode string to validate
+        
+    Returns:
+        Tuple of (is_valid, normalized_barcode)
+    """
+    if not barcode:
+        return False, ""
+    
+    # Remove any whitespace and convert to string
+    clean_barcode = str(barcode).strip()
+    
+    # Check if it's exactly 16 digits
+    if re.match(r'^\d{16}$', clean_barcode):
+        return True, clean_barcode
+    
+    # Try to extract 16 consecutive digits
+    digits_only = re.sub(r'\D', '', clean_barcode)
+    if len(digits_only) == 16:
+        return True, digits_only
+    
+    return False, clean_barcode
+
+def validate_com_id(com_id) -> tuple[bool, str]:
+    """
+    Validate that COM ID is exactly 8 digits.
+    
+    Args:
+        com_id: COM ID to validate (can be string, int, float)
+        
+    Returns:
+        Tuple of (is_valid, normalized_com_id)
+    """
+    if com_id is None:
+        return False, ""
+    
+    # Handle different input types
+    if isinstance(com_id, (int, float)):
+        # Convert to integer if it's a whole number
+        if isinstance(com_id, float) and com_id.is_integer():
+            com_id = int(com_id)
+        clean_com_id = str(com_id)
+    else:
+        clean_com_id = str(com_id).strip()
+    
+    # Remove any non-digit characters
+    digits_only = re.sub(r'\D', '', clean_com_id)
+    
+    # Check if it's exactly 8 digits
+    if len(digits_only) == 8:
+        return True, digits_only
+    
+    # Check if it's less than 8 digits and pad with leading zeros
+    if len(digits_only) <= 8 and len(digits_only) > 0:
+        padded_com_id = digits_only.zfill(8)
+        return True, padded_com_id
+    
+    return False, clean_com_id
+
+def normalize_document_id(doc_id: str) -> str:
+    """
+    Normalize document ID by removing .pdf extension and ensuring proper format.
+    
+    Args:
+        doc_id: Document ID to normalize
+        
+    Returns:
+        Normalized document ID
+    """
+    if not doc_id:
+        return ""
+    
+    # Convert to string and strip whitespace
+    normalized = str(doc_id).strip()
+    
+    # Remove .pdf extension (case-insensitive)
+    if normalized.lower().endswith('.pdf'):
+        normalized = normalized[:-4]
+    
+    return normalized
 
 @csrf_exempt
 def initialize_index(request):
@@ -466,48 +552,36 @@ def process_index_initialization(task_id, project_id, allocation_results=None):
                     start_row = 1 if isinstance(data[0][0], str) and not data[0][0].isdigit() else 0
                     print(f"DEBUG: Processing data with {len(data)} rows, starting at row {start_row}")
                     
-                    # Extract barcode and ComID pairs
+                    # Extract barcode and ComID pairs with robust validation
                     for i in range(start_row, len(data)):
                         if i < len(data) and len(data[i]) >= 2:
                             barcode_raw = data[i][0]
-                            com_id = data[i][1]
+                            com_id_raw = data[i][1]
                             
-                            # Keep the original barcode format AND create a normalized version
-                            barcode_original = str(barcode_raw) if barcode_raw is not None else None
+                            # Validate and normalize barcode (should be 16 digits)
+                            barcode_valid, normalized_barcode = validate_barcode(barcode_raw)
+                            if not barcode_valid:
+                                # Fallback to original format for backward compatibility
+                                normalized_barcode = normalize_document_id(str(barcode_raw)) if barcode_raw is not None else ""
+                                print(f"DEBUG: Invalid barcode format in row {i}: '{barcode_raw}'. Expected 16 digits.")
                             
-                            # Also normalize to simple number format (for backward compatibility)
-                            try:
-                                if isinstance(barcode_raw, float) and barcode_raw.is_integer():
-                                    # Convert float to integer (remove decimal)
-                                    barcode_normalized = str(int(barcode_raw))
-                                elif isinstance(barcode_raw, int):
-                                    barcode_normalized = str(barcode_raw)
-                                else:
-                                    # Try to convert string to integer
-                                    barcode_normalized = str(int(float(str(barcode_raw))))
-                            except (ValueError, TypeError, AttributeError):
-                                barcode_normalized = barcode_original
+                            # Validate and normalize COM ID (should be 8 digits)
+                            com_id_valid, normalized_com_id = validate_com_id(com_id_raw)
+                            if not com_id_valid and com_id_raw is not None:
+                                print(f"DEBUG: Invalid COM ID format in row {i}: '{com_id_raw}'. Expected 8 digits.")
+                                continue  # Skip entries with invalid COM IDs
                             
-                            print(f"DEBUG: Extracted barcode: {barcode_raw} -> original: {barcode_original}, normalized: {barcode_normalized}, com_id: {com_id}")
+                            print(f"DEBUG: Row {i} - barcode: {barcode_raw} -> {normalized_barcode} (valid: {barcode_valid}), com_id: {com_id_raw} -> {normalized_com_id} (valid: {com_id_valid})")
                             
-                            # Keep ComID in original format (preserve leading zeros and any formatting)
-                            if com_id is not None:
-                                try:
-                                    # Convert to string to preserve original format
-                                    if isinstance(com_id, float) and com_id.is_integer():
-                                        # Handle case where Excel returns a float like 6006767.0
-                                        com_id = str(int(com_id))
-                                    else:
-                                        # Keep as string to preserve any leading zeros or formatting
-                                        com_id = str(com_id)
-                                    
-                                    # Store both formats in the mappings dictionary
-                                    if barcode_original and com_id:
-                                        com_id_mappings[barcode_original] = com_id
-                                    if barcode_normalized and com_id:
-                                        com_id_mappings[barcode_normalized] = com_id
-                                except (ValueError, TypeError):
-                                    pass
+                            # Store mappings using normalized values
+                            if normalized_barcode and normalized_com_id:
+                                com_id_mappings[normalized_barcode] = normalized_com_id
+                                
+                                # Also store original barcode format for backward compatibility
+                                if barcode_raw is not None:
+                                    original_barcode = str(barcode_raw).strip()
+                                    if original_barcode != normalized_barcode:
+                                        com_id_mappings[original_barcode] = normalized_com_id
                 
                 print(f"DEBUG: Extracted {len(com_id_mappings)} COM ID mappings")
         except Exception as e:
@@ -546,33 +620,40 @@ def process_index_initialization(task_id, project_id, allocation_results=None):
                 # Get frame range for this segment
                 frame_range = segment.frame_range
                 
-                # Create index entry with document index
-                # Remove PDF extension (case-insensitive) to get the barcode for COM ID lookup
-                doc_id_lower = doc_id.lower()
-                if doc_id_lower.endswith('.pdf'):
-                    doc_id_base = doc_id[:-4]  # Remove last 4 characters (.pdf or .PDF)
-                else:
-                    doc_id_base = doc_id
+                # Normalize document ID and validate it as barcode
+                normalized_doc_id = normalize_document_id(doc_id)
+                barcode_valid, validated_barcode = validate_barcode(normalized_doc_id)
                 
-                # Get COM ID from the mapping or use a placeholder
-                com_id = com_id_mappings.get(doc_id_base, None)
+                # Use validated barcode for COM ID lookup
+                lookup_key = validated_barcode if barcode_valid else normalized_doc_id
+                
+                # Get COM ID from the mapping
+                com_id = com_id_mappings.get(lookup_key, None)
 
-                # If not found, try alternative lookup methods
+                # If not found, try alternative lookup methods with original format
                 if com_id is None:
-                    # Try without leading zeros
-                    try:
-                        normalized_id = str(int(doc_id_base))
-                        com_id = com_id_mappings.get(normalized_id, None)
-                    except (ValueError, TypeError):
-                        pass
+                    # Try with original document ID (remove .pdf extension)
+                    com_id = com_id_mappings.get(normalized_doc_id, None)
+                    
+                    # Try with numeric conversion for backward compatibility
+                    if com_id is None:
+                        try:
+                            numeric_id = str(int(normalized_doc_id))
+                            com_id = com_id_mappings.get(numeric_id, None)
+                        except (ValueError, TypeError):
+                            pass
+
+                # Log validation results
+                if not barcode_valid and normalized_doc_id:
+                    print(f"DEBUG: Document ID '{doc_id}' is not a valid 16-digit barcode: '{normalized_doc_id}'")
 
                 # If COM ID is still not found, generate a placeholder
                 if com_id is None:
                     # Use a placeholder COM ID (negative roll_id to avoid conflicts)
-                    com_id = -roll_id
-                    print(f"DEBUG: No COM ID found for doc_id: {doc_id}, tried '{doc_id_base}', using placeholder: {com_id}")
+                    com_id = f"PH{roll_id:06d}"  # Use string placeholder instead of negative number
+                    print(f"DEBUG: No COM ID found for doc_id: {doc_id} (lookup_key: {lookup_key}), using placeholder: {com_id}")
                 else:
-                    print(f"DEBUG: Found COM ID: {com_id} for doc_id: {doc_id}")
+                    print(f"DEBUG: Found COM ID: {com_id} for doc_id: {doc_id} (lookup_key: {lookup_key})")
                 
                 # Update document COM ID if available
                 for doc in pseudo_project.documents:
@@ -581,13 +662,25 @@ def process_index_initialization(task_id, project_id, allocation_results=None):
                 
                 # Also update the actual Document model in the database
                 try:
-                    db_document = Document.objects.filter(project=project, doc_id=doc_id_base).first()
+                    # Use validated barcode or normalized doc_id for database lookup
+                    lookup_doc_id = validated_barcode if barcode_valid else normalized_doc_id
+                    db_document = Document.objects.filter(project=project, doc_id=lookup_doc_id).first()
+                    
+                    # Also try with original normalized doc_id if not found
+                    if not db_document and lookup_doc_id != normalized_doc_id:
+                        db_document = Document.objects.filter(project=project, doc_id=normalized_doc_id).first()
+                    
                     if db_document and com_id is not None:
-                        db_document.com_id = com_id
-                        db_document.save()
-                        print(f"DEBUG: Updated COM ID {com_id} for document {doc_id_base} in database")
+                        # Validate COM ID before storing in database
+                        com_id_valid, validated_com_id = validate_com_id(com_id)
+                        if com_id_valid:
+                            db_document.com_id = validated_com_id
+                            db_document.save()
+                            print(f"DEBUG: Updated COM ID {validated_com_id} for document {lookup_doc_id} in database")
+                        else:
+                            print(f"DEBUG: Skipping database update - invalid COM ID format: {com_id}")
                 except Exception as e:
-                    print(f"DEBUG: Error updating COM ID for document {doc_id_base}: {str(e)}")
+                    print(f"DEBUG: Error updating COM ID for document {lookup_doc_id}: {str(e)}")
                     # Don't fail the whole process for this error
                     pass
                 

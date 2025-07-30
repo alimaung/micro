@@ -517,31 +517,13 @@ window.FileFinders = class FileFinders {
         const filePath = `${basePath}\\${file}`;
         const extension = file.split('.').pop().toLowerCase();
         
-        // Check if it's an Excel file
-        const isExcelFile = extension === 'xlsx' || extension === 'xls';
-        
-        // Check if filename contains keywords
-        const containsComlistKeyword = file.toLowerCase().includes('comlist');
-        
-        // Check if file contains archive ID
-        const containsArchiveId = archiveId && (
-            file === archiveId + '.xlsx' || 
-            file === archiveId + '.xls' ||
-            file.startsWith(archiveId + '_') ||
-            file.includes('_' + archiveId)
-        );
-        
-        const containsArchiveIdBase = archiveIdBase && (
-            file.startsWith(archiveIdBase + '_') ||
-            file.includes('_' + archiveIdBase)
-        );
+        // Check if it's an Excel file (including .xlsm)
+        const isExcelFile = extension === 'xlsx' || extension === 'xls' || extension === 'xlsm';
         
         console.log("[COMLIST DEBUG] Checking file:", file, 
                   "Path:", filePath,
                   "Extension:", extension,
-                  "Is Excel:", isExcelFile,
-                  "Contains COMList:", containsComlistKeyword,
-                  "Contains Archive ID:", containsArchiveId);
+                  "Is Excel:", isExcelFile);
         
         if (isExcelFile) {
             fileCandidates.push({
@@ -549,8 +531,7 @@ window.FileFinders = class FileFinders {
                 path: filePath,
                 isExcelFile: true,
                 inSubfolder: inSubfolder,
-                containsArchiveId: containsArchiveId || containsArchiveIdBase,
-                containsComlistKeyword: containsComlistKeyword
+                archiveId: archiveId // Pass archive ID for scoring
             });
         }
     }
@@ -720,34 +701,141 @@ window.FileFinders = class FileFinders {
     }
     
     /**
-     * Score a file candidate for being a COMList file (0-4)
+     * Score a file candidate for being a COMList file (0-10)
      * @param {Object} fileCandidate - File candidate
-     * @returns {number} - Score (0-4)
+     * @returns {number} - Score (0-10)
      */
     scoreComlistFile(fileCandidate) {
         let score = 0;
         
         // Must be an Excel file to be considered
-        if (fileCandidate.isExcelFile) {
+        if (!fileCandidate.isExcelFile) {
+            return 0;
+        }
+        
+        score += 1; // Base score for being Excel
+        
+        const fileName = fileCandidate.name.toLowerCase();
+        
+        // COM keyword scoring (highest priority) - up to 3 points
+        const comScore = this.scoreComKeywords(fileName);
+        score += comScore;
+        
+        // Archive ID scoring (second priority) - up to 4 points  
+        const archiveScore = this.scoreArchiveIdMatch(fileName, fileCandidate.archiveId);
+        score += archiveScore;
+        
+        // Location bonus - 1 point for root folder
+        if (!fileCandidate.inSubfolder) {
             score += 1;
-            
-            // Contains comlist keyword
-            if (fileCandidate.containsComlistKeyword) {
-                score += 1;
-            }
-            
-            // Contains archive ID 
-            if (fileCandidate.containsArchiveId) {
-                score += 1;
-            }
-            
-            // Not in a subfolder (directly in source)
-            if (!fileCandidate.inSubfolder) {
-                score += 1;
+        }
+        
+        // File extension preference - slight bonus for newer formats
+        if (fileName.endsWith('.xlsx')) {
+            score += 0.5;
+        } else if (fileName.endsWith('.xlsm')) {
+            score += 0.3;
+        }
+        
+        return Math.round(score * 10) / 10; // Round to 1 decimal
+    }
+    
+    /**
+     * Score COM-related keywords in filename
+     * @param {string} fileName - Lowercase filename
+     * @returns {number} - Score 0-3
+     */
+    scoreComKeywords(fileName) {
+        // Exact COM patterns (highest score)
+        if (fileName.includes('comlist')) return 3;
+        if (fileName.includes('com_list')) return 3;
+        if (fileName.includes('com-list')) return 3;
+        if (fileName.includes('comliste')) return 3;
+        if (fileName.includes('com-liste')) return 3;
+        
+        // Generic COM variations (medium score)
+        if (fileName.includes('com_')) return 2;
+        if (fileName.includes('com-')) return 2;
+        if (fileName.includes('_com')) return 2;
+        if (fileName.includes('-com')) return 2;
+        
+        // Just "com" somewhere (low score)
+        if (fileName.includes('com')) return 1;
+        
+        return 0;
+    }
+    
+    /**
+     * Score archive ID matching with fuzzy tolerance
+     * @param {string} fileName - Lowercase filename
+     * @param {string} archiveId - Archive ID (e.g., "RRD262-2018")
+     * @returns {number} - Score 0-4
+     */
+    scoreArchiveIdMatch(fileName, archiveId) {
+        if (!archiveId) return 0;
+        
+        const archiveLower = archiveId.toLowerCase();
+        
+        // Perfect match patterns (4 points)
+        if (fileName.startsWith(archiveLower + '.') || 
+            fileName.startsWith(archiveLower + '_') ||
+            fileName.startsWith(archiveLower + '-')) {
+            return 4;
+        }
+        
+        // Extract components: RRD262-2018 -> prefix="RRD", number="262", year="2018"
+        const match = archiveLower.match(/^([a-z]+)(\d+)-(\d{4})$/);
+        if (!match) return this.scoreFallbackArchiveMatch(fileName, archiveLower);
+        
+        const [, prefix, number, year] = match;
+        
+        // Check for variations with different separators (3 points)
+        const variations = [
+            `${prefix}-${number}-${year}`,  // RRD-262-2018
+            `${prefix}_${number}_${year}`,  // RRD_262_2018
+            `${prefix}${number}_${year}`,   // RRD262_2018
+            `r${number}-${year}`,           // R262-2018 (missing RD)
+            `${prefix.substring(1)}${number}-${year}` // RD262-2018 (missing R)
+        ];
+        
+        for (const variation of variations) {
+            if (fileName.includes(variation)) {
+                return 3;
             }
         }
         
-        return score;
+        // Partial matches (2 points)
+        if (fileName.includes(number) && fileName.includes(year)) {
+            return 2;
+        }
+        
+        // Year only (1 point)
+        if (fileName.includes(year)) {
+            return 1;
+        }
+        
+        return 0;
+    }
+    
+    /**
+     * Fallback scoring for non-standard archive ID formats
+     * @param {string} fileName - Lowercase filename
+     * @param {string} archiveLower - Lowercase archive ID
+     * @returns {number} - Score 0-4
+     */
+    scoreFallbackArchiveMatch(fileName, archiveLower) {
+        // Exact substring match
+        if (fileName.includes(archiveLower)) {
+            return 4;
+        }
+        
+        // Try without dashes/underscores
+        const cleanArchive = archiveLower.replace(/[-_]/g, '');
+        if (fileName.includes(cleanArchive)) {
+            return 2;
+        }
+        
+        return 0;
     }
     
     /**

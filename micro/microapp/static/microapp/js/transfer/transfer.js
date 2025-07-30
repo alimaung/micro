@@ -288,7 +288,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     const folderPicker = document.querySelector('.folder-picker-modal');
                     folderPicker.classList.add('show');
                     // Allow selection of only Excel files (.xlsx and .xls)
-                    const selectedResult = await FolderPicker.show(false, 'files', ['xlsx', 'xls'], 'Select COMList File');
+                    const selectedResult = await FolderPicker.show(false, 'files', ['xlsx', 'xls', 'xlsm'], 'Select COMList File');
                     folderPicker.classList.remove('show');
                     
                     if (selectedResult && selectedResult.path) {
@@ -1789,7 +1789,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         const extension = file.split('.').pop().toLowerCase();
                         
                         // Check if it's an Excel file
-                        const isExcelFile = extension === 'xlsx' || extension === 'xls';
+                        const isExcelFile = extension === 'xlsx' || extension === 'xls' || extension === 'xlsm';
                         
                         // Check if filename contains keywords
                         const containsComlistKeyword = file.toLowerCase().includes('comlist');
@@ -1885,7 +1885,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 const extension = file.split('.').pop().toLowerCase();
                                 
                                 // Check if it's an Excel file
-                                const isExcelFile = extension === 'xlsx' || extension === 'xls';
+                                const isExcelFile = extension === 'xlsx' || extension === 'xls' || extension === 'xlsm';
                                 
                                 // Check if filename contains keywords
                                 const containsComlistKeyword = file.toLowerCase().includes('comlist');

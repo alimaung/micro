@@ -70,6 +70,7 @@ def get_projects_for_handoff(request):
         
         ready_projects = []
         filmed_projects = []
+        completed_projects = []
         
         for project in projects:
             # Calculate completion status
@@ -177,8 +178,13 @@ def get_projects_for_handoff(request):
                 'project_path': project.project_path
             }
             
-            # Categorize projects
-            if all_filmed and all_developed and all_labeled:
+            # Categorize projects - check handoff status first
+            if project.handoff_complete:
+                project_data['status'] = 'completed'
+                project_data['status_text'] = 'Handoff Complete'
+                completed_projects.append(project_data)
+                logger.info(f"✅ Project {project.archive_id} categorized as HANDOFF COMPLETE")
+            elif all_filmed and all_developed and all_labeled:
                 project_data['status'] = 'ready'
                 project_data['status_text'] = 'Ready for Handoff'
                 ready_projects.append(project_data)
@@ -205,13 +211,16 @@ def get_projects_for_handoff(request):
         # Sort by completion date (most recent first)
         ready_projects.sort(key=lambda x: x['completion_date'] or '', reverse=True)
         filmed_projects.sort(key=lambda x: x['completion_date'] or '', reverse=True)
+        completed_projects.sort(key=lambda x: x['completion_date'] or '', reverse=True)
         
         logger.info("=== HANDOFF PROJECT QUERY SUMMARY ===")
         logger.info(f"Total projects evaluated: {projects.count()}")
         logger.info(f"Ready for handoff: {len(ready_projects)}")
         logger.info(f"Filming complete: {len(filmed_projects)}")
+        logger.info(f"Handoff complete: {len(completed_projects)}")
         logger.info(f"Ready projects: {[p['archive_id'] for p in ready_projects]}")
         logger.info(f"Filmed projects: {[p['archive_id'] for p in filmed_projects]}")
+        logger.info(f"Completed projects: {[p['archive_id'] for p in completed_projects]}")
         logger.info("=== HANDOFF PROJECT QUERY DEBUG END ===\n")
         
         return JsonResponse({
@@ -219,8 +228,10 @@ def get_projects_for_handoff(request):
             'projects': {
                 'ready': ready_projects,
                 'filmed': filmed_projects,
+                'completed': completed_projects,
                 'total_ready': len(ready_projects),
-                'total_filmed': len(filmed_projects)
+                'total_filmed': len(filmed_projects),
+                'total_completed': len(completed_projects)
             }
         })
         
@@ -476,7 +487,7 @@ def validate_project_index(request, project_id):
 @require_http_methods(["POST"])
 def generate_handoff_files(request, project_id):
     """
-    Generate the final handoff files (scan.xlsx and scan.dat) for a project.
+    Generate the final handoff files (Excel only - DAT file generation disabled) for a project.
     """
     try:
         data = json.loads(request.body)

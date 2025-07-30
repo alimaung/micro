@@ -2,7 +2,7 @@ from django.urls import path, include
 from . import views
 from django.views.i18n import JavaScriptCatalog
 from . import api
-from .views import external_systems_views, sma_views
+from .views import external_systems_views, sma_views, analyze_views
 
 
 urlpatterns = [
@@ -24,6 +24,11 @@ urlpatterns = [
     
     path('film/', views.film, name='film'),
     path('film/sma/', views.sma_filming, name='sma_filming'),
+    path('analyze/', views.analyze, name='analyze'),
+    path('analyze/<int:project_id>/', analyze_views.analyze_project_detail, name='analyze_project_detail'),
+    path('api/analyze/<int:project_id>/data/', analyze_views.analyze_project_data_api, name='analyze_project_data_api'),
+    path('api/analyze/<int:project_id>/refresh/', analyze_views.analyze_refresh_data, name='analyze_refresh_data'),
+    path('api/analyze/<int:project_id>/export/', analyze_views.analyze_export_data, name='analyze_export_data'),
     path('develop/', views.develop, name='develop'),
     path('label/', views.label, name='label'),
     path('control/', views.control, name='control'),
@@ -140,7 +145,7 @@ urlpatterns = [
     
     # Roll endpoints
     # path('api/projects/<int:project_id>/rolls/', api.get_rolls, name='api_get_rolls'),  # Conflicts with views.get_project_rolls
-    path('api/rolls/<int:roll_id>/', api.get_roll, name='api_get_roll'),
+    # path('api/rolls/<int:roll_id>/', api.get_roll, name='api_get_roll'),  # Conflicts with views.get_roll_details - use the one that includes temp roll info
     path('api/rolls/<int:roll_id>/documents/', api.get_roll_documents, name='api_get_roll_documents'),
     
     # Temp Roll endpoints
