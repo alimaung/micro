@@ -11,6 +11,7 @@ from .project_manager import ProjectManager
 from .document_manager import DocumentManager
 from .analyze_service import AnalyzeService
 from .filming_order_service import FilmingOrderService
+from .trinamic_service import TrinamicService, get_trinamic_service
 
 __all__ = [
     'FilmNumberManager',
@@ -19,6 +20,8 @@ __all__ = [
     'DocumentManager',
     'AnalyzeService',
     'FilmingOrderService',
+    'TrinamicService',
+    'get_trinamic_service',
 ]
 
 # Services package 

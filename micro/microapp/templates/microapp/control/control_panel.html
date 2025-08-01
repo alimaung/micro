@@ -450,3 +450,285 @@
         </div>
     </div>
 </div>
+
+<!-- SMA Machine Controls Row -->
+<div class="control-row-full">
+    <!-- SMA Machine Control Card -->
+    <div class="control-card sma-control-card">
+        <div class="card-header">
+            <h2>
+                SMA Machine Controls
+                <span class="status-badge critical" id="sma-connection-status">
+                    <i class="fas fa-times-circle"></i>
+                    Disconnected
+                </span>
+            </h2>
+            <div class="header-actions">
+                <button id="sma-emergency-stop" class="control-button emergency" onclick="SMAControls.emergencyStop()">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>Emergency Stop</span>
+                </button>
+            </div>
+        </div>
+        
+        <div class="card-content">
+            <!-- Connection Controls -->
+            <div class="sma-connection-section">
+                <h3>Connection</h3>
+                <div class="connection-controls">
+                    <div class="connection-settings">
+                        <div class="setting-group">
+                            <label for="sma-port">Port:</label>
+                            <select id="sma-port">
+                                <option value="COM3">COM3</option>
+                                <option value="COM4">COM4</option>
+                                <option value="COM5">COM5</option>
+                                <option value="COM6">COM6</option>
+                            </select>
+                        </div>
+                        <div class="setting-group">
+                            <label for="sma-baudrate">Baudrate:</label>
+                            <select id="sma-baudrate">
+                                <option value="9600">9600</option>
+                                <option value="19200">19200</option>
+                                <option value="38400">38400</option>
+                                <option value="57600">57600</option>
+                                <option value="115200">115200</option>
+                            </select>
+                        </div>
+                        <div class="setting-group">
+                            <label for="sma-address">Address:</label>
+                            <input type="number" id="sma-address" value="1" min="1" max="255">
+                        </div>
+                    </div>
+                    <div class="connection-buttons">
+                        <button id="sma-connect-btn" class="control-button" onclick="SMAControls.connect(document.getElementById('sma-port').value, parseInt(document.getElementById('sma-baudrate').value), parseInt(document.getElementById('sma-address').value))">
+                            <i class="fas fa-link"></i>
+                            <span>Connect</span>
+                        </button>
+                        <button id="sma-disconnect-btn" class="control-button" onclick="SMAControls.disconnect()" disabled>
+                            <i class="fas fa-unlink"></i>
+                            <span>Disconnect</span>
+                        </button>
+                        <button id="sma-refresh-btn" class="control-button" onclick="SMAControls.refreshStatus()">
+                            <i class="fas fa-refresh"></i>
+                            <span>Refresh</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- I/O Controls Section -->
+            <div class="sma-io-section">
+                <h3>I/O Controls</h3>
+                <div class="io-controls-grid">
+                    <!-- Vacuum Controls -->
+                    <div class="io-control-group">
+                        <h4>Vacuum</h4>
+                        <div class="io-status">
+                            Status: <span id="sma-vacuum-status" class="status-neutral">N/A</span>
+                        </div>
+                        <div class="io-buttons">
+                            <button class="control-button" onclick="SMAControls.controlIO('vacuum', 'on')">
+                                <i class="fas fa-power-off"></i> ON
+                            </button>
+                            <button class="control-button" onclick="SMAControls.controlIO('vacuum', 'off')">
+                                <i class="fas fa-ban"></i> OFF
+                            </button>
+                            <button class="control-button" onclick="SMAControls.controlIO('vacuum', 'status')">
+                                <i class="fas fa-question"></i> Check
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- LED Controls -->
+                    <div class="io-control-group">
+                        <h4>LED</h4>
+                        <div class="io-status">
+                            Status: <span id="sma-led-status" class="status-neutral">N/A</span>
+                        </div>
+                        <div class="io-buttons">
+                            <button class="control-button" onclick="SMAControls.controlIO('led', 'on')">
+                                <i class="fas fa-lightbulb"></i> ON
+                            </button>
+                            <button class="control-button" onclick="SMAControls.controlIO('led', 'off')">
+                                <i class="fas fa-lightbulb"></i> OFF
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Magnet Controls -->
+                    <div class="io-control-group">
+                        <h4>Magnet</h4>
+                        <div class="io-status">
+                            Status: <span id="sma-magnet-status" class="status-neutral">N/A</span>
+                        </div>
+                        <div class="io-buttons">
+                            <button class="control-button" onclick="SMAControls.controlIO('magnet', 'on')">
+                                <i class="fas fa-magnet"></i> ON
+                            </button>
+                            <button class="control-button" onclick="SMAControls.controlIO('magnet', 'off')">
+                                <i class="fas fa-magnet"></i> OFF
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Sensors -->
+                    <div class="io-control-group">
+                        <h4>Sensors</h4>
+                        <div class="sensor-readings">
+                            <div class="sensor-item">
+                                Light Sensor: <span id="sma-light-sensor-value" class="status-neutral">N/A</span>
+                                <button class="control-button small" onclick="SMAControls.controlIO('light_sensor', 'read')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <div class="sensor-item">
+                                Machine State: <span id="sma-machine-state" class="status-neutral">N/A</span>
+                                <button class="control-button small" onclick="SMAControls.controlIO('machine_state', 'get')">
+                                    <i class="fas fa-info"></i>
+                                </button>
+                            </div>
+                            <div class="sensor-item">
+                                Zero Point: <span id="sma-zero-point-status" class="status-neutral">N/A</span>
+                                <button class="control-button small" onclick="SMAControls.controlIO('zero_point', 'check')">
+                                    <i class="fas fa-crosshairs"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Motor Controls Section -->
+            <div class="sma-motor-section">
+                <h3>Motor Controls</h3>
+                <div class="motor-controls-grid">
+                    <!-- Motor 0 (Shutter) -->
+                    <div class="motor-control-group">
+                        <h4>Motor 0 (Shutter) - <span id="sma-motor-0-status" class="status-neutral">N/A</span></h4>
+                        
+                        <div class="motor-config">
+                            <div class="config-row">
+                                <label>Speed:</label>
+                                <input type="number" id="motor0-speed" value="640" min="1" max="2000">
+                            </div>
+                            <div class="config-row">
+                                <label>Current:</label>
+                                <input type="number" id="motor0-current" value="80" min="1" max="255">
+                            </div>
+                            <div class="config-row">
+                                <label>Standby Current:</label>
+                                <input type="number" id="motor0-standby-current" value="10" min="1" max="255">
+                            </div>
+                            <div class="config-row">
+                                <label>Acceleration:</label>
+                                <input type="number" id="motor0-acceleration" value="1000" min="1" max="2000">
+                            </div>
+                            <div class="config-row">
+                                <label>Steps:</label>
+                                <input type="number" id="motor0-steps" value="3200" min="1" max="10000000">
+                            </div>
+                            <div class="config-row">
+                                <label>Resolution:</label>
+                                <div class="radio-group">
+                                    <input type="radio" id="motor0-res1" name="motor0-resolution" value="1">
+                                    <label for="motor0-res1">Full</label>
+                                    <input type="radio" id="motor0-res2" name="motor0-resolution" value="2">
+                                    <label for="motor0-res2">Half</label>
+                                    <input type="radio" id="motor0-res4" name="motor0-resolution" value="4" checked>
+                                    <label for="motor0-res4">1/4</label>
+                                    <input type="radio" id="motor0-res8" name="motor0-resolution" value="8">
+                                    <label for="motor0-res8">1/8</label>
+                                </div>
+                            </div>
+                            <div class="config-row">
+                                <label>Direction:</label>
+                                <div class="toggle-switch">
+                                    <input type="checkbox" id="motor0-direction" checked>
+                                    <label for="motor0-direction" class="toggle-label">
+                                        <span class="toggle-inner"></span>
+                                        <span class="toggle-switch-slider"></span>
+                                    </label>
+                                    <span class="toggle-text">Forward</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="action-buttons">
+                            <button class="action-btn start-btn" onclick="SMAControls.executeMotorCommand(0)">
+                                <i class="fas fa-play"></i> START
+                            </button>
+                            <button class="action-btn stop-btn" onclick="SMAControls.controlMotor(0, 'stop')">
+                                <i class="fas fa-stop"></i> STOP
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Motor 1 (Film) -->
+                    <div class="motor-control-group">
+                        <h4>Motor 1 (Film) - <span id="sma-motor-1-status" class="status-neutral">N/A</span></h4>
+                        
+                        <div class="motor-config">
+                            <div class="config-row">
+                                <label>Speed:</label>
+                                <input type="number" id="motor1-speed" value="1000" min="1" max="2000">
+                            </div>
+                            <div class="config-row">
+                                <label>Current:</label>
+                                <input type="number" id="motor1-current" value="120" min="1" max="255">
+                            </div>
+                            <div class="config-row">
+                                <label>Standby Current:</label>
+                                <input type="number" id="motor1-standby-current" value="10" min="1" max="255">
+                            </div>
+                            <div class="config-row">
+                                <label>Acceleration:</label>
+                                <input type="number" id="motor1-acceleration" value="600" min="1" max="2000">
+                            </div>
+                            <div class="config-row">
+                                <label>Steps:</label>
+                                <input type="number" id="motor1-steps" value="1000000" min="1" max="10000000">
+                            </div>
+                            <div class="config-row">
+                                <label>Resolution:</label>
+                                <div class="radio-group">
+                                    <input type="radio" id="motor1-res1" name="motor1-resolution" value="1">
+                                    <label for="motor1-res1">Full</label>
+                                    <input type="radio" id="motor1-res2" name="motor1-resolution" value="2">
+                                    <label for="motor1-res2">Half</label>
+                                    <input type="radio" id="motor1-res4" name="motor1-resolution" value="4" checked>
+                                    <label for="motor1-res4">1/4</label>
+                                    <input type="radio" id="motor1-res8" name="motor1-resolution" value="8">
+                                    <label for="motor1-res8">1/8</label>
+                                </div>
+                            </div>
+                            <div class="config-row">
+                                <label>Direction:</label>
+                                <div class="toggle-switch">
+                                    <input type="checkbox" id="motor1-direction" checked>
+                                    <label for="motor1-direction" class="toggle-label">
+                                        <span class="toggle-inner"></span>
+                                        <span class="toggle-switch-slider"></span>
+                                    </label>
+                                    <span class="toggle-text">Forward</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="action-buttons">
+                            <button class="action-btn start-btn" onclick="SMAControls.executeMotorCommand(1)">
+                                <i class="fas fa-play"></i> START
+                            </button>
+                            <button class="action-btn stop-btn" onclick="SMAControls.controlMotor(1, 'stop')">
+                                <i class="fas fa-stop"></i> STOP
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+    </div>
+</div>

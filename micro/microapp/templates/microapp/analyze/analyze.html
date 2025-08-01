@@ -29,7 +29,7 @@
                     <div class="stat-number">{{ summary_stats.total_analyzed }}</div>
                     <div class="stat-label">{% trans "Analyzed" %}</div>
                     <div class="stat-details">
-                        <small>{{ summary_stats.analyzed_total_16mm }} × 16mm • {{ summary_stats.analyzed_total_35mm }} × 35mm • {{ summary_stats.analyzed_avg_utilization }}% util</small>
+                        <small>{{ summary_stats.analyzed_total_16mm }} × 16mm • {{ summary_stats.analyzed_total_35mm }} × 35mm • {{ summary_stats.analyzed_avg_utilization }}% util • {{ summary_stats.analyzed_temp_rolls_created|add:summary_stats.analyzed_temp_rolls_used }} temp</small>
                     </div>
                 </div>
                 <div class="stat-card">
@@ -283,6 +283,25 @@
                             </div>
                         </div>
                         
+                        <!-- Temp Roll Metrics -->
+                        {% if folder.estimated_temp_rolls_created > 0 or folder.estimated_temp_rolls_used > 0 %}
+                        <div class="metric metric-temp-rolls">
+                            <i class="fas fa-recycle metric-icon"></i>
+                            <div class="metric-content">
+                                <div class="metric-value">
+                                    {% if folder.estimated_temp_rolls_created > 0 and folder.estimated_temp_rolls_used > 0 %}
+                                        {{ folder.estimated_temp_rolls_created }}+{{ folder.estimated_temp_rolls_used }}
+                                    {% elif folder.estimated_temp_rolls_created > 0 %}
+                                        +{{ folder.estimated_temp_rolls_created }}
+                                    {% else %}
+                                        {{ folder.estimated_temp_rolls_used }}
+                                    {% endif %}
+                                </div>
+                                <div class="metric-label">{% trans "Temp Rolls" %}</div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
                         <div class="metric">
                             <i class="fas fa-hdd metric-icon"></i>
                             <div class="metric-content">
@@ -421,6 +440,25 @@
                                 <div class="metric-label">{% trans "Size" %}</div>
                             </div>
                         </div>
+                        
+                        <!-- Temp Roll Metrics for Registered Projects -->
+                        {% if data.temp_rolls_created > 0 or data.temp_rolls_used > 0 %}
+                        <div class="metric metric-temp-rolls">
+                            <i class="fas fa-recycle metric-icon"></i>
+                            <div class="metric-content">
+                                <div class="metric-value">
+                                    {% if data.temp_rolls_created > 0 and data.temp_rolls_used > 0 %}
+                                        {{ data.temp_rolls_created }}+{{ data.temp_rolls_used }}
+                                    {% elif data.temp_rolls_created > 0 %}
+                                        +{{ data.temp_rolls_created }}
+                                    {% else %}
+                                        {{ data.temp_rolls_used }}
+                                    {% endif %}
+                                </div>
+                                <div class="metric-label">{% trans "Temp Rolls" %}</div>
+                            </div>
+                        </div>
+                        {% endif %}
                     </div>
 
                     {% if data.has_oversized %}

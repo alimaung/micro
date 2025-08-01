@@ -11,6 +11,7 @@ Usage:
   python motor_control_cli.py --port COM3 --apply-config
   python motor_control_cli.py --port COM3 --motor 0 --home (only works for shutter motor)
   python motor_control_cli.py --port COM3 --motor 0 --is-running --json
+  python motor_control_cli.py --port COM3 --motor 1 --set-reference-speeds 50 10
 """
 
 import sys
@@ -99,6 +100,12 @@ def main():
                            help='Set standby current (0-100)')
     param_group.add_argument('--set-acceleration', type=int, metavar='ACCEL', 
                            help='Set acceleration (0-100)')
+    param_group.add_argument('--set-reference-speeds', type=int, nargs=2, metavar=('SPEED1', 'SPEED2'),
+                           help='Set reference speeds for acceleration curves (e.g., --set-reference-speeds 50 10)')
+    param_group.add_argument('--set-reference-speed1', type=int, metavar='SPEED1',
+                           help='Set reference speed 1 for acceleration curve')
+    param_group.add_argument('--set-reference-speed2', type=int, metavar='SPEED2',
+                           help='Set reference speed 2 for acceleration curve')
     
     # Status commands
     status_group = parser.add_argument_group('Status Commands')
@@ -272,6 +279,70 @@ def main():
                     "acceleration": args.set_acceleration,
                     "result": result
                 }))
+        
+        # Reference speed parameters
+        if args.set_reference_speeds is not None:
+            speed1, speed2 = args.set_reference_speeds
+            if not args.json:
+                logger.info("MOTOR", f"Setting motor {motor_num} reference speeds to {speed1}, {speed2}...")
+                result = motor.set_reference_speeds(motor_num, speed1, speed2)
+                logger.info("MOTOR", f"Reference speeds set command result: {result}")
+            else:
+                result = motor.set_reference_speeds(motor_num, speed1, speed2)
+                print(json.dumps({
+                    "success": True if result else False,
+                    "motor": motor_num,
+                    "reference_speed1": speed1,
+                    "reference_speed2": speed2,
+                    "result": result
+                }))
+                
+        if args.set_reference_speed1 is not None:
+            # For individual reference speed setting, we need to get the current speed2 or use a default
+            # Since we can't read current values, we'll use the config defaults
+            if motor_num == 0:  # Shutter motor
+                config = config_manager.get_shutter_config()
+                speed2 = config.get('ref_speed2', 10)  # Default from trinamic.ini
+            else:
+                speed2 = 10  # Default for film motor
+                
+            speed1 = args.set_reference_speed1
+            if not args.json:
+                logger.info("MOTOR", f"Setting motor {motor_num} reference speed 1 to {speed1} (speed 2 kept at {speed2})...")
+                result = motor.set_reference_speeds(motor_num, speed1, speed2)
+                logger.info("MOTOR", f"Reference speed 1 set command result: {result}")
+            else:
+                result = motor.set_reference_speeds(motor_num, speed1, speed2)
+                print(json.dumps({
+                    "success": True if result else False,
+                    "motor": motor_num,
+                    "reference_speed1": speed1,
+                    "reference_speed2": speed2,
+                    "result": result
+                }))
+                
+        if args.set_reference_speed2 is not None:
+            # For individual reference speed setting, we need to get the current speed1 or use a default
+            if motor_num == 0:  # Shutter motor
+                config = config_manager.get_shutter_config()
+                speed1 = config.get('ref_speed1', 50)  # Default from trinamic.ini
+            else:
+                speed1 = 50  # Default for film motor
+                
+            speed2 = args.set_reference_speed2
+            if not args.json:
+                logger.info("MOTOR", f"Setting motor {motor_num} reference speed 2 to {speed2} (speed 1 kept at {speed1})...")
+                result = motor.set_reference_speeds(motor_num, speed1, speed2)
+                logger.info("MOTOR", f"Reference speed 2 set command result: {result}")
+            else:
+                result = motor.set_reference_speeds(motor_num, speed1, speed2)
+                print(json.dumps({
+                    "success": True if result else False,
+                    "motor": motor_num,
+                    "reference_speed1": speed1,
+                    "reference_speed2": speed2,
+                    "result": result
+                }))
             
         # Movement commands
         if args.move is not None:
@@ -401,8 +472,9 @@ def main():
         if not any([args.move is not None, args.stop, args.home, 
                    args.set_resolution is not None, args.set_speed is not None,
                    args.set_current is not None, args.set_standby_current is not None,
-                   args.set_acceleration is not None, args.is_running, args.reset,
-                   args.show_config, args.apply_config]):
+                   args.set_acceleration is not None, args.set_reference_speeds is not None,
+                   args.set_reference_speed1 is not None, args.set_reference_speed2 is not None,
+                   args.is_running, args.reset, args.show_config, args.apply_config]):
             parser.print_help()
             
     except Exception as e:

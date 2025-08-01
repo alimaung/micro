@@ -1315,6 +1315,11 @@ class AnalyzedFolder(models.Model):
     estimated_rolls_35mm = models.IntegerField(default=0, help_text="Estimated 35mm rolls needed")
     total_estimated_rolls = models.IntegerField(default=0, help_text="Total estimated rolls needed")
     
+    # Temp roll estimates
+    estimated_temp_rolls_created = models.IntegerField(default=0, help_text="Estimated number of temp rolls that would be created")
+    estimated_temp_rolls_used = models.IntegerField(default=0, help_text="Estimated number of existing temp rolls that would be used")
+    temp_roll_strategy = models.CharField(max_length=20, default="unknown", help_text="Strategy for temp roll usage (create, use, both, none)")
+    
     # Folder statistics
     file_count = models.IntegerField(default=0, help_text="Total files in folder")
     total_size = models.BigIntegerField(default=0, help_text="Total size in bytes")
@@ -1408,6 +1413,9 @@ class AnalyzedFolder(models.Model):
             'estimated_rolls': self.total_estimated_rolls,
             'estimated_rolls_16mm': self.estimated_rolls_16mm,
             'estimated_rolls_35mm': self.estimated_rolls_35mm,
+            'estimated_temp_rolls_created': self.estimated_temp_rolls_created,
+            'estimated_temp_rolls_used': self.estimated_temp_rolls_used,
+            'temp_roll_strategy': self.temp_roll_strategy,
             'utilization_16mm': utilization_16mm,
             'utilization_35mm': utilization_35mm,
             'overall_utilization': overall_utilization,

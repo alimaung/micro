@@ -144,11 +144,42 @@ class AnalyzeService:
                     rolls_16mm = len(results.get('rolls_16mm', []))
                     rolls_35mm = len(results.get('rolls_35mm', []))
                     temp_rolls = len(results.get('temp_rolls', []))
+                    
+                    # Count temp rolls created and used from roll data
+                    temp_rolls_created = 0
+                    temp_rolls_used = 0
+                    temp_roll_strategy = 'none'
+                    
+                    # Analyze 16mm rolls for temp roll patterns
+                    for roll in results.get('rolls_16mm', []):
+                        if roll.get('created_temp_roll'):
+                            temp_rolls_created += 1
+                        if roll.get('source_temp_roll'):
+                            temp_rolls_used += 1
+                    
+                    # Analyze 35mm rolls for temp roll patterns  
+                    for roll in results.get('rolls_35mm', []):
+                        if roll.get('created_temp_roll'):
+                            temp_rolls_created += 1
+                        if roll.get('source_temp_roll'):
+                            temp_rolls_used += 1
+                    
+                    # Determine strategy
+                    if temp_rolls_created > 0 and temp_rolls_used > 0:
+                        temp_roll_strategy = 'both'
+                    elif temp_rolls_created > 0:
+                        temp_roll_strategy = 'create'
+                    elif temp_rolls_used > 0:
+                        temp_roll_strategy = 'use'
+                    
                     summary.update({
                         'total_rolls_16mm': rolls_16mm,
                         'total_rolls_35mm': rolls_35mm,
                         'total_rolls': rolls_16mm + rolls_35mm,
-                        'temp_rolls': temp_rolls
+                        'temp_rolls': temp_rolls,
+                        'temp_rolls_created': temp_rolls_created,
+                        'temp_rolls_used': temp_rolls_used,
+                        'temp_roll_strategy': temp_roll_strategy
                     })
             
             # Extract project state data
@@ -413,6 +444,9 @@ class AnalyzeService:
                     'estimated_rolls_16mm': analysis_results.get('estimated_rolls_16mm', 0),
                     'estimated_rolls_35mm': analysis_results.get('estimated_rolls_35mm', 0),
                     'total_estimated_rolls': analysis_results.get('total_estimated_rolls', 0),
+                    'estimated_temp_rolls_created': analysis_results.get('estimated_temp_rolls_created', 0),
+                    'estimated_temp_rolls_used': analysis_results.get('estimated_temp_rolls_used', 0),
+                    'temp_roll_strategy': analysis_results.get('temp_roll_strategy', 'unknown'),
                     'file_count': analysis_results.get('file_count', 0),
                     'total_size': analysis_results.get('total_size', 0),
                     'total_size_formatted': analysis_results.get('total_size_formatted', '0 B'),
@@ -533,6 +567,11 @@ class AnalyzeService:
                 estimated_rolls_35mm = 0  # No 35mm needed for standard workflow
                 recommended_workflow = 'standard_16mm'  # Can use 16mm only
             
+            # Calculate temp roll estimates and strategy
+            temp_roll_data = self._calculate_temp_roll_estimates(
+                estimated_rolls_16mm, estimated_rolls_35mm, total_pages, has_oversized
+            )
+            
             # Calculate total folder size
             total_size = sum(f.stat().st_size for f in folder_path.rglob('*') if f.is_file())
             file_count = len([f for f in folder_path.rglob('*') if f.is_file()])
@@ -545,6 +584,9 @@ class AnalyzeService:
                 'estimated_rolls_16mm': estimated_rolls_16mm,
                 'estimated_rolls_35mm': estimated_rolls_35mm,
                 'total_estimated_rolls': estimated_rolls_16mm + estimated_rolls_35mm,
+                'estimated_temp_rolls_created': temp_roll_data['temp_rolls_created'],
+                'estimated_temp_rolls_used': temp_roll_data['temp_rolls_used'],
+                'temp_roll_strategy': temp_roll_data['strategy'],
                 'file_count': file_count,
                 'total_size': total_size,
                 'total_size_formatted': self.format_file_size(total_size),
@@ -654,14 +696,101 @@ class AnalyzeService:
             }
     
     def get_analyzed_folders(self):
-        """
-        Get all folders that have been analyzed but not yet registered.
-        
-        Returns:
-            QuerySet of AnalyzedFolder instances that aren't registered
-        """
-        return AnalyzedFolder.objects.filter(registered_as_project__isnull=True).order_by('-analyzed_at')
+        """Get all analyzed folders that haven't been registered as projects"""
+        from ..models import AnalyzedFolder
+        return AnalyzedFolder.objects.filter(registered_as_project__isnull=True)
     
+    def _calculate_temp_roll_estimates(self, estimated_rolls_16mm, estimated_rolls_35mm, total_pages, has_oversized):
+        """
+        Calculate estimated temp roll usage and creation based on project size and workflow.
+        
+        This method estimates temp roll behavior based on typical allocation patterns:
+        - Small projects (1-2 rolls): Likely to create temp rolls with remaining capacity
+        - Medium projects (3-5 rolls): May use existing temp rolls and create new ones
+        - Large projects (6+ rolls): Likely to use existing temp rolls, create fewer new ones
+        - Mixed workflow projects: Different patterns for 16mm vs 35mm
+        
+        Args:
+            estimated_rolls_16mm: Number of 16mm rolls estimated
+            estimated_rolls_35mm: Number of 35mm rolls estimated  
+            total_pages: Total pages in the project
+            has_oversized: Whether project has oversized documents
+            
+        Returns:
+            Dict with temp roll estimates and strategy
+        """
+        temp_rolls_created = 0
+        temp_rolls_used = 0
+        strategy = 'none'
+        
+        total_rolls = estimated_rolls_16mm + estimated_rolls_35mm
+        
+        # Constants for capacity analysis
+        CAPACITY_16MM = 2900
+        CAPACITY_35MM = 690
+        TEMP_ROLL_THRESHOLD = 200  # Minimum remaining capacity to create temp roll
+        
+        if total_rolls == 0:
+            return {
+                'temp_rolls_created': 0,
+                'temp_rolls_used': 0,
+                'strategy': 'none'
+            }
+        
+        # Analyze 16mm temp roll patterns
+        if estimated_rolls_16mm > 0:
+            # Calculate if last 16mm roll would likely create a temp roll
+            total_16mm_capacity = estimated_rolls_16mm * CAPACITY_16MM
+            pages_for_16mm = total_pages  # 16mm gets all pages in both workflows
+            last_roll_usage = pages_for_16mm % CAPACITY_16MM
+            
+            if last_roll_usage > 0:  # Not perfectly filled
+                remaining_capacity = CAPACITY_16MM - last_roll_usage
+                if remaining_capacity >= TEMP_ROLL_THRESHOLD:
+                    temp_rolls_created += 1
+        
+        # Analyze 35mm temp roll patterns (only for mixed workflow)
+        if estimated_rolls_35mm > 0 and has_oversized:
+            # For 35mm, estimate based on oversized + reference pages
+            # This is a simplified estimate since we don't have exact oversized page count here
+            estimated_35mm_pages = total_pages * 0.1  # Rough estimate: 10% oversized
+            estimated_35mm_pages_with_refs = estimated_35mm_pages * 2  # Add reference pages
+            
+            last_35mm_roll_usage = estimated_35mm_pages_with_refs % CAPACITY_35MM
+            if last_35mm_roll_usage > 0:
+                remaining_capacity = CAPACITY_35MM - last_35mm_roll_usage
+                if remaining_capacity >= TEMP_ROLL_THRESHOLD:
+                    temp_rolls_created += 1
+        
+        # Estimate temp roll usage based on project size
+        if total_rolls >= 6:
+            # Large projects likely to reuse existing temp rolls
+            temp_rolls_used = min(2, total_rolls // 3)  # Use some existing temp rolls
+            strategy = 'use' if temp_rolls_created == 0 else 'both'
+        elif total_rolls >= 3:
+            # Medium projects may use some existing temp rolls
+            temp_rolls_used = min(1, total_rolls // 4)
+            strategy = 'create' if temp_rolls_used == 0 else 'both'
+        else:
+            # Small projects primarily create temp rolls
+            strategy = 'create' if temp_rolls_created > 0 else 'none'
+        
+        # Refine strategy based on final numbers
+        if temp_rolls_created > 0 and temp_rolls_used > 0:
+            strategy = 'both'
+        elif temp_rolls_created > 0:
+            strategy = 'create'
+        elif temp_rolls_used > 0:
+            strategy = 'use'
+        else:
+            strategy = 'none'
+        
+        return {
+            'temp_rolls_created': temp_rolls_created,
+            'temp_rolls_used': temp_rolls_used,
+            'strategy': strategy
+        }
+
     def register_analyzed_folder_as_project(self, analyzed_folder_id, project_data):
         """
         Convert an analyzed folder into a registered project.

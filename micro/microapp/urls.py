@@ -62,6 +62,16 @@ urlpatterns = [
     # New URL pattern for machine stats
     path('get_machine_stats/', views.get_machine_stats, name='get_machine_stats'),
     
+    # Trinamic control endpoints
+    path('trinamic/connect/', views.trinamic_connect, name='trinamic_connect'),
+    path('trinamic/disconnect/', views.trinamic_disconnect, name='trinamic_disconnect'),
+    path('trinamic/status/', views.trinamic_status, name='trinamic_status'),
+    path('trinamic/io/', views.trinamic_io_control, name='trinamic_io_control'),
+    path('trinamic/motor/', views.trinamic_motor_control, name='trinamic_motor_control'),
+    path('trinamic/system_status/', views.trinamic_system_status, name='trinamic_system_status'),
+    path('trinamic/emergency_stop/', views.trinamic_emergency_stop, name='trinamic_emergency_stop'),
+    path('trinamic/configure/', views.trinamic_configure, name='trinamic_configure'),
+    
     # File Transfer Endpoints
     path('transfer-files/', views.transfer_files, name='transfer_files'),
     path('transfer-progress/', views.transfer_progress, name='transfer_progress'),

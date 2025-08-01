@@ -180,6 +180,9 @@ function createSortControls() {
                 <option value="rolls">Rolls</option>
                 <option value="utilization">Utilization</option>
                 <option value="oversized">Oversized</option>
+                <option value="temp_created">Temp Rolls Created</option>
+                <option value="temp_used">Temp Rolls Used</option>
+                <option value="temp_strategy">Temp Roll Strategy</option>
                 <option value="location">Location</option>
                 <option value="status">Status</option>
                 <option value="date">Date</option>
@@ -340,6 +343,7 @@ function generateTableHTML(cardsGrid, sectionType) {
                     <th>16mm Rolls</th>
                     <th>35mm Rolls</th>
                     <th>Oversized</th>
+                    <th>Temp Rolls</th>
                     <th>Utilization</th>
                     <th>Status</th>
                     <th>Actions</th>
@@ -381,6 +385,10 @@ function generateTableHTML(cardsGrid, sectionType) {
             const status = card.querySelector('.status-badge')?.textContent || 'N/A';
             const actions = card.querySelector('.card-actions')?.innerHTML || '';
             
+            // Extract temp roll information
+            const tempRollElement = card.querySelector('.metric-temp-rolls .metric-value');
+            const tempRollDisplay = tempRollElement ? tempRollElement.textContent.trim() : '0';
+            
             rowsHTML += `
                 <tr>
                     <td class="name-cell">${name}</td>
@@ -390,6 +398,7 @@ function generateTableHTML(cardsGrid, sectionType) {
                     <td class="number-cell film-16mm-cell">${rolls16mm}</td>
                     <td class="number-cell film-35mm-cell">${rolls35mm}</td>
                     <td class="number-cell oversized-cell">${oversized}</td>
+                    <td class="number-cell temp-rolls-cell">${tempRollDisplay}</td>
                     <td class="utilization-cell">${utilization}</td>
                     <td class="status-cell">${status}</td>
                     <td class="actions-cell">${actions}</td>
@@ -405,6 +414,7 @@ function generateTableHTML(cardsGrid, sectionType) {
                     <th>Documents</th>
                     <th>Pages</th>
                     <th>Rolls</th>
+                    <th>Temp Rolls</th>
                     <th>Size</th>
                     <th>Status</th>
                     <th>Actions</th>
@@ -423,6 +433,10 @@ function generateTableHTML(cardsGrid, sectionType) {
             const actions = card.querySelector('.card-actions')?.innerHTML || '';
             const projectId = card.getAttribute('onclick')?.match(/\d+/)?.[0] || '';
             
+            // Extract temp roll information for registered projects
+            const tempRollElement = card.querySelector('.metric-temp-rolls .metric-value');
+            const tempRollDisplay = tempRollElement ? tempRollElement.textContent.trim() : '0';
+            
             const rowClass = projectId ? `onclick="viewProjectDetail(${projectId})" style="cursor: pointer;"` : '';
             
             rowsHTML += `
@@ -432,6 +446,7 @@ function generateTableHTML(cardsGrid, sectionType) {
                     <td class="number-cell">${documents}</td>
                     <td class="number-cell">${pages}</td>
                     <td class="number-cell">${rolls}</td>
+                    <td class="number-cell temp-rolls-cell">${tempRollDisplay}</td>
                     <td class="size-cell">${size}</td>
                     <td class="status-cell">${status}</td>
                     <td class="actions-cell" onclick="event.stopPropagation();">${actions}</td>
@@ -566,6 +581,23 @@ function sortCards(cards, field, direction) {
                 valueB = getNumericValue(b.querySelector('.metric-oversized .metric-value')?.textContent || '0');
                 break;
                 
+            case 'temp_created':
+                // For temp rolls, we need to parse the combined display or look for individual values
+                valueA = getTempRollValue(a, 'created');
+                valueB = getTempRollValue(b, 'created');
+                break;
+                
+            case 'temp_used':
+                valueA = getTempRollValue(a, 'used');
+                valueB = getTempRollValue(b, 'used');
+                break;
+                
+            case 'temp_strategy':
+                // Strategy would be stored as data attribute or derived from display
+                valueA = getTempRollStrategy(a);
+                valueB = getTempRollStrategy(b);
+                break;
+                
             case 'location':
                 valueA = a.querySelector('.location-badge')?.textContent?.toLowerCase() || '';
                 valueB = b.querySelector('.location-badge')?.textContent?.toLowerCase() || '';
@@ -661,7 +693,7 @@ function updateSortDirectionIcon() {
     if (!icon) return;
     
     // Determine if this is a numeric or alphabetic sort
-    const numericFields = ['size', 'files', 'pdfs', 'pages', 'documents', 'rolls', 'utilization', 'oversized'];
+    const numericFields = ['size', 'files', 'pdfs', 'pages', 'documents', 'rolls', 'utilization', 'oversized', 'temp_created', 'temp_used'];
     const isNumeric = numericFields.includes(currentSort.field);
     
     if (isNumeric) {
@@ -1521,6 +1553,67 @@ function confirmAnalyze(folderPath) {
     
     // Start analysis
     analyzeFolder(folderPath);
+}
+
+/**
+ * Get temp roll value from card (created or used)
+ */
+function getTempRollValue(card, type) {
+    const tempRollMetric = card.querySelector('.metric-temp-rolls .metric-value');
+    if (!tempRollMetric) return 0;
+    
+    const text = tempRollMetric.textContent.trim();
+    
+    // Parse different formats:
+    // "+3" = 3 created, 0 used
+    // "2" = 2 used, 0 created  
+    // "2+3" = 2 created, 3 used
+    
+    if (text.includes('+')) {
+        const parts = text.split('+');
+        if (type === 'created') {
+            return getNumericValue(parts[0] || '0');
+        } else if (type === 'used') {
+            return getNumericValue(parts[1] || '0');
+        }
+    } else if (text.startsWith('+')) {
+        // Only created rolls (e.g., "+3")
+        if (type === 'created') {
+            return getNumericValue(text.substring(1));
+        } else {
+            return 0;
+        }
+    } else {
+        // Only used rolls (e.g., "2")
+        if (type === 'used') {
+            return getNumericValue(text);
+        } else {
+            return 0;
+        }
+    }
+    
+    return 0;
+}
+
+/**
+ * Get temp roll strategy from card
+ */
+function getTempRollStrategy(card) {
+    // Try to determine strategy from temp roll display
+    const tempRollMetric = card.querySelector('.metric-temp-rolls .metric-value');
+    if (!tempRollMetric) return 'none';
+    
+    const text = tempRollMetric.textContent.trim();
+    
+    if (text.includes('+')) {
+        return 'both';  // Has both created and used
+    } else if (text.startsWith('+')) {
+        return 'create';  // Only creates temp rolls
+    } else if (text && text !== '0') {
+        return 'use';  // Only uses temp rolls
+    } else {
+        return 'none';  // No temp rolls
+    }
 }
 
 /**

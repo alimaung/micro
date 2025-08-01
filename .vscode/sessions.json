@@ -62,7 +62,7 @@
           "icon": "tools",
           "color": "terminal.ansiBrightBlue",
           "commands": [
-            "cd .\\.utils"
+            "cd .\\.utils\\db-backup ; py backupper.py --cron 24"
           ]
         },
         {

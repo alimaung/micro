@@ -1,6 +1,7 @@
 /* Machine Control Card and Relay Control Card */
 .machine-control-card,
-.relay-control-card {
+.relay-control-card,
+.sma-control-card {
     display: flex;
     flex-direction: column;
 }
@@ -528,4 +529,553 @@
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(960deg); }
+}
+
+/* ===== SMA Machine Controls Styles ===== */
+
+/* SMA Control Card Layout */
+.sma-control-card .card-content {
+    flex-direction: column;
+    /* gap: 25px; */
+}
+
+/* Section Headers */
+.sma-control-card h3 {
+    color: var(--primary-color);
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--border-color);
+}
+
+/* Connection Section */
+.sma-connection-section {
+    background-color: var(--card-bg-secondary);
+    border-radius: 8px;
+    padding: 20px;
+    border: 1px solid var(--border-color);
+}
+
+.connection-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-items: flex-end;
+}
+
+.connection-settings {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.setting-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 120px;
+}
+
+.setting-group label {
+    font-weight: 500;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.setting-group select,
+.setting-group input {
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background-color: var(--input-bg);
+    color: var(--text-primary);
+    font-size: 0.9rem;
+}
+
+.connection-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* I/O Controls Section */
+.sma-io-section {
+    background-color: var(--card-bg-secondary);
+    border-radius: 8px;
+    padding: 0px 20px 0 20px;
+    border: 1px solid var(--border-color);
+}
+
+.io-controls-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.io-control-group {
+    background-color: var(--card-bg);
+    border-radius: 6px;
+    padding: 15px;
+    border: 1px solid var(--border-light);
+}
+
+.io-control-group h4 {
+    color: var(--text-primary);
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.io-status {
+    margin-bottom: 12px;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.io-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.io-buttons .control-button {
+    flex: 1;
+    min-width: 60px;
+    padding: 6px 10px;
+    font-size: 0.85rem;
+}
+
+/* Sensor Readings */
+.sensor-readings {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.sensor-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 8px;
+    background-color: var(--input-bg);
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.sensor-item .control-button.small {
+    padding: 4px 8px;
+    font-size: 0.8rem;
+    min-width: auto;
+}
+
+/* Motor Controls Section */
+.sma-motor-section {
+    background-color: var(--card-bg-secondary);
+    border-radius: 8px;
+    padding: 0px 20px 0 20px;
+    border: 1px solid var(--border-color);
+}
+
+.motor-controls-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 15px;
+}
+
+.motor-control-group {
+    background-color: var(--card-bg);
+    border-radius: 6px;
+    padding: 12px;
+    border: 1px solid var(--border-light);
+}
+
+.motor-control-group h4 {
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+    border-bottom: 1px solid var(--border-light);
+    padding-bottom: 6px;
+}
+
+/* Motor Configuration */
+.motor-config {
+    margin-bottom: 15px;
+}
+
+.config-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    padding: 4px 0;
+}
+
+.config-row label {
+    font-weight: 500;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    min-width: 70px;
+}
+
+.config-row input[type="number"] {
+    width: 80px;
+    padding: 4px 6px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: var(--input-bg);
+    color: var(--text-primary);
+    font-size: 0.85rem;
+}
+
+/* Radio Group */
+.radio-group {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.radio-group input[type="radio"] {
+    margin: 0 3px 0 0;
+    width: 14px;
+    height: 14px;
+}
+
+.radio-group label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-right: 8px;
+    min-width: auto;
+    cursor: pointer;
+}
+
+/* Toggle Switch */
+.toggle-switch {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.toggle-switch input[type="checkbox"] {
+    display: none;
+}
+
+.toggle-label {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+    cursor: pointer;
+}
+
+.toggle-switch-slider {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    border-radius: 24px;
+    transition: 0.3s;
+    max-width: 43px;
+    height: 23px;
+}
+
+.toggle-switch-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    border-radius: 50%;
+    transition: 0.3s;
+}
+
+.toggle-switch input:checked + .toggle-label .toggle-switch-slider {
+    background-color: var(--primary-color, #007bff);
+}
+
+.toggle-switch input:checked + .toggle-label .toggle-switch-slider:before {
+    transform: translateX(20px);
+}
+
+.toggle-text {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    min-width: 50px;
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.action-btn {
+    padding: 12px 8px;
+    border-radius: 6px;
+    border: 2px solid;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+}
+
+.action-btn.start-btn {
+    background-color: var(--success-color, #28a745);
+    border-color: var(--success-color, #28a745);
+    color: white;
+}
+
+.action-btn.start-btn:hover {
+    background-color: #218838;
+    border-color: #218838;
+    transform: translateY(-1px);
+}
+
+.action-btn.stop-btn {
+    background-color: var(--danger-color, #dc3545);
+    border-color: var(--danger-color, #dc3545);
+    color: white;
+}
+
+.action-btn.stop-btn:hover {
+    background-color: #c82333;
+    border-color: #c82333;
+    transform: translateY(-1px);
+}
+
+.action-btn:active {
+    transform: translateY(0);
+}
+
+
+
+/* Configuration Section */
+.sma-config-section {
+    background-color: var(--card-bg-secondary);
+    border-radius: 8px;
+    padding: 0px 20px 0 20px;
+    border: 1px solid var(--border-color);
+}
+
+.config-controls-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 15px;
+}
+
+.config-motor-group {
+    background-color: var(--card-bg);
+    border-radius: 6px;
+    padding: 12px;
+    border: 1px solid var(--border-light);
+}
+
+.config-motor-group h4 {
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+    border-bottom: 1px solid var(--border-light);
+    padding-bottom: 6px;
+}
+
+.config-compact {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.config-compact-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.config-compact-row label {
+    font-weight: 500;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    min-width: 80px;
+}
+
+.config-compact-row input {
+    width: 70px;
+    padding: 4px 6px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: var(--input-bg);
+    color: var(--text-primary);
+    font-size: 0.85rem;
+}
+
+.config-btn {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    background-color: var(--primary-color, #007bff);
+    color: white;
+    border: 1px solid var(--primary-color, #007bff);
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 35px;
+}
+
+.config-btn:hover {
+    background-color: #0056b3;
+    border-color: #0056b3;
+}
+
+/* Status Classes */
+.status-good {
+    color: var(--success-color, #28a745);
+    font-weight: 600;
+}
+
+.status-warning {
+    color: var(--warning-color, #ffc107);
+    font-weight: 600;
+}
+
+.status-error {
+    color: var(--danger-color, #dc3545);
+    font-weight: 600;
+}
+
+.status-neutral {
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .connection-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .connection-settings {
+        justify-content: space-between;
+    }
+    
+    .io-controls-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .motor-controls-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .config-controls-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .motor-buttons {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    /* Granular controls responsive */
+    .movement-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .direction-buttons {
+        width: 100%;
+    }
+
+    .direction-buttons .control-button.direction {
+        flex: 1;
+    }
+
+    .quick-step-buttons {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+    }
+
+    .joystick-controls {
+        flex-direction: column;
+    }
+
+    .continuous-settings {
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    
+    .motor-buttons {
+        grid-template-columns: 1fr;
+    }
+    
+    .io-buttons {
+        flex-direction: column;
+    }
+    
+    .config-compact-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 4px;
+    }
+    
+    .config-compact-row label {
+        min-width: auto;
+        text-align: center;
+    }
+
+    .config-compact-row input {
+        width: 100%;
+    }
+
+    .config-btn {
+        align-self: center;
+        min-width: 60px;
+    }
+
+    /* Granular controls mobile */
+    .motor-controls-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .quick-step-buttons {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+
+    .quick-step-buttons .control-button.small {
+        padding: 8px 4px;
+        font-size: 0.8rem;
+    }
+
+    .continuous-settings {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .continuous-settings input {
+        width: 100%;
+    }
+
+    .joystick-controls .control-button.joystick {
+        padding: 16px 8px;
+        font-size: 0.9rem;
+    }
 }

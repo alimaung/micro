@@ -563,4 +563,747 @@ const MachineControls = {
             NotificationManager.showNotification('Error updating machine stats', 'error');
         });
     }
-}; 
+};
+
+// Create namespace for SMA Machine control functions
+const SMAControls = {
+    // State tracking
+    isConnected: false,
+    connectionPort: 'COM3',
+    baudrate: 9600,
+    address: 1,
+    
+    // Motor configurations
+    motorConfigs: {
+        0: { // Shutter motor
+            speed: 100,
+            current: 200,
+            acceleration: 500,
+            resolution: 2
+        },
+        1: { // Film motor
+            speed: 100,
+            current: 200,
+            acceleration: 500,
+            resolution: 2
+        }
+    },
+
+    // Continuous movement tracking
+    continuousMovement: {
+        0: {
+            interval: null,
+            direction: 0,
+            speed: 50,
+            intervalMs: 100
+        },
+        1: {
+            interval: null,
+            direction: 0,
+            speed: 50,
+            intervalMs: 100
+        }
+    },
+
+    /**
+     * Connect to the Trinamic controller
+     */
+    connect: function(port = null, baudrate = null, address = null) {
+        const connectData = {
+            port: port || this.connectionPort,
+            baudrate: baudrate || this.baudrate,
+            address: address || this.address
+        };
+
+        console.log(`Connecting to Trinamic controller on ${connectData.port}...`);
+
+        fetch('/trinamic/connect/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify(connectData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                this.isConnected = true;
+                this.connectionPort = connectData.port;
+                this.updateConnectionStatus(true);
+                NotificationManager.showNotification(`Connected to Trinamic controller on ${connectData.port}`, 'success');
+                this.refreshStatus();
+            } else {
+                console.error(`Connection failed: ${data.message}`);
+                NotificationManager.showNotification(`Connection failed: ${data.message}`, 'error');
+                this.updateConnectionStatus(false);
+            }
+        })
+        .catch(error => {
+            console.error('Connection error:', error);
+            NotificationManager.showNotification('Network error during connection', 'error');
+            this.updateConnectionStatus(false);
+        });
+    },
+
+    /**
+     * Disconnect from the Trinamic controller
+     */
+    disconnect: function() {
+        console.log('Disconnecting from Trinamic controller...');
+
+        fetch('/trinamic/disconnect/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                this.isConnected = false;
+                this.updateConnectionStatus(false);
+                NotificationManager.showNotification('Disconnected from Trinamic controller', 'info');
+                this.clearStatus();
+            } else {
+                console.error(`Disconnect failed: ${data.message}`);
+                NotificationManager.showNotification(`Disconnect failed: ${data.message}`, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Disconnect error:', error);
+            NotificationManager.showNotification('Network error during disconnect', 'error');
+        });
+    },
+
+    /**
+     * Control I/O devices (vacuum, LED, magnet, sensors)
+     */
+    controlIO: function(device, action) {
+        if (!this.isConnected) {
+            NotificationManager.showNotification('Not connected to Trinamic controller', 'warning');
+            return;
+        }
+
+        console.log(`I/O Control: ${device} ${action}`);
+
+        const requestData = {
+            device: device,
+            action: action
+        };
+
+        fetch('/trinamic/io/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify(requestData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                const message = `${device.toUpperCase()} ${action}: ${data.message}`;
+                NotificationManager.showNotification(message, 'success');
+                this.updateIOStatus(device, action, data.data);
+            } else {
+                console.error(`I/O control failed: ${data.message}`);
+                NotificationManager.showNotification(`I/O control failed: ${data.message}`, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('I/O control error:', error);
+            NotificationManager.showNotification('Network error during I/O control', 'error');
+        });
+    },
+
+    /**
+     * Control motors (move, stop, home, configure)
+     */
+    controlMotor: function(motor, action, parameters = {}) {
+        if (!this.isConnected) {
+            NotificationManager.showNotification('Not connected to Trinamic controller', 'warning');
+            return;
+        }
+
+        console.log(`Motor Control: Motor ${motor} ${action}`, parameters);
+
+        const requestData = {
+            motor: motor,
+            action: action,
+            ...parameters
+        };
+
+        fetch('/trinamic/motor/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify(requestData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                const message = `Motor ${motor} ${action}: ${data.message}`;
+                NotificationManager.showNotification(message, 'success');
+                this.updateMotorStatus(motor, action, data.data);
+            } else {
+                console.error(`Motor control failed: ${data.message}`);
+                NotificationManager.showNotification(`Motor control failed: ${data.message}`, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Motor control error:', error);
+            NotificationManager.showNotification('Network error during motor control', 'error');
+        });
+    },
+
+    /**
+     * Emergency stop all motors
+     */
+    emergencyStop: function() {
+        console.log('EMERGENCY STOP TRIGGERED');
+
+        // Immediately stop all continuous movements
+        this.stopAllContinuousMovement();
+
+        fetch('/trinamic/emergency_stop/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                NotificationManager.showNotification('EMERGENCY STOP ACTIVATED', 'warning');
+                this.refreshStatus();
+            } else {
+                console.error(`Emergency stop failed: ${data.message}`);
+                NotificationManager.showNotification(`Emergency stop failed: ${data.message}`, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Emergency stop error:', error);
+            NotificationManager.showNotification('Network error during emergency stop', 'error');
+        });
+    },
+
+    /**
+     * Configure motor parameters
+     */
+    configureMotors: function(configurations) {
+        if (!this.isConnected) {
+            NotificationManager.showNotification('Not connected to Trinamic controller', 'warning');
+            return;
+        }
+
+        console.log('Configuring motors:', configurations);
+
+        fetch('/trinamic/configure/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({ motors: configurations })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                NotificationManager.showNotification('Motor configuration applied', 'success');
+                // Update local configurations
+                Object.assign(this.motorConfigs, configurations);
+                this.refreshStatus();
+            } else {
+                console.error(`Configuration failed: ${data.message}`);
+                NotificationManager.showNotification(`Configuration failed: ${data.message}`, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Configuration error:', error);
+            NotificationManager.showNotification('Network error during configuration', 'error');
+        });
+    },
+
+    /**
+     * Refresh system status
+     */
+    refreshStatus: function() {
+        if (!this.isConnected) {
+            this.clearStatus();
+            return;
+        }
+
+        fetch('/trinamic/system_status/', {
+            method: 'GET',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                this.updateSystemStatus(data.data);
+            } else {
+                console.error(`Status refresh failed: ${data.message}`);
+            }
+        })
+        .catch(error => {
+            console.error('Status refresh error:', error);
+        });
+    },
+
+    /**
+     * Update connection status UI
+     */
+    updateConnectionStatus: function(connected) {
+        const statusElement = document.getElementById('sma-connection-status');
+        if (statusElement) {
+            if (connected) {
+                statusElement.innerHTML = '<i class="fas fa-check-circle"></i> Connected';
+                statusElement.className = 'status-badge operational';
+            } else {
+                statusElement.innerHTML = '<i class="fas fa-times-circle"></i> Disconnected';
+                statusElement.className = 'status-badge critical';
+            }
+        }
+
+        // Update connect/disconnect button states
+        const connectBtn = document.getElementById('sma-connect-btn');
+        const disconnectBtn = document.getElementById('sma-disconnect-btn');
+        
+        if (connectBtn) connectBtn.disabled = connected;
+        if (disconnectBtn) disconnectBtn.disabled = !connected;
+    },
+
+    /**
+     * Update I/O status displays
+     */
+    updateIOStatus: function(device, action, data) {
+        // Update vacuum status
+        if (device === 'vacuum') {
+            const vacuumStatus = document.getElementById('sma-vacuum-status');
+            if (vacuumStatus && data) {
+                if (action === 'status') {
+                    vacuumStatus.textContent = data.vacuum_ok ? 'OK' : 'Not OK';
+                    vacuumStatus.className = data.vacuum_ok ? 'status-good' : 'status-error';
+                } else {
+                    vacuumStatus.textContent = action === 'on' ? 'ON' : 'OFF';
+                    vacuumStatus.className = action === 'on' ? 'status-good' : 'status-neutral';
+                }
+            }
+        }
+
+        // Update LED status
+        if (device === 'led') {
+            const ledStatus = document.getElementById('sma-led-status');
+            if (ledStatus) {
+                ledStatus.textContent = action === 'on' ? 'ON' : 'OFF';
+                ledStatus.className = action === 'on' ? 'status-good' : 'status-neutral';
+            }
+        }
+
+        // Update magnet status
+        if (device === 'magnet') {
+            const magnetStatus = document.getElementById('sma-magnet-status');
+            if (magnetStatus) {
+                magnetStatus.textContent = action === 'on' ? 'ON' : 'OFF';
+                magnetStatus.className = action === 'on' ? 'status-good' : 'status-neutral';
+            }
+        }
+
+        // Update sensor readings
+        if (device === 'light_sensor' && data) {
+            const lightSensorValue = document.getElementById('sma-light-sensor-value');
+            if (lightSensorValue) {
+                lightSensorValue.textContent = data.light_sensor_value || 'N/A';
+            }
+        }
+
+        if (device === 'machine_state' && data) {
+            const machineStateValue = document.getElementById('sma-machine-state');
+            if (machineStateValue) {
+                machineStateValue.textContent = data.state || 'UNKNOWN';
+                machineStateValue.className = data.lid_closed ? 'status-good' : 'status-warning';
+            }
+        }
+    },
+
+    /**
+     * Update motor status displays
+     */
+    updateMotorStatus: function(motor, action, data) {
+        const motorStatusElement = document.getElementById(`sma-motor-${motor}-status`);
+        if (motorStatusElement) {
+            if (action === 'status' && data) {
+                motorStatusElement.textContent = data.running ? 'RUNNING' : 'STOPPED';
+                motorStatusElement.className = data.running ? 'status-warning' : 'status-good';
+            } else if (action === 'stop') {
+                motorStatusElement.textContent = 'STOPPED';
+                motorStatusElement.className = 'status-good';
+            }
+        }
+    },
+
+    /**
+     * Update comprehensive system status
+     */
+    updateSystemStatus: function(statusData) {
+        if (!statusData || !statusData.success) return;
+
+        // Update machine state
+        if (statusData.machine_state) {
+            this.updateIOStatus('machine_state', 'get', statusData.machine_state);
+        }
+
+        // Update vacuum status
+        if (statusData.vacuum_status) {
+            this.updateIOStatus('vacuum', 'status', statusData.vacuum_status);
+        }
+
+        // Update zero point status
+        if (statusData.zero_point) {
+            const zeroPointElement = document.getElementById('sma-zero-point-status');
+            if (zeroPointElement) {
+                zeroPointElement.textContent = statusData.zero_point.at_zero_point ? 'AT ZERO' : 'NOT AT ZERO';
+                zeroPointElement.className = statusData.zero_point.at_zero_point ? 'status-good' : 'status-neutral';
+            }
+        }
+
+        // Update light sensor
+        if (statusData.light_sensor) {
+            this.updateIOStatus('light_sensor', 'read', statusData.light_sensor);
+        }
+
+        // Update motor statuses
+        if (statusData.motor_statuses) {
+            for (const [motorKey, motorData] of Object.entries(statusData.motor_statuses)) {
+                const motorNumber = motorKey.split('_')[1];
+                this.updateMotorStatus(parseInt(motorNumber), 'status', motorData);
+            }
+        }
+    },
+
+    /**
+     * Clear all status displays
+     */
+    clearStatus: function() {
+        // Clear I/O statuses
+        const ioElements = ['sma-vacuum-status', 'sma-led-status', 'sma-magnet-status', 
+                           'sma-light-sensor-value', 'sma-machine-state', 'sma-zero-point-status'];
+        
+        ioElements.forEach(elementId => {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.textContent = 'N/A';
+                element.className = 'status-neutral';
+            }
+        });
+
+        // Clear motor statuses
+        for (let i = 0; i < 2; i++) {
+            const motorStatusElement = document.getElementById(`sma-motor-${i}-status`);
+            if (motorStatusElement) {
+                motorStatusElement.textContent = 'N/A';
+                motorStatusElement.className = 'status-neutral';
+            }
+        }
+    },
+
+    /**
+     * Start continuous movement (joystick style)
+     */
+    startContinuousMovement: function(motor, direction) {
+        if (!this.isConnected) {
+            NotificationManager.showNotification('Not connected to Trinamic controller', 'warning');
+            return;
+        }
+
+        // Stop any existing movement for this motor
+        this.stopContinuousMovement(motor);
+
+        // Get settings from UI
+        const speedElement = document.getElementById(`motor${motor}-continuous-speed`);
+        const intervalElement = document.getElementById(`motor${motor}-continuous-interval`);
+        
+        const speed = speedElement ? parseInt(speedElement.value) : 50;
+        const intervalMs = intervalElement ? parseInt(intervalElement.value) : 100;
+
+        // Update tracking
+        this.continuousMovement[motor].direction = direction;
+        this.continuousMovement[motor].speed = speed;
+        this.continuousMovement[motor].intervalMs = intervalMs;
+
+        console.log(`Starting continuous movement: Motor ${motor}, Direction ${direction}, Speed ${speed}, Interval ${intervalMs}ms`);
+
+        // Add active class to the button
+        const buttons = document.querySelectorAll(`.joystick-controls .control-button.joystick`);
+        buttons.forEach(btn => {
+            if (btn.getAttribute('onmousedown')?.includes(`(${motor}, ${direction})`)) {
+                btn.classList.add('active');
+            }
+        });
+
+        // Start the interval
+        this.continuousMovement[motor].interval = setInterval(() => {
+            this.controlMotor(motor, 'move', {
+                steps: speed,
+                direction: direction
+            });
+        }, intervalMs);
+
+        // Provide haptic feedback if available
+        if (navigator.vibrate) {
+            navigator.vibrate(50);
+        }
+    },
+
+    /**
+     * Stop continuous movement
+     */
+    stopContinuousMovement: function(motor) {
+        if (this.continuousMovement[motor].interval) {
+            clearInterval(this.continuousMovement[motor].interval);
+            this.continuousMovement[motor].interval = null;
+            console.log(`Stopped continuous movement for motor ${motor}`);
+        }
+
+        // Remove active class from all joystick buttons for this motor
+        const buttons = document.querySelectorAll(`.joystick-controls .control-button.joystick`);
+        buttons.forEach(btn => {
+            if (btn.getAttribute('onmousedown')?.includes(`(${motor},`)) {
+                btn.classList.remove('active');
+            }
+        });
+
+        // Stop the motor
+        if (this.isConnected) {
+            this.controlMotor(motor, 'stop', {});
+        }
+    },
+
+    /**
+     * Stop all continuous movements (emergency)
+     */
+    stopAllContinuousMovement: function() {
+        console.log('Stopping all continuous movements');
+        for (let motor = 0; motor <= 1; motor++) {
+            this.stopContinuousMovement(motor);
+        }
+    },
+
+    /**
+     * Execute motor command with current settings
+     */
+    executeMotorCommand: function(motor) {
+        if (!this.isConnected) {
+            NotificationManager.showNotification('Not connected to Trinamic controller', 'warning');
+            return;
+        }
+
+        // Get all current settings from UI
+        const speed = parseInt(document.getElementById(`motor${motor}-speed`).value);
+        const current = parseInt(document.getElementById(`motor${motor}-current`).value);
+        const standbyCurrent = parseInt(document.getElementById(`motor${motor}-standby-current`).value);
+        const acceleration = parseInt(document.getElementById(`motor${motor}-acceleration`).value);
+        const steps = parseInt(document.getElementById(`motor${motor}-steps`).value);
+        const directionToggle = document.getElementById(`motor${motor}-direction`).checked;
+        const direction = directionToggle ? 1 : -1; // Forward = 1, Backward = -1
+        
+        // Get selected resolution
+        const resolutionRadios = document.querySelectorAll(`input[name="motor${motor}-resolution"]:checked`);
+        const resolution = resolutionRadios.length > 0 ? parseInt(resolutionRadios[0].value) : 4;
+
+        console.log(`Executing motor ${motor} command: Speed=${speed}, Current=${current}, Standby Current=${standbyCurrent}, Acceleration=${acceleration}, Steps=${steps}, Direction=${direction}, Resolution=${resolution}`);
+
+        // Set all motor parameters first
+        Promise.all([
+            fetch('/trinamic/motor/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({
+                    motor: motor,
+                    action: 'set_speed',
+                    speed: speed
+                })
+            }),
+            fetch('/trinamic/motor/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({
+                    motor: motor,
+                    action: 'set_current',
+                    current: current
+                })
+            }),
+            fetch('/trinamic/motor/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({
+                    motor: motor,
+                    action: 'set_standby_current',
+                    standby_current: standbyCurrent
+                })
+            }),
+            fetch('/trinamic/motor/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({
+                    motor: motor,
+                    action: 'set_acceleration',
+                    acceleration: acceleration
+                })
+            }),
+            fetch('/trinamic/motor/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({
+                    motor: motor,
+                    action: 'set_resolution',
+                    resolution: resolution
+                })
+            })
+        ])
+        .then(responses => Promise.all(responses.map(r => r.json())))
+        .then(results => {
+            // Check if all parameters were set successfully
+            const allSuccess = results.every(result => result.status === 'success');
+            
+            if (!allSuccess) {
+                NotificationManager.showNotification('Failed to configure motor settings', 'error');
+                return;
+            }
+
+            // Now execute the movement
+            return this.controlMotor(motor, 'move', {
+                steps: steps,
+                direction: direction
+            });
+        })
+        .catch(error => {
+            console.error('Motor command error:', error);
+            NotificationManager.showNotification('Error executing motor command', 'error');
+        });
+    },
+
+    /**
+     * Update direction toggle text
+     */
+    updateDirectionToggle: function(motor) {
+        const toggle = document.getElementById(`motor${motor}-direction`);
+        const text = document.querySelector(`#motor${motor}-direction + .toggle-label + .toggle-text`);
+        
+        if (toggle && text) {
+            text.textContent = toggle.checked ? 'Forward' : 'Backward';
+        }
+    },
+
+    /**
+     * Cleanup connections and stop all operations
+     */
+    cleanup: function() {
+        console.log('SMA Controls cleanup initiated');
+        
+        // Stop all continuous movements
+        this.stopAllContinuousMovement();
+        
+        // Disconnect if connected
+        if (this.isConnected) {
+            // Use sendBeacon for reliable cleanup during page unload
+            const data = JSON.stringify({});
+            const blob = new Blob([data], {type: 'application/json'});
+            
+            try {
+                navigator.sendBeacon('/trinamic/disconnect/', blob);
+                console.log('Cleanup disconnect sent via beacon');
+            } catch (e) {
+                // Fallback for older browsers
+                fetch('/trinamic/disconnect/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                    body: data,
+                    keepalive: true
+                }).catch(() => {
+                    // Ignore errors during cleanup
+                });
+            }
+            
+            this.isConnected = false;
+            this.updateConnectionStatus(false);
+        }
+    },
+
+    /**
+     * Initialize SMA controls
+     */
+    initialize: function() {
+        console.log('Initializing SMA Controls...');
+        this.updateConnectionStatus(false);
+        this.clearStatus();
+        
+        // Add global event listeners for safety
+        document.addEventListener('keydown', (e) => {
+            // Stop all continuous movement on ESC key
+            if (e.key === 'Escape') {
+                this.stopAllContinuousMovement();
+                NotificationManager.showNotification('Emergency stop: All continuous movements stopped', 'warning');
+            }
+        });
+
+        // Stop continuous movement if the window loses focus
+        window.addEventListener('blur', () => {
+            this.stopAllContinuousMovement();
+        });
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            this.cleanup();
+        });
+
+        // Cleanup on page hide (mobile/tab switching)
+        window.addEventListener('pagehide', () => {
+            this.cleanup();
+        });
+
+        // Add event listeners for direction toggles
+        for (let motor = 0; motor <= 1; motor++) {
+            const toggle = document.getElementById(`motor${motor}-direction`);
+            if (toggle) {
+                toggle.addEventListener('change', () => {
+                    this.updateDirectionToggle(motor);
+                });
+                // Set initial text
+                this.updateDirectionToggle(motor);
+            }
+        }
+    }
+};
+
+// Initialize SMA Controls when the page loads
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof SMAControls !== 'undefined') {
+        SMAControls.initialize();
+    }
+});

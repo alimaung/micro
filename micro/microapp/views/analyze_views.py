@@ -149,6 +149,8 @@ def analyze_dashboard(request):
     analyzed_total_16mm = sum(item.get('estimated_rolls_16mm', 0) for item in sections_data['analyzed'])
     analyzed_total_35mm = sum(item.get('estimated_rolls_35mm', 0) for item in sections_data['analyzed'])
     analyzed_total_size = sum(item.get('total_size', 0) for item in sections_data['analyzed'] if item.get('total_size'))
+    analyzed_temp_rolls_created = sum(item.get('estimated_temp_rolls_created', 0) for item in sections_data['analyzed'])
+    analyzed_temp_rolls_used = sum(item.get('estimated_temp_rolls_used', 0) for item in sections_data['analyzed'])
     
     # Calculate average utilization for analyzed folders
     analyzed_utilization_values = [item.get('overall_utilization', 0) for item in sections_data['analyzed'] if item.get('overall_utilization', 0) > 0]
@@ -160,6 +162,8 @@ def analyze_dashboard(request):
     registered_with_oversized = sum(1 for item in sections_data['registered'] if item['data'].get('has_oversized', False))
     registered_total_rolls = sum(item['data'].get('total_rolls', 0) for item in sections_data['registered'])
     registered_total_size = sum(item['data'].get('total_size', 0) for item in sections_data['registered'] if item['data'].get('total_size'))
+    registered_temp_rolls_created = sum(item['data'].get('temp_rolls_created', 0) for item in sections_data['registered'])
+    registered_temp_rolls_used = sum(item['data'].get('temp_rolls_used', 0) for item in sections_data['registered'])
     
     # Pagination - apply to the current section or all data
     if section_filter == 'unanalyzed':
@@ -208,13 +212,17 @@ def analyze_dashboard(request):
             'analyzed_total_size': analyzed_total_size,
             'analyzed_total_size_formatted': analyze_service.format_file_size(analyzed_total_size),
             'analyzed_avg_utilization': round(analyzed_avg_utilization, 1),
+            'analyzed_temp_rolls_created': analyzed_temp_rolls_created,
+            'analyzed_temp_rolls_used': analyzed_temp_rolls_used,
             # Registered stats
             'registered_total_documents': registered_total_docs,
             'registered_total_pages': registered_total_pages,
             'registered_with_oversized': registered_with_oversized,
             'registered_total_rolls': registered_total_rolls,
             'registered_total_size': registered_total_size,
-            'registered_total_size_formatted': analyze_service.format_file_size(registered_total_size)
+            'registered_total_size_formatted': analyze_service.format_file_size(registered_total_size),
+            'registered_temp_rolls_created': registered_temp_rolls_created,
+            'registered_temp_rolls_used': registered_temp_rolls_used
         }
     }
     
@@ -510,6 +518,12 @@ def sort_folder_data(data_list, sort_field, sort_direction, data_type):
                 return sorted(data_list, key=lambda x: x.get('oversized_count', 0), reverse=reverse_sort)
             elif sort_field == 'date':
                 return sorted(data_list, key=lambda x: x.get('analyzed_at') or '', reverse=reverse_sort)
+            elif sort_field == 'temp_created':
+                return sorted(data_list, key=lambda x: x.get('estimated_temp_rolls_created', 0), reverse=reverse_sort)
+            elif sort_field == 'temp_used':
+                return sorted(data_list, key=lambda x: x.get('estimated_temp_rolls_used', 0), reverse=reverse_sort)
+            elif sort_field == 'temp_strategy':
+                return sorted(data_list, key=lambda x: x.get('temp_roll_strategy', 'none'), reverse=reverse_sort)
                 
         elif data_type == 'registered':
             # Sorting for registered projects (note: many don't have size data)
@@ -541,6 +555,12 @@ def sort_folder_data(data_list, sort_field, sort_direction, data_type):
                 return sorted(data_list, key=get_status_priority, reverse=reverse_sort)
             elif sort_field == 'date':
                 return sorted(data_list, key=lambda x: x['project'].updated_at, reverse=reverse_sort)
+            elif sort_field == 'temp_created':
+                return sorted(data_list, key=lambda x: x['data'].get('temp_rolls_created', 0), reverse=reverse_sort)
+            elif sort_field == 'temp_used':
+                return sorted(data_list, key=lambda x: x['data'].get('temp_rolls_used', 0), reverse=reverse_sort)
+            elif sort_field == 'temp_strategy':
+                return sorted(data_list, key=lambda x: x['data'].get('temp_roll_strategy', 'none'), reverse=reverse_sort)
     
     except Exception as e:
         logger.error(f"Error sorting data: {e}")

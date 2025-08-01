@@ -154,6 +154,7 @@ class ConfigManager:
         motor_control.set_max_acceleration(self.MOTOR_FILM, film_config['acceleration'])
         motor_control.set_max_current(self.MOTOR_FILM, film_config['drive_current'])
         motor_control.set_standby_current(self.MOTOR_FILM, film_config['hold_current'])
+        # Note: Film motor doesn't get reference speeds in the original VB.NET code
         
         if self.verbose:
             logger.info("CONFIG", "Motor configuration applied successfully")

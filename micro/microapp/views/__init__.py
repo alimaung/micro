@@ -55,3 +55,6 @@ from .explore_views import *
 
 # Import analyze views
 from .analyze_views import *
+
+# Import trinamic views
+from .trinamic_views import *
