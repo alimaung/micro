@@ -119,6 +119,15 @@ def get_chemical_status(request):
                     'is_critical': batch.is_critical,
                     'is_low': batch.is_low,
                     'created_at': batch.created_at.isoformat(),
+                    'installation_date': batch.installation_date.isoformat(),
+                    # Age-related fields
+                    'days_since_installation': batch.days_since_installation,
+                    'hours_since_installation': batch.hours_since_installation,
+                    'age_status': batch.age_status,
+                    'is_age_warning': batch.is_age_warning,
+                    'is_age_locked': batch.is_age_locked,
+                    'days_until_warning': batch.days_until_warning,
+                    'hours_until_lockout': batch.hours_until_lockout,
                     'status': 'critical' if batch.is_critical else 'low' if batch.is_low else 'good'
                 }
             else:
@@ -192,9 +201,14 @@ def start_development(request):
         
         area_needed = film_length_m * film_height_m
         
+        # Check for expert mode
+        expert_mode = data.get('expert_mode', False)
+        
         chemicals_ok = True
         chemical_warnings = []
         low_chemical_warnings = []
+        age_warnings = []
+        locked_warnings = []
         
         for chemical_type, display_name in ChemicalBatch.CHEMICAL_TYPES:
             batch = ChemicalBatch.objects.filter(
@@ -205,22 +219,48 @@ def start_development(request):
             if not batch:
                 chemicals_ok = False
                 chemical_warnings.append(f"{display_name}: No active batch found")
-            elif not batch.can_process_roll(area_needed):
+            elif not batch.can_process_roll(area_needed, expert_mode=expert_mode):
                 chemicals_ok = False
                 remaining = batch.remaining_capacity
-                chemical_warnings.append(f"{display_name}: Insufficient capacity ({remaining:.3f} m² remaining, {area_needed:.3f} m² needed)")
-            elif batch.is_critical:
-                # Critical level but can still process this roll
-                low_chemical_warnings.append(f"{display_name}: Critical level ({batch.capacity_percent:.1f}% remaining)")
-            elif batch.is_low:
-                # Low level but can still process this roll
-                low_chemical_warnings.append(f"{display_name}: Low level ({batch.capacity_percent:.1f}% remaining)")
+                
+                if batch.is_age_locked and not expert_mode:
+                    hours_over = batch.hours_since_installation - (14 * 24 + 48)
+                    locked_warnings.append(f"{display_name}: Age-locked ({hours_over:.1f} hours past expiry). Chemistry must be replaced.")
+                else:
+                    chemical_warnings.append(f"{display_name}: Insufficient capacity ({remaining:.3f} m² remaining, {area_needed:.3f} m² needed)")
+            else:
+                # Check for warnings even if development can proceed
+                if batch.is_age_locked and expert_mode:
+                    hours_over = batch.hours_since_installation - (14 * 24 + 48)
+                    age_warnings.append(f"{display_name}: EXPERT MODE - Age-locked ({hours_over:.1f} hours past expiry). Quality may be compromised.")
+                elif batch.is_age_warning:
+                    if batch.hours_until_lockout > 0:
+                        age_warnings.append(f"{display_name}: Age warning - {batch.hours_until_lockout:.1f} hours until lockout. Quality may diminish.")
+                    else:
+                        age_warnings.append(f"{display_name}: Age warning - Past 2 weeks installation. Quality may be compromised.")
+                
+                if batch.is_critical:
+                    # Critical level but can still process this roll
+                    low_chemical_warnings.append(f"{display_name}: Critical level ({batch.capacity_percent:.1f}% remaining)")
+                elif batch.is_low:
+                    # Low level but can still process this roll
+                    low_chemical_warnings.append(f"{display_name}: Low level ({batch.capacity_percent:.1f}% remaining)")
         
         if not chemicals_ok:
+            # Determine the primary error type
+            if locked_warnings:
+                error_msg = 'Chemicals are age-locked and must be replaced'
+                all_warnings = locked_warnings + chemical_warnings
+            else:
+                error_msg = 'Chemical batches need replacement before development'
+                all_warnings = chemical_warnings
+                
             return JsonResponse({
                 'success': False,
-                'error': 'Chemical batches need replacement before development',
-                'warnings': chemical_warnings
+                'error': error_msg,
+                'warnings': all_warnings,
+                'locked_chemicals': len(locked_warnings) > 0,
+                'expert_mode_available': len(locked_warnings) > 0
             }, status=400)
         
         # If chemicals are OK but some are low, include warnings in success response
@@ -229,11 +269,19 @@ def start_development(request):
             'session_id': None,  # Will be set below
             'estimated_completion': None,  # Will be set below
             'duration_minutes': None,  # Will be set below
-            'film_length_meters': (roll.pages_used + 100) / 100.0
+            'film_length_meters': (roll.pages_used + 100) / 100.0,
+            'expert_mode': expert_mode
         }
         
+        # Combine all warning types
+        all_warnings = []
+        if age_warnings:
+            all_warnings.extend(age_warnings)
         if low_chemical_warnings:
-            response_data['chemical_warnings'] = low_chemical_warnings
+            all_warnings.extend(low_chemical_warnings)
+            
+        if all_warnings:
+            response_data['chemical_warnings'] = all_warnings
         
         with transaction.atomic():
             # Create development session

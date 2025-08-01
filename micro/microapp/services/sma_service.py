@@ -944,8 +944,9 @@ class SMAService:
                         # For re-filming, use strategy-based temp roll creation
                         temp_roll_created = cls._handle_refilming_temp_roll_creation(roll)
                     else:
-                        # For initial filming, activate any temp rolls that were created during register phase
-                        temp_roll_created = cls._activate_predicted_temp_rolls(roll)
+                        # For initial filming, temp rolls are already created as "available" by registration
+                        # No activation needed - just check if this roll created any temp rolls
+                        temp_roll_created = roll.created_temp_roll is not None
                     
                     # Save roll (including any temp roll relationships and updated pages_remaining)
                     roll.save(update_fields=[
@@ -956,9 +957,9 @@ class SMAService:
                     logger.info(f"Roll stats: capacity={roll.capacity}, pages_used={roll.pages_used}, pages_remaining={roll.pages_remaining}")
                     logger.info(f"Filming type: {'re-filming' if is_re_filming else 'initial filming'}")
                     if temp_roll_created:
-                        logger.info(f"Temp roll {'created' if is_re_filming else 'exists'} for roll {roll.roll_number}")
+                        logger.info(f"Temp roll {'created' if is_re_filming else 'available from registration'} for roll {roll.roll_number}")
                     else:
-                        logger.info(f"No temp roll {'created' if is_re_filming else 'exists'} for roll {roll.roll_number}")
+                        logger.info(f"No temp roll {'created' if is_re_filming else 'available'} for roll {roll.roll_number}")
                     
                     return {
                         'success': True,
@@ -977,43 +978,6 @@ class SMAService:
         except Exception as e:
             logger.error(f"Error marking roll as filmed: {e}")
             return {'success': False, 'error': str(e)}
-
-    @classmethod
-    def _activate_predicted_temp_rolls(cls, roll) -> bool:
-        """Activate temp rolls that were created during register phase (change status from 'created' to 'available')."""
-        try:
-            from ..models import TempRoll
-            
-            roll_display = roll.roll_number or roll.film_number or f"Roll {roll.id}"
-            
-            # Find temp rolls that were created for this roll during register phase
-            predicted_temp_rolls = TempRoll.objects.filter(
-                source_roll=roll,
-                status='created'
-            )
-            
-            activated_count = 0
-            for temp_roll in predicted_temp_rolls:
-                # Change status from 'created' to 'available' now that filming is complete
-                temp_roll.status = 'available'
-                temp_roll.save(update_fields=['status'])
-                logger.info(f"Activated temp roll #{temp_roll.temp_roll_id} from register phase for roll {roll_display}")
-                activated_count += 1
-                
-                # Update roll relationship if this is the main temp roll created by this roll
-                if not roll.created_temp_roll:
-                    roll.created_temp_roll = temp_roll
-            
-            if activated_count > 0:
-                logger.info(f"Activated {activated_count} predicted temp roll(s) for roll {roll_display}")
-                return True
-            else:
-                logger.info(f"No predicted temp rolls found for roll {roll_display} (roll fully utilized)")
-                return False
-                
-        except Exception as e:
-            logger.error(f"Error activating predicted temp rolls for roll {roll_display}: {e}")
-            return False
 
     @classmethod
     def _handle_refilming_temp_roll_creation(cls, roll) -> bool:
@@ -1142,12 +1106,15 @@ class SMAService:
     @classmethod
     def get_temp_roll_strategy(cls, roll_id: int, film_type: str, required_pages: int, preview_only: bool = True) -> Dict[str, Any]:
         """
-        Calculate temp roll strategy for re-filming operations.
+        Calculate temp roll strategy for filming operations.
+        
+        For new filming: Uses pre-allocated temp rolls from registration (read-only)
+        For re-filming: Manages temp rolls independently (like registration does)
         
         Args:
-            roll_id: The roll being re-filmed
+            roll_id: The roll being filmed
             film_type: Type of film (16mm/35mm)
-            required_pages: Number of pages needed for re-filming
+            required_pages: Number of pages needed for filming
             preview_only: If True, don't make any changes, just calculate strategy
             
         Returns:
@@ -1156,7 +1123,7 @@ class SMAService:
         try:
             from ..models import Roll, TempRoll
             
-            # Get the roll being re-filmed
+            # Get the roll being filmed
             try:
                 roll = Roll.objects.get(id=roll_id)
             except Roll.DoesNotExist:
@@ -1165,7 +1132,6 @@ class SMAService:
                     'error': f'Roll {roll_id} not found'
                 }
             
-            # For re-filming, we always consider new rolls or temp rolls - never reuse the existing roll
             # Standard capacities by film type
             FILM_CAPACITIES = {
                 '16mm': 2900,
@@ -1174,12 +1140,8 @@ class SMAService:
             
             standard_capacity = FILM_CAPACITIES.get(film_type, 2900)
             
-            # Find available temp rolls of the same film type with sufficient capacity
-            available_temp_rolls = TempRoll.objects.filter(
-                film_type=film_type,
-                status='available',
-                usable_capacity__gte=required_pages
-            ).order_by('usable_capacity')  # Best fit: prefer smallest roll that fits
+            # Determine if this is refilming based on roll's filming status
+            is_refilming = roll.filming_status in ['completed', 'error'] or roll.filming_completed_at is not None
             
             strategy = {
                 'film_type': film_type,
@@ -1189,61 +1151,21 @@ class SMAService:
                 'temp_roll': None,
                 'new_roll_capacity': standard_capacity,
                 'will_create_temp_roll': False,
-                'reason': ''
+                'reason': '',
+                'is_refilming': is_refilming
             }
             
-            if available_temp_rolls.exists():
-                # Use the best available temp roll
-                best_temp_roll = available_temp_rolls.first()
+            if is_refilming:
+                # REFILMING: Full temp roll management (like registration)
+                logger.info(f"Roll {roll_id} is being re-filmed - managing temp rolls independently")
                 
-                strategy.update({
-                    'use_temp_roll': True,
-                    'temp_roll': {
-                        'temp_roll_id': best_temp_roll.temp_roll_id,
-                        'remaining_capacity': best_temp_roll.usable_capacity,
-                        'source_roll_id': best_temp_roll.source_roll.id if best_temp_roll.source_roll else None,
-                        'created_date': best_temp_roll.creation_date.isoformat() if best_temp_roll.creation_date else None
-                    },
-                    'reason': f'Using existing temp roll #{best_temp_roll.temp_roll_id} with {best_temp_roll.usable_capacity} pages available'
-                })
-                
-                # If preview_only is False, we would update the temp roll here
-                if not preview_only:
-                    # Update temp roll capacity (this would be done during actual filming)
-                    best_temp_roll.usable_capacity -= required_pages
-                    if best_temp_roll.usable_capacity <= 0:
-                        best_temp_roll.status = 'exhausted'
-                    best_temp_roll.save()
-                    
-                    logger.info(f"Updated temp roll #{best_temp_roll.temp_roll_id}: {best_temp_roll.usable_capacity} pages remaining")
+                return cls._handle_refilming_temp_roll_strategy(roll, film_type, required_pages, preview_only, strategy, standard_capacity)
             
             else:
-                # Use new roll (for re-filming, we never reuse the existing roll)
-                remaining_capacity = standard_capacity - required_pages
-                min_temp_roll_threshold = 100  # Minimum pages to create a temp roll
+                # NEW FILMING: Read-only execution of registration's decisions
+                logger.info(f"Roll {roll_id} is being filmed for the first time - executing registration's plan")
                 
-                strategy.update({
-                    'use_temp_roll': False,
-                    'will_create_temp_roll': remaining_capacity >= min_temp_roll_threshold,
-                    'remaining_capacity': remaining_capacity,
-                    'reason': f'No suitable temp rolls available. Using new {film_type} roll.'
-                })
-                
-                if strategy['will_create_temp_roll']:
-                    strategy['reason'] += f' Will create temp roll with {remaining_capacity} pages.'
-                else:
-                    strategy['reason'] += f' Remaining {remaining_capacity} pages too small for temp roll.'
-                
-                # If preview_only is False, we would create the temp roll after filming
-                if not preview_only and strategy['will_create_temp_roll']:
-                    # This would be done after filming completes
-                    pass
-            
-            return {
-                'success': True,
-                'temp_roll_strategy': strategy,
-                'preview_only': preview_only
-            }
+                return cls._handle_new_filming_temp_roll_strategy(roll, film_type, required_pages, preview_only, strategy, standard_capacity)
             
         except Exception as e:
             logger.error(f"Error calculating temp roll strategy: {e}")
@@ -1251,3 +1173,136 @@ class SMAService:
                 'success': False,
                 'error': f'Failed to calculate temp roll strategy: {str(e)}'
             }
+
+    @classmethod
+    def _handle_new_filming_temp_roll_strategy(cls, roll, film_type: str, required_pages: int, preview_only: bool, strategy: dict, standard_capacity: int) -> Dict[str, Any]:
+        """Handle temp roll strategy for new filming - execute registration's plan."""
+        
+        # Check if registration allocated a temp roll to this roll
+        if roll.source_temp_roll:
+            # Registration allocated a temp roll - use it regardless of status
+            temp_roll = roll.source_temp_roll
+            
+            logger.info(f"Registration allocated temp roll #{temp_roll.temp_roll_id} to roll {roll.id}")
+            logger.info(f"  - status: {temp_roll.status}")
+            logger.info(f"  - usable_capacity: {temp_roll.usable_capacity}")
+            logger.info(f"  - used_by_roll: {temp_roll.used_by_roll.id if temp_roll.used_by_roll else 'None'}")
+            
+            # Verify this temp roll was allocated to this roll
+            if temp_roll.used_by_roll and temp_roll.used_by_roll.id == roll.id:
+                strategy.update({
+                    'use_temp_roll': True,
+                    'temp_roll': {
+                        'temp_roll_id': temp_roll.temp_roll_id,
+                        'remaining_capacity': temp_roll.usable_capacity,
+                        'source_roll_id': temp_roll.source_roll.id if temp_roll.source_roll else None,
+                        'created_date': temp_roll.creation_date.isoformat() if temp_roll.creation_date else None
+                    },
+                    'reason': f'Using temp roll #{temp_roll.temp_roll_id} allocated by registration (capacity: {temp_roll.usable_capacity} pages)'
+                })
+            else:
+                # Temp roll exists but not allocated to this roll - this shouldn't happen
+                logger.warning(f"Temp roll #{temp_roll.temp_roll_id} exists but not allocated to roll {roll.id}")
+                strategy.update({
+                    'use_temp_roll': False,
+                    'reason': f'Temp roll #{temp_roll.temp_roll_id} allocation error. Using new roll.'
+                })
+        
+        # Check if registration planned to create a temp roll from this roll
+        elif roll.created_temp_roll:
+            # Registration planned temp roll creation
+            logger.info(f"Registration planned temp roll creation from roll {roll.id}")
+            
+            remaining_capacity = standard_capacity - required_pages
+            strategy.update({
+                'use_temp_roll': False,
+                'will_create_temp_roll': True,
+                'remaining_capacity': remaining_capacity,
+                'reason': f'Registration planned temp roll creation. Using new {film_type} roll, will create temp roll with ~{remaining_capacity} pages.'
+            })
+        
+        else:
+            # Registration planned new roll with no temp roll operations
+            logger.info(f"Registration planned new roll for roll {roll.id} with no temp roll operations")
+            
+            remaining_capacity = standard_capacity - required_pages
+            strategy.update({
+                'use_temp_roll': False,
+                'will_create_temp_roll': False,
+                'remaining_capacity': remaining_capacity,
+                'reason': f'Registration planned new {film_type} roll. No temp roll operations needed.'
+            })
+        
+        return {
+            'success': True,
+            'temp_roll_strategy': strategy,
+            'preview_only': preview_only
+        }
+
+    @classmethod
+    def _handle_refilming_temp_roll_strategy(cls, roll, film_type: str, required_pages: int, preview_only: bool, strategy: dict, standard_capacity: int) -> Dict[str, Any]:
+        """Handle temp roll strategy for refilming - full temp roll management."""
+        from ..models import TempRoll
+        
+        logger.info(f"Managing temp rolls for re-filming roll {roll.id}")
+        
+        # Find available temp rolls (same logic as registration)
+        available_temp_rolls = TempRoll.objects.filter(
+            film_type=film_type,
+            status='available',
+            usable_capacity__gte=required_pages
+        ).order_by('usable_capacity')  # Best fit: prefer smallest roll that fits
+        
+        if available_temp_rolls.exists():
+            # Use the best available temp roll
+            best_temp_roll = available_temp_rolls.first()
+            
+            logger.info(f"Found available temp roll #{best_temp_roll.temp_roll_id} for re-filming")
+            
+            strategy.update({
+                'use_temp_roll': True,
+                'temp_roll': {
+                    'temp_roll_id': best_temp_roll.temp_roll_id,
+                    'remaining_capacity': best_temp_roll.usable_capacity,
+                    'source_roll_id': best_temp_roll.source_roll.id if best_temp_roll.source_roll else None,
+                    'created_date': best_temp_roll.creation_date.isoformat() if best_temp_roll.creation_date else None
+                },
+                'reason': f'Re-filming: Using available temp roll #{best_temp_roll.temp_roll_id} with {best_temp_roll.usable_capacity} pages'
+            })
+            
+            # If not preview only, allocate the temp roll (like registration does)
+            if not preview_only:
+                best_temp_roll.status = 'used'
+                best_temp_roll.used_by_roll = roll
+                best_temp_roll.save()
+                logger.info(f"Allocated temp roll #{best_temp_roll.temp_roll_id} to roll {roll.id} for re-filming")
+        
+        else:
+            # Use new roll for refilming
+            remaining_capacity = standard_capacity - required_pages
+            min_temp_roll_threshold = 100  # Minimum pages to create a temp roll
+            
+            logger.info(f"No available temp rolls for re-filming, using new roll")
+            
+            strategy.update({
+                'use_temp_roll': False,
+                'will_create_temp_roll': remaining_capacity >= min_temp_roll_threshold,
+                'remaining_capacity': remaining_capacity,
+                'reason': f'Re-filming: No suitable temp rolls available. Using new {film_type} roll.'
+            })
+            
+            if strategy['will_create_temp_roll']:
+                strategy['reason'] += f' Will create temp roll with {remaining_capacity} pages.'
+                
+                # If not preview only, plan temp roll creation (like registration does)
+                if not preview_only:
+                    # This would be handled after filming completes
+                    logger.info(f"Planned temp roll creation after re-filming roll {roll.id}")
+            else:
+                strategy['reason'] += f' Remaining {remaining_capacity} pages too small for temp roll.'
+        
+        return {
+            'success': True,
+            'temp_roll_strategy': strategy,
+            'preview_only': preview_only
+        }

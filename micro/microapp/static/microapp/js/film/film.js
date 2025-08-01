@@ -319,6 +319,10 @@ document.addEventListener('DOMContentLoaded', function() {
             filteredRolls = allRolls;
             
             displayRolls(filteredRolls);
+            
+            // Display filming priority summary for ready rolls
+            displayFilmingPrioritySummary(allRolls);
+            
             hideLoadingState();
             
         } catch (error) {
@@ -361,8 +365,64 @@ document.addEventListener('DOMContentLoaded', function() {
             const isCompleted = status === 'completed';
             const isReFilming = roll.is_re_filming || false;
             
+            // Determine dependency information
+            let dependencyInfo = '';
+            let dependencyClass = '';
+            
+            if (status === 'ready' && roll.filming_priority) {
+                const priority = roll.filming_priority;
+                
+                switch (priority.priority_tier) {
+                    case 'creator':
+                        dependencyInfo = `<i class="fas fa-star" title="Creates temp roll for ${priority.blocks_count || 0} other rolls"></i> Priority: Creates for ${priority.blocks_count || 0} rolls`;
+                        dependencyClass = 'priority-creator';
+                        break;
+                    case 'immediate':
+                        dependencyInfo = `<i class="fas fa-check-circle" title="Ready to film immediately"></i> Ready Now`;
+                        dependencyClass = 'priority-immediate';
+                        break;
+                    case 'waiting':
+                        dependencyInfo = `<i class="fas fa-clock" title="Waiting for dependencies"></i> Waiting`;
+                        dependencyClass = 'priority-waiting';
+                        break;
+                    case 'problem':
+                        dependencyInfo = `<i class="fas fa-exclamation-triangle" title="Has issues that need resolution"></i> Needs Attention`;
+                        dependencyClass = 'priority-problem';
+                        break;
+                    default:
+                        if (roll.source_temp_roll && roll.created_temp_roll) {
+                            dependencyInfo = `<i class="fas fa-exchange-alt" title="Uses temp roll and creates temp roll"></i> Chain`;
+                            dependencyClass = 'dependency-chain';
+                        } else if (roll.source_temp_roll) {
+                            dependencyInfo = `<i class="fas fa-arrow-right" title="Uses temp roll - may depend on other rolls"></i> Uses Temp`;
+                            dependencyClass = 'dependency-consumer';
+                        } else if (roll.created_temp_roll) {
+                            dependencyInfo = `<i class="fas fa-arrow-left" title="Creates temp roll for other rolls"></i> Creates Temp`;
+                            dependencyClass = 'dependency-creator';
+                        } else {
+                            dependencyInfo = `<i class="fas fa-circle" title="Independent roll - no temp roll dependencies"></i> Independent`;
+                            dependencyClass = 'dependency-independent';
+                        }
+                }
+            } else {
+                // Fallback to old logic for non-ready rolls
+                if (roll.source_temp_roll && roll.created_temp_roll) {
+                    dependencyInfo = `<i class="fas fa-exchange-alt" title="Uses temp roll and creates temp roll"></i> Chain`;
+                    dependencyClass = 'dependency-chain';
+                } else if (roll.source_temp_roll) {
+                    dependencyInfo = `<i class="fas fa-arrow-right" title="Uses temp roll - may depend on other rolls"></i> Uses Temp`;
+                    dependencyClass = 'dependency-consumer';
+                } else if (roll.created_temp_roll) {
+                    dependencyInfo = `<i class="fas fa-arrow-left" title="Creates temp roll for other rolls"></i> Creates Temp`;
+                    dependencyClass = 'dependency-creator';
+                } else {
+                    dependencyInfo = `<i class="fas fa-circle" title="Independent roll - no temp roll dependencies"></i> Independent`;
+                    dependencyClass = 'dependency-independent';
+                }
+            }
+            
             // Build CSS classes - avoid duplication
-            const cardClasses = ['roll-card', statusClass];
+            const cardClasses = ['roll-card', statusClass, dependencyClass];
             if (isCompleted && statusClass !== 'completed') {
                 cardClasses.push('completed');
             }
@@ -418,6 +478,12 @@ document.addEventListener('DOMContentLoaded', function() {
                             <span class="roll-detail-label">Output:</span>
                             <span class="roll-detail-value">${roll.output_directory || 'Not set'}</span>
                         </div>
+                        ${dependencyInfo ? `
+                            <div class="roll-detail-item dependency-info">
+                                <span class="roll-detail-label">Filming:</span>
+                                <span class="roll-detail-value dependency-badge">${dependencyInfo}</span>
+                            </div>
+                        ` : ''}
                         <div class="directory-status ${roll.output_directory_exists ? 'exists' : 'missing'}">
                             <i class="fas ${roll.output_directory_exists ? 'fa-check' : 'fa-times'}"></i>
                             Directory ${roll.output_directory_exists ? 'exists' : 'missing'}
@@ -676,35 +742,74 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Display temp roll preview information
     function displayTempRollPreview(strategy, isReFilming = true) {
+        // Get refilming status from strategy if available, fallback to parameter
+        const actuallyReFilming = strategy.is_refilming !== undefined ? strategy.is_refilming : isReFilming;
+        
         if (strategy.use_temp_roll) {
             // Will use existing temp roll
             const tempRoll = strategy.temp_roll;
-            updateRollSourceDisplay(
-                `Temp Roll #${tempRoll.temp_roll_id} (${tempRoll.remaining_capacity} pages available)`,
-                'temp-roll'
-            );
             
-            // Update temp roll instruction
-            updateTempRollInstruction(
-                `Insert Temp Roll #${tempRoll.temp_roll_id}`,
-                `Existing temp roll with ${tempRoll.remaining_capacity} pages capacity. Will use ${strategy.pages_to_use} pages.`
-            );
+            // Update roll source display with more context
+            let sourceText = `Temp Roll #${tempRoll.temp_roll_id} (${tempRoll.remaining_capacity} pages available)`;
+            if (!actuallyReFilming) {
+                sourceText = `Pre-allocated: ${sourceText}`;
+            }
+            
+            updateRollSourceDisplay(sourceText, 'temp-roll');
+            
+            // Update temp roll instruction with context
+            let instructionTitle = `Insert Temp Roll #${tempRoll.temp_roll_id}`;
+            let instructionDetails;
+            
+            if (actuallyReFilming) {
+                instructionDetails = `Re-filming: Using available temp roll with ${tempRoll.remaining_capacity} pages capacity. Will use ${strategy.pages_to_use} pages.`;
+            } else {
+                instructionDetails = `Using pre-allocated temp roll from registration with ${tempRoll.remaining_capacity} pages capacity. Will use ${strategy.pages_to_use} pages.`;
+            }
+            
+            updateTempRollInstruction(instructionTitle, instructionDetails);
             
             // Show preview of what will happen
-            showTempRollPreviewInfo(strategy, isReFilming);
+            showTempRollPreviewInfo(strategy, actuallyReFilming);
         } else {
             // Will use new roll
-            updateRollSourceDisplay(isReFilming ? 'New Roll (Re-filming)' : 'New Roll', 'new-roll');
+            let rollSourceText;
+            if (actuallyReFilming) {
+                rollSourceText = 'New Roll (Re-filming)';
+            } else {
+                rollSourceText = 'New Roll (First filming)';
+            }
             
-            // Update temp roll instruction
-            const rollTypeDesc = isReFilming ? 'new roll for re-filming' : 'new roll';
+            updateRollSourceDisplay(rollSourceText, 'new-roll');
+            
+            // Update temp roll instruction with context
+            let rollTypeDesc;
+            if (actuallyReFilming) {
+                rollTypeDesc = 'new roll for re-filming';
+            } else {
+                rollTypeDesc = 'new roll for first filming';
+            }
+            
+            let instructionDetails = `${rollTypeDesc.charAt(0).toUpperCase() + rollTypeDesc.slice(1)} with ${strategy.new_roll_capacity} pages capacity. `;
+            
+            if (strategy.will_create_temp_roll) {
+                instructionDetails += 'Will create temp roll after filming.';
+            } else {
+                instructionDetails += 'Roll will be fully used.';
+            }
+            
             updateTempRollInstruction(
                 `Insert new ${strategy.film_type} film roll`,
-                `${rollTypeDesc.charAt(0).toUpperCase() + rollTypeDesc.slice(1)} with ${strategy.new_roll_capacity} pages capacity. ${strategy.will_create_temp_roll ? 'Will create temp roll after filming.' : 'Roll will be fully used.'}`
+                instructionDetails
             );
             
             // Show preview of what will happen
-            showTempRollPreviewInfo(strategy, isReFilming);
+            showTempRollPreviewInfo(strategy, actuallyReFilming);
+        }
+        
+        // Show the strategy reason if available
+        if (strategy.reason) {
+            showStrategyReason(strategy.reason);
         }
     }
     
@@ -768,7 +873,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Build preview content
-        const previewTitle = isReFilming ? 'Temp Roll Strategy Preview' : 'Film Roll Strategy';
+        let previewTitle;
+        if (isReFilming) {
+            previewTitle = 'Re-filming Strategy Preview';
+        } else {
+            previewTitle = 'First Filming Strategy Preview';
+        }
+        
         let previewContent = `
             <h3>${previewTitle}</h3>
             <div class="preview-info">
@@ -776,10 +887,16 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (strategy.use_temp_roll) {
             const tempRoll = strategy.temp_roll;
+            const remainingAfter = tempRoll.remaining_capacity - strategy.pages_to_use;
+            
             previewContent += `
                 <div class="preview-item">
                     <span class="preview-label">Will Use:</span>
                     <span class="preview-value temp-roll">Temp Roll #${tempRoll.temp_roll_id}</span>
+                </div>
+                <div class="preview-item">
+                    <span class="preview-label">Source:</span>
+                    <span class="preview-value">${isReFilming ? 'Available temp roll' : 'Pre-allocated from registration'}</span>
                 </div>
                 <div class="preview-item">
                     <span class="preview-label">Current Capacity:</span>
@@ -791,14 +908,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 <div class="preview-item">
                     <span class="preview-label">After Filming:</span>
-                    <span class="preview-value">${tempRoll.remaining_capacity - strategy.pages_to_use} pages remaining</span>
+                    <span class="preview-value">${remainingAfter} pages remaining${remainingAfter <= 0 ? ' (temp roll exhausted)' : ''}</span>
                 </div>
             `;
         } else {
+            const remainingAfter = strategy.new_roll_capacity - strategy.pages_to_use;
+            
             previewContent += `
                 <div class="preview-item">
                     <span class="preview-label">Will Use:</span>
                     <span class="preview-value new-roll">New ${strategy.film_type} Roll</span>
+                </div>
+                <div class="preview-item">
+                    <span class="preview-label">Source:</span>
+                    <span class="preview-value">${isReFilming ? 'New roll for re-filming' : 'Allocated new roll from registration'}</span>
                 </div>
                 <div class="preview-item">
                     <span class="preview-label">Roll Capacity:</span>
@@ -814,7 +937,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 previewContent += `
                     <div class="preview-item">
                         <span class="preview-label">Will Create:</span>
-                        <span class="preview-value temp-roll">New Temp Roll (${strategy.new_roll_capacity - strategy.pages_to_use} pages)</span>
+                        <span class="preview-value temp-roll">New Temp Roll (${remainingAfter} pages)</span>
                     </div>
                 `;
             } else {
@@ -890,11 +1013,17 @@ document.addEventListener('DOMContentLoaded', function() {
         const statusFilterElement = document.getElementById('roll-status-filter');
         const filmTypeFilterElement = document.getElementById('film-type-filter');
         const activeTogglePosition = document.querySelector('.toggle-position.active');
+        const dependencyInfoPanel = document.getElementById('dependency-info-panel');
         
         const searchTerm = searchElement ? searchElement.value.toLowerCase() : '';
         const statusFilter = statusFilterElement ? statusFilterElement.value : 'all';
         const filmTypeFilter = filmTypeFilterElement ? filmTypeFilterElement.value : 'all';
-        const locationFilter = activeTogglePosition ? activeTogglePosition.dataset.location : 'all';
+        const locationFilter = activeTogglePosition ? activeTogglePosition.dataset.position : 'all';
+        
+        // Show dependency info panel only for "ready" status
+        if (dependencyInfoPanel) {
+            dependencyInfoPanel.style.display = (statusFilter === 'ready') ? 'block' : 'none';
+        }
         
         filteredRolls = allRolls.filter(roll => {
             // Search filter
@@ -2443,6 +2572,12 @@ Directory Exists: ${roll.output_directory_exists ? 'Yes' : 'No'}`;
         if (existingPreview) {
             existingPreview.remove();
         }
+        
+        // Remove any existing strategy reason sections
+        const existingStrategyReason = document.getElementById('temp-roll-strategy-reason');
+        if (existingStrategyReason) {
+            existingStrategyReason.remove();
+        }
     }
     
     // Lighting mode control functions
@@ -2694,4 +2829,156 @@ Directory Exists: ${roll.output_directory_exists ? 'Yes' : 'No'}`;
             console.error('Error clearing roll selection state:', error);
         }
     }
+    
+    /**
+     * Show the strategy reason in a dedicated section
+     */
+    function showStrategyReason(reason) {
+        let reasonSection = document.getElementById('temp-roll-strategy-reason');
+        
+        if (!reasonSection) {
+            // Create reason section
+            reasonSection = document.createElement('div');
+            reasonSection.id = 'temp-roll-strategy-reason';
+            reasonSection.className = 'strategy-reason-section';
+            
+            // Insert after the temp roll instructions
+            const tempRollInstructions = document.getElementById('temp-roll-instructions');
+            if (tempRollInstructions && tempRollInstructions.parentNode) {
+                tempRollInstructions.parentNode.insertBefore(reasonSection, tempRollInstructions.nextSibling);
+            }
+        }
+        
+        reasonSection.innerHTML = `
+            <div class="strategy-reason">
+                <i class="fas fa-info-circle"></i>
+                <span>${reason}</span>
+            </div>
+        `;
+    }
+    
+    // Display filming priority summary
+    function displayFilmingPrioritySummary(rolls) {
+        if (!rolls || rolls.length === 0) return;
+        
+        // Count rolls by priority
+        const priorityCounts = {
+            creator: 0,
+            immediate: 0,
+            waiting: 0,
+            problem: 0,
+            total_ready: 0
+        };
+        
+        let recommendedNext = null;
+        
+        rolls.forEach(roll => {
+            if (roll.filming_status === 'ready' && roll.filming_priority) {
+                const tier = roll.filming_priority.priority_tier;
+                if (priorityCounts.hasOwnProperty(tier)) {
+                    priorityCounts[tier]++;
+                }
+                if (tier === 'creator' || tier === 'immediate') {
+                    priorityCounts.total_ready++;
+                    if (!recommendedNext && tier === 'creator') {
+                        recommendedNext = roll;
+                    }
+                }
+                if (!recommendedNext && tier === 'immediate') {
+                    recommendedNext = roll;
+                }
+            }
+        });
+        
+        // Create or update priority summary panel
+        let summaryPanel = document.getElementById('filming-priority-summary');
+        if (!summaryPanel) {
+            summaryPanel = document.createElement('div');
+            summaryPanel.id = 'filming-priority-summary';
+            summaryPanel.className = 'priority-summary-panel';
+            
+            // Insert after search filters, before dependency info
+            const searchFilter = document.querySelector('.search-filter');
+            if (searchFilter && searchFilter.parentNode) {
+                searchFilter.parentNode.insertBefore(summaryPanel, searchFilter.nextSibling);
+            }
+        }
+        
+        // Generate summary content
+        let summaryHTML = `
+            <div class="priority-summary-header">
+                <h4><i class="fas fa-chart-bar"></i> Filming Priority Summary</h4>
+            </div>
+            <div class="priority-summary-content">
+                <div class="priority-stats">
+                    <div class="stat-item priority-creator-stat">
+                        <div class="stat-number">${priorityCounts.creator}</div>
+                        <div class="stat-label">High Priority<br/><small>Creates temp rolls</small></div>
+                    </div>
+                    <div class="stat-item priority-immediate-stat">
+                        <div class="stat-number">${priorityCounts.immediate}</div>
+                        <div class="stat-label">Ready Now<br/><small>Independent</small></div>
+                    </div>
+                    <div class="stat-item priority-waiting-stat">
+                        <div class="stat-number">${priorityCounts.waiting}</div>
+                        <div class="stat-label">Waiting<br/><small>Need dependencies</small></div>
+                    </div>
+                    <div class="stat-item priority-problem-stat">
+                        <div class="stat-number">${priorityCounts.problem}</div>
+                        <div class="stat-label">Need Attention<br/><small>Have issues</small></div>
+                    </div>
+                </div>
+        `;
+        
+        if (recommendedNext) {
+            const reason = recommendedNext.filming_priority.priority_tier === 'creator' 
+                ? `Creates temp roll for other rolls` 
+                : 'Ready to film immediately';
+            
+            summaryHTML += `
+                <div class="recommended-next">
+                    <div class="recommendation-header">
+                        <i class="fas fa-bullseye"></i> Recommended Next
+                    </div>
+                    <div class="recommendation-content">
+                        <strong>Roll ${recommendedNext.id}</strong> - ${recommendedNext.project_archive_id} 
+                        <span class="recommendation-reason">${reason}</span>
+                        <button class="btn-film-recommended" onclick="selectRollForFilming(${recommendedNext.id})">
+                            <i class="fas fa-video"></i> Film This Roll
+                        </button>
+                    </div>
+                </div>
+            `;
+        } else if (priorityCounts.total_ready === 0) {
+            summaryHTML += `
+                <div class="no-ready-rolls">
+                    <i class="fas fa-info-circle"></i> No rolls ready for immediate filming. 
+                    Check waiting and problem rolls above.
+                </div>
+            `;
+        }
+        
+        summaryHTML += `
+            </div>
+        `;
+        
+        summaryPanel.innerHTML = summaryHTML;
+        
+        // Show/hide based on filter
+        const statusFilter = document.getElementById('roll-status-filter');
+        const showSummary = !statusFilter || statusFilter.value === 'all' || statusFilter.value === 'ready';
+        summaryPanel.style.display = showSummary ? 'block' : 'none';
+    }
+    
+    // Function to handle filming a recommended roll
+    window.selectRollForFilming = function(rollId) {
+        // Find the roll card and trigger filming
+        const rollCard = document.querySelector(`.roll-card[data-roll-id="${rollId}"]`);
+        if (rollCard) {
+            const filmButton = rollCard.querySelector('.btn-film');
+            if (filmButton) {
+                filmButton.click();
+            }
+        }
+    };
 });

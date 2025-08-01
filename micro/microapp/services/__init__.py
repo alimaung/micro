@@ -9,12 +9,16 @@ from .film_number_manager import FilmNumberManager
 from .roll_manager import RollManager
 from .project_manager import ProjectManager
 from .document_manager import DocumentManager
+from .analyze_service import AnalyzeService
+from .filming_order_service import FilmingOrderService
 
 __all__ = [
     'FilmNumberManager',
-    'RollManager',
-    'ProjectManager',
+    'DistributionManager', 
+    'SMAService',
     'DocumentManager',
+    'AnalyzeService',
+    'FilmingOrderService',
 ]
 
 # Services package 

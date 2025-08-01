@@ -145,9 +145,9 @@ class RollAdmin(admin.ModelAdmin):
 
 class TempRollAdmin(admin.ModelAdmin):
     list_display = ('temp_roll_id', 'film_type', 'capacity', 'usable_capacity', 
-                    'status', 'creation_date', 'source_roll', 'used_by_roll')
+                    'status', 'exists', 'creation_date', 'source_roll', 'used_by_roll')
     search_fields = ('temp_roll_id', 'film_type')
-    list_filter = ('film_type', 'status')
+    list_filter = ('film_type', 'status', 'exists')  # Add exists to filter options
     readonly_fields = ('temp_roll_id', 'creation_date')
     fieldsets = (
         ('Identification', {
@@ -157,7 +157,7 @@ class TempRollAdmin(admin.ModelAdmin):
             'fields': ('capacity', 'usable_capacity')
         }),
         ('Status', {
-            'fields': ('status', 'creation_date')
+            'fields': ('status', 'exists', 'creation_date')  # Include exists here
         }),
         ('Relationships', {
             'fields': ('source_roll', 'used_by_roll')

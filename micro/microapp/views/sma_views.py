@@ -23,6 +23,67 @@ from ..models import Project, Roll, FilmingSession, FilmingSessionLog
 
 logger = logging.getLogger(__name__)
 
+def sort_rolls_by_temp_roll_dependencies(rolls):
+    """
+    Sort rolls to respect temp roll dependency chains.
+    
+    Ensures that rolls that create temp rolls are filmed before rolls that use those temp rolls.
+    
+    Args:
+        rolls: List of Roll objects
+        
+    Returns:
+        List of rolls sorted by dependency order
+    """
+    if not rolls:
+        return rolls
+    
+    # Create a map of temp roll ID to the roll that will create it
+    temp_roll_creators = {}
+    for roll in rolls:
+        if roll.created_temp_roll:
+            temp_roll_creators[roll.created_temp_roll.temp_roll_id] = roll
+    
+    # Calculate dependency depth for each roll
+    def get_dependency_depth(roll, visited=None):
+        if visited is None:
+            visited = set()
+            
+        # Prevent circular dependencies
+        if roll.id in visited:
+            return 0
+        visited.add(roll.id)
+        
+        # If this roll uses a temp roll, check if that temp roll is created by another roll
+        if roll.source_temp_roll and roll.source_temp_roll.temp_roll_id in temp_roll_creators:
+            creator_roll = temp_roll_creators[roll.source_temp_roll.temp_roll_id]
+            # This roll depends on the creator roll, so it has depth + 1
+            return get_dependency_depth(creator_roll, visited.copy()) + 1
+        
+        # No dependencies, this roll can be filmed first (depth 0)
+        return 0
+    
+    # Sort by dependency depth (lower depth = film first), then by project and roll number
+    sorted_rolls = sorted(rolls, key=lambda r: (
+        get_dependency_depth(r),  # Primary: dependency depth
+        r.project.archive_id,     # Secondary: project archive ID
+        r.roll_number or 0        # Tertiary: roll number
+    ))
+    
+    # Log the dependency chain for debugging
+    if logger.isEnabledFor(logging.INFO):
+        logger.info("Temp roll dependency order:")
+        for i, roll in enumerate(sorted_rolls):
+            depth = get_dependency_depth(roll)
+            temp_roll_info = ""
+            if roll.source_temp_roll:
+                temp_roll_info = f" (uses T#{roll.source_temp_roll.temp_roll_id})"
+            if roll.created_temp_roll:
+                temp_roll_info += f" (creates T#{roll.created_temp_roll.temp_roll_id})"
+            logger.info(f"  {i+1}. Roll {roll.id} - {roll.project.archive_id} R{roll.roll_number} [depth={depth}]{temp_roll_info}")
+    
+    return sorted_rolls
+
 @method_decorator(csrf_exempt, name='dispatch')
 @method_decorator(login_required, name='dispatch')
 class SMAFilmingView(View):
@@ -572,13 +633,43 @@ def project_rolls(request, project_id):
         include_sessions = request.GET.get('include_sessions', 'false').lower() == 'true'
         
         # Build query
-        rolls_query = Roll.objects.filter(project=project).order_by('roll_number')
+        rolls_query = Roll.objects.filter(project=project).prefetch_related('source_temp_roll', 'created_temp_roll')
         
         if status_filter:
             rolls_query = rolls_query.filter(filming_status=status_filter)
         
+        # Get all rolls and sort by dependencies for "ready" status
+        all_rolls = list(rolls_query)
+        if not status_filter or status_filter == 'ready':
+            from ..services import FilmingOrderService
+            filming_order = FilmingOrderService.analyze_rolls_for_filming(rolls_query)
+            
+            # Flatten the filming order for response
+            ordered_rolls = []
+            # Add creator rolls first (highest priority)
+            for roll, analysis in filming_order['creator_rolls']:
+                ordered_rolls.append(roll)
+            # Then immediate rolls
+            for roll, analysis in filming_order['immediate_rolls']:
+                ordered_rolls.append(roll)
+            # Then waiting rolls
+            for roll, analysis in filming_order['waiting_rolls']:
+                ordered_rolls.append(roll)
+            # Finally problem rolls
+            for roll, analysis in filming_order['problem_rolls']:
+                ordered_rolls.append(roll)
+                
+            all_rolls = ordered_rolls
+        else:
+            # Default sorting for other statuses
+            all_rolls.sort(key=lambda r: (r.roll_number or 0,))
+        
         roll_data = []
-        for roll in rolls_query:
+        for roll in all_rolls:
+            # Get filming priority information
+            from ..services import FilmingOrderService
+            priority_info = FilmingOrderService.get_filming_priority(roll)
+            
             # Use getattr with defaults for fields that might not exist
             roll_info = {
                 'id': roll.id,
@@ -596,12 +687,27 @@ def project_rolls(request, project_id):
                 'film_type': getattr(roll, 'film_type', '16mm'),
                 'film_number': getattr(roll, 'film_number', None),
                 'status': getattr(roll, 'status', 'active'),
+                
+                # Add temp roll relationship information for dependency indicators
+                'source_temp_roll': {
+                    'temp_roll_id': roll.source_temp_roll.temp_roll_id,
+                    'capacity': roll.source_temp_roll.usable_capacity,
+                    'status': roll.source_temp_roll.status
+                } if roll.source_temp_roll else None,
+                'created_temp_roll': {
+                    'temp_roll_id': roll.created_temp_roll.temp_roll_id,
+                    'capacity': roll.created_temp_roll.usable_capacity,
+                    'status': roll.created_temp_roll.status
+                } if roll.created_temp_roll else None,
+                
                 # Add debugging info for directory check
                 'debug_directory_info': {
                     'has_output_directory': bool(getattr(roll, 'output_directory', None)),
                     'output_directory_path': getattr(roll, 'output_directory', None),
                     'directory_exists_check': roll.output_directory_exists if hasattr(roll, 'output_directory_exists') else 'property_missing'
-                }
+                },
+                # Add priority information
+                'filming_priority': priority_info
             }
             
             # Include session information if requested
@@ -993,9 +1099,10 @@ def all_rolls(request):
         status_filter = request.GET.get('status')
         film_type_filter = request.GET.get('film_type')
         include_sessions = request.GET.get('include_sessions', 'false').lower() == 'true'
+        sort_by_dependencies = request.GET.get('sort_dependencies', 'true').lower() == 'true'
         
         # Build query - get all rolls with project information
-        rolls_query = Roll.objects.select_related('project').order_by('-creation_date', 'project__archive_id', 'roll_number')
+        rolls_query = Roll.objects.select_related('project').prefetch_related('source_temp_roll', 'created_temp_roll')
         
         if status_filter:
             rolls_query = rolls_query.filter(filming_status=status_filter)
@@ -1003,8 +1110,40 @@ def all_rolls(request):
         if film_type_filter:
             rolls_query = rolls_query.filter(film_type=film_type_filter)
         
+        # Get all rolls first
+        all_rolls = list(rolls_query)
+        
+        # Use FilmingOrderService for intelligent sorting when status is ready
+        if sort_by_dependencies and (not status_filter or status_filter == 'ready'):
+            from ..services import FilmingOrderService
+            filming_order = FilmingOrderService.analyze_rolls_for_filming(rolls_query)
+            
+            # Flatten the filming order for response
+            ordered_rolls = []
+            # Add creator rolls first (highest priority)
+            for roll, analysis in filming_order['creator_rolls']:
+                ordered_rolls.append(roll)
+            # Then immediate rolls
+            for roll, analysis in filming_order['immediate_rolls']:
+                ordered_rolls.append(roll)
+            # Then waiting rolls
+            for roll, analysis in filming_order['waiting_rolls']:
+                ordered_rolls.append(roll)
+            # Finally problem rolls
+            for roll, analysis in filming_order['problem_rolls']:
+                ordered_rolls.append(roll)
+                
+            all_rolls = ordered_rolls
+        else:
+            # Default sorting: creation date, archive ID, roll number
+            all_rolls.sort(key=lambda r: (-r.creation_date.timestamp(), r.project.archive_id, r.roll_number or 0))
+        
         roll_data = []
-        for roll in rolls_query:
+        for roll in all_rolls:
+            # Get filming priority information
+            from ..services import FilmingOrderService
+            priority_info = FilmingOrderService.get_filming_priority(roll)
+            
             # Use getattr with defaults for fields that might not exist
             roll_info = {
                 'id': roll.id,
@@ -1030,12 +1169,27 @@ def all_rolls(request):
                 'project_location': getattr(roll.project, 'location', 'Unknown') if roll.project else 'Unknown',
                 # Check if this is a re-filming operation (completed rolls can be re-filmed)
                 'is_re_filming': getattr(roll, 'filming_status', 'ready') == 'completed',
+                
+                # Add temp roll relationship information for dependency indicators
+                'source_temp_roll': {
+                    'temp_roll_id': roll.source_temp_roll.temp_roll_id,
+                    'capacity': roll.source_temp_roll.usable_capacity,
+                    'status': roll.source_temp_roll.status
+                } if roll.source_temp_roll else None,
+                'created_temp_roll': {
+                    'temp_roll_id': roll.created_temp_roll.temp_roll_id,
+                    'capacity': roll.created_temp_roll.usable_capacity,
+                    'status': roll.created_temp_roll.status
+                } if roll.created_temp_roll else None,
+                
                 # Add debugging info for directory check
                 'debug_directory_info': {
                     'has_output_directory': bool(getattr(roll, 'output_directory', None)),
                     'output_directory_path': getattr(roll, 'output_directory', None),
                     'directory_exists_check': roll.output_directory_exists if hasattr(roll, 'output_directory_exists') else 'property_missing'
-                }
+                },
+                # Add priority information
+                'filming_priority': priority_info
             }
             
             # Include session information if requested

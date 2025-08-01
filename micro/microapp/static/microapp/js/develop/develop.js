@@ -186,6 +186,11 @@ class DevelopmentDashboard {
     }
     
     bindEvents() {
+        // Debug/Test buttons
+        document.getElementById('test-audio').addEventListener('click', () => {
+            this.testDevelopmentAudio();
+        });
+        
         // Refresh buttons
         document.getElementById('refresh-dashboard').addEventListener('click', () => {
             this.loadInitialData();
@@ -532,7 +537,7 @@ class DevelopmentDashboard {
         noSelectionMessage.style.display = 'none';
     }
     
-    async startDevelopment() {
+    async startDevelopment(expertMode = false) {
         if (!this.selectedRoll) return;
         
         try {
@@ -543,7 +548,8 @@ class DevelopmentDashboard {
                     'X-CSRFToken': this.getCSRFToken()
                 },
                 body: JSON.stringify({
-                    roll_id: this.selectedRoll.id
+                    roll_id: this.selectedRoll.id,
+                    expert_mode: expertMode
                 })
             });
             
@@ -575,8 +581,11 @@ class DevelopmentDashboard {
                 this.loadRolls();
                 this.loadChemicalStatus();
             } else {
-                if (data.warnings && data.warnings.length > 0) {
-                    this.showNotification('error', 'Chemical Capacity Exceeded', 
+                if (data.locked_chemicals && data.expert_mode_available) {
+                    // Show expert mode option for age-locked chemicals
+                    this.showExpertModeDialog(data.error, data.warnings);
+                } else if (data.warnings && data.warnings.length > 0) {
+                    this.showNotification('error', 'Chemical Issues', 
                         `Cannot start development: ${data.warnings.join(', ')}`);
                 } else {
                     this.showNotification('error', 'Error', data.error || 'Failed to start development');
@@ -815,43 +824,54 @@ class DevelopmentDashboard {
     
     playAlarmSound() {
         try {
-            // Create airplane seatbelt chime sound
+            // Use the existing PA chime audio file
+            const audio = new Audio('/static/microapp/audio/pa-chime.mp3');
+            audio.volume = 0.7; // Set to 70% volume
+            
+            // Play the audio
+            const playPromise = audio.play();
+            
+            if (playPromise !== undefined) {
+                playPromise
+                    .then(() => {
+                        console.log('Development completion chime played successfully');
+                    })
+                    .catch(error => {
+                        console.log('Could not play development completion chime:', error);
+                        // Fallback to programmatic sound if audio file fails
+                        this.playFallbackChime();
+                    });
+            }
+        } catch (error) {
+            console.log('Could not load development completion chime:', error);
+            // Fallback to programmatic sound if audio file fails
+            this.playFallbackChime();
+        }
+    }
+    
+    playFallbackChime() {
+        try {
+            // Fallback programmatic chime if audio file is unavailable
             const audioContext = new (window.AudioContext || window.webkitAudioContext)();
             
-            // First chime (higher pitch)
-            const oscillator1 = audioContext.createOscillator();
-            const gainNode1 = audioContext.createGain();
+            // Simple notification chime
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
             
-            oscillator1.connect(gainNode1);
-            gainNode1.connect(audioContext.destination);
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
             
-            oscillator1.frequency.value = 1000; // 1000 Hz
-            oscillator1.type = 'sine';
-            gainNode1.gain.setValueAtTime(0, audioContext.currentTime);
-            gainNode1.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.1);
-            gainNode1.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.5);
+            oscillator.frequency.value = 800; // 800 Hz
+            oscillator.type = 'sine';
+            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.1);
+            gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.8);
             
-            oscillator1.start(audioContext.currentTime);
-            oscillator1.stop(audioContext.currentTime + 0.5);
-            
-            // Second chime (lower pitch) - starts slightly after first
-            const oscillator2 = audioContext.createOscillator();
-            const gainNode2 = audioContext.createGain();
-            
-            oscillator2.connect(gainNode2);
-            gainNode2.connect(audioContext.destination);
-            
-            oscillator2.frequency.value = 800; // 800 Hz
-            oscillator2.type = 'sine';
-            gainNode2.gain.setValueAtTime(0, audioContext.currentTime + 0.6);
-            gainNode2.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.7);
-            gainNode2.gain.linearRampToValueAtTime(0, audioContext.currentTime + 1.2);
-            
-            oscillator2.start(audioContext.currentTime + 0.6);
-            oscillator2.stop(audioContext.currentTime + 1.2);
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.8);
             
         } catch (error) {
-            console.log('Could not play seatbelt chime sound:', error);
+            console.log('Could not play fallback chime sound:', error);
         }
     }
     
@@ -1187,13 +1207,22 @@ class DevelopmentDashboard {
                 }
             }
             
-            // Update date/batch info
+            // Update date/batch info with age status
             const dateElement = container.querySelector(`#${chemicalType}-date`);
             if (dateElement) {
                 if (data.batch_id && data.batch_id !== 'No active batch') {
-                    const createdDate = data.created_at ? new Date(data.created_at).toLocaleDateString() : 'Unknown';
-                    dateElement.textContent = `Batch: ${data.batch_id} (${createdDate})`;
-                    dateElement.style.color = '#6c757d';
+                    const installDate = data.installation_date ? new Date(data.installation_date).toLocaleDateString() : 'Unknown';
+                    const ageInfo = this.formatAgeStatus(data);
+                    dateElement.innerHTML = `Batch: ${data.batch_id} (${installDate})<br>${ageInfo}`;
+                    
+                    // Color based on age status
+                    if (data.is_age_locked) {
+                        dateElement.style.color = '#dc3545'; // Red for locked
+                    } else if (data.is_age_warning) {
+                        dateElement.style.color = '#ffc107'; // Yellow for warning
+                    } else {
+                        dateElement.style.color = '#6c757d'; // Normal gray
+                    }
                 } else {
                     dateElement.textContent = 'No active batch';
                     dateElement.style.color = '#dc3545';
@@ -1627,6 +1656,26 @@ class DevelopmentDashboard {
         }
     }
     
+    formatAgeStatus(chemicalData) {
+        if (chemicalData.is_age_locked) {
+            const hoursOver = chemicalData.hours_since_installation - (14 * 24 + 48);
+            return `<strong style="color: #dc3545;">🔒 LOCKED</strong> (${hoursOver.toFixed(1)}h past expiry)`;
+        } else if (chemicalData.is_age_warning) {
+            if (chemicalData.hours_until_lockout > 0) {
+                return `<strong style="color: #ffc107;">⚠️ WARNING</strong> (${chemicalData.hours_until_lockout.toFixed(1)}h until lockout)`;
+            } else {
+                return `<strong style="color: #ffc107;">⚠️ WARNING</strong> (past 2 weeks)`;
+            }
+        } else {
+            const daysLeft = chemicalData.days_until_warning;
+            if (daysLeft <= 3) {
+                return `<span style="color: #28a745;">✓ Fresh</span> (${daysLeft} days until warning)`;
+            } else {
+                return `<span style="color: #28a745;">✓ Fresh</span> (${daysLeft} days old)`;
+            }
+        }
+    }
+
     formatDateTime(dateString) {
         return new Date(dateString).toLocaleString();
     }
@@ -1670,6 +1719,72 @@ class DevelopmentDashboard {
         return token;
     }
     
+    showExpertModeDialog(error, warnings) {
+        // Create expert mode dialog
+        const dialog = document.createElement('div');
+        dialog.className = 'expert-mode-dialog-overlay';
+        dialog.innerHTML = `
+            <div class="expert-mode-dialog">
+                <div class="expert-mode-header">
+                    <h3><i class="fas fa-exclamation-triangle"></i> Chemical Age Lockout</h3>
+                </div>
+                <div class="expert-mode-content">
+                    <p><strong>${error}</strong></p>
+                    <ul>
+                        ${warnings.map(warning => `<li>${warning}</li>`).join('')}
+                    </ul>
+                    <div class="expert-mode-warning">
+                        <i class="fas fa-user-cog"></i>
+                        <p><strong>Expert Mode Available:</strong> You can bypass age restrictions, but development quality may be compromised.</p>
+                    </div>
+                </div>
+                <div class="expert-mode-actions">
+                    <button class="btn btn-secondary" onclick="this.closest('.expert-mode-dialog-overlay').remove()">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                    <button class="btn btn-warning" onclick="window.developmentDashboard.startExpertDevelopment()">
+                        <i class="fas fa-user-cog"></i> Proceed with Expert Mode
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        // Add to body
+        document.body.appendChild(dialog);
+        
+        // Show with animation
+        setTimeout(() => {
+            dialog.style.opacity = '1';
+        }, 10);
+    }
+    
+    async startExpertDevelopment() {
+        // Close dialog
+        const dialog = document.querySelector('.expert-mode-dialog-overlay');
+        if (dialog) {
+            dialog.remove();
+        }
+        
+        // Start development with expert mode
+        await this.startDevelopment(true);
+    }
+    
+    testDevelopmentAudio() {
+        console.log('Testing development completion audio...');
+        
+        // Show notification about testing audio
+        this.showNotification('info', 'Testing Audio', 'Playing development completion chime...');
+        
+        // Play the same audio used for development completion
+        this.playAlarmSound();
+        
+        // Also flash the timer area if visible (for visual feedback)
+        const timerElement = document.getElementById('development-timer');
+        if (timerElement && timerElement.style.display !== 'none') {
+            this.flashTimer();
+        }
+    }
+
     showNotification(type, title, message) {
         // Create notification element
         const notification = document.createElement('div');

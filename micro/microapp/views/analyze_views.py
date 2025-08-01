@@ -21,34 +21,64 @@ def analyze_dashboard(request):
     analyze_service = AnalyzeService()
     
     # Get the current section filter
-    section_filter = request.GET.get('section', 'all')  # all, unregistered, analyzed, registered
+    section_filter = request.GET.get('section', 'all')  # all, unanalyzed, analyzed, registered
     search_query = request.GET.get('search', '')
+    
+    # Get sorting parameters
+    sort_field = request.GET.get('sort', 'name')  # name, size, pages, documents, date
+    sort_direction = request.GET.get('dir', 'asc')  # asc, desc
     
     # Initialize sections data
     sections_data = {
-        'unregistered': [],
+        'unanalyzed': [],
         'analyzed': [],
         'registered': []
     }
     
-    # Section 1: Unregistered/Unanalyzed folders
-    if section_filter in ['all', 'unregistered']:
-        unregistered_folders = analyze_service.discover_unregistered_folders()
+    # Section 1: Unanalyzed folders (truly unknown folders that haven't been analyzed)
+    if section_filter in ['all', 'unanalyzed']:
+        print(f"\n=== VIEW DEBUG: Getting unanalyzed folders ===")
+        # Get unanalyzed folders (discover_unregistered_folders already excludes analyzed ones)
+        unanalyzed_folders = analyze_service.discover_unregistered_folders()
+        print(f"Raw unanalyzed folders count: {len(unanalyzed_folders)}")
+        for folder in unanalyzed_folders:
+            print(f"  - Unanalyzed: {folder['folder_name']} at {folder['folder_path']}")
         
-        # Apply search filter to unregistered folders
+        # Apply search filter to unanalyzed folders
         if search_query:
-            filtered_unregistered = []
-            for folder in unregistered_folders:
+            filtered_unanalyzed = []
+            for folder in unanalyzed_folders:
                 if (search_query.lower() in folder['folder_name'].lower() or
                     search_query.lower() in folder['folder_path'].lower()):
-                    filtered_unregistered.append(folder)
-            unregistered_folders = filtered_unregistered
+                    filtered_unanalyzed.append(folder)
+            unanalyzed_folders = filtered_unanalyzed
+            print(f"After search filter: {len(unanalyzed_folders)} folders")
         
-        sections_data['unregistered'] = unregistered_folders
+        # Apply sorting to unanalyzed folders
+        sections_data['unanalyzed'] = sort_folder_data(unanalyzed_folders, sort_field, sort_direction, 'unanalyzed')
+        print(f"Final unanalyzed folders: {len(sections_data['unanalyzed'])}")
+        print("=== END VIEW DEBUG ===\n")
     
     # Section 2: Analyzed but not registered folders
     if section_filter in ['all', 'analyzed']:
+        print(f"\n=== VIEW DEBUG: Getting analyzed folders ===")
         analyzed_folders = analyze_service.get_analyzed_folders()
+        print(f"Raw analyzed folders from DB: {analyzed_folders.count()}")
+        for folder in analyzed_folders:
+            print(f"  - Analyzed DB: {folder.folder_name} at {folder.folder_path}")
+        
+        # Filter out folders that have already been registered as projects
+        # Use the registered_as_project field to exclude folders that have been registered
+        unregistered_analyzed_folders = analyzed_folders.filter(registered_as_project__isnull=True)
+        print(f"After excluding registered (using registered_as_project field): {unregistered_analyzed_folders.count()}")
+        
+        # Also debug: show which folders are registered
+        registered_analyzed_folders = analyzed_folders.filter(registered_as_project__isnull=False)
+        print(f"Registered analyzed folders (should be excluded): {registered_analyzed_folders.count()}")
+        for folder in registered_analyzed_folders:
+            print(f"  - Registered: {folder.folder_name} -> Project ID: {folder.registered_as_project.id if folder.registered_as_project else 'None'}")
+        
+        analyzed_folders = unregistered_analyzed_folders
         
         # Apply search filter to analyzed folders
         if search_query:
@@ -56,6 +86,7 @@ def analyze_dashboard(request):
                 Q(folder_name__icontains=search_query) |
                 Q(folder_path__icontains=search_query)
             )
+            print(f"After search filter: {analyzed_folders.count()}")
         
         # Convert to list with analysis summary
         analyzed_list = []
@@ -67,8 +98,17 @@ def analyze_dashboard(request):
             folder_data['analyzed_at'] = folder.analyzed_at
             folder_data['analyzed_by'] = folder.analyzed_by
             analyzed_list.append(folder_data)
+            print(f"  - Final Analyzed: {folder.folder_name} at {folder.folder_path}")
         
-        sections_data['analyzed'] = analyzed_list
+        # Apply sorting to analyzed folders
+        print(f"DEBUG: Before sorting analyzed folders - count: {len(analyzed_list)}, sort_field: {sort_field}, sort_direction: {sort_direction}")
+        if analyzed_list:
+            print(f"DEBUG: Sample analyzed folder data keys: {list(analyzed_list[0].keys())}")
+            if sort_field == 'size':
+                print(f"DEBUG: Sample total_size values: {[item.get('total_size', 'MISSING') for item in analyzed_list[:3]]}")
+        sections_data['analyzed'] = sort_folder_data(analyzed_list, sort_field, sort_direction, 'analyzed')
+        print(f"Final analyzed folders: {len(sections_data['analyzed'])}")
+        print("=== END ANALYZED DEBUG ===\n")
     
     # Section 3: Registered projects (no filtering by status - show all)
     if section_filter in ['all', 'registered']:
@@ -86,26 +126,44 @@ def analyze_dashboard(request):
                     filtered_projects.append(item)
             projects_with_data = filtered_projects
         
-        sections_data['registered'] = projects_with_data
+        # Apply sorting to registered projects
+        sections_data['registered'] = sort_folder_data(projects_with_data, sort_field, sort_direction, 'registered')
     
     # Calculate summary statistics across all sections
-    total_unregistered = len(sections_data['unregistered'])
+    total_unanalyzed = len(sections_data['unanalyzed'])
     total_analyzed = len(sections_data['analyzed'])
     total_registered = len(sections_data['registered'])
     
-    # Summary stats for analyzed folders
+    # Enhanced stats for unanalyzed folders
+    unanalyzed_total_files = sum(item.get('file_count', 0) for item in sections_data['unanalyzed'])
+    unanalyzed_total_size = sum(item.get('total_size', 0) for item in sections_data['unanalyzed'])
+    unanalyzed_total_pdfs = sum(item.get('pdf_count', 0) for item in sections_data['unanalyzed'])
+    unanalyzed_total_excel = sum(item.get('excel_count', 0) for item in sections_data['unanalyzed'])
+    unanalyzed_total_other = sum(item.get('other_count', 0) for item in sections_data['unanalyzed'])
+    
+    # Enhanced stats for analyzed folders
     analyzed_total_docs = sum(item.get('total_documents', 0) for item in sections_data['analyzed'])
     analyzed_total_pages = sum(item.get('total_pages', 0) for item in sections_data['analyzed'])
     analyzed_with_oversized = sum(1 for item in sections_data['analyzed'] if item.get('has_oversized', False))
+    analyzed_total_oversized = sum(item.get('oversized_count', 0) for item in sections_data['analyzed'])
+    analyzed_total_16mm = sum(item.get('estimated_rolls_16mm', 0) for item in sections_data['analyzed'])
+    analyzed_total_35mm = sum(item.get('estimated_rolls_35mm', 0) for item in sections_data['analyzed'])
+    analyzed_total_size = sum(item.get('total_size', 0) for item in sections_data['analyzed'] if item.get('total_size'))
     
-    # Summary stats for registered projects
+    # Calculate average utilization for analyzed folders
+    analyzed_utilization_values = [item.get('overall_utilization', 0) for item in sections_data['analyzed'] if item.get('overall_utilization', 0) > 0]
+    analyzed_avg_utilization = sum(analyzed_utilization_values) / len(analyzed_utilization_values) if analyzed_utilization_values else 0
+    
+    # Enhanced stats for registered projects
     registered_total_docs = sum(item['data'].get('total_documents', 0) for item in sections_data['registered'])
     registered_total_pages = sum(item['data'].get('total_pages', 0) for item in sections_data['registered'])
     registered_with_oversized = sum(1 for item in sections_data['registered'] if item['data'].get('has_oversized', False))
+    registered_total_rolls = sum(item['data'].get('total_rolls', 0) for item in sections_data['registered'])
+    registered_total_size = sum(item['data'].get('total_size', 0) for item in sections_data['registered'] if item['data'].get('total_size'))
     
     # Pagination - apply to the current section or all data
-    if section_filter == 'unregistered':
-        paginate_data = sections_data['unregistered']
+    if section_filter == 'unanalyzed':
+        paginate_data = sections_data['unanalyzed']
     elif section_filter == 'analyzed':
         paginate_data = sections_data['analyzed']
     elif section_filter == 'registered':
@@ -113,7 +171,7 @@ def analyze_dashboard(request):
     else:
         # For 'all', combine all sections for pagination
         paginate_data = (
-            [{'type': 'unregistered', 'data': item} for item in sections_data['unregistered']] +
+            [{'type': 'unanalyzed', 'data': item} for item in sections_data['unanalyzed']] +
             [{'type': 'analyzed', 'data': item} for item in sections_data['analyzed']] +
             [{'type': 'registered', 'data': item} for item in sections_data['registered']]
         )
@@ -127,16 +185,36 @@ def analyze_dashboard(request):
         'sections_data': sections_data,
         'search_query': search_query,
         'section_filter': section_filter,
+        'sort_field': sort_field,
+        'sort_direction': sort_direction,
         'summary_stats': {
-            'total_unregistered': total_unregistered,
+            'total_unanalyzed': total_unanalyzed,
             'total_analyzed': total_analyzed,
             'total_registered': total_registered,
+            # Unanalyzed stats
+            'unanalyzed_total_files': unanalyzed_total_files,
+            'unanalyzed_total_size': unanalyzed_total_size,
+            'unanalyzed_total_size_formatted': analyze_service.format_file_size(unanalyzed_total_size),
+            'unanalyzed_total_pdfs': unanalyzed_total_pdfs,
+            'unanalyzed_total_excel': unanalyzed_total_excel,
+            'unanalyzed_total_other': unanalyzed_total_other,
+            # Analyzed stats
             'analyzed_total_documents': analyzed_total_docs,
             'analyzed_total_pages': analyzed_total_pages,
             'analyzed_with_oversized': analyzed_with_oversized,
+            'analyzed_total_oversized': analyzed_total_oversized,
+            'analyzed_total_16mm': analyzed_total_16mm,
+            'analyzed_total_35mm': analyzed_total_35mm,
+            'analyzed_total_size': analyzed_total_size,
+            'analyzed_total_size_formatted': analyze_service.format_file_size(analyzed_total_size),
+            'analyzed_avg_utilization': round(analyzed_avg_utilization, 1),
+            # Registered stats
             'registered_total_documents': registered_total_docs,
             'registered_total_pages': registered_total_pages,
-            'registered_with_oversized': registered_with_oversized
+            'registered_with_oversized': registered_with_oversized,
+            'registered_total_rolls': registered_total_rolls,
+            'registered_total_size': registered_total_size,
+            'registered_total_size_formatted': analyze_service.format_file_size(registered_total_size)
         }
     }
     
@@ -384,4 +462,96 @@ def get_folder_basic_info_api(request):
         return JsonResponse({
             'status': 'error',
             'message': f'Error getting folder info: {str(e)}'
-        }, status=500) 
+        }, status=500)
+
+def sort_folder_data(data_list, sort_field, sort_direction, data_type):
+    """Sort folder/project data by specified field and direction"""
+    if not data_list:
+        return data_list
+    
+    reverse_sort = sort_direction == 'desc'
+    print(f"DEBUG sort_folder_data: data_type={data_type}, sort_field={sort_field}, direction={sort_direction}, count={len(data_list)}")
+    
+    try:
+        if data_type == 'unanalyzed':
+            # Sorting for unanalyzed folders
+            if sort_field == 'name':
+                return sorted(data_list, key=lambda x: x.get('folder_name', '').lower(), reverse=reverse_sort)
+            elif sort_field == 'size':
+                return sorted(data_list, key=lambda x: x.get('total_size', 0), reverse=reverse_sort)
+            elif sort_field == 'files':
+                return sorted(data_list, key=lambda x: x.get('file_count', 0), reverse=reverse_sort)
+            elif sort_field == 'pdfs':
+                return sorted(data_list, key=lambda x: x.get('pdf_count', 0), reverse=reverse_sort)
+            elif sort_field == 'documents' or sort_field == 'pages':
+                # For unanalyzed, sort by file count as fallback
+                return sorted(data_list, key=lambda x: x.get('file_count', 0), reverse=reverse_sort)
+            elif sort_field == 'date':
+                # No date field for unanalyzed, fallback to name
+                return sorted(data_list, key=lambda x: x.get('folder_name', '').lower(), reverse=reverse_sort)
+                
+        elif data_type == 'analyzed':
+            # Sorting for analyzed folders
+            if sort_field == 'name':
+                return sorted(data_list, key=lambda x: x.get('folder_name', '').lower(), reverse=reverse_sort)
+            elif sort_field == 'size':
+                return sorted(data_list, key=lambda x: x.get('total_size', 0), reverse=reverse_sort)
+            elif sort_field == 'documents':
+                return sorted(data_list, key=lambda x: x.get('total_documents', 0), reverse=reverse_sort)
+            elif sort_field == 'pages':
+                return sorted(data_list, key=lambda x: x.get('total_pages', 0), reverse=reverse_sort)
+            elif sort_field == 'files':
+                return sorted(data_list, key=lambda x: x.get('file_count', 0), reverse=reverse_sort)
+            elif sort_field == 'rolls':
+                return sorted(data_list, key=lambda x: x.get('total_estimated_rolls', 0), reverse=reverse_sort)
+            elif sort_field == 'utilization':
+                return sorted(data_list, key=lambda x: x.get('overall_utilization', 0), reverse=reverse_sort)
+            elif sort_field == 'oversized':
+                return sorted(data_list, key=lambda x: x.get('oversized_count', 0), reverse=reverse_sort)
+            elif sort_field == 'date':
+                return sorted(data_list, key=lambda x: x.get('analyzed_at') or '', reverse=reverse_sort)
+                
+        elif data_type == 'registered':
+            # Sorting for registered projects (note: many don't have size data)
+            if sort_field == 'name':
+                return sorted(data_list, key=lambda x: x['project'].archive_id.lower(), reverse=reverse_sort)
+            elif sort_field == 'size':
+                # Handle missing size data gracefully - use 0 as fallback
+                return sorted(data_list, key=lambda x: x['data'].get('total_size', 0), reverse=reverse_sort)
+            elif sort_field == 'documents':
+                return sorted(data_list, key=lambda x: x['data'].get('total_documents', 0), reverse=reverse_sort)
+            elif sort_field == 'pages':
+                return sorted(data_list, key=lambda x: x['data'].get('total_pages', 0), reverse=reverse_sort)
+            elif sort_field == 'rolls':
+                return sorted(data_list, key=lambda x: x['data'].get('total_rolls', 0), reverse=reverse_sort)
+            elif sort_field == 'location':
+                return sorted(data_list, key=lambda x: (x['project'].location or '').lower(), reverse=reverse_sort)
+            elif sort_field == 'status':
+                # Sort by completion status
+                def get_status_priority(item):
+                    project = item['project']
+                    if project.processing_complete:
+                        return 4
+                    elif project.film_allocation_complete:
+                        return 3
+                    elif item['data'].get('total_documents', 0) > 0:
+                        return 2
+                    else:
+                        return 1
+                return sorted(data_list, key=get_status_priority, reverse=reverse_sort)
+            elif sort_field == 'date':
+                return sorted(data_list, key=lambda x: x['project'].updated_at, reverse=reverse_sort)
+    
+    except Exception as e:
+        logger.error(f"Error sorting data: {e}")
+        # Return original data if sorting fails
+        return data_list
+    
+    # Default fallback - sort by name
+    try:
+        if data_type == 'registered':
+            return sorted(data_list, key=lambda x: x['project'].archive_id.lower(), reverse=reverse_sort)
+        else:
+            return sorted(data_list, key=lambda x: x.get('folder_name', '').lower(), reverse=reverse_sort)
+    except:
+        return data_list 

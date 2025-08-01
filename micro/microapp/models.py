@@ -272,6 +272,7 @@ class TempRoll(models.Model):
     
     # Status and metadata
     status = models.CharField(max_length=20, default="available", help_text="Status (available, used)")
+    exists = models.BooleanField(default=False, help_text="Whether this temp roll physically exists (vs just planned)")
     creation_date = models.DateTimeField(auto_now_add=True)
     
     # Relationships to other rolls
@@ -288,7 +289,9 @@ class TempRoll(models.Model):
     
     def can_accommodate(self, pages_needed):
         """Check if this temp roll can accommodate the specified number of pages."""
-        return self.status == "available" and self.usable_capacity >= pages_needed
+        return (self.exists and 
+                self.status == "available" and 
+                self.usable_capacity >= pages_needed)
 
 class DocumentSegment(models.Model):
     """Represents a segment of a document on a film roll."""
@@ -790,6 +793,7 @@ class ChemicalBatch(models.Model):
     # Status and dates
     is_active = models.BooleanField(default=True, help_text="Whether this batch is currently active")
     created_at = models.DateTimeField(auto_now_add=True)
+    installation_date = models.DateTimeField(default=timezone.now, help_text="When this batch was installed in the machine")
     replaced_at = models.DateTimeField(null=True, blank=True, help_text="When this batch was replaced")
     
     class Meta:
@@ -813,14 +817,61 @@ class ChemicalBatch(models.Model):
         return (self.remaining_capacity / self.max_area) * 100 if self.max_area > 0 else 0
     
     @property
+    def days_since_installation(self):
+        """Calculate days since installation."""
+        from django.utils import timezone
+        return (timezone.now() - self.installation_date).days
+    
+    @property
+    def hours_since_installation(self):
+        """Calculate hours since installation."""
+        from django.utils import timezone
+        return (timezone.now() - self.installation_date).total_seconds() / 3600
+    
+    @property
+    def is_age_warning(self):
+        """Check if chemical batch has reached 2-week warning period."""
+        return self.hours_since_installation >= (14 * 24)  # 2 weeks = 336 hours
+    
+    @property
+    def is_age_locked(self):
+        """Check if chemical batch is locked due to age (2 weeks + 48 hours)."""
+        return self.hours_since_installation >= (14 * 24 + 48)  # 2 weeks + 48 hours = 384 hours
+    
+    @property
+    def days_until_warning(self):
+        """Calculate days until warning (negative if already in warning period)."""
+        return 14 - self.days_since_installation
+    
+    @property
+    def hours_until_lockout(self):
+        """Calculate hours until lockout (negative if already locked)."""
+        return (14 * 24 + 48) - self.hours_since_installation
+    
+    @property
+    def age_status(self):
+        """Get age status: 'fresh', 'warning', or 'locked'."""
+        if self.is_age_locked:
+            return 'locked'
+        elif self.is_age_warning:
+            return 'warning'
+        else:
+            return 'fresh'
+    
+    @property
+    def is_expired(self):
+        """Check if chemical batch has expired (for backward compatibility)."""
+        return self.is_age_locked
+    
+    @property
     def is_critical(self):
-        """Check if chemical level is critical (< 10% remaining)."""
-        return self.capacity_percent < 10
+        """Check if chemical level is critical (< 10% remaining OR age-locked)."""
+        return self.capacity_percent < 10 or self.is_age_locked
     
     @property
     def is_low(self):
-        """Check if chemical level is low (< 20% remaining)."""
-        return self.capacity_percent < 20
+        """Check if chemical level is low (< 20% remaining OR age-warning)."""
+        return self.capacity_percent < 20 or self.is_age_warning
     
     def add_roll_usage(self, film_type, area_used):
         """Add usage for a film roll with actual area used."""
@@ -836,9 +887,22 @@ class ChemicalBatch(models.Model):
         self.used_area = min(self.used_area, self.max_area)
         self.save()
     
-    def can_process_roll(self, area_needed):
-        """Check if this batch can process a roll requiring the given area."""
-        return (self.used_area + area_needed) <= self.max_area
+    def can_process_roll(self, area_needed, expert_mode=False):
+        """Check if this batch can process a roll requiring the given area.
+        
+        Args:
+            area_needed: Required area in m²
+            expert_mode: If True, bypasses age restrictions (for expert users)
+        """
+        has_capacity = (self.used_area + area_needed) <= self.max_area
+        
+        if expert_mode:
+            # Expert mode bypasses age restrictions but still checks capacity
+            return has_capacity
+        else:
+            # Normal mode checks both capacity and age
+            is_not_locked = not self.is_age_locked
+            return has_capacity and is_not_locked
 
 
 class DevelopmentLog(models.Model):
@@ -1294,13 +1358,61 @@ class AnalyzedFolder(models.Model):
     @property
     def analysis_summary(self):
         """Get a summary of analysis results."""
+        # Calculate utilization percentage
+        utilization_16mm = 0
+        utilization_35mm = 0
+        overall_utilization = 0
+        
+        # Standard roll capacities (consistent with allocation phase)
+        CAPACITY_16MM = 2900  # pages per 16mm roll (matches allocation_views.py)
+        CAPACITY_35MM = 690   # pages per 35mm roll (matches allocation_views.py)
+        
+        if self.estimated_rolls_16mm > 0:
+            # Estimate utilization for 16mm rolls
+            total_capacity_16mm = self.estimated_rolls_16mm * CAPACITY_16MM
+            if total_capacity_16mm > 0:
+                utilization_16mm = min(100, int((self.total_pages / total_capacity_16mm) * 100))
+        
+        if self.estimated_rolls_35mm > 0:
+            # Estimate utilization for 35mm rolls (based on oversized pages only)
+            total_capacity_35mm = self.estimated_rolls_35mm * CAPACITY_35MM
+            if total_capacity_35mm > 0:
+                # For 35mm, use oversized pages + references (oversized * 2)
+                estimated_35mm_pages = self.oversized_count * 2  # oversized + reference pages
+                utilization_35mm = min(100, int((estimated_35mm_pages / total_capacity_35mm) * 100))
+        
+        # Calculate overall utilization
+        if self.total_estimated_rolls > 0:
+            # Use weighted average based on roll types
+            if self.estimated_rolls_16mm > 0 and self.estimated_rolls_35mm > 0:
+                # Mixed workflow - calculate utilization based on appropriate page counts
+                total_16mm_capacity = self.estimated_rolls_16mm * CAPACITY_16MM
+                total_35mm_capacity = self.estimated_rolls_35mm * CAPACITY_35MM
+                
+                # 16mm gets all pages, 35mm gets oversized + references
+                estimated_35mm_pages = self.oversized_count * 2
+                total_pages_allocated = self.total_pages + estimated_35mm_pages
+                total_capacity = total_16mm_capacity + total_35mm_capacity
+                
+                overall_utilization = min(100, int((total_pages_allocated / total_capacity) * 100))
+            elif self.estimated_rolls_35mm > 0:
+                overall_utilization = utilization_35mm
+            else:
+                overall_utilization = utilization_16mm
+        
         return {
             'total_documents': self.total_documents,
             'total_pages': self.total_pages,
             'oversized_count': self.oversized_count,
             'has_oversized': self.has_oversized,
             'estimated_rolls': self.total_estimated_rolls,
+            'estimated_rolls_16mm': self.estimated_rolls_16mm,
+            'estimated_rolls_35mm': self.estimated_rolls_35mm,
+            'utilization_16mm': utilization_16mm,
+            'utilization_35mm': utilization_35mm,
+            'overall_utilization': overall_utilization,
             'file_count': self.file_count,
+            'total_size': self.total_size,  # Add numeric size for sorting
             'total_size_formatted': self.total_size_formatted,
             'pdf_folder_found': self.pdf_folder_found,
             'recommended_workflow': self.recommended_workflow

@@ -250,9 +250,43 @@ class AnalyzeService:
                 is_registered = data_folder.exists() and data_folder.is_dir()
                 
                 # Check if this folder is already analyzed
+                # Normalize path to match what's stored in database
+                folder_path_str = str(folder_path.resolve())
+                
+                # Try multiple path formats to handle database inconsistencies
+                path_variants = [
+                    folder_path_str,  # Normal: X:\folder
+                    folder_path_str.replace('\\', '/'),  # Forward slashes: X:/folder
+                    folder_path_str.replace(':\\', ':'),  # Missing backslash: X:folder
+                ]
+                
+                # DEBUG: Print detailed path analysis
+                print(f"=== DISCOVER DEBUG for {folder_path.name} ===")
+                print(f"Raw folder_path: {folder_path}")
+                print(f"Normalized folder_path_str: {folder_path_str}")
+                print(f"Path variants to check: {path_variants}")
+                print(f"Is registered (has .data): {is_registered}")
+                
+                # Check if analyzed using any path variant
                 is_analyzed = AnalyzedFolder.objects.filter(
-                    folder_path=str(folder_path)
+                    folder_path__in=path_variants
                 ).exists()
+                
+                print(f"Is analyzed (DB lookup with variants): {is_analyzed}")
+                
+                # Check all analyzed folders to see what's in DB
+                all_analyzed = AnalyzedFolder.objects.all()
+                print(f"All analyzed folders in DB ({all_analyzed.count()}):")
+                for af in all_analyzed:
+                    print(f"  - {af.folder_name}: {af.folder_path}")
+                    if folder_path.name.lower() == af.folder_name.lower():
+                        print(f"    *** MATCH BY NAME: {af.folder_name}")
+                        print(f"    *** DB path: '{af.folder_path}'")
+                        print(f"    *** Check path: '{folder_path_str}'")
+                        print(f"    *** Path in variants: {af.folder_path in path_variants}")
+                
+                print(f"Final decision - will include: {not is_registered and not is_analyzed}")
+                print("=== END DEBUG ===\n")
                 
                 if not is_registered and not is_analyzed:
                     # Get basic folder info
@@ -292,30 +326,45 @@ class AnalyzeService:
             folder_path: Path to the folder
             
         Returns:
-            Dict with basic folder information
+            Dict with basic folder information including detailed file type counts
         """
         try:
             folder_path = Path(folder_path)
             
-            # Count files and calculate size
+            # Count files and calculate size with detailed file type tracking
             file_count = 0
             total_size = 0
             pdf_count = 0
+            excel_count = 0
+            other_count = 0
+            
+            # Define Excel extensions
+            excel_extensions = {'.xls', '.xlsx', '.xlsm', '.xlsb'}
             
             for file_path in folder_path.rglob('*'):
                 if file_path.is_file():
                     file_count += 1
                     total_size += file_path.stat().st_size
-                    if file_path.suffix.lower() == '.pdf':
+                    
+                    # Categorize file types
+                    ext = file_path.suffix.lower()
+                    if ext in {'.pdf'}:
                         pdf_count += 1
+                    elif ext in excel_extensions:
+                        excel_count += 1
+                    else:
+                        # Count other files (shortcuts, temp files, etc.)
+                        other_count += 1
             
             return {
-                'folder_path': str(folder_path),
+                'folder_path': str(folder_path.resolve()),  # Normalize path
                 'folder_name': folder_path.name,
                 'file_count': file_count,
                 'total_size': total_size,
                 'total_size_formatted': self.format_file_size(total_size),
                 'pdf_count': pdf_count,
+                'excel_count': excel_count,
+                'other_count': other_count,
                 'has_pdfs': pdf_count > 0
             }
             
@@ -336,7 +385,8 @@ class AnalyzeService:
             AnalyzedFolder instance or None if analysis failed
         """
         try:
-            folder_path = str(folder_path)
+            # Normalize the folder path to ensure consistent comparison
+            folder_path = str(Path(folder_path).resolve())
             
             # Check if already analyzed
             existing_analysis = AnalyzedFolder.objects.filter(folder_path=folder_path).first()
@@ -443,16 +493,44 @@ class AnalyzeService:
             # Perform actual document analysis
             analysis_results = self._analyze_pdf_documents(pdf_files, Path(pdf_folder_path))
             
-            # Calculate roll estimates based on actual page counts
+            # Calculate roll estimates based on actual page counts and workflow
             total_pages = analysis_results['total_pages']
-            estimated_rolls_16mm = max(1, total_pages // 1500) if total_pages > 0 else 0
-            estimated_rolls_35mm = max(1, total_pages // 800) if total_pages > 0 else 0
-            
-            # Determine recommended workflow
             has_oversized = analysis_results['has_oversized']
+            
+            # Use consistent capacities with allocation phase
+            CAPACITY_16MM = 2900  # Pages per 16mm roll (matches allocation_views.py)
+            CAPACITY_35MM = 690   # Pages per 35mm roll (matches allocation_views.py)
+            
             if has_oversized:
-                recommended_workflow = 'mixed_format'  # Requires both 16mm and 35mm
+                # Mixed workflow: 16mm for all pages + 35mm for oversized only
+                estimated_rolls_16mm = max(1, (total_pages + CAPACITY_16MM - 1) // CAPACITY_16MM) if total_pages > 0 else 0
+                
+                # Estimate 35mm rolls using EXACT REGISTER PHASE LOGIC
+                total_35mm_pages = 0
+                for document in analysis_results['documents']:
+                    if document.get('has_oversized', False):
+                        # Count actual oversized pages in this document
+                        total_oversized = document.get('total_oversized', 0)
+                        
+                        # If no count but we have the list, use its length
+                        if total_oversized == 0 and 'oversized_pages' in document and document['oversized_pages']:
+                            total_oversized = len(document['oversized_pages'])
+                        
+                        # Add reference pages (1:1 ratio as per register phase)
+                        total_references = total_oversized
+                        
+                        # Total pages for this document in 35mm
+                        document_35mm_pages = total_oversized + total_references
+                        total_35mm_pages += document_35mm_pages
+                
+                # Calculate 35mm rolls needed
+                estimated_rolls_35mm = max(1, (total_35mm_pages + CAPACITY_35MM - 1) // CAPACITY_35MM) if total_35mm_pages > 0 else 1
+                
+                recommended_workflow = 'hybrid'  # Requires both 16mm and 35mm
             else:
+                # Standard workflow: 16mm only
+                estimated_rolls_16mm = max(1, (total_pages + CAPACITY_16MM - 1) // CAPACITY_16MM) if total_pages > 0 else 0
+                estimated_rolls_35mm = 0  # No 35mm needed for standard workflow
                 recommended_workflow = 'standard_16mm'  # Can use 16mm only
             
             # Calculate total folder size
@@ -502,7 +580,8 @@ class AnalyzeService:
         results = {
             'document_count': 0,
             'total_pages': 0,
-            'oversized_count': 0,
+            'oversized_count': 0,  # Total oversized pages across all documents
+            'documents_with_oversized': 0,  # Count of documents that have oversized pages
             'has_oversized': False,
             'documents': []
         }
@@ -544,6 +623,7 @@ class AnalyzeService:
                                 doc_result['total_oversized'] += 1
                                 doc_result['oversized_pages'].append(i + 1)  # 1-based page number
                                 results['has_oversized'] = True
+                                results['oversized_count'] += 1  # Count each oversized page
                         except Exception as page_e:
                             # Skip problematic pages
                             logger.debug(f"Error analyzing page {i+1} in {pdf_file.name}: {page_e}")
@@ -551,7 +631,7 @@ class AnalyzeService:
                     
                     # Count documents with oversized pages
                     if doc_result['has_oversized']:
-                        results['oversized_count'] += 1
+                        results['documents_with_oversized'] += 1
                     
                     results['documents'].append(doc_result)
                     results['document_count'] += 1
@@ -600,21 +680,21 @@ class AnalyzeService:
                 logger.warning(f"Folder already registered: {analyzed_folder.folder_path}")
                 return analyzed_folder.registered_as_project
             
-            # Create new project from analyzed folder data
+            # Create new project - identical to regular registration flow
+            # Use only the basic fields that regular registration uses
             project = Project.objects.create(
                 archive_id=project_data.get('archive_id'),
-                name=project_data.get('name', analyzed_folder.folder_name),
                 location=project_data.get('location'),
-                doc_type=project_data.get('doc_type'),
-                project_path=analyzed_folder.folder_path,
-                folder_path=analyzed_folder.folder_path,
-                project_folder_name=analyzed_folder.folder_name,
-                pdf_folder_path=analyzed_folder.pdf_folder_path,
-                has_pdf_folder=analyzed_folder.pdf_folder_found,
-                has_oversized=analyzed_folder.has_oversized,
-                total_pages=analyzed_folder.total_pages,
-                owner=analyzed_folder.analyzed_by,
-                data_dir=analyzed_folder.analysis_data_path
+                doc_type=project_data.get('doc_type', ''),
+                project_path=project_data.get('project_path'),
+                project_folder_name=project_data.get('project_folder_name'),
+                comlist_path=project_data.get('comlist_path'),
+                output_dir=project_data.get('output_dir', ''),
+                retain_sources=project_data.get('retain_sources', True),
+                add_to_database=project_data.get('add_to_database', True),
+                pdf_folder_path=project_data.get('pdf_folder_path', ''),
+                has_pdf_folder=project_data.get('has_pdf_folder', False),
+                owner=analyzed_folder.analyzed_by
             )
             
             # Link the analyzed folder to the project

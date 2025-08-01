@@ -82,6 +82,32 @@
                 </div>
             </div>
             
+            <!-- Dependency Order Information -->
+            <div class="dependency-info-panel" id="dependency-info-panel" style="display: none;">
+                <div class="info-content">
+                    <h4><i class="fas fa-info-circle"></i> Filming Order</h4>
+                    <p>Rolls are automatically sorted by temp roll dependencies. Film in the order shown for optimal temp roll usage:</p>
+                    <div class="dependency-legend">
+                        <div class="legend-item">
+                            <div class="legend-indicator dependency-creator"></div>
+                            <span><strong>Creates Temp:</strong> Film first - creates temp rolls for other rolls</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-indicator dependency-consumer"></div>
+                            <span><strong>Uses Temp:</strong> May depend on other rolls being filmed first</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-indicator dependency-chain"></div>
+                            <span><strong>Chain:</strong> Uses temp roll AND creates new temp roll</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-indicator dependency-independent"></div>
+                            <span><strong>Independent:</strong> Can be filmed anytime</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
             <div class="rolls-grid" id="rolls-grid">
                 <!-- Rolls will be loaded dynamically -->
                 <div class="loading-state">

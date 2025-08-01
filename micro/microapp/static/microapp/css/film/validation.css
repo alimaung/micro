@@ -571,4 +571,46 @@
 
 .preview-note i {
     color: var(--film-primary);
+}
+
+/* Strategy Reason Section */
+.strategy-reason-section {
+    margin-top: 16px;
+    padding: 12px 16px;
+    background-color: var(--film-surface);
+    border-radius: 8px;
+    border: 1px solid var(--film-border);
+}
+
+.strategy-reason {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 14px;
+    color: var(--film-text);
+    line-height: 1.4;
+}
+
+.strategy-reason i {
+    color: var(--film-primary);
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.strategy-reason span {
+    flex: 1;
+}
+
+/* Dark mode support for strategy reason */
+.dark-mode .strategy-reason-section {
+    background-color: var(--color-dark-surface);
+    border-color: var(--color-dark-border);
+}
+
+.dark-mode .strategy-reason {
+    color: var(--color-dark-text);
+}
+
+.dark-mode .strategy-reason i {
+    color: var(--color-dark-primary);
 } 

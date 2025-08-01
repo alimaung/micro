@@ -6,6 +6,8 @@
 // Make the class available globally
 window.TransferCore = class TransferCore {
     constructor() {
+        console.log('TransferCore constructor called');
+        
         // Initialize dependencies
         this.eventManager = new EventManager();
         this.ui = new TransferUI(this.eventManager);
@@ -14,6 +16,8 @@ window.TransferCore = class TransferCore {
         this.apiService = new ApiService();
         this.utils = new Utilities();
         this.dbService = new DatabaseService();
+        
+        console.log('All dependencies initialized, checking URL parameters...');
         
         // Check for URL parameters
         this.checkUrlParameters();
@@ -32,11 +36,46 @@ window.TransferCore = class TransferCore {
     }
     
     /**
-     * Check URL parameters for project ID, step, or mode
+     * Check URL parameters for project ID, step, mode, or source folder
      */
     async checkUrlParameters() {
+        console.log('checkUrlParameters called, current URL:', window.location.href);
         try {
             const urlParams = new URLSearchParams(window.location.search);
+            console.log('All URL parameters:', Object.fromEntries(urlParams.entries()));
+            
+            // Check for source folder parameter (from analyze page)
+            const sourceFolder = urlParams.get('source_folder');
+            const analyzedFolderId = urlParams.get('analyzed_folder_id');
+            const folderName = urlParams.get('folder_name');
+            
+            if (sourceFolder) {
+                this.ui.addLogEntry(`Source folder found in URL: ${sourceFolder}`);
+                console.log('URL Parameters detected:', { sourceFolder, folderName, analyzedFolderId });
+                
+                // Pre-populate the source folder (with slight delay to ensure UI is ready)
+                setTimeout(async () => {
+                    try {
+                        await this.handleSourceFolderFromUrl(sourceFolder, folderName, analyzedFolderId);
+                    } catch (error) {
+                        console.error('Error in handleSourceFolderFromUrl:', error);
+                        this.ui.addLogEntry(`Error handling source folder from URL: ${error.message}`);
+                    }
+                }, 100);
+            } else if (analyzedFolderId) {
+                // If we have analyzed folder ID but no source folder path, fetch it from backend
+                this.ui.addLogEntry(`Analyzed folder ID found in URL: ${analyzedFolderId}`);
+                console.log('Analyzed folder ID detected, fetching folder path from backend:', { analyzedFolderId, folderName });
+                
+                setTimeout(async () => {
+                    try {
+                        await this.handleAnalyzedFolderFromUrl(analyzedFolderId, folderName);
+                    } catch (error) {
+                        console.error('Error in handleAnalyzedFolderFromUrl:', error);
+                        this.ui.addLogEntry(`Error handling analyzed folder from URL: ${error.message}`);
+                    }
+                }, 100);
+            }
             
             // Check if we have a project ID in the URL
             const projectId = urlParams.get('id');
@@ -431,6 +470,134 @@ window.TransferCore = class TransferCore {
         });
     }
     
+    /**
+     * Handle analyzed folder ID from URL parameters (fetch folder path from backend)
+     * @param {string} analyzedFolderId - Analyzed folder ID from URL
+     * @param {string} folderName - Folder name from URL
+     */
+    async handleAnalyzedFolderFromUrl(analyzedFolderId, folderName) {
+        console.log('handleAnalyzedFolderFromUrl called with:', { analyzedFolderId, folderName });
+        this.ui.addLogEntry(`Fetching analyzed folder data from backend: ID ${analyzedFolderId}`);
+        
+        try {
+            // Fetch the analyzed folder data from the backend
+            const response = await fetch(`/api/analyze/folder/${analyzedFolderId}/`);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            const data = await response.json();
+            
+            if (data.status !== 'success') {
+                throw new Error(data.message || 'Failed to fetch analyzed folder data');
+            }
+            
+            const folderData = data.data;
+            const folderPath = folderData.folder_path;
+            const folderNameFromBackend = folderData.folder_name || folderName;
+            
+            console.log('Fetched analyzed folder data:', folderData);
+            this.ui.addLogEntry(`Successfully fetched folder data: ${folderPath}`);
+            
+            // Now handle it as if we had the source folder path from the URL
+            await this.handleSourceFolderFromUrl(folderPath, folderNameFromBackend, analyzedFolderId);
+            
+        } catch (error) {
+            console.error('Error fetching analyzed folder data:', error);
+            this.ui.addLogEntry(`Error fetching analyzed folder data: ${error.message}`);
+            this.ui.showNotification(`Error loading folder data: ${error.message}`, 'error');
+            
+            // Fallback: if we have a folder name, try to show a basic form
+            if (folderName) {
+                this.ui.addLogEntry(`Fallback: using folder name "${folderName}" without path validation`);
+                this.ui.showNotification(`Could not load folder path, but folder name "${folderName}" is available`, 'warning');
+                
+                // Try to parse project info from the folder name at least
+                if (this.state.uiState.autoParseEnabled) {
+                    this.parseProjectInfo(folderName);
+                }
+            }
+        }
+    }
+
+    /**
+     * Handle source folder from URL parameters
+     * @param {string} path - Source folder path from URL
+     * @param {string} folderName - Folder name from URL
+     * @param {string} analyzedFolderId - Analyzed folder ID from URL
+     */
+    async handleSourceFolderFromUrl(path, folderName, analyzedFolderId) {
+        console.log('handleSourceFolderFromUrl called with:', { path, folderName, analyzedFolderId });
+        this.ui.addLogEntry(`Pre-selecting source folder from analyze page: ${path}`);
+        
+        try {
+            // Check if UI elements are available
+            if (!this.ui.elements.sourceFolderInput) {
+                console.error('Source folder input element not found');
+                this.ui.addLogEntry('Error: Source folder input element not found');
+                return;
+            }
+            
+            // Update the source folder input field
+            this.ui.elements.sourceFolderInput.value = path;
+            console.log('Set source folder input value to:', path);
+            
+            // Update state directly
+            this.state.sourceData.path = path;
+            this.state.sourceData.folderName = folderName || this.utils.extractFolderName(path);
+            
+            // Show a notification that the folder was pre-selected
+            this.ui.showNotification(`Source folder pre-selected: ${folderName || path}`, 'info');
+            
+            // Trigger the UI update for source folder
+            this.ui.updateSourceInfo(this.state.sourceData);
+            
+            // Get folder structure and file stats
+            console.log('Getting folder structure for:', path);
+            await this.fetchSourceFileStats();
+            
+            // Get folder structure from API
+            const folderStructure = await this.apiService.getFolderStructure(path, true);
+            this.state.sourceData.folderStructure = folderStructure;
+            
+            // Update UI with source information
+            this.ui.updateSourceInfo(this.state.sourceData);
+            
+            // Save state to localStorage
+            this.saveStateToStorage();
+            
+            console.log('Folder structure loaded, triggering auto features...');
+            
+            // If auto features are enabled, trigger them
+            if (this.state.uiState.autoSelectPathEnabled) {
+                this.updateDestinationPreview();
+            }
+            
+            if (this.state.uiState.autoParseEnabled && this.state.sourceData.folderName) {
+                console.log('Auto-parsing project info from:', this.state.sourceData.folderName);
+                this.parseProjectInfo(this.state.sourceData.folderName);
+            }
+            
+            if (this.state.uiState.autoFindPdfEnabled) {
+                this.ui.addLogEntry("Auto-find PDF folder is enabled and will be triggered");
+                this.finders.findPdfFolder(this.state.sourceData, this.state.projectInfo);
+            }
+            
+            if (this.state.uiState.autoFindComlistEnabled) {
+                this.ui.addLogEntry("Auto-find COMList file is enabled and will be triggered");
+                this.finders.findComlistFile(this.state.sourceData, this.state.projectInfo);
+            }
+            
+            console.log('handleSourceFolderFromUrl completed successfully');
+            
+        } catch (error) {
+            console.error('Error handling source folder from URL:', error);
+            this.ui.addLogEntry(`Error pre-selecting source folder: ${error.message}`);
+            this.ui.showNotification('Error pre-selecting source folder', 'error');
+        }
+    }
+
     /**
      * Handle source folder selected
      * @param {string} path - Selected source folder path
@@ -1012,37 +1179,121 @@ window.TransferCore = class TransferCore {
      */
     async saveProjectToDatabase() {
         try {
-            // Create structured project data from current state
-            const projectData = {
-                archive_id: this.state.projectInfo.archiveId || '',
-                location: this.state.projectInfo.location || '',
-                doc_type: this.state.projectInfo.documentType || '',
-                project_path: this.state.sourceData.path || '',
-                project_folder_name: this.state.sourceData.folderName || '',
-                comlist_path: this.state.projectInfo.comlistPath || null,
-                output_dir: this.state.destinationPath || null,
-                
-                // Include processed metadata if available
-                has_pdf_folder: !!this.state.projectInfo.pdfPath,
-                pdf_folder_path: this.state.projectInfo.pdfPath || null,
-            };
-            
             this.ui.addLogEntry("Saving project to database...");
             
-            // Use DatabaseService to make the request
-            const result = await this.dbService.createProject(projectData);
+            // Check if this project was created from an analyzed folder
+            const urlParams = new URLSearchParams(window.location.search);
+            const analyzedFolderId = urlParams.get('analyzed_folder_id');
             
-            if (result.status === 'success') {
-                this.ui.addLogEntry(`Project added to database with ID: ${result.project_id}`);
-                return result;
+            if (analyzedFolderId) {
+                // Register analyzed folder as project using the proper API
+                this.ui.addLogEntry(`Registering analyzed folder (ID: ${analyzedFolderId}) as project...`);
+                
+                // Create project data identical to regular registration flow
+                const projectData = {
+                    archive_id: this.state.projectInfo.archiveId || '',
+                    location: this.state.projectInfo.location || '',
+                    doc_type: this.state.projectInfo.documentType || '',
+                    project_path: this.state.sourceData.path || '',
+                    project_folder_name: this.state.sourceData.folderName || '',
+                    comlist_path: this.state.projectInfo.comlistPath || null,
+                    output_dir: this.state.destinationPath || null,
+                    retain_sources: true,
+                    add_to_database: true,
+                    pdf_folder_path: this.state.projectInfo.pdfPath || '',
+                    has_pdf_folder: !!this.state.projectInfo.pdfPath
+                };
+                
+                const result = await this.registerAnalyzedFolder(analyzedFolderId, projectData);
+                
+                if (result.status === 'success') {
+                    this.ui.addLogEntry(`Analyzed folder registered as project with ID: ${result.data.project_id}`);
+                    return { status: 'success', project_id: result.data.project_id };
+                } else {
+                    this.ui.addLogEntry(`Failed to register analyzed folder: ${result.message}`);
+                    return result;
+                }
             } else {
-                this.ui.addLogEntry(`Failed to add project to database: ${result.message}`);
-                return result;
+                // Regular project creation
+                const projectData = {
+                    archive_id: this.state.projectInfo.archiveId || '',
+                    location: this.state.projectInfo.location || '',
+                    doc_type: this.state.projectInfo.documentType || '',
+                    project_path: this.state.sourceData.path || '',
+                    project_folder_name: this.state.sourceData.folderName || '',
+                    comlist_path: this.state.projectInfo.comlistPath || null,
+                    output_dir: this.state.destinationPath || null,
+                    
+                    // Include processed metadata if available
+                    has_pdf_folder: !!this.state.projectInfo.pdfPath,
+                    pdf_folder_path: this.state.projectInfo.pdfPath || null,
+                };
+                
+                // Use DatabaseService to make the request
+                const result = await this.dbService.createProject(projectData);
+                
+                if (result.status === 'success') {
+                    this.ui.addLogEntry(`Project added to database with ID: ${result.project_id}`);
+                    return result;
+                } else {
+                    this.ui.addLogEntry(`Failed to add project to database: ${result.message}`);
+                    return result;
+                }
             }
         } catch (error) {
             this.ui.addLogEntry(`Error adding project to database: ${error.message}`);
             return { status: 'error', message: error.message };
         }
+    }
+
+    /**
+     * Register an analyzed folder as a project
+     * @param {string} analyzedFolderId - ID of the analyzed folder
+     * @param {Object} projectData - Project data
+     * @returns {Promise<Object>} Registration result
+     */
+    async registerAnalyzedFolder(analyzedFolderId, projectData) {
+        try {
+            const response = await fetch('/api/analyze/register-folder/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.getCsrfToken()
+                },
+                body: JSON.stringify({
+                    analyzed_folder_id: analyzedFolderId,
+                    project_data: projectData
+                })
+            });
+            
+            const result = await response.json();
+            return result;
+        } catch (error) {
+            console.error('Error registering analyzed folder:', error);
+            return { status: 'error', message: error.message };
+        }
+    }
+
+    /**
+     * Get CSRF token for API requests
+     * @returns {string} CSRF token
+     */
+    getCsrfToken() {
+        const token = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (token) {
+            return token.value;
+        }
+        
+        // Try to get from cookie
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+            const [name, value] = cookie.trim().split('=');
+            if (name === 'csrftoken') {
+                return value;
+            }
+        }
+        
+        return '';
     }
 
     /**
