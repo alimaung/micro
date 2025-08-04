@@ -1,0 +1,217 @@
+/* Skeleton Loading Styles for Analyze Page */
+
+/* Skeleton text placeholder */
+.skeleton-text {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+    border-radius: 4px;
+    color: transparent !important;
+    user-select: none;
+    pointer-events: none;
+}
+
+/* Skeleton card styles */
+.skeleton-card {
+    pointer-events: none;
+    user-select: none;
+    opacity: 0.8;
+}
+
+/* Skeleton loading animation */
+@keyframes skeleton-loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* Skeleton badges */
+.skeleton-badge {
+    background: linear-gradient(90deg, #e0e0e0 25%, #d0d0d0 50%, #e0e0e0 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+    color: transparent !important;
+}
+
+/* Skeleton buttons */
+.skeleton-btn {
+    background: linear-gradient(90deg, #e0e0e0 25%, #d0d0d0 50%, #e0e0e0 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+    color: transparent !important;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.skeleton-btn i {
+    opacity: 0.3;
+}
+
+/* Skeleton utilization bar */
+.skeleton-bar {
+    background: linear-gradient(90deg, #e0e0e0 25%, #d0d0d0 50%, #e0e0e0 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+    width: 60% !important;
+}
+
+/* Skeleton loading stat cards */
+.skeleton-loading {
+    position: relative;
+    overflow: hidden;
+}
+
+.skeleton-loading::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent 25%, rgba(255,255,255,0.2) 50%, transparent 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Skeleton content loading indicators */
+.skeleton-loading-indicator {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 20px 30px;
+    border-radius: 8px;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-size: 16px;
+}
+
+.skeleton-loading-indicator .spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #ffffff30;
+    border-top: 2px solid #ffffff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Fade transition between skeleton and real content */
+.skeleton-fade-out {
+    animation: fade-out 0.3s ease-out forwards;
+}
+
+.real-content-fade-in {
+    animation: fade-in 0.3s ease-in forwards;
+}
+
+@keyframes fade-out {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Override skeleton elements during loading */
+.skeleton-text::placeholder {
+    color: transparent;
+}
+
+/* Skeleton metric values with consistent widths */
+.skeleton-card .metric-value.skeleton-text {
+    min-width: 40px;
+    height: 1.2em;
+    display: inline-block;
+}
+
+.skeleton-card h3.skeleton-text {
+    min-width: 120px;
+    height: 1.4em;
+    display: inline-block;
+}
+
+.skeleton-card .folder-path .skeleton-text {
+    min-width: 200px;
+    height: 1em;
+    display: inline-block;
+}
+
+.skeleton-card .skeleton-text small {
+    min-width: 150px;
+    height: 0.9em;
+    display: inline-block;
+}
+
+/* Responsive skeleton adjustments */
+@media (max-width: 768px) {
+    .skeleton-card .folder-path .skeleton-text {
+        min-width: 150px;
+    }
+    
+    .skeleton-card h3.skeleton-text {
+        min-width: 100px;
+    }
+}
+
+/* Skeleton grid ensures consistent layout */
+.skeleton-card .key-metrics {
+    opacity: 0.7;
+}
+
+.skeleton-card .key-metrics .metric-icon {
+    opacity: 0.3;
+}
+
+/* Loading state for entire sections */
+.section-container.skeleton-loading {
+    min-height: 400px;
+    position: relative;
+}
+
+/* Stagger animation for multiple skeleton cards */
+.skeleton-card:nth-child(1) { animation-delay: 0s; }
+.skeleton-card:nth-child(2) { animation-delay: 0.1s; }
+.skeleton-card:nth-child(3) { animation-delay: 0.2s; }
+.skeleton-card:nth-child(4) { animation-delay: 0.3s; }
+.skeleton-card:nth-child(5) { animation-delay: 0.4s; }
+.skeleton-card:nth-child(6) { animation-delay: 0.5s; }
+
+/* Pulse effect for skeleton cards */
+@keyframes skeleton-pulse {
+    0%, 100% {
+        opacity: 0.8;
+    }
+    50% {
+        opacity: 0.6;
+    }
+}
+
+.skeleton-card {
+    animation: skeleton-pulse 2s ease-in-out infinite;
+} 

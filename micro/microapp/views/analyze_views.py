@@ -18,6 +18,58 @@ logger = logging.getLogger(__name__)
 @login_required
 def analyze_dashboard(request):
     """Main analyze dashboard showing three sections: unregistered, analyzed, and registered projects"""
+    
+    # Check if this is a fast skeleton load request
+    fast_load = request.GET.get('skeleton', 'false').lower() == 'true'
+    
+    # If not explicitly requesting skeleton=false, redirect to skeleton mode for faster loading
+    if not fast_load and request.GET.get('skeleton') != 'false':
+        from django.shortcuts import redirect
+        # Preserve existing parameters and add skeleton=true
+        params = request.GET.copy()
+        params['skeleton'] = 'true'
+        return redirect(f"{request.path}?{params.urlencode()}")
+    
+    if fast_load:
+        # Return minimal template with skeleton placeholders
+        context = {
+            'skeleton_mode': True,
+            'search_query': request.GET.get('search', ''),
+            'section_filter': request.GET.get('section', 'all'),
+            'sort_field': request.GET.get('sort', 'name'),
+            'sort_direction': request.GET.get('dir', 'asc'),
+            # Empty sections data for skeleton
+            'sections_data': {
+                'unanalyzed': [],
+                'analyzed': [],
+                'registered': []
+            },
+            # Minimal page_obj for skeleton (won't be used due to skeleton_mode check)
+            'page_obj': None,
+            # Placeholder stats for skeleton
+            'summary_stats': {
+                'total_unanalyzed': '...',
+                'total_analyzed': '...',
+                'total_registered': '...',
+                'unanalyzed_total_pdfs': '...',
+                'unanalyzed_total_excel': '...',
+                'unanalyzed_total_size_formatted': '...',
+                'analyzed_total_16mm': '...',
+                'analyzed_total_35mm': '...',
+                'analyzed_avg_utilization': '...',
+                'analyzed_temp_rolls_created': 0,
+                'analyzed_temp_rolls_used': 0,
+                'analyzed_total_documents': '...',
+                'analyzed_total_pages': '...',
+                'analyzed_total_oversized': '...',
+                'registered_total_rolls': '...',
+                'registered_total_size_formatted': '...',
+                'registered_total_documents': '...',
+                'registered_total_pages': '...',
+            }
+        }
+        return render(request, 'microapp/analyze/analyze.html', context)
+    
     analyze_service = AnalyzeService()
     
     # Get the current section filter
@@ -191,6 +243,7 @@ def analyze_dashboard(request):
         'section_filter': section_filter,
         'sort_field': sort_field,
         'sort_direction': sort_direction,
+        'skeleton_mode': False,
         'summary_stats': {
             'total_unanalyzed': total_unanalyzed,
             'total_analyzed': total_analyzed,
@@ -227,6 +280,214 @@ def analyze_dashboard(request):
     }
     
     return render(request, 'microapp/analyze/analyze.html', context)
+
+@login_required
+def analyze_dashboard_data_api(request):
+    """API endpoint to get the actual dashboard data for skeleton loading"""
+    analyze_service = AnalyzeService()
+    
+    # Get the current section filter
+    section_filter = request.GET.get('section', 'all')
+    search_query = request.GET.get('search', '')
+    
+    # Get sorting parameters
+    sort_field = request.GET.get('sort', 'name')
+    sort_direction = request.GET.get('dir', 'asc')
+    
+    # Initialize sections data
+    sections_data = {
+        'unanalyzed': [],
+        'analyzed': [],
+        'registered': []
+    }
+    
+    # Section 1: Unanalyzed folders
+    if section_filter in ['all', 'unanalyzed']:
+        unanalyzed_folders = analyze_service.discover_unregistered_folders()
+        
+        # Apply search filter
+        if search_query:
+            filtered_unanalyzed = []
+            for folder in unanalyzed_folders:
+                if (search_query.lower() in folder['folder_name'].lower() or
+                    search_query.lower() in folder['folder_path'].lower()):
+                    filtered_unanalyzed.append(folder)
+            unanalyzed_folders = filtered_unanalyzed
+        
+        sections_data['unanalyzed'] = sort_folder_data(unanalyzed_folders, sort_field, sort_direction, 'unanalyzed')
+    
+    # Section 2: Analyzed folders
+    if section_filter in ['all', 'analyzed']:
+        analyzed_folders = analyze_service.get_analyzed_folders().filter(registered_as_project__isnull=True)
+        
+        # Apply search filter
+        if search_query:
+            analyzed_folders = analyzed_folders.filter(
+                Q(folder_name__icontains=search_query) |
+                Q(folder_path__icontains=search_query)
+            )
+        
+        # Convert to list with analysis summary
+        analyzed_list = []
+        for folder in analyzed_folders:
+            folder_data = folder.analysis_summary
+            folder_data['id'] = folder.id
+            folder_data['folder_name'] = folder.folder_name
+            folder_data['folder_path'] = folder.folder_path
+            folder_data['analyzed_at'] = folder.analyzed_at.isoformat() if folder.analyzed_at else None
+            folder_data['analyzed_by'] = {
+                'id': folder.analyzed_by.id,
+                'username': folder.analyzed_by.username
+            } if folder.analyzed_by else None
+            analyzed_list.append(folder_data)
+        
+        sections_data['analyzed'] = sort_folder_data(analyzed_list, sort_field, sort_direction, 'analyzed')
+    
+    # Section 3: Registered projects
+    if section_filter in ['all', 'registered']:
+        projects_with_data = analyze_service.get_registered_projects_with_data()
+        
+        # Apply search filter
+        if search_query:
+            filtered_projects = []
+            for item in projects_with_data:
+                project = item['project']
+                if (search_query.lower() in project.archive_id.lower() or
+                    search_query.lower() in (project.location or '').lower() or
+                    search_query.lower() in (project.doc_type or '').lower() or
+                    search_query.lower() in (project.name or '').lower()):
+                    filtered_projects.append(item)
+            projects_with_data = filtered_projects
+        
+        # Convert projects to serializable format
+        serializable_projects = []
+        for item in projects_with_data:
+            project = item['project']
+            serializable_item = {
+                'project': {
+                    'id': project.id,
+                    'archive_id': project.archive_id,
+                    'name': project.name,
+                    'location': project.location,
+                    'doc_type': project.doc_type,
+                    'processing_complete': project.processing_complete,
+                    'film_allocation_complete': project.film_allocation_complete,
+                    'created_at': project.created_at.isoformat() if project.created_at else None,
+                    'updated_at': project.updated_at.isoformat() if project.updated_at else None,
+                },
+                'data': item['data']
+            }
+            serializable_projects.append(serializable_item)
+        
+        sections_data['registered'] = sort_folder_data(serializable_projects, sort_field, sort_direction, 'registered')
+    
+    # Calculate summary statistics
+    total_unanalyzed = len(sections_data['unanalyzed'])
+    total_analyzed = len(sections_data['analyzed'])
+    total_registered = len(sections_data['registered'])
+    
+    # Enhanced stats for unanalyzed folders
+    unanalyzed_total_files = sum(item.get('file_count', 0) for item in sections_data['unanalyzed'])
+    unanalyzed_total_size = sum(item.get('total_size', 0) for item in sections_data['unanalyzed'])
+    unanalyzed_total_pdfs = sum(item.get('pdf_count', 0) for item in sections_data['unanalyzed'])
+    unanalyzed_total_excel = sum(item.get('excel_count', 0) for item in sections_data['unanalyzed'])
+    unanalyzed_total_other = sum(item.get('other_count', 0) for item in sections_data['unanalyzed'])
+    
+    # Enhanced stats for analyzed folders
+    analyzed_total_docs = sum(item.get('total_documents', 0) for item in sections_data['analyzed'])
+    analyzed_total_pages = sum(item.get('total_pages', 0) for item in sections_data['analyzed'])
+    analyzed_with_oversized = sum(1 for item in sections_data['analyzed'] if item.get('has_oversized', False))
+    analyzed_total_oversized = sum(item.get('oversized_count', 0) for item in sections_data['analyzed'])
+    analyzed_total_16mm = sum(item.get('estimated_rolls_16mm', 0) for item in sections_data['analyzed'])
+    analyzed_total_35mm = sum(item.get('estimated_rolls_35mm', 0) for item in sections_data['analyzed'])
+    analyzed_total_size = sum(item.get('total_size', 0) for item in sections_data['analyzed'] if item.get('total_size'))
+    analyzed_temp_rolls_created = sum(item.get('estimated_temp_rolls_created', 0) for item in sections_data['analyzed'])
+    analyzed_temp_rolls_used = sum(item.get('estimated_temp_rolls_used', 0) for item in sections_data['analyzed'])
+    
+    # Calculate average utilization for analyzed folders
+    analyzed_utilization_values = [item.get('overall_utilization', 0) for item in sections_data['analyzed'] if item.get('overall_utilization', 0) > 0]
+    analyzed_avg_utilization = sum(analyzed_utilization_values) / len(analyzed_utilization_values) if analyzed_utilization_values else 0
+    
+    # Enhanced stats for registered projects
+    registered_total_docs = sum(item['data'].get('total_documents', 0) for item in sections_data['registered'])
+    registered_total_pages = sum(item['data'].get('total_pages', 0) for item in sections_data['registered'])
+    registered_with_oversized = sum(1 for item in sections_data['registered'] if item['data'].get('has_oversized', False))
+    registered_total_rolls = sum(item['data'].get('total_rolls', 0) for item in sections_data['registered'])
+    registered_total_size = sum(item['data'].get('total_size', 0) for item in sections_data['registered'] if item['data'].get('total_size'))
+    registered_temp_rolls_created = sum(item['data'].get('temp_rolls_created', 0) for item in sections_data['registered'])
+    registered_temp_rolls_used = sum(item['data'].get('temp_rolls_used', 0) for item in sections_data['registered'])
+    
+    # Pagination
+    if section_filter == 'unanalyzed':
+        paginate_data = sections_data['unanalyzed']
+    elif section_filter == 'analyzed':
+        paginate_data = sections_data['analyzed']
+    elif section_filter == 'registered':
+        paginate_data = sections_data['registered']
+    else:
+        # For 'all', combine all sections for pagination
+        paginate_data = (
+            [{'type': 'unanalyzed', 'data': item} for item in sections_data['unanalyzed']] +
+            [{'type': 'analyzed', 'data': item} for item in sections_data['analyzed']] +
+            [{'type': 'registered', 'data': item} for item in sections_data['registered']]
+        )
+    
+    paginator = Paginator(paginate_data, 12)  # 12 items per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    # Convert page_obj to serializable format
+    page_data = {
+        'items': list(page_obj),
+        'number': page_obj.number,
+        'num_pages': page_obj.paginator.num_pages,
+        'has_previous': page_obj.has_previous(),
+        'has_next': page_obj.has_next(),
+        'previous_page_number': page_obj.previous_page_number() if page_obj.has_previous() else None,
+        'next_page_number': page_obj.next_page_number() if page_obj.has_next() else None,
+        'start_index': page_obj.start_index(),
+        'end_index': page_obj.end_index(),
+        'count': page_obj.paginator.count
+    }
+    
+    return JsonResponse({
+        'status': 'success',
+        'page_obj': page_data,
+        'sections_data': sections_data,
+        'summary_stats': {
+            'total_unanalyzed': total_unanalyzed,
+            'total_analyzed': total_analyzed,
+            'total_registered': total_registered,
+            # Unanalyzed stats
+            'unanalyzed_total_files': unanalyzed_total_files,
+            'unanalyzed_total_size': unanalyzed_total_size,
+            'unanalyzed_total_size_formatted': analyze_service.format_file_size(unanalyzed_total_size),
+            'unanalyzed_total_pdfs': unanalyzed_total_pdfs,
+            'unanalyzed_total_excel': unanalyzed_total_excel,
+            'unanalyzed_total_other': unanalyzed_total_other,
+            # Analyzed stats
+            'analyzed_total_documents': analyzed_total_docs,
+            'analyzed_total_pages': analyzed_total_pages,
+            'analyzed_with_oversized': analyzed_with_oversized,
+            'analyzed_total_oversized': analyzed_total_oversized,
+            'analyzed_total_16mm': analyzed_total_16mm,
+            'analyzed_total_35mm': analyzed_total_35mm,
+            'analyzed_total_size': analyzed_total_size,
+            'analyzed_total_size_formatted': analyze_service.format_file_size(analyzed_total_size),
+            'analyzed_avg_utilization': round(analyzed_avg_utilization, 1),
+            'analyzed_temp_rolls_created': analyzed_temp_rolls_created,
+            'analyzed_temp_rolls_used': analyzed_temp_rolls_used,
+            # Registered stats
+            'registered_total_documents': registered_total_docs,
+            'registered_total_pages': registered_total_pages,
+            'registered_with_oversized': registered_with_oversized,
+            'registered_total_rolls': registered_total_rolls,
+            'registered_total_size': registered_total_size,
+            'registered_total_size_formatted': analyze_service.format_file_size(registered_total_size),
+            'registered_temp_rolls_created': registered_temp_rolls_created,
+            'registered_temp_rolls_used': registered_temp_rolls_used
+        }
+    })
 
 @login_required
 def analyze_project_detail(request, project_id):

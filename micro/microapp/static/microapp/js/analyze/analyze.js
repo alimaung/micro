@@ -27,9 +27,1023 @@ function initializeSortFromURL() {
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Analyze page loaded');
     
-    // Initialize the analyze page
-    initializeAnalyzePage();
+    // Clean up old cache entries on page load
+    clearOldCache();
+    
+    // Add cache status indicator
+    addCacheStatusIndicator();
+    
+    // Check if we're in skeleton mode and need to load real data
+    if (window.SKELETON_MODE) {
+        console.log('Skeleton mode detected - loading real data...');
+        loadRealData();
+    } else {
+        // Initialize the analyze page normally
+        initializeAnalyzePage();
+        
+        // Update cache status for non-skeleton mode
+        updateCacheStatus();
+    }
 });
+
+// Cache configuration
+const CACHE_CONFIG = {
+    key: 'analyze_dashboard_data',
+    version: '1.0',
+    ttl: 5 * 60 * 1000, // 5 minutes in milliseconds
+    maxSize: 2 * 1024 * 1024 // 2MB max cache size
+};
+
+/**
+ * Generate cache key based on current filters
+ */
+function generateCacheKey() {
+    const params = new URLSearchParams({
+        section: window.SECTION_FILTER || 'all',
+        search: window.SEARCH_QUERY || '',
+        sort: window.SORT_FIELD || 'folder_name',
+        direction: window.SORT_DIRECTION || 'asc'
+    });
+    return `${CACHE_CONFIG.key}_${params.toString()}`;
+}
+
+/**
+ * Check if cached data is valid and not expired
+ */
+function isCacheValid(cacheData) {
+    if (!cacheData || !cacheData.timestamp || !cacheData.version) {
+        return false;
+    }
+    
+    // Check version compatibility
+    if (cacheData.version !== CACHE_CONFIG.version) {
+        return false;
+    }
+    
+    // Check if data has expired
+    const now = Date.now();
+    const age = now - cacheData.timestamp;
+    return age < CACHE_CONFIG.ttl;
+}
+
+/**
+ * Get cached data from localStorage
+ */
+function getCachedData() {
+    try {
+        const cacheKey = generateCacheKey();
+        const cached = localStorage.getItem(cacheKey);
+        
+        if (!cached) {
+            return null;
+        }
+        
+        const cacheData = JSON.parse(cached);
+        
+        if (!isCacheValid(cacheData)) {
+            // Remove expired cache
+            localStorage.removeItem(cacheKey);
+            return null;
+        }
+        
+        console.log('📦 Using cached dashboard data');
+        return cacheData.data;
+    } catch (error) {
+        console.warn('Failed to read cache:', error);
+        return null;
+    }
+}
+
+/**
+ * Save data to localStorage cache
+ */
+function setCachedData(data) {
+    try {
+        const cacheKey = generateCacheKey();
+        const cacheData = {
+            data: data,
+            timestamp: Date.now(),
+            version: CACHE_CONFIG.version
+        };
+        
+        const serialized = JSON.stringify(cacheData);
+        
+        // Check cache size
+        if (serialized.length > CACHE_CONFIG.maxSize) {
+            console.warn('Data too large to cache:', serialized.length, 'bytes');
+            return false;
+        }
+        
+        localStorage.setItem(cacheKey, serialized);
+        console.log('💾 Dashboard data cached successfully');
+        return true;
+    } catch (error) {
+        console.warn('Failed to cache data:', error);
+        // Handle quota exceeded error
+        if (error.name === 'QuotaExceededError') {
+            clearOldCache();
+            // Try again after cleanup
+            try {
+                localStorage.setItem(cacheKey, JSON.stringify(cacheData));
+                return true;
+            } catch (retryError) {
+                console.warn('Failed to cache after cleanup:', retryError);
+            }
+        }
+        return false;
+    }
+}
+
+/**
+ * Clear old or invalid cache entries
+ */
+function clearOldCache() {
+    try {
+        const keysToRemove = [];
+        
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith(CACHE_CONFIG.key)) {
+                try {
+                    const cached = localStorage.getItem(key);
+                    const cacheData = JSON.parse(cached);
+                    
+                    if (!isCacheValid(cacheData)) {
+                        keysToRemove.push(key);
+                    }
+                } catch (error) {
+                    // Remove invalid cache entries
+                    keysToRemove.push(key);
+                }
+            }
+        }
+        
+        keysToRemove.forEach(key => {
+            localStorage.removeItem(key);
+            console.log('🗑️ Removed expired cache:', key);
+        });
+        
+        console.log(`🧹 Cleaned up ${keysToRemove.length} cache entries`);
+    } catch (error) {
+        console.warn('Failed to clear old cache:', error);
+    }
+}
+
+/**
+ * Invalidate cache for current filters
+ */
+function invalidateCache() {
+    try {
+        const cacheKey = generateCacheKey();
+        localStorage.removeItem(cacheKey);
+        console.log('🗑️ Cache invalidated');
+    } catch (error) {
+        console.warn('Failed to invalidate cache:', error);
+    }
+}
+
+/**
+ * Clear all analyze dashboard cache
+ */
+function clearAllCache() {
+    try {
+        const keysToRemove = [];
+        
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith(CACHE_CONFIG.key)) {
+                keysToRemove.push(key);
+            }
+        }
+        
+        keysToRemove.forEach(key => localStorage.removeItem(key));
+        console.log(`🗑️ Cleared all cache (${keysToRemove.length} entries)`);
+    } catch (error) {
+        console.warn('Failed to clear all cache:', error);
+    }
+}
+
+/**
+ * Load real data from cache or API
+ */
+async function loadRealData() {
+    try {
+        // First try to get cached data
+        const cachedData = getCachedData();
+        if (cachedData) {
+            showSkeletonLoadingIndicator();
+            setTimeout(() => {
+                replaceSkeletonWithRealData(cachedData);
+                hideSkeletonLoadingIndicator();
+            }, 100); // Small delay to show loading briefly
+            return;
+        }
+        
+        // If no cache, show loading and fetch from API
+        showSkeletonLoadingIndicator();
+        
+        const params = new URLSearchParams();
+        if (window.SECTION_FILTER && window.SECTION_FILTER !== 'all') {
+            params.append('section', window.SECTION_FILTER);
+        }
+        if (window.SEARCH_QUERY) {
+            params.append('search', window.SEARCH_QUERY);
+        }
+        if (window.SORT_FIELD) {
+            params.append('sort', window.SORT_FIELD);
+        }
+        if (window.SORT_DIRECTION) {
+            params.append('direction', window.SORT_DIRECTION);
+        }
+        
+        const url = `/api/analyze/dashboard-data/${params.toString() ? '?' + params.toString() : ''}`;
+        console.log('🌐 Fetching fresh data from API:', url);
+        
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        
+        // Cache the fresh data
+        setCachedData(data);
+        
+        // Update the UI
+        replaceSkeletonWithRealData(data);
+        hideSkeletonLoadingIndicator();
+        
+    } catch (error) {
+        console.error('Failed to load dashboard data:', error);
+        hideSkeletonLoadingIndicator();
+        
+        // Show error message
+        const realContent = document.getElementById('real-content');
+        if (realContent) {
+            realContent.innerHTML = `
+                <div class="error-message">
+                    <div class="error-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <h3>Failed to Load Data</h3>
+                    <p>Unable to load dashboard data. Please try refreshing the page.</p>
+                    <button class="btn btn-primary" onclick="location.reload()">
+                        <i class="fas fa-sync-alt"></i>
+                        Refresh Page
+                    </button>
+                </div>
+            `;
+            realContent.style.display = 'block';
+            
+            // Hide skeleton
+            const skeletonContent = document.getElementById('skeleton-content');
+            if (skeletonContent) {
+                skeletonContent.style.display = 'none';
+            }
+        }
+    }
+}
+
+/**
+ * Show skeleton loading indicator
+ */
+function showSkeletonLoadingIndicator() {
+    const indicator = document.createElement('div');
+    indicator.id = 'skeleton-loading-indicator';
+    indicator.className = 'skeleton-loading-indicator';
+    indicator.innerHTML = `
+        <div class="spinner"></div>
+        <span>Loading dashboard data...</span>
+    `;
+    document.body.appendChild(indicator);
+}
+
+/**
+ * Hide skeleton loading indicator
+ */
+function hideSkeletonLoadingIndicator() {
+    const indicator = document.getElementById('skeleton-loading-indicator');
+    if (indicator) {
+        indicator.remove();
+    }
+}
+
+/**
+ * Replace skeleton content with real data
+ */
+function replaceSkeletonWithRealData(data) {
+    console.log('Replacing skeleton with real data...', data);
+    
+    // Update stats in header
+    updateHeaderStats(data.summary_stats);
+    
+    // Update section tab counts
+    updateSectionTabCounts(data.summary_stats);
+    
+    // Replace skeleton content sections
+    const skeletonContent = document.getElementById('skeleton-content');
+    const realContent = document.getElementById('real-content');
+    
+    if (skeletonContent && realContent) {
+        // Generate real content HTML
+        generateRealContentHTML(data, realContent);
+        
+        // Fade out skeleton and fade in real content
+        skeletonContent.classList.add('skeleton-fade-out');
+        
+        setTimeout(() => {
+            skeletonContent.style.display = 'none';
+            realContent.style.display = 'block';
+            realContent.classList.add('real-content-fade-in');
+            
+            // Update cache status after content loads
+            updateCacheStatus();
+        }, 300);
+    }
+    
+    // Update window state
+    window.SKELETON_MODE = false;
+}
+
+/**
+ * Update header statistics
+ */
+function updateHeaderStats(stats) {
+    const statCards = document.querySelectorAll('.header-stats .stat-card');
+    
+    if (statCards.length >= 4) {
+        // Update unanalyzed stats
+        updateStatCard(statCards[0], stats.total_unanalyzed, 
+            `${stats.unanalyzed_total_pdfs} PDFs • ${stats.unanalyzed_total_excel} Excel • ${stats.unanalyzed_total_size_formatted}`);
+        
+        // Update analyzed stats
+        updateStatCard(statCards[1], stats.total_analyzed, 
+            `${stats.analyzed_total_16mm} × 16mm • ${stats.analyzed_total_35mm} × 35mm • ${stats.analyzed_avg_utilization}% util • ${stats.analyzed_temp_rolls_created + stats.analyzed_temp_rolls_used} temp`);
+        
+        // Update registered stats
+        updateStatCard(statCards[2], stats.total_registered, 
+            `${stats.registered_total_rolls} rolls • ${stats.registered_total_size_formatted || 'Size N/A'}`);
+        
+        // Update total documents stats
+        const totalDocs = stats.analyzed_total_documents + stats.registered_total_documents;
+        const totalPages = stats.analyzed_total_pages + stats.registered_total_pages;
+        updateStatCard(statCards[3], totalDocs, 
+            `${totalPages} pages • ${stats.analyzed_total_oversized} oversized`);
+    }
+}
+
+/**
+ * Update individual stat card
+ */
+function updateStatCard(card, number, details) {
+    const numberEl = card.querySelector('.stat-number');
+    const detailsEl = card.querySelector('.stat-details small');
+    
+    if (numberEl) {
+        numberEl.classList.remove('skeleton-text');
+        numberEl.textContent = number;
+    }
+    
+    if (detailsEl) {
+        detailsEl.classList.remove('skeleton-text');
+        detailsEl.textContent = details;
+    }
+    
+    card.classList.remove('skeleton-loading');
+}
+
+/**
+ * Update section tab counts
+ */
+function updateSectionTabCounts(stats) {
+    const tabs = document.querySelectorAll('.section-tab');
+    
+    tabs.forEach(tab => {
+        const text = tab.textContent.trim();
+        if (text.includes('Unanalyzed')) {
+            tab.innerHTML = `<i class="fas fa-folder-open"></i> Unanalyzed (${stats.total_unanalyzed})`;
+        } else if (text.includes('Analyzed')) {
+            tab.innerHTML = `<i class="fas fa-chart-line"></i> Analyzed (${stats.total_analyzed})`;
+        } else if (text.includes('Registered')) {
+            tab.innerHTML = `<i class="fas fa-check-circle"></i> Registered (${stats.total_registered})`;
+        }
+    });
+}
+
+/**
+ * Generate real content HTML from data
+ */
+function generateRealContentHTML(data, realContent) {
+    let htmlContent = '';
+    
+    // Generate unanalyzed section
+    if (data.sections_data.unanalyzed && data.sections_data.unanalyzed.length > 0) {
+        htmlContent += generateUnanalyzedSectionHTML(data.sections_data.unanalyzed);
+    }
+    
+    // Generate analyzed section
+    if (data.sections_data.analyzed && data.sections_data.analyzed.length > 0) {
+        htmlContent += generateAnalyzedSectionHTML(data.sections_data.analyzed);
+    }
+    
+    // Generate registered section
+    if (data.sections_data.registered && data.sections_data.registered.length > 0) {
+        htmlContent += generateRegisteredSectionHTML(data.sections_data.registered);
+    }
+    
+    // Handle empty state
+    if (!data.sections_data.unanalyzed.length && !data.sections_data.analyzed.length && !data.sections_data.registered.length) {
+        htmlContent = generateEmptyStateHTML();
+    }
+    
+    // Add pagination if needed
+    if (data.page_obj && data.page_obj.num_pages > 1) {
+        htmlContent += generatePaginationHTML(data.page_obj);
+    }
+    
+    realContent.innerHTML = htmlContent;
+}
+
+/**
+ * Generate unanalyzed section HTML
+ */
+function generateUnanalyzedSectionHTML(folders) {
+    return `
+        <div class="section-container unanalyzed-section">
+            <div class="section-header">
+                <h2><i class="fas fa-folder-open"></i> Unanalyzed Folders</h2>
+                <p class="section-description">Folders that haven't been analyzed yet - unknown content</p>
+            </div>
+            <div class="cards-grid">
+                ${folders.map(folder => generateUnanalyzedCardHTML(folder)).join('')}
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Generate analyzed section HTML
+ */
+function generateAnalyzedSectionHTML(folders) {
+    return `
+        <div class="section-container analyzed-section">
+            <div class="section-header">
+                <h2><i class="fas fa-chart-line"></i> Analyzed Folders</h2>
+                <p class="section-description">Folders that have been analyzed but not yet registered</p>
+            </div>
+            <div class="cards-grid">
+                ${folders.map(folder => generateAnalyzedCardHTML(folder)).join('')}
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Generate registered section HTML
+ */
+function generateRegisteredSectionHTML(projects) {
+    return `
+        <div class="section-container registered-section">
+            <div class="section-header">
+                <h2><i class="fas fa-check-circle"></i> Registered Projects</h2>
+                <p class="section-description">Projects that have been registered and are in the workflow</p>
+            </div>
+            <div class="cards-grid">
+                ${projects.map(project => generateRegisteredCardHTML(project)).join('')}
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Generate individual card HTML for unanalyzed folders
+ */
+function generateUnanalyzedCardHTML(folder) {
+    return `
+        <div class="folder-card unanalyzed">
+            <div class="card-header">
+                <div class="card-title">
+                    <h3>${escapeHtml(folder.folder_name)}</h3>
+                    <div class="card-meta">
+                        <span class="status-badge status-unanalyzed">Unanalyzed</span>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="folder-path">
+                    <i class="fas fa-folder-open"></i>
+                    <span title="${escapeHtml(folder.folder_path)}">${escapeHtml(truncateText(folder.folder_path, 50))}</span>
+                </div>
+                <div class="key-metrics">
+                    <div class="metric">
+                        <i class="fas fa-file metric-icon"></i>
+                        <div class="metric-content">
+                            <div class="metric-value">${folder.file_count || 0}</div>
+                            <div class="metric-label">Total Files</div>
+                        </div>
+                    </div>
+                    <div class="metric">
+                        <i class="fas fa-file-pdf metric-icon"></i>
+                        <div class="metric-content">
+                            <div class="metric-value">${folder.pdf_count || 0}</div>
+                            <div class="metric-label">PDFs</div>
+                        </div>
+                    </div>
+                    <div class="metric">
+                        <i class="fas fa-file-excel metric-icon"></i>
+                        <div class="metric-content">
+                            <div class="metric-value">${folder.excel_count || 0}</div>
+                            <div class="metric-label">Excel</div>
+                        </div>
+                    </div>
+                    <div class="metric">
+                        <i class="fas fa-file-alt metric-icon"></i>
+                        <div class="metric-content">
+                            <div class="metric-value">${folder.other_count || 0}</div>
+                            <div class="metric-label">Others</div>
+                        </div>
+                    </div>
+                    <div class="metric">
+                        <i class="fas fa-hdd metric-icon"></i>
+                        <div class="metric-content">
+                            <div class="metric-value">${folder.total_size_formatted || 'N/A'}</div>
+                            <div class="metric-label">Size</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <div class="card-actions">
+                    <button class="btn btn-primary" onclick="showAnalyzeModal('${escapeJs(folder.folder_path)}', '${escapeJs(folder.folder_name)}')">
+                        <i class="fas fa-chart-line"></i>
+                        Analyze
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Generate individual card HTML for analyzed folders
+ */
+function generateAnalyzedCardHTML(folder) {
+    // Format analyzed date and user info
+    const analyzedDate = folder.analyzed_at ? formatDate(folder.analyzed_at) : 'Unknown';
+    const analyzedBy = folder.analyzed_by ? folder.analyzed_by.username : 'Unknown';
+    
+    // Generate workflow badge
+    let workflowBadge = '';
+    if (folder.recommended_workflow && folder.recommended_workflow !== 'unknown') {
+        workflowBadge = `<span class="workflow-badge">${escapeHtml(folder.recommended_workflow.charAt(0).toUpperCase() + folder.recommended_workflow.slice(1))}</span>`;
+    }
+    
+    // Generate film type badges
+    let filmTypeBadges = '';
+    if (folder.estimated_rolls_16mm > 0 && folder.estimated_rolls_35mm > 0) {
+        filmTypeBadges = `
+            <span class="film-type-badge film-16mm">16mm</span>
+            <span class="film-type-badge film-35mm">35mm</span>
+        `;
+    } else if (folder.estimated_rolls_35mm > 0) {
+        filmTypeBadges = `<span class="film-type-badge film-35mm">35mm</span>`;
+    } else if (folder.estimated_rolls_16mm > 0) {
+        filmTypeBadges = `<span class="film-type-badge film-16mm">16mm</span>`;
+    }
+    
+    // Generate film roll metrics
+    let filmRollMetrics = '';
+    if (folder.estimated_rolls_16mm > 0 && folder.estimated_rolls_35mm > 0) {
+        // Show both 16mm and 35mm
+        filmRollMetrics = `
+            <div class="metric metric-film">
+                <i class="fas fa-film metric-icon film-16mm-icon"></i>
+                <div class="metric-content">
+                    <div class="metric-value">${folder.estimated_rolls_16mm}</div>
+                    <div class="metric-label">16mm Rolls</div>
+                </div>
+            </div>
+            <div class="metric metric-film">
+                <i class="fas fa-film metric-icon film-35mm-icon"></i>
+                <div class="metric-content">
+                    <div class="metric-value">${folder.estimated_rolls_35mm}</div>
+                    <div class="metric-label">35mm Rolls</div>
+                </div>
+            </div>
+        `;
+    } else if (folder.estimated_rolls_35mm > 0) {
+        // Show only 35mm
+        filmRollMetrics = `
+            <div class="metric metric-film">
+                <i class="fas fa-film metric-icon film-35mm-icon"></i>
+                <div class="metric-content">
+                    <div class="metric-value">${folder.estimated_rolls_35mm}</div>
+                    <div class="metric-label">35mm Rolls</div>
+                </div>
+            </div>
+        `;
+    } else if (folder.estimated_rolls_16mm > 0) {
+        // Show only 16mm
+        filmRollMetrics = `
+            <div class="metric metric-film">
+                <i class="fas fa-film metric-icon film-16mm-icon"></i>
+                <div class="metric-content">
+                    <div class="metric-value">${folder.estimated_rolls_16mm}</div>
+                    <div class="metric-label">16mm Rolls</div>
+                </div>
+            </div>
+        `;
+    } else {
+        // Fallback to total rolls
+        filmRollMetrics = `
+            <div class="metric">
+                <i class="fas fa-film metric-icon"></i>
+                <div class="metric-content">
+                    <div class="metric-value">${folder.estimated_rolls || 0}</div>
+                    <div class="metric-label">Est. Rolls</div>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Generate temp roll metrics
+    let tempRollMetrics = '';
+    if (folder.estimated_temp_rolls_created > 0 || folder.estimated_temp_rolls_used > 0) {
+        let tempRollValue = '';
+        if (folder.estimated_temp_rolls_created > 0 && folder.estimated_temp_rolls_used > 0) {
+            tempRollValue = `${folder.estimated_temp_rolls_created}+${folder.estimated_temp_rolls_used}`;
+        } else if (folder.estimated_temp_rolls_created > 0) {
+            tempRollValue = `+${folder.estimated_temp_rolls_created}`;
+        } else {
+            tempRollValue = `${folder.estimated_temp_rolls_used}`;
+        }
+        
+        tempRollMetrics = `
+            <div class="metric metric-temp-rolls">
+                <i class="fas fa-recycle metric-icon"></i>
+                <div class="metric-content">
+                    <div class="metric-value">${tempRollValue}</div>
+                    <div class="metric-label">Temp Rolls</div>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Generate oversized alert
+    let oversizedAlert = '';
+    if (folder.has_oversized) {
+        oversizedAlert = `
+            <div class="oversized-alert">
+                <i class="fas fa-exclamation-triangle"></i>
+                Contains oversized documents (${folder.oversized_count})
+            </div>
+        `;
+    }
+    
+    // Generate PDF folder info
+    let pdfFolderInfo = '';
+    if (folder.pdf_folder_found) {
+        pdfFolderInfo = `
+            <div class="pdf-folder-info">
+                <i class="fas fa-check-circle"></i>
+                PDF folder found
+            </div>
+        `;
+    }
+    
+    // Generate utilization bar
+    let utilizationBar = '';
+    if (folder.overall_utilization > 0) {
+        let utilizationClass = '';
+        let utilizationText = '';
+        
+        if (folder.overall_utilization >= 85) {
+            utilizationClass = 'utilization-excellent';
+            utilizationText = 'Excellent efficiency';
+        } else if (folder.overall_utilization >= 70) {
+            utilizationClass = 'utilization-good';
+            utilizationText = 'Good efficiency';
+        } else if (folder.overall_utilization >= 50) {
+            utilizationClass = 'utilization-fair';
+            utilizationText = 'Fair efficiency';
+        } else {
+            utilizationClass = 'utilization-poor';
+            utilizationText = 'Low efficiency';
+        }
+        
+        utilizationBar = `
+            <div class="utilization-container">
+                <div class="utilization-header">
+                    <span class="utilization-label">Roll Utilization</span>
+                    <span class="utilization-percentage">${folder.overall_utilization}%</span>
+                </div>
+                <div class="utilization-bar">
+                    <div class="utilization-fill" style="width: ${folder.overall_utilization}%"></div>
+                </div>
+                <div class="utilization-description">
+                    <small class="${utilizationClass}">${utilizationText}</small>
+                </div>
+            </div>
+        `;
+    }
+    
+    return `
+        <div class="folder-card analyzed">
+            <div class="card-header">
+                <div class="card-title">
+                    <h3>${escapeHtml(folder.folder_name)}</h3>
+                    <div class="card-meta">
+                        <span class="status-badge status-analyzed">Analyzed</span>
+                        ${workflowBadge}
+                        ${filmTypeBadges}
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="folder-path">
+                    <i class="fas fa-folder-open"></i>
+                    <span title="${escapeHtml(folder.folder_path)}">${escapeHtml(truncateText(folder.folder_path, 50))}</span>
+                </div>
+                
+                <div class="key-metrics">
+                    <div class="metric">
+                        <i class="fas fa-file-alt metric-icon"></i>
+                        <div class="metric-content">
+                            <div class="metric-value">${folder.total_documents || 0}</div>
+                            <div class="metric-label">Documents</div>
+                        </div>
+                    </div>
+                    <div class="metric">
+                        <i class="fas fa-copy metric-icon"></i>
+                        <div class="metric-content">
+                            <div class="metric-value">${folder.total_pages || 0}</div>
+                            <div class="metric-label">Pages</div>
+                        </div>
+                    </div>
+                    
+                    ${filmRollMetrics}
+                    
+                    <!-- Always show oversized count -->
+                    <div class="metric metric-oversized">
+                        <i class="fas fa-exclamation-triangle metric-icon ${folder.has_oversized ? 'oversized-icon' : ''}"></i>
+                        <div class="metric-content">
+                            <div class="metric-value ${folder.has_oversized ? 'oversized-value' : ''}">${folder.oversized_count || 0}</div>
+                            <div class="metric-label">Oversized</div>
+                        </div>
+                    </div>
+                    
+                    ${tempRollMetrics}
+                    
+                    <div class="metric">
+                        <i class="fas fa-hdd metric-icon"></i>
+                        <div class="metric-content">
+                            <div class="metric-value">${folder.total_size_formatted || 'N/A'}</div>
+                            <div class="metric-label">Size</div>
+                        </div>
+                    </div>
+                </div>
+
+                ${oversizedAlert}
+                ${pdfFolderInfo}
+                ${utilizationBar}
+            </div>
+            <div class="card-footer">
+                <div class="analysis-info">
+                    <small>Analyzed: ${analyzedDate}</small>
+                    <small>By: ${analyzedBy}</small>
+                </div>
+                <div class="card-actions">
+                    <button class="btn btn-secondary" onclick="showAnalyzeModal('${escapeJs(folder.folder_path)}', '${escapeJs(folder.folder_name)}')">
+                        <i class="fas fa-sync-alt"></i>
+                        Re-analyze
+                    </button>
+                    <button class="btn btn-primary" onclick="showRegistrationModal(${folder.id}, '${escapeJs(folder.folder_name)}')">
+                        <i class="fas fa-plus-circle"></i>
+                        Register
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Generate individual card HTML for registered projects
+ */
+function generateRegisteredCardHTML(item) {
+    const project = item.project;
+    const data = item.data;
+    
+    // Generate doc type badge
+    let docTypeBadge = '';
+    if (project.doc_type) {
+        docTypeBadge = `<span class="doc-type-badge">${escapeHtml(project.doc_type)}</span>`;
+    }
+    
+    // Generate status badge based on project state
+    let statusBadge = '';
+    if (project.processing_complete) {
+        statusBadge = '<span class="status-badge status-completed">Completed</span>';
+    } else if (project.film_allocation_complete) {
+        statusBadge = '<span class="status-badge status-allocated">Allocated</span>';
+    } else if (data.total_documents) {
+        statusBadge = '<span class="status-badge status-analyzed">Analyzed</span>';
+    } else {
+        statusBadge = '<span class="status-badge status-registered">Registered</span>';
+    }
+    
+    // Generate temp roll metrics for registered projects
+    let tempRollMetrics = '';
+    if (data.temp_rolls_created > 0 || data.temp_rolls_used > 0) {
+        let tempRollValue = '';
+        if (data.temp_rolls_created > 0 && data.temp_rolls_used > 0) {
+            tempRollValue = `${data.temp_rolls_created}+${data.temp_rolls_used}`;
+        } else if (data.temp_rolls_created > 0) {
+            tempRollValue = `+${data.temp_rolls_created}`;
+        } else {
+            tempRollValue = `${data.temp_rolls_used}`;
+        }
+        
+        tempRollMetrics = `
+            <div class="metric metric-temp-rolls">
+                <i class="fas fa-recycle metric-icon"></i>
+                <div class="metric-content">
+                    <div class="metric-value">${tempRollValue}</div>
+                    <div class="metric-label">Temp Rolls</div>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Generate oversized alert for registered projects
+    let oversizedAlert = '';
+    if (data.has_oversized) {
+        oversizedAlert = `
+            <div class="oversized-alert">
+                <i class="fas fa-exclamation-triangle"></i>
+                Contains oversized documents (${data.oversized_count})
+            </div>
+        `;
+    }
+    
+    // Format size value
+    const sizeValue = (data.total_size_formatted && data.total_size_formatted !== "0 B") 
+        ? data.total_size_formatted 
+        : 'N/A';
+    
+    return `
+        <div class="project-card registered" onclick="viewProjectDetail(${project.id})">
+            <div class="card-header">
+                <div class="card-title">
+                    <h3>${escapeHtml(project.archive_id)}</h3>
+                    <div class="card-meta">
+                        <span class="location-badge location-${project.location.toLowerCase()}">${escapeHtml(project.location)}</span>
+                        ${docTypeBadge}
+                    </div>
+                </div>
+                <div class="card-status">
+                    ${statusBadge}
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="key-metrics">
+                    <div class="metric">
+                        <i class="fas fa-file-alt metric-icon"></i>
+                        <div class="metric-content">
+                            <div class="metric-value">${Math.floor(data.total_documents || 0)}</div>
+                            <div class="metric-label">Documents</div>
+                        </div>
+                    </div>
+                    <div class="metric">
+                        <i class="fas fa-copy metric-icon"></i>
+                        <div class="metric-content">
+                            <div class="metric-value">${Math.floor(data.total_pages || 0)}</div>
+                            <div class="metric-label">Pages</div>
+                        </div>
+                    </div>
+                    <div class="metric">
+                        <i class="fas fa-film metric-icon"></i>
+                        <div class="metric-content">
+                            <div class="metric-value">${data.total_rolls || 0}</div>
+                            <div class="metric-label">Rolls</div>
+                        </div>
+                    </div>
+                    <div class="metric">
+                        <i class="fas fa-hdd metric-icon"></i>
+                        <div class="metric-content">
+                            <div class="metric-value">${sizeValue}</div>
+                            <div class="metric-label">Size</div>
+                        </div>
+                    </div>
+                    
+                    ${tempRollMetrics}
+                </div>
+
+                ${oversizedAlert}
+            </div>
+            <div class="card-footer">
+                <div class="project-dates">
+                    <small>Created: ${formatDate(project.created_at)}</small>
+                    <small>Updated: ${formatDate(project.updated_at)}</small>
+                </div>
+                <div class="card-actions">
+                    <button class="action-btn" onclick="event.stopPropagation(); exportProjectData(${project.id})">
+                        <i class="fas fa-download"></i>
+                    </button>
+                    <button class="action-btn" onclick="event.stopPropagation(); refreshProjectData(${project.id})">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Generate empty state HTML
+ */
+function generateEmptyStateHTML() {
+    return `
+        <div class="empty-state">
+            <div class="empty-state-content">
+                <i class="fas fa-search empty-state-icon"></i>
+                <h3>No Items Found</h3>
+                <p>No folders or projects found matching your criteria.</p>
+                <div class="empty-state-actions">
+                    <button class="btn btn-primary" onclick="switchSection('all')">
+                        <i class="fas fa-eye"></i>
+                        View All
+                    </button>
+                    <a href="/register/" class="btn btn-secondary">
+                        <i class="fas fa-plus"></i>
+                        Register New Project
+                    </a>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Generate pagination HTML
+ */
+function generatePaginationHTML(pageObj) {
+    let paginationHTML = '<div class="pagination-container"><div class="pagination">';
+    
+    if (pageObj.has_previous) {
+        paginationHTML += `<a href="?page=${pageObj.previous_page_number}" class="page-link"><i class="fas fa-chevron-left"></i></a>`;
+    }
+    
+    // Simplified pagination - just show current page
+    paginationHTML += `<span class="page-link current">${pageObj.number}</span>`;
+    
+    if (pageObj.has_next) {
+        paginationHTML += `<a href="?page=${pageObj.next_page_number}" class="page-link"><i class="fas fa-chevron-right"></i></a>`;
+    }
+    
+    paginationHTML += '</div>';
+    paginationHTML += `<div class="pagination-info">Showing ${pageObj.start_index} - ${pageObj.end_index} of ${pageObj.count} items</div>`;
+    paginationHTML += '</div>';
+    
+    return paginationHTML;
+}
+
+/**
+ * Utility functions for HTML generation
+ */
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function escapeJs(text) {
+    return text.replace(/'/g, "\\'").replace(/"/g, '\\"');
+}
+
+function formatDate(dateString) {
+    if (!dateString) return 'Unknown';
+    
+    let date;
+    if (typeof dateString === 'string') {
+        // Handle ISO date strings from API
+        date = new Date(dateString);
+    } else {
+        // Handle Date objects
+        date = dateString;
+    }
+    
+    // Check if date is valid
+    if (isNaN(date.getTime())) {
+        return 'Invalid Date';
+    }
+    
+    return date.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric' 
+    });
+}
 
 /**
  * Initialize the analyze page
@@ -1719,3 +2733,198 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style); 
+
+/**
+ * Perform search with cache invalidation
+ */
+function performSearch() {
+    const searchInput = document.getElementById('search-input');
+    const newQuery = searchInput ? searchInput.value.trim() : '';
+    
+    // Check if search query has changed
+    if (window.SEARCH_QUERY !== newQuery) {
+        window.SEARCH_QUERY = newQuery;
+        invalidateCache(); // Invalidate cache when search changes
+        
+        if (window.SKELETON_MODE) {
+            loadRealData(); // Reload with new search
+        } else {
+            // Redirect with new search parameter
+            updateUrlAndReload();
+        }
+    }
+}
+
+/**
+ * Apply section filter with cache invalidation
+ */
+function applyFilter(section) {
+    // Check if filter has changed
+    if (window.SECTION_FILTER !== section) {
+        window.SECTION_FILTER = section;
+        invalidateCache(); // Invalidate cache when filter changes
+        
+        if (window.SKELETON_MODE) {
+            loadRealData(); // Reload with new filter
+        } else {
+            // Redirect with new filter parameter
+            updateUrlAndReload();
+        }
+    }
+    
+    // Update active tab
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+}
+
+/**
+ * Apply sorting with cache invalidation
+ */
+function applySort(field, direction = null) {
+    let hasChanged = false;
+    
+    // Determine sort direction
+    if (direction === null) {
+        if (window.SORT_FIELD === field) {
+            direction = window.SORT_DIRECTION === 'asc' ? 'desc' : 'asc';
+        } else {
+            direction = 'asc';
+        }
+    }
+    
+    // Check if sort has changed
+    if (window.SORT_FIELD !== field || window.SORT_DIRECTION !== direction) {
+        window.SORT_FIELD = field;
+        window.SORT_DIRECTION = direction;
+        hasChanged = true;
+    }
+    
+    if (hasChanged) {
+        invalidateCache(); // Invalidate cache when sort changes
+        
+        if (window.SKELETON_MODE) {
+            loadRealData(); // Reload with new sort
+        } else {
+            // Redirect with new sort parameter
+            updateUrlAndReload();
+        }
+    }
+    
+    // Update sort indicators
+    updateSortIndicators();
+}
+
+/**
+ * Update URL and reload page (for non-skeleton mode)
+ */
+function updateUrlAndReload() {
+    const url = new URL(window.location);
+    
+    // Update URL parameters
+    if (window.SECTION_FILTER && window.SECTION_FILTER !== 'all') {
+        url.searchParams.set('section', window.SECTION_FILTER);
+    } else {
+        url.searchParams.delete('section');
+    }
+    
+    if (window.SEARCH_QUERY) {
+        url.searchParams.set('search', window.SEARCH_QUERY);
+    } else {
+        url.searchParams.delete('search');
+    }
+    
+    if (window.SORT_FIELD && window.SORT_FIELD !== 'folder_name') {
+        url.searchParams.set('sort', window.SORT_FIELD);
+    } else {
+        url.searchParams.delete('sort');
+    }
+    
+    if (window.SORT_DIRECTION && window.SORT_DIRECTION !== 'asc') {
+        url.searchParams.set('direction', window.SORT_DIRECTION);
+    } else {
+        url.searchParams.delete('direction');
+    }
+    
+    // Reload page with new parameters
+    window.location.href = url.toString();
+}
+
+/**
+ * Refresh data and clear cache
+ */
+function refreshDashboardData() {
+    console.log('🔄 Refreshing dashboard data...');
+    
+    // Clear all cache
+    clearAllCache();
+    
+    if (window.SKELETON_MODE) {
+        // Reload data in skeleton mode
+        loadRealData();
+    } else {
+        // Reload page for non-skeleton mode
+        location.reload();
+    }
+}
+
+/**
+ * Add cache status indicator to the page
+ */
+function addCacheStatusIndicator() {
+    const header = document.querySelector('.dashboard-header');
+    if (!header) return;
+    
+    const cacheIndicator = document.createElement('div');
+    cacheIndicator.id = 'cache-status';
+    cacheIndicator.className = 'cache-status';
+    cacheIndicator.innerHTML = `
+        <div class="cache-info">
+            <span class="cache-icon" title="Data cached locally">
+                <i class="fas fa-database"></i>
+            </span>
+            <span class="cache-time" id="cache-time"></span>
+        </div>
+        <div class="cache-actions">
+            <button class="btn-link" onclick="refreshDashboardData()" title="Refresh data">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+            <button class="btn-link" onclick="clearAllCache()" title="Clear cache">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    `;
+    
+    header.appendChild(cacheIndicator);
+    updateCacheStatus();
+}
+
+/**
+ * Update cache status display
+ */
+function updateCacheStatus() {
+    const cacheTime = document.getElementById('cache-time');
+    const cacheStatus = document.getElementById('cache-status');
+    
+    if (!cacheTime || !cacheStatus) return;
+    
+    const cachedData = getCachedData();
+    if (cachedData) {
+        const cacheKey = generateCacheKey();
+        const cached = localStorage.getItem(cacheKey);
+        
+        if (cached) {
+            const cacheData = JSON.parse(cached);
+            const age = Date.now() - cacheData.timestamp;
+            const ageMinutes = Math.floor(age / (1000 * 60));
+            
+            cacheTime.textContent = ageMinutes === 0 ? 'Just now' : `${ageMinutes}m ago`;
+            cacheStatus.style.display = 'flex';
+            return;
+        }
+    }
+    
+    // No cache or invalid cache
+    cacheStatus.style.display = 'none';
+}

@@ -9,7 +9,7 @@
  9. [] Fix Label generation card (show recently generated and historical seperate)
 10. [] Feat Quality (Compare original documents with film and blipindex (maybe with MFDWin integration))
 11. [] Implement offline transfer module
-12. [] Implement motor control on films with full rolls (spool the remaining film)
+12. [x] Implement motor control on films with full rolls (spool the remaining film)
 13. [] 
 14. [] 
 15. [] 

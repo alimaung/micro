@@ -820,6 +820,11 @@
     margin-top: 8px;
 }
 
+/* Motor 0 (Shutter) has 3 buttons */
+.motor-control-group:first-child .action-buttons {
+    grid-template-columns: 1fr 1fr 1fr;
+}
+
 .action-btn {
     padding: 12px 8px;
     border-radius: 6px;
@@ -856,6 +861,18 @@
 .action-btn.stop-btn:hover {
     background-color: #c82333;
     border-color: #c82333;
+    transform: translateY(-1px);
+}
+
+.action-btn.home-btn {
+    background-color: #007bff;
+    border-color: #007bff;
+    color: white;
+}
+
+.action-btn.home-btn:hover {
+    background-color: #0056b3;
+    border-color: #0056b3;
     transform: translateY(-1px);
 }
 

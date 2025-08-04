@@ -10,7 +10,7 @@ import os
 import traceback
 from .ui_automation import (
     find_window, find_control, click_button, wait_for_window,
-    safe_get_window_text, enumerate_window_children
+    safe_get_window_text, enumerate_window_children, wait_for_sma_main_window_ready
 )
 from .sma_exceptions import SMAWindowNotFoundError, SMAControlNotFoundError, SMATimeoutError
 
@@ -86,19 +86,23 @@ def handle_data_source_selection(app, template_name, logger):
 
         time.sleep(1)
         
-        # Wait until the correct main window is visible again
-        logger.info("Waiting for the main SMA window to reappear...")
+        # Wait for the loading process to complete and main window to be ready
+        logger.info("Waiting for document loading to complete and main SMA window to be ready...")
         try:
-            # Define the specific window class we're looking for
-            main_window_class = "WindowsForms10.Window.8.app.0.141b42a_r6_ad1"
-            
-            # Wait for the window with the specific class to be visible
-            main_win = find_window(app, 
-                                   class_name=main_window_class,
-                                   timeout=30,
-                                   logger=logger)
-            
-            return main_win
+            # First try the sophisticated approach
+            try:
+                main_win = wait_for_sma_main_window_ready(app, logger, timeout=30)
+                return main_win
+            except SMATimeoutError:
+                logger.warning("Sophisticated window detection failed, trying simple approach...")
+                
+                # Fallback: Just wait a bit and look for main window
+                time.sleep(5)  # Give time for loading
+                
+                # Try to find main window by title regex
+                main_win = find_window(app, title_re="SMA 51.*", timeout=30, logger=logger)
+                logger.info("Found main window using simple fallback approach")
+                return main_win
         except Exception as e:
             logger.error(f"Error waiting for main window to reappear: {e}")
             
@@ -124,21 +128,24 @@ def handle_data_source_selection(app, template_name, logger):
 def handle_film_start(main_win, app, logger):
     """Handle the film start process."""
     try:
-        # Find the "Verfilmen starten" button
+        # Wait for the "Verfilmen starten" button to be available and enabled
+        logger.info("Waiting for 'Verfilmen starten' button to be available...")
         start_film = find_control(
             main_win,
             title="Verfilmen starten", 
             auto_id="cmdStart", 
             control_type="Button", 
-            timeout=30, 
+            timeout=60,  # Increased timeout for loading
             logger=logger
         )
         
         # Click the "Verfilmen starten" button
         click_button(start_film, logger)
         
-        # Wait for the "Film einlegen" window to appear
+        # Wait for the "Verfilmen der Dokumente" window to appear
+        # This confirms our click worked
         film_window_title = "Verfilmen der Dokumente"
+        logger.info(f"Waiting for '{film_window_title}' window to confirm button click worked...")
         film_window = wait_for_window(
             app=app, 
             title=film_window_title, 
@@ -146,6 +153,7 @@ def handle_film_start(main_win, app, logger):
             logger=logger
         )
         
+        logger.info("Film start process completed successfully")
         return film_window
     
     except Exception as e:

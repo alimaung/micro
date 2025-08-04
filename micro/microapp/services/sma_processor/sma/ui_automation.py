@@ -13,6 +13,7 @@ Any changes to timing or interaction sequences could break the automation.
 
 import time
 import sys
+import win32gui
 from pywinauto import Application
 from .sma_exceptions import (
     SMAProcessNotFoundError, SMAWindowNotFoundError, SMAControlNotFoundError,
@@ -555,4 +556,179 @@ def retry_ui_operation(operation_func, max_retries=3, delay=1, logger=None):
             if logger:
                 logger.warning(f"UI operation attempt {attempt + 1} failed: {e}, retrying...")
             time.sleep(delay)
-    return None 
+    return None
+
+def get_windows_with_win32gui(target_classes, logger=None):
+    """Get windows using win32gui (same method as test script)."""
+    def enum_window_callback(hwnd, windows):
+        if win32gui.IsWindowVisible(hwnd):
+            window_text = win32gui.GetWindowText(hwnd)
+            class_name = win32gui.GetClassName(hwnd)
+            if class_name in target_classes:
+                windows.append((hwnd, window_text, class_name))
+        return True
+    
+    windows = []
+    win32gui.EnumWindows(enum_window_callback, windows)
+    
+    if logger:
+        titles = [f'"{title}"' if title else "(No title)" for _, title, _ in windows]
+        logger.debug(f"Win32GUI found windows: {' | '.join(titles)}")
+    
+    return windows
+
+def wait_for_sma_main_window_ready(app, logger, timeout=60):
+    """
+    Wait for the SMA main window to be ready after clicking 'Neue Rolle beginnen'.
+    
+    Based on the observed window flow:
+    1. Wait for loading to complete (no PDF Renderer windows)
+    2. Find the main SMA window (title starts with "SMA 51")
+    3. Return the main window when ready
+    """
+    if logger:
+        logger.info("Waiting for SMA main window to be ready (loading process to complete)...")
+    
+    start_time = time.time()
+    target_classes = ["WindowsForms10.Window.8.app.0.141b42a_r6_ad1", "WindowsForms10.Window.8.app.0.141b42a_r7_ad1"]
+    
+    # First, wait for the loading process to complete (no more PDF Renderer)
+    loading_complete = False
+    main_window_found = False
+    
+    while time.time() - start_time < timeout:
+        try:
+            # First try pywinauto method
+            all_windows = app.windows()
+            pywinauto_windows = []
+            
+            for window in all_windows:
+                try:
+                    if window.class_name() in target_classes and window.is_visible():
+                        title = window.window_text()
+                        pywinauto_windows.append((window, title))
+                except Exception:
+                    continue
+            
+            # Also try win32gui method as fallback
+            win32_windows = get_windows_with_win32gui(target_classes, logger)
+            
+            if logger:
+                pywinauto_titles = [f'"{title}"' if title else "(No title)" for _, title in pywinauto_windows]
+                logger.debug(f"PyWinAuto windows: {' | '.join(pywinauto_titles)}")
+            
+            # Check window states using win32gui results (more reliable)
+            main_window_title = None
+            datenquelle_present = False
+            has_pdf_renderer = False
+            
+            for hwnd, title, class_name in win32_windows:
+                if title and title.startswith("SMA 51"):
+                    main_window_title = title
+                    main_window_found = True
+                elif title == "Datenquelle auswählen":
+                    datenquelle_present = True
+                elif not title:  # PDF Renderer or other loading windows
+                    has_pdf_renderer = True
+            
+            # We're ready when we have the main window and no PDF Renderer
+            # (Datenquelle window stays open - that's normal!)
+            if main_window_title and not has_pdf_renderer:
+                if logger:
+                    logger.info("SMA main window is ready! Loading process completed.")
+                
+                # First try to find in pywinauto windows
+                main_window = None
+                for window, title in pywinauto_windows:
+                    if title and title.startswith("SMA 51"):
+                        main_window = window
+                        break
+                
+                # If pywinauto didn't find it, create window object from win32gui handle
+                if not main_window:
+                    main_window_hwnd = None
+                    for hwnd, title, class_name in win32_windows:
+                        if title and title.startswith("SMA 51"):
+                            main_window_hwnd = hwnd
+                            break
+                    
+                    if main_window_hwnd:
+                        try:
+                            # Create pywinauto window object from handle
+                            from pywinauto import win32_element_info
+                            main_window = app.window(handle=main_window_hwnd)
+                            if logger:
+                                logger.info("Created pywinauto window object from win32gui handle")
+                        except Exception as e:
+                            if logger:
+                                logger.error(f"Failed to create pywinauto window from handle: {e}")
+                
+                if main_window:
+                    try:
+                        main_window.set_focus()
+                        return main_window
+                    except Exception as e:
+                        if logger:
+                            logger.error(f"Failed to set focus on main window: {e}")
+                        # Return anyway, maybe it will work
+                        return main_window
+                else:
+                    if logger:
+                        logger.warning("Found main window with win32gui but couldn't get pywinauto object")
+            
+            # Log current state for debugging
+            if logger:
+                elapsed = int(time.time() - start_time)
+                if elapsed % 5 == 0:  # Log every 5 seconds
+                    state_msg = f"Waiting for ready state (elapsed: {elapsed}s) - "
+                    if not main_window_found:
+                        state_msg += "Main window not found, "
+                    if has_pdf_renderer:
+                        state_msg += "PDF Renderer still loading, "
+                    logger.info(state_msg.rstrip(", "))
+            
+        except Exception as e:
+            if logger:
+                logger.debug(f"Error checking window state: {e}")
+        
+        time.sleep(0.5)  # Check more frequently
+    
+    # Timeout reached - try to find any main window as fallback
+    if logger:
+        logger.warning(f"Timeout reached, attempting fallback window search...")
+    
+    try:
+        # Try to find main window by title regex as fallback
+        main_win = find_window(app, title_re="SMA 51.*", timeout=10, logger=logger)
+        if logger:
+            logger.info("Found main window using fallback method")
+        return main_win
+    except Exception as fallback_error:
+        if logger:
+            logger.error(f"Fallback window search also failed: {fallback_error}")
+    
+    # Final failure
+    error_msg = f"SMA main window was not ready within {timeout} seconds"
+    if logger:
+        logger.error(error_msg)
+        
+        # Final diagnostic
+        try:
+            logger.info("Final window state at timeout:")
+            all_windows = app.windows()
+            for i, window in enumerate(all_windows):
+                try:
+                    if window.is_visible():
+                        title = window.window_text()
+                        class_name = window.class_name()
+                        logger.info(f"  Window {i+1}: '{title}' ({class_name})")
+                except Exception:
+                    pass
+        except Exception:
+            pass
+    
+    raise SMATimeoutError(
+        operation="wait_for_sma_main_window_ready",
+        timeout_duration=timeout,
+        message=error_msg
+    ) 

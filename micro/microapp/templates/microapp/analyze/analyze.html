@@ -6,6 +6,7 @@
 
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'microapp/css/analyze/analyze.css' %}">
+    <link rel="stylesheet" href="{% static 'microapp/css/analyze/skeleton.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -18,32 +19,32 @@
                 <p class="analyze-description">{% trans "Discover, analyze, and register projects" %}</p>
             </div>
             <div class="header-stats">
-                <div class="stat-card">
-                    <div class="stat-number">{{ summary_stats.total_unanalyzed }}</div>
+                <div class="stat-card {% if skeleton_mode %}skeleton-loading{% endif %}">
+                    <div class="stat-number {% if skeleton_mode %}skeleton-text{% endif %}">{{ summary_stats.total_unanalyzed }}</div>
                     <div class="stat-label">{% trans "Unanalyzed" %}</div>
                     <div class="stat-details">
-                        <small>{{ summary_stats.unanalyzed_total_pdfs }} PDFs • {{ summary_stats.unanalyzed_total_excel }} Excel • {{ summary_stats.unanalyzed_total_size_formatted }}</small>
+                        <small class="{% if skeleton_mode %}skeleton-text{% endif %}">{{ summary_stats.unanalyzed_total_pdfs }} PDFs • {{ summary_stats.unanalyzed_total_excel }} Excel • {{ summary_stats.unanalyzed_total_size_formatted }}</small>
                     </div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-number">{{ summary_stats.total_analyzed }}</div>
+                <div class="stat-card {% if skeleton_mode %}skeleton-loading{% endif %}">
+                    <div class="stat-number {% if skeleton_mode %}skeleton-text{% endif %}">{{ summary_stats.total_analyzed }}</div>
                     <div class="stat-label">{% trans "Analyzed" %}</div>
                     <div class="stat-details">
-                        <small>{{ summary_stats.analyzed_total_16mm }} × 16mm • {{ summary_stats.analyzed_total_35mm }} × 35mm • {{ summary_stats.analyzed_avg_utilization }}% util • {{ summary_stats.analyzed_temp_rolls_created|add:summary_stats.analyzed_temp_rolls_used }} temp</small>
+                        <small class="{% if skeleton_mode %}skeleton-text{% endif %}">{{ summary_stats.analyzed_total_16mm }} × 16mm • {{ summary_stats.analyzed_total_35mm }} × 35mm • {{ summary_stats.analyzed_avg_utilization }}% util • {{ summary_stats.analyzed_temp_rolls_created|add:summary_stats.analyzed_temp_rolls_used }} temp</small>
                     </div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-number">{{ summary_stats.total_registered }}</div>
+                <div class="stat-card {% if skeleton_mode %}skeleton-loading{% endif %}">
+                    <div class="stat-number {% if skeleton_mode %}skeleton-text{% endif %}">{{ summary_stats.total_registered }}</div>
                     <div class="stat-label">{% trans "Registered" %}</div>
                     <div class="stat-details">
-                        <small>{{ summary_stats.registered_total_rolls }} rolls • {% if summary_stats.registered_total_size_formatted and summary_stats.registered_total_size_formatted != "0 B" %}{{ summary_stats.registered_total_size_formatted }}{% else %}Size N/A{% endif %}</small>
+                        <small class="{% if skeleton_mode %}skeleton-text{% endif %}">{{ summary_stats.registered_total_rolls }} rolls • {% if summary_stats.registered_total_size_formatted and summary_stats.registered_total_size_formatted != "0 B" %}{{ summary_stats.registered_total_size_formatted }}{% else %}Size N/A{% endif %}</small>
                     </div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-number">{{ summary_stats.analyzed_total_documents|add:summary_stats.registered_total_documents|floatformat:0 }}</div>
+                <div class="stat-card {% if skeleton_mode %}skeleton-loading{% endif %}">
+                    <div class="stat-number {% if skeleton_mode %}skeleton-text{% endif %}">{{ summary_stats.analyzed_total_documents|add:summary_stats.registered_total_documents|floatformat:0 }}</div>
                     <div class="stat-label">{% trans "Total Documents" %}</div>
                     <div class="stat-details">
-                        <small>{{ summary_stats.analyzed_total_pages|add:summary_stats.registered_total_pages|floatformat:0 }} pages • {{ summary_stats.analyzed_total_oversized }} oversized</small>
+                        <small class="{% if skeleton_mode %}skeleton-text{% endif %}">{{ summary_stats.analyzed_total_pages|add:summary_stats.registered_total_pages|floatformat:0 }} pages • {{ summary_stats.analyzed_total_oversized }} oversized</small>
                     </div>
                 </div>
             </div>
@@ -61,17 +62,17 @@
             <button class="section-tab {% if section_filter == 'unanalyzed' %}active{% endif %}" 
                     onclick="switchSection('unanalyzed')">
                 <i class="fas fa-folder-open"></i>
-                {% trans "Unanalyzed" %} ({{ summary_stats.total_unanalyzed }})
+                {% trans "Unanalyzed" %} {% if not skeleton_mode %}({{ summary_stats.total_unanalyzed }}){% endif %}
             </button>
             <button class="section-tab {% if section_filter == 'analyzed' %}active{% endif %}" 
                     onclick="switchSection('analyzed')">
                 <i class="fas fa-chart-line"></i>
-                {% trans "Analyzed" %} ({{ summary_stats.total_analyzed }})
+                {% trans "Analyzed" %} {% if not skeleton_mode %}({{ summary_stats.total_analyzed }}){% endif %}
             </button>
             <button class="section-tab {% if section_filter == 'registered' %}active{% endif %}" 
                     onclick="switchSection('registered')">
                 <i class="fas fa-check-circle"></i>
-                {% trans "Registered" %} ({{ summary_stats.total_registered }})
+                {% trans "Registered" %} {% if not skeleton_mode %}({{ summary_stats.total_registered }}){% endif %}
             </button>
         </div>
         
@@ -91,461 +92,712 @@
         </div>
     </div>
 
-    <!-- Content Sections -->
-    {% if section_filter == 'all' or section_filter == 'unanalyzed' %}
-    {% if sections_data.unanalyzed %}
-    <div class="section-container unanalyzed-section">
-        <div class="section-header">
-            <h2><i class="fas fa-folder-open"></i> {% trans "Unanalyzed Folders" %}</h2>
-            <p class="section-description">{% trans "Folders that haven't been analyzed yet - unknown content" %}</p>
-        </div>
-        
-        <div class="cards-grid">
-            {% for folder in sections_data.unanalyzed %}
-            <div class="folder-card unanalyzed">
-                <div class="card-header">
-                    <div class="card-title">
-                        <h3>{{ folder.folder_name }}</h3>
-                        <div class="card-meta">
-                            <span class="status-badge status-unanalyzed">{% trans "Unanalyzed" %}</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card-body">
-                    <div class="folder-path">
-                        <i class="fas fa-folder-open"></i>
-                        <span title="{{ folder.folder_path }}">{{ folder.folder_path|truncatechars:50 }}</span>
-                    </div>
-                    
-                    <div class="key-metrics">
-                        <div class="metric">
-                            <i class="fas fa-file metric-icon"></i>
-                            <div class="metric-content">
-                                <div class="metric-value">{{ folder.file_count }}</div>
-                                <div class="metric-label">{% trans "Total Files" %}</div>
-                            </div>
-                        </div>
-                        <div class="metric">
-                            <i class="fas fa-file-pdf metric-icon"></i>
-                            <div class="metric-content">
-                                <div class="metric-value">{{ folder.pdf_count }}</div>
-                                <div class="metric-label">{% trans "PDFs" %}</div>
-                            </div>
-                        </div>
-                        <div class="metric">
-                            <i class="fas fa-file-excel metric-icon"></i>
-                            <div class="metric-content">
-                                <div class="metric-value">{{ folder.excel_count|default:0 }}</div>
-                                <div class="metric-label">{% trans "Excel" %}</div>
-                            </div>
-                        </div>
-                        <div class="metric">
-                            <i class="fas fa-file-alt metric-icon"></i>
-                            <div class="metric-content">
-                                <div class="metric-value">{{ folder.other_count|default:0 }}</div>
-                                <div class="metric-label">{% trans "Others" %}</div>
-                            </div>
-                        </div>
-                        <div class="metric">
-                            <i class="fas fa-hdd metric-icon"></i>
-                            <div class="metric-content">
-                                <div class="metric-value">{{ folder.total_size_formatted }}</div>
-                                <div class="metric-label">{% trans "Size" %}</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card-footer">
-                    <div class="card-actions">
-                        <button class="btn btn-primary" 
-                                onclick="showAnalyzeModal('{{ folder.folder_path|escapejs }}', '{{ folder.folder_name|escapejs }}')">
-                            <i class="fas fa-chart-line"></i>
-                            {% trans "Analyze" %}
-                        </button>
-                    </div>
-                </div>
+    <!-- Skeleton Loading State -->
+    {% if skeleton_mode %}
+    <div id="skeleton-content">
+        <!-- Skeleton for unanalyzed section -->
+        {% if section_filter == 'all' or section_filter == 'unanalyzed' %}
+        <div class="section-container unanalyzed-section">
+            <div class="section-header">
+                <h2><i class="fas fa-folder-open"></i> {% trans "Unanalyzed Folders" %}</h2>
+                <p class="section-description">{% trans "Folders that haven't been analyzed yet - unknown content" %}</p>
             </div>
-            {% endfor %}
-        </div>
-    </div>
-    {% endif %}
-    {% endif %}
-
-    {% if section_filter == 'all' or section_filter == 'analyzed' %}
-    {% if sections_data.analyzed %}
-    <div class="section-container analyzed-section">
-        <div class="section-header">
-            <h2><i class="fas fa-chart-line"></i> {% trans "Analyzed Folders" %}</h2>
-            <p class="section-description">{% trans "Folders that have been analyzed but not yet registered" %}</p>
-        </div>
-        
-        <div class="cards-grid">
-            {% for folder in sections_data.analyzed %}
-            <div class="folder-card analyzed">
-                <div class="card-header">
-                    <div class="card-title">
-                        <h3>{{ folder.folder_name }}</h3>
-                        <div class="card-meta">
-                            <span class="status-badge status-analyzed">{% trans "Analyzed" %}</span>
-                            {% if folder.recommended_workflow != 'unknown' %}
-                                <span class="workflow-badge">{{ folder.recommended_workflow|title }}</span>
-                            {% endif %}
-                            
-                            <!-- Film Type Badges -->
-                            {% if folder.estimated_rolls_16mm > 0 and folder.estimated_rolls_35mm > 0 %}
-                                <span class="film-type-badge film-16mm">16mm</span>
-                                <span class="film-type-badge film-35mm">35mm</span>
-                            {% elif folder.estimated_rolls_35mm > 0 %}
-                                <span class="film-type-badge film-35mm">35mm</span>
-                            {% elif folder.estimated_rolls_16mm > 0 %}
-                                <span class="film-type-badge film-16mm">16mm</span>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card-body">
-                    <div class="folder-path">
-                        <i class="fas fa-folder-open"></i>
-                        <span title="{{ folder.folder_path }}">{{ folder.folder_path|truncatechars:50 }}</span>
-                    </div>
-                    
-                    <div class="key-metrics">
-                        <div class="metric">
-                            <i class="fas fa-file-alt metric-icon"></i>
-                            <div class="metric-content">
-                                <div class="metric-value">{{ folder.total_documents }}</div>
-                                <div class="metric-label">{% trans "Documents" %}</div>
+            
+            <div class="cards-grid">
+                {% for i in "123456"|make_list %}
+                <div class="folder-card unanalyzed skeleton-card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <h3 class="skeleton-text">Loading folder name...</h3>
+                            <div class="card-meta">
+                                <span class="status-badge skeleton-badge">{% trans "Unanalyzed" %}</span>
                             </div>
                         </div>
-                        <div class="metric">
-                            <i class="fas fa-copy metric-icon"></i>
-                            <div class="metric-content">
-                                <div class="metric-value">{{ folder.total_pages }}</div>
-                                <div class="metric-label">{% trans "Pages" %}</div>
-                            </div>
+                    </div>
+
+                    <div class="card-body">
+                        <div class="folder-path">
+                            <i class="fas fa-folder-open"></i>
+                            <span class="skeleton-text">Loading path...</span>
                         </div>
                         
-                        <!-- Film Roll Metrics -->
-                        {% if folder.estimated_rolls_16mm > 0 and folder.estimated_rolls_35mm > 0 %}
-                            <!-- Show both 16mm and 35mm -->
-                            <div class="metric metric-film">
-                                <i class="fas fa-film metric-icon film-16mm-icon"></i>
+                        <div class="key-metrics">
+                            <div class="metric">
+                                <i class="fas fa-file metric-icon"></i>
                                 <div class="metric-content">
-                                    <div class="metric-value">{{ folder.estimated_rolls_16mm }}</div>
-                                    <div class="metric-label">{% trans "16mm Rolls" %}</div>
+                                    <div class="metric-value skeleton-text">...</div>
+                                    <div class="metric-label">{% trans "Total Files" %}</div>
                                 </div>
                             </div>
-                            <div class="metric metric-film">
-                                <i class="fas fa-film metric-icon film-35mm-icon"></i>
+                            <div class="metric">
+                                <i class="fas fa-file-pdf metric-icon"></i>
                                 <div class="metric-content">
-                                    <div class="metric-value">{{ folder.estimated_rolls_35mm }}</div>
-                                    <div class="metric-label">{% trans "35mm Rolls" %}</div>
+                                    <div class="metric-value skeleton-text">...</div>
+                                    <div class="metric-label">{% trans "PDFs" %}</div>
                                 </div>
                             </div>
-                        {% elif folder.estimated_rolls_35mm > 0 %}
-                            <!-- Show only 35mm -->
-                            <div class="metric metric-film">
-                                <i class="fas fa-film metric-icon film-35mm-icon"></i>
+                            <div class="metric">
+                                <i class="fas fa-file-excel metric-icon"></i>
                                 <div class="metric-content">
-                                    <div class="metric-value">{{ folder.estimated_rolls_35mm }}</div>
-                                    <div class="metric-label">{% trans "35mm Rolls" %}</div>
+                                    <div class="metric-value skeleton-text">...</div>
+                                    <div class="metric-label">{% trans "Excel" %}</div>
                                 </div>
                             </div>
-                        {% elif folder.estimated_rolls_16mm > 0 %}
-                            <!-- Show only 16mm -->
-                            <div class="metric metric-film">
-                                <i class="fas fa-film metric-icon film-16mm-icon"></i>
+                            <div class="metric">
+                                <i class="fas fa-file-alt metric-icon"></i>
                                 <div class="metric-content">
-                                    <div class="metric-value">{{ folder.estimated_rolls_16mm }}</div>
-                                    <div class="metric-label">{% trans "16mm Rolls" %}</div>
+                                    <div class="metric-value skeleton-text">...</div>
+                                    <div class="metric-label">{% trans "Others" %}</div>
                                 </div>
                             </div>
-                        {% else %}
-                            <!-- Fallback to total rolls -->
+                            <div class="metric">
+                                <i class="fas fa-hdd metric-icon"></i>
+                                <div class="metric-content">
+                                    <div class="metric-value skeleton-text">...</div>
+                                    <div class="metric-label">{% trans "Size" %}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-footer">
+                        <div class="card-actions">
+                            <button class="btn btn-primary skeleton-btn" disabled>
+                                <i class="fas fa-chart-line"></i>
+                                {% trans "Analyze" %}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Skeleton for analyzed section -->
+        {% if section_filter == 'all' or section_filter == 'analyzed' %}
+        <div class="section-container analyzed-section">
+            <div class="section-header">
+                <h2><i class="fas fa-chart-line"></i> {% trans "Analyzed Folders" %}</h2>
+                <p class="section-description">{% trans "Folders that have been analyzed but not yet registered" %}</p>
+            </div>
+            
+            <div class="cards-grid">
+                {% for i in "123456"|make_list %}
+                <div class="folder-card analyzed skeleton-card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <h3 class="skeleton-text">Loading folder name...</h3>
+                            <div class="card-meta">
+                                <span class="status-badge skeleton-badge">{% trans "Analyzed" %}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-body">
+                        <div class="folder-path">
+                            <i class="fas fa-folder-open"></i>
+                            <span class="skeleton-text">Loading path...</span>
+                        </div>
+                        
+                        <div class="key-metrics">
+                            <div class="metric">
+                                <i class="fas fa-file-alt metric-icon"></i>
+                                <div class="metric-content">
+                                    <div class="metric-value skeleton-text">...</div>
+                                    <div class="metric-label">{% trans "Documents" %}</div>
+                                </div>
+                            </div>
+                            <div class="metric">
+                                <i class="fas fa-copy metric-icon"></i>
+                                <div class="metric-content">
+                                    <div class="metric-value skeleton-text">...</div>
+                                    <div class="metric-label">{% trans "Pages" %}</div>
+                                </div>
+                            </div>
                             <div class="metric">
                                 <i class="fas fa-film metric-icon"></i>
                                 <div class="metric-content">
-                                    <div class="metric-value">{{ folder.estimated_rolls }}</div>
-                                    <div class="metric-label">{% trans "Est. Rolls" %}</div>
+                                    <div class="metric-value skeleton-text">...</div>
+                                    <div class="metric-label">{% trans "Rolls" %}</div>
                                 </div>
                             </div>
-                        {% endif %}
-                        
-                        <!-- Always show oversized count -->
-                        <div class="metric metric-oversized">
-                            <i class="fas fa-exclamation-triangle metric-icon {% if folder.has_oversized %}oversized-icon{% endif %}"></i>
-                            <div class="metric-content">
-                                <div class="metric-value {% if folder.has_oversized %}oversized-value{% endif %}">{{ folder.oversized_count|default:0 }}</div>
-                                <div class="metric-label">{% trans "Oversized" %}</div>
+                            <div class="metric">
+                                <i class="fas fa-hdd metric-icon"></i>
+                                <div class="metric-content">
+                                    <div class="metric-value skeleton-text">...</div>
+                                    <div class="metric-label">{% trans "Size" %}</div>
+                                </div>
                             </div>
                         </div>
                         
-                        <!-- Temp Roll Metrics -->
-                        {% if folder.estimated_temp_rolls_created > 0 or folder.estimated_temp_rolls_used > 0 %}
-                        <div class="metric metric-temp-rolls">
-                            <i class="fas fa-recycle metric-icon"></i>
-                            <div class="metric-content">
-                                <div class="metric-value">
-                                    {% if folder.estimated_temp_rolls_created > 0 and folder.estimated_temp_rolls_used > 0 %}
-                                        {{ folder.estimated_temp_rolls_created }}+{{ folder.estimated_temp_rolls_used }}
-                                    {% elif folder.estimated_temp_rolls_created > 0 %}
-                                        +{{ folder.estimated_temp_rolls_created }}
-                                    {% else %}
-                                        {{ folder.estimated_temp_rolls_used }}
-                                    {% endif %}
-                                </div>
-                                <div class="metric-label">{% trans "Temp Rolls" %}</div>
+                        <div class="utilization-container">
+                            <div class="utilization-header">
+                                <span class="utilization-label">{% trans "Roll Utilization" %}</span>
+                                <span class="utilization-percentage skeleton-text">...%</span>
                             </div>
-                        </div>
-                        {% endif %}
-                        
-                        <div class="metric">
-                            <i class="fas fa-hdd metric-icon"></i>
-                            <div class="metric-content">
-                                <div class="metric-value">{{ folder.total_size_formatted }}</div>
-                                <div class="metric-label">{% trans "Size" %}</div>
+                            <div class="utilization-bar">
+                                <div class="utilization-fill skeleton-bar"></div>
                             </div>
                         </div>
                     </div>
 
-                    {% if folder.has_oversized %}
-                    <div class="oversized-alert">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        {% trans "Contains oversized documents" %} ({{ folder.oversized_count }})
+                    <div class="card-footer">
+                        <div class="analysis-info">
+                            <small class="skeleton-text">Loading analysis info...</small>
+                        </div>
+                        <div class="card-actions">
+                            <button class="btn btn-secondary skeleton-btn" disabled>
+                                <i class="fas fa-sync-alt"></i>
+                                {% trans "Re-analyze" %}
+                            </button>
+                            <button class="btn btn-primary skeleton-btn" disabled>
+                                <i class="fas fa-plus-circle"></i>
+                                {% trans "Register" %}
+                            </button>
+                        </div>
                     </div>
-                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
 
-                    {% if folder.pdf_folder_found %}
-                    <div class="pdf-folder-info">
-                        <i class="fas fa-check-circle"></i>
-                        {% trans "PDF folder found" %}
+        <!-- Skeleton for registered section -->
+        {% if section_filter == 'all' or section_filter == 'registered' %}
+        <div class="section-container registered-section">
+            <div class="section-header">
+                <h2><i class="fas fa-check-circle"></i> {% trans "Registered Projects" %}</h2>
+                <p class="section-description">{% trans "Projects that have been registered and are in the workflow" %}</p>
+            </div>
+            
+            <div class="cards-grid">
+                {% for i in "123456"|make_list %}
+                <div class="project-card registered skeleton-card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <h3 class="skeleton-text">Loading project...</h3>
+                            <div class="card-meta">
+                                <span class="location-badge skeleton-badge">Loading...</span>
+                            </div>
+                        </div>
+                        <div class="card-status">
+                            <span class="status-badge skeleton-badge">Loading...</span>
+                        </div>
                     </div>
-                    {% endif %}
-                    
-                    <!-- Utilization Progress Bar -->
-                    {% if folder.overall_utilization > 0 %}
-                    <div class="utilization-container">
-                        <div class="utilization-header">
-                            <span class="utilization-label">{% trans "Roll Utilization" %}</span>
-                            <span class="utilization-percentage">{{ folder.overall_utilization }}%</span>
+
+                    <div class="card-body">
+                        <div class="key-metrics">
+                            <div class="metric">
+                                <i class="fas fa-file-alt metric-icon"></i>
+                                <div class="metric-content">
+                                    <div class="metric-value skeleton-text">...</div>
+                                    <div class="metric-label">{% trans "Documents" %}</div>
+                                </div>
+                            </div>
+                            <div class="metric">
+                                <i class="fas fa-copy metric-icon"></i>
+                                <div class="metric-content">
+                                    <div class="metric-value skeleton-text">...</div>
+                                    <div class="metric-label">{% trans "Pages" %}</div>
+                                </div>
+                            </div>
+                            <div class="metric">
+                                <i class="fas fa-film metric-icon"></i>
+                                <div class="metric-content">
+                                    <div class="metric-value skeleton-text">...</div>
+                                    <div class="metric-label">{% trans "Rolls" %}</div>
+                                </div>
+                            </div>
+                            <div class="metric">
+                                <i class="fas fa-hdd metric-icon"></i>
+                                <div class="metric-content">
+                                    <div class="metric-value skeleton-text">...</div>
+                                    <div class="metric-label">{% trans "Size" %}</div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="utilization-bar">
-                            <div class="utilization-fill" style="width: {{ folder.overall_utilization }}%"></div>
+                    </div>
+
+                    <div class="card-footer">
+                        <div class="project-dates">
+                            <small class="skeleton-text">Loading dates...</small>
                         </div>
-                        <div class="utilization-description">
-                            {% if folder.overall_utilization >= 85 %}
-                                <small class="utilization-excellent">{% trans "Excellent efficiency" %}</small>
-                            {% elif folder.overall_utilization >= 70 %}
-                                <small class="utilization-good">{% trans "Good efficiency" %}</small>
-                            {% elif folder.overall_utilization >= 50 %}
-                                <small class="utilization-fair">{% trans "Fair efficiency" %}</small>
+                        <div class="card-actions">
+                            <button class="action-btn skeleton-btn" disabled>
+                                <i class="fas fa-download"></i>
+                            </button>
+                            <button class="action-btn skeleton-btn" disabled>
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Real Content Sections (hidden during skeleton loading) -->
+    <div id="real-content" {% if skeleton_mode %}style="display: none;"{% endif %}>
+        <!-- Content Sections -->
+        {% if section_filter == 'all' or section_filter == 'unanalyzed' %}
+        {% if sections_data.unanalyzed %}
+        <div class="section-container unanalyzed-section">
+            <div class="section-header">
+                <h2><i class="fas fa-folder-open"></i> {% trans "Unanalyzed Folders" %}</h2>
+                <p class="section-description">{% trans "Folders that haven't been analyzed yet - unknown content" %}</p>
+            </div>
+            
+            <div class="cards-grid">
+                {% for folder in sections_data.unanalyzed %}
+                <div class="folder-card unanalyzed">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <h3>{{ folder.folder_name }}</h3>
+                            <div class="card-meta">
+                                <span class="status-badge status-unanalyzed">{% trans "Unanalyzed" %}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-body">
+                        <div class="folder-path">
+                            <i class="fas fa-folder-open"></i>
+                            <span title="{{ folder.folder_path }}">{{ folder.folder_path|truncatechars:50 }}</span>
+                        </div>
+                        
+                        <div class="key-metrics">
+                            <div class="metric">
+                                <i class="fas fa-file metric-icon"></i>
+                                <div class="metric-content">
+                                    <div class="metric-value">{{ folder.file_count }}</div>
+                                    <div class="metric-label">{% trans "Total Files" %}</div>
+                                </div>
+                            </div>
+                            <div class="metric">
+                                <i class="fas fa-file-pdf metric-icon"></i>
+                                <div class="metric-content">
+                                    <div class="metric-value">{{ folder.pdf_count }}</div>
+                                    <div class="metric-label">{% trans "PDFs" %}</div>
+                                </div>
+                            </div>
+                            <div class="metric">
+                                <i class="fas fa-file-excel metric-icon"></i>
+                                <div class="metric-content">
+                                    <div class="metric-value">{{ folder.excel_count|default:0 }}</div>
+                                    <div class="metric-label">{% trans "Excel" %}</div>
+                                </div>
+                            </div>
+                            <div class="metric">
+                                <i class="fas fa-file-alt metric-icon"></i>
+                                <div class="metric-content">
+                                    <div class="metric-value">{{ folder.other_count|default:0 }}</div>
+                                    <div class="metric-label">{% trans "Others" %}</div>
+                                </div>
+                            </div>
+                            <div class="metric">
+                                <i class="fas fa-hdd metric-icon"></i>
+                                <div class="metric-content">
+                                    <div class="metric-value">{{ folder.total_size_formatted }}</div>
+                                    <div class="metric-label">{% trans "Size" %}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-footer">
+                        <div class="card-actions">
+                            <button class="btn btn-primary" 
+                                    onclick="showAnalyzeModal('{{ folder.folder_path|escapejs }}', '{{ folder.folder_name|escapejs }}')">
+                                <i class="fas fa-chart-line"></i>
+                                {% trans "Analyze" %}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        {% endif %}
+
+        {% if section_filter == 'all' or section_filter == 'analyzed' %}
+        {% if sections_data.analyzed %}
+        <div class="section-container analyzed-section">
+            <div class="section-header">
+                <h2><i class="fas fa-chart-line"></i> {% trans "Analyzed Folders" %}</h2>
+                <p class="section-description">{% trans "Folders that have been analyzed but not yet registered" %}</p>
+            </div>
+            
+            <div class="cards-grid">
+                {% for folder in sections_data.analyzed %}
+                <div class="folder-card analyzed">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <h3>{{ folder.folder_name }}</h3>
+                            <div class="card-meta">
+                                <span class="status-badge status-analyzed">{% trans "Analyzed" %}</span>
+                                {% if folder.recommended_workflow != 'unknown' %}
+                                    <span class="workflow-badge">{{ folder.recommended_workflow|title }}</span>
+                                {% endif %}
+                                
+                                <!-- Film Type Badges -->
+                                {% if folder.estimated_rolls_16mm > 0 and folder.estimated_rolls_35mm > 0 %}
+                                    <span class="film-type-badge film-16mm">16mm</span>
+                                    <span class="film-type-badge film-35mm">35mm</span>
+                                {% elif folder.estimated_rolls_35mm > 0 %}
+                                    <span class="film-type-badge film-35mm">35mm</span>
+                                {% elif folder.estimated_rolls_16mm > 0 %}
+                                    <span class="film-type-badge film-16mm">16mm</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-body">
+                        <div class="folder-path">
+                            <i class="fas fa-folder-open"></i>
+                            <span title="{{ folder.folder_path }}">{{ folder.folder_path|truncatechars:50 }}</span>
+                        </div>
+                        
+                        <div class="key-metrics">
+                            <div class="metric">
+                                <i class="fas fa-file-alt metric-icon"></i>
+                                <div class="metric-content">
+                                    <div class="metric-value">{{ folder.total_documents }}</div>
+                                    <div class="metric-label">{% trans "Documents" %}</div>
+                                </div>
+                            </div>
+                            <div class="metric">
+                                <i class="fas fa-copy metric-icon"></i>
+                                <div class="metric-content">
+                                    <div class="metric-value">{{ folder.total_pages }}</div>
+                                    <div class="metric-label">{% trans "Pages" %}</div>
+                                </div>
+                            </div>
+                            
+                            <!-- Film Roll Metrics -->
+                            {% if folder.estimated_rolls_16mm > 0 and folder.estimated_rolls_35mm > 0 %}
+                                <!-- Show both 16mm and 35mm -->
+                                <div class="metric metric-film">
+                                    <i class="fas fa-film metric-icon film-16mm-icon"></i>
+                                    <div class="metric-content">
+                                        <div class="metric-value">{{ folder.estimated_rolls_16mm }}</div>
+                                        <div class="metric-label">{% trans "16mm Rolls" %}</div>
+                                    </div>
+                                </div>
+                                <div class="metric metric-film">
+                                    <i class="fas fa-film metric-icon film-35mm-icon"></i>
+                                    <div class="metric-content">
+                                        <div class="metric-value">{{ folder.estimated_rolls_35mm }}</div>
+                                        <div class="metric-label">{% trans "35mm Rolls" %}</div>
+                                    </div>
+                                </div>
+                            {% elif folder.estimated_rolls_35mm > 0 %}
+                                <!-- Show only 35mm -->
+                                <div class="metric metric-film">
+                                    <i class="fas fa-film metric-icon film-35mm-icon"></i>
+                                    <div class="metric-content">
+                                        <div class="metric-value">{{ folder.estimated_rolls_35mm }}</div>
+                                        <div class="metric-label">{% trans "35mm Rolls" %}</div>
+                                    </div>
+                                </div>
+                            {% elif folder.estimated_rolls_16mm > 0 %}
+                                <!-- Show only 16mm -->
+                                <div class="metric metric-film">
+                                    <i class="fas fa-film metric-icon film-16mm-icon"></i>
+                                    <div class="metric-content">
+                                        <div class="metric-value">{{ folder.estimated_rolls_16mm }}</div>
+                                        <div class="metric-label">{% trans "16mm Rolls" %}</div>
+                                    </div>
+                                </div>
                             {% else %}
-                                <small class="utilization-poor">{% trans "Low efficiency" %}</small>
-                            {% endif %}
-                        </div>
-                    </div>
-                    {% endif %}
-                </div>
-
-                <div class="card-footer">
-                    <div class="analysis-info">
-                        <small>{% trans "Analyzed" %}: {{ folder.analyzed_at|date:"M d, Y H:i" }}</small>
-                        <small>{% trans "By" %}: {{ folder.analyzed_by.username }}</small>
-                    </div>
-                    <div class="card-actions">
-                        <button class="btn btn-secondary" 
-                                onclick="showAnalyzeModal('{{ folder.folder_path|escapejs }}', '{{ folder.folder_name|escapejs }}')">
-                            <i class="fas fa-sync-alt"></i>
-                            {% trans "Re-analyze" %}
-                        </button>
-                        <button class="btn btn-primary" 
-                                onclick="showRegistrationModal({{ folder.id }}, '{{ folder.folder_name|escapejs }}')">
-                            <i class="fas fa-plus-circle"></i>
-                            {% trans "Register" %}
-                        </button>
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-    {% endif %}
-    {% endif %}
-
-    {% if section_filter == 'all' or section_filter == 'registered' %}
-    {% if sections_data.registered %}
-    <div class="section-container registered-section">
-        <div class="section-header">
-            <h2><i class="fas fa-check-circle"></i> {% trans "Registered Projects" %}</h2>
-            <p class="section-description">{% trans "Projects that have been registered and are in the workflow" %}</p>
-        </div>
-        
-        <div class="cards-grid">
-            {% for item in sections_data.registered %}
-            {% with project=item.project data=item.data %}
-            <div class="project-card registered" onclick="viewProjectDetail({{ project.id }})">
-                <div class="card-header">
-                    <div class="card-title">
-                        <h3>{{ project.archive_id }}</h3>
-                        <div class="card-meta">
-                            <span class="location-badge location-{{ project.location|lower }}">{{ project.location }}</span>
-                            {% if project.doc_type %}
-                                <span class="doc-type-badge">{{ project.doc_type }}</span>
-                            {% endif %}
-                        </div>
-                    </div>
-                    <div class="card-status">
-                        {% if project.processing_complete %}
-                            <span class="status-badge status-completed">{% trans "Completed" %}</span>
-                        {% elif project.film_allocation_complete %}
-                            <span class="status-badge status-allocated">{% trans "Allocated" %}</span>
-                        {% elif data.total_documents %}
-                            <span class="status-badge status-analyzed">{% trans "Analyzed" %}</span>
-                        {% else %}
-                            <span class="status-badge status-registered">{% trans "Registered" %}</span>
-                        {% endif %}
-                    </div>
-                </div>
-
-                <div class="card-body">
-                    <div class="key-metrics">
-                        <div class="metric">
-                            <i class="fas fa-file-alt metric-icon"></i>
-                            <div class="metric-content">
-                                <div class="metric-value">{{ data.total_documents|default:0|floatformat:0 }}</div>
-                                <div class="metric-label">{% trans "Documents" %}</div>
-                            </div>
-                        </div>
-                        <div class="metric">
-                            <i class="fas fa-copy metric-icon"></i>
-                            <div class="metric-content">
-                                <div class="metric-value">{{ data.total_pages|default:0|floatformat:0 }}</div>
-                                <div class="metric-label">{% trans "Pages" %}</div>
-                            </div>
-                        </div>
-                        <div class="metric">
-                            <i class="fas fa-film metric-icon"></i>
-                            <div class="metric-content">
-                                <div class="metric-value">{{ data.total_rolls|default:0 }}</div>
-                                <div class="metric-label">{% trans "Rolls" %}</div>
-                            </div>
-                        </div>
-                        <div class="metric">
-                            <i class="fas fa-hdd metric-icon"></i>
-                            <div class="metric-content">
-                                <div class="metric-value">{% if data.total_size_formatted and data.total_size_formatted != "0 B" %}{{ data.total_size_formatted }}{% else %}N/A{% endif %}</div>
-                                <div class="metric-label">{% trans "Size" %}</div>
-                            </div>
-                        </div>
-                        
-                        <!-- Temp Roll Metrics for Registered Projects -->
-                        {% if data.temp_rolls_created > 0 or data.temp_rolls_used > 0 %}
-                        <div class="metric metric-temp-rolls">
-                            <i class="fas fa-recycle metric-icon"></i>
-                            <div class="metric-content">
-                                <div class="metric-value">
-                                    {% if data.temp_rolls_created > 0 and data.temp_rolls_used > 0 %}
-                                        {{ data.temp_rolls_created }}+{{ data.temp_rolls_used }}
-                                    {% elif data.temp_rolls_created > 0 %}
-                                        +{{ data.temp_rolls_created }}
-                                    {% else %}
-                                        {{ data.temp_rolls_used }}
-                                    {% endif %}
+                                <!-- Fallback to total rolls -->
+                                <div class="metric">
+                                    <i class="fas fa-film metric-icon"></i>
+                                    <div class="metric-content">
+                                        <div class="metric-value">{{ folder.estimated_rolls }}</div>
+                                        <div class="metric-label">{% trans "Est. Rolls" %}</div>
+                                    </div>
                                 </div>
-                                <div class="metric-label">{% trans "Temp Rolls" %}</div>
+                            {% endif %}
+                            
+                            <!-- Always show oversized count -->
+                            <div class="metric metric-oversized">
+                                <i class="fas fa-exclamation-triangle metric-icon {% if folder.has_oversized %}oversized-icon{% endif %}"></i>
+                                <div class="metric-content">
+                                    <div class="metric-value {% if folder.has_oversized %}oversized-value{% endif %}">{{ folder.oversized_count|default:0 }}</div>
+                                    <div class="metric-label">{% trans "Oversized" %}</div>
+                                </div>
+                            </div>
+                            
+                            <!-- Temp Roll Metrics -->
+                            {% if folder.estimated_temp_rolls_created > 0 or folder.estimated_temp_rolls_used > 0 %}
+                            <div class="metric metric-temp-rolls">
+                                <i class="fas fa-recycle metric-icon"></i>
+                                <div class="metric-content">
+                                    <div class="metric-value">
+                                        {% if folder.estimated_temp_rolls_created > 0 and folder.estimated_temp_rolls_used > 0 %}
+                                            {{ folder.estimated_temp_rolls_created }}+{{ folder.estimated_temp_rolls_used }}
+                                        {% elif folder.estimated_temp_rolls_created > 0 %}
+                                            +{{ folder.estimated_temp_rolls_created }}
+                                        {% else %}
+                                            {{ folder.estimated_temp_rolls_used }}
+                                        {% endif %}
+                                    </div>
+                                    <div class="metric-label">{% trans "Temp Rolls" %}</div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            <div class="metric">
+                                <i class="fas fa-hdd metric-icon"></i>
+                                <div class="metric-content">
+                                    <div class="metric-value">{{ folder.total_size_formatted }}</div>
+                                    <div class="metric-label">{% trans "Size" %}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if folder.has_oversized %}
+                        <div class="oversized-alert">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            {% trans "Contains oversized documents" %} ({{ folder.oversized_count }})
+                        </div>
+                        {% endif %}
+
+                        {% if folder.pdf_folder_found %}
+                        <div class="pdf-folder-info">
+                            <i class="fas fa-check-circle"></i>
+                            {% trans "PDF folder found" %}
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Utilization Progress Bar -->
+                        {% if folder.overall_utilization > 0 %}
+                        <div class="utilization-container">
+                            <div class="utilization-header">
+                                <span class="utilization-label">{% trans "Roll Utilization" %}</span>
+                                <span class="utilization-percentage">{{ folder.overall_utilization }}%</span>
+                            </div>
+                            <div class="utilization-bar">
+                                <div class="utilization-fill" style="width: {{ folder.overall_utilization }}%"></div>
+                            </div>
+                            <div class="utilization-description">
+                                {% if folder.overall_utilization >= 85 %}
+                                    <small class="utilization-excellent">{% trans "Excellent efficiency" %}</small>
+                                {% elif folder.overall_utilization >= 70 %}
+                                    <small class="utilization-good">{% trans "Good efficiency" %}</small>
+                                {% elif folder.overall_utilization >= 50 %}
+                                    <small class="utilization-fair">{% trans "Fair efficiency" %}</small>
+                                {% else %}
+                                    <small class="utilization-poor">{% trans "Low efficiency" %}</small>
+                                {% endif %}
                             </div>
                         </div>
                         {% endif %}
                     </div>
 
-                    {% if data.has_oversized %}
-                    <div class="oversized-alert">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        {% trans "Contains oversized documents" %} ({{ data.oversized_count }})
-                    </div>
-                    {% endif %}
-                </div>
-
-                <div class="card-footer">
-                    <div class="project-dates">
-                        <small>{% trans "Created" %}: {{ project.created_at|date:"M d, Y" }}</small>
-                        <small>{% trans "Updated" %}: {{ project.updated_at|date:"M d, Y" }}</small>
-                    </div>
-                    <div class="card-actions">
-                        <button class="action-btn" onclick="event.stopPropagation(); exportProjectData({{ project.id }})">
-                            <i class="fas fa-download"></i>
-                        </button>
-                        <button class="action-btn" onclick="event.stopPropagation(); refreshProjectData({{ project.id }})">
-                            <i class="fas fa-sync-alt"></i>
-                        </button>
+                    <div class="card-footer">
+                        <div class="analysis-info">
+                            <small>{% trans "Analyzed" %}: {{ folder.analyzed_at|date:"M d, Y H:i" }}</small>
+                            <small>{% trans "By" %}: {{ folder.analyzed_by.username }}</small>
+                        </div>
+                        <div class="card-actions">
+                            <button class="btn btn-secondary" 
+                                    onclick="showAnalyzeModal('{{ folder.folder_path|escapejs }}', '{{ folder.folder_name|escapejs }}')">
+                                <i class="fas fa-sync-alt"></i>
+                                {% trans "Re-analyze" %}
+                            </button>
+                            <button class="btn btn-primary" 
+                                    onclick="showRegistrationModal({{ folder.id }}, '{{ folder.folder_name|escapejs }}')">
+                                <i class="fas fa-plus-circle"></i>
+                                {% trans "Register" %}
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
-            {% endwith %}
-            {% endfor %}
-        </div>
-    </div>
-    {% endif %}
-    {% endif %}
-
-    <!-- Empty State -->
-    {% if not sections_data.unregistered and not sections_data.analyzed and not sections_data.registered %}
-    <div class="empty-state">
-        <div class="empty-state-content">
-            <i class="fas fa-search empty-state-icon"></i>
-            <h3>{% trans "No Items Found" %}</h3>
-            <p>{% trans "No folders or projects found matching your criteria." %}</p>
-            <div class="empty-state-actions">
-                <button class="btn btn-primary" onclick="switchSection('all')">
-                    <i class="fas fa-eye"></i>
-                    {% trans "View All" %}
-                </button>
-                <a href="{% url 'register' %}" class="btn btn-secondary">
-                    <i class="fas fa-plus"></i>
-                    {% trans "Register New Project" %}
-                </a>
+                {% endfor %}
             </div>
         </div>
-    </div>
-    {% endif %}
+        {% endif %}
+        {% endif %}
 
-    <!-- Pagination -->
-    {% if page_obj.has_other_pages %}
-    <div class="pagination-container">
-        <div class="pagination">
-            {% if page_obj.has_previous %}
-                <a href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}&section={{ section_filter }}" 
-                   class="page-link">
-                    <i class="fas fa-chevron-left"></i>
-                </a>
-            {% endif %}
+        {% if section_filter == 'all' or section_filter == 'registered' %}
+        {% if sections_data.registered %}
+        <div class="section-container registered-section">
+            <div class="section-header">
+                <h2><i class="fas fa-check-circle"></i> {% trans "Registered Projects" %}</h2>
+                <p class="section-description">{% trans "Projects that have been registered and are in the workflow" %}</p>
+            </div>
             
-            {% for page_num in page_obj.paginator.page_range %}
-                {% if page_num == page_obj.number %}
-                    <span class="page-link current">{{ page_num }}</span>
-                {% else %}
-                    <a href="?page={{ page_num }}&search={{ search_query }}&section={{ section_filter }}" 
-                       class="page-link">{{ page_num }}</a>
+            <div class="cards-grid">
+                {% for item in sections_data.registered %}
+                {% with project=item.project data=item.data %}
+                <div class="project-card registered" onclick="viewProjectDetail({{ project.id }})">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <h3>{{ project.archive_id }}</h3>
+                            <div class="card-meta">
+                                <span class="location-badge location-{{ project.location|lower }}">{{ project.location }}</span>
+                                {% if project.doc_type %}
+                                    <span class="doc-type-badge">{{ project.doc_type }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="card-status">
+                            {% if project.processing_complete %}
+                                <span class="status-badge status-completed">{% trans "Completed" %}</span>
+                            {% elif project.film_allocation_complete %}
+                                <span class="status-badge status-allocated">{% trans "Allocated" %}</span>
+                            {% elif data.total_documents %}
+                                <span class="status-badge status-analyzed">{% trans "Analyzed" %}</span>
+                            {% else %}
+                                <span class="status-badge status-registered">{% trans "Registered" %}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="card-body">
+                        <div class="key-metrics">
+                            <div class="metric">
+                                <i class="fas fa-file-alt metric-icon"></i>
+                                <div class="metric-content">
+                                    <div class="metric-value">{{ data.total_documents|default:0|floatformat:0 }}</div>
+                                    <div class="metric-label">{% trans "Documents" %}</div>
+                                </div>
+                            </div>
+                            <div class="metric">
+                                <i class="fas fa-copy metric-icon"></i>
+                                <div class="metric-content">
+                                    <div class="metric-value">{{ data.total_pages|default:0|floatformat:0 }}</div>
+                                    <div class="metric-label">{% trans "Pages" %}</div>
+                                </div>
+                            </div>
+                            <div class="metric">
+                                <i class="fas fa-film metric-icon"></i>
+                                <div class="metric-content">
+                                    <div class="metric-value">{{ data.total_rolls|default:0 }}</div>
+                                    <div class="metric-label">{% trans "Rolls" %}</div>
+                                </div>
+                            </div>
+                            <div class="metric">
+                                <i class="fas fa-hdd metric-icon"></i>
+                                <div class="metric-content">
+                                    <div class="metric-value">{% if data.total_size_formatted and data.total_size_formatted != "0 B" %}{{ data.total_size_formatted }}{% else %}N/A{% endif %}</div>
+                                    <div class="metric-label">{% trans "Size" %}</div>
+                                </div>
+                            </div>
+                            
+                            <!-- Temp Roll Metrics for Registered Projects -->
+                            {% if data.temp_rolls_created > 0 or data.temp_rolls_used > 0 %}
+                            <div class="metric metric-temp-rolls">
+                                <i class="fas fa-recycle metric-icon"></i>
+                                <div class="metric-content">
+                                    <div class="metric-value">
+                                        {% if data.temp_rolls_created > 0 and data.temp_rolls_used > 0 %}
+                                            {{ data.temp_rolls_created }}+{{ data.temp_rolls_used }}
+                                        {% elif data.temp_rolls_created > 0 %}
+                                            +{{ data.temp_rolls_created }}
+                                        {% else %}
+                                            {{ data.temp_rolls_used }}
+                                        {% endif %}
+                                    </div>
+                                    <div class="metric-label">{% trans "Temp Rolls" %}</div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        {% if data.has_oversized %}
+                        <div class="oversized-alert">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            {% trans "Contains oversized documents" %} ({{ data.oversized_count }})
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="card-footer">
+                        <div class="project-dates">
+                            <small>{% trans "Created" %}: {{ project.created_at|date:"M d, Y" }}</small>
+                            <small>{% trans "Updated" %}: {{ project.updated_at|date:"M d, Y" }}</small>
+                        </div>
+                        <div class="card-actions">
+                            <button class="action-btn" onclick="event.stopPropagation(); exportProjectData({{ project.id }})">
+                                <i class="fas fa-download"></i>
+                            </button>
+                            <button class="action-btn" onclick="event.stopPropagation(); refreshProjectData({{ project.id }})">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endwith %}
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        {% endif %}
+
+        <!-- Empty State -->
+        {% if not skeleton_mode and not sections_data.unanalyzed and not sections_data.analyzed and not sections_data.registered %}
+        <div class="empty-state">
+            <div class="empty-state-content">
+                <i class="fas fa-search empty-state-icon"></i>
+                <h3>{% trans "No Items Found" %}</h3>
+                <p>{% trans "No folders or projects found matching your criteria." %}</p>
+                <div class="empty-state-actions">
+                    <button class="btn btn-primary" onclick="switchSection('all')">
+                        <i class="fas fa-eye"></i>
+                        {% trans "View All" %}
+                    </button>
+                    <a href="{% url 'register' %}" class="btn btn-secondary">
+                        <i class="fas fa-plus"></i>
+                        {% trans "Register New Project" %}
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Pagination -->
+        {% if not skeleton_mode and page_obj.has_other_pages %}
+        <div class="pagination-container">
+            <div class="pagination">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}&section={{ section_filter }}" 
+                       class="page-link">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
                 {% endif %}
-            {% endfor %}
+                
+                {% for page_num in page_obj.paginator.page_range %}
+                    {% if page_num == page_obj.number %}
+                        <span class="page-link current">{{ page_num }}</span>
+                    {% else %}
+                        <a href="?page={{ page_num }}&search={{ search_query }}&section={{ section_filter }}" 
+                           class="page-link">{{ page_num }}</a>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}&search={{ search_query }}&section={{ section_filter }}" 
+                       class="page-link">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                {% endif %}
+            </div>
             
-            {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}&search={{ search_query }}&section={{ section_filter }}" 
-                   class="page-link">
-                    <i class="fas fa-chevron-right"></i>
-                </a>
-            {% endif %}
+            <div class="pagination-info">
+                {% trans "Showing" %} {{ page_obj.start_index }} - {{ page_obj.end_index }} 
+                {% trans "of" %} {{ page_obj.paginator.count }} {% trans "items" %}
+            </div>
         </div>
-        
-        <div class="pagination-info">
-            {% trans "Showing" %} {{ page_obj.start_index }} - {{ page_obj.end_index }} 
-            {% trans "of" %} {{ page_obj.paginator.count }} {% trans "items" %}
-        </div>
+        {% endif %}
     </div>
-    {% endif %}
 </div>
 
 <!-- Loading Modal -->
@@ -559,4 +811,12 @@
 
 {% block extra_js %}
     <script src="{% static 'microapp/js/analyze/analyze.js' %}"></script>
+    <script>
+        // Pass skeleton mode state to JavaScript
+        window.SKELETON_MODE = {{ skeleton_mode|yesno:"true,false" }};
+        window.SECTION_FILTER = '{{ section_filter }}';
+        window.SEARCH_QUERY = '{{ search_query }}';
+        window.SORT_FIELD = '{{ sort_field }}';
+        window.SORT_DIRECTION = '{{ sort_direction }}';
+    </script>
 {% endblock %} 

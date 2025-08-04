@@ -32,6 +32,7 @@ urlpatterns = [
     path('api/analyze/folder/', analyze_views.analyze_folder_api, name='analyze_folder_api'),
     path('api/analyze/register-folder/', analyze_views.register_analyzed_folder_api, name='register_analyzed_folder_api'),
     path('api/analyze/folder-info/', analyze_views.get_folder_basic_info_api, name='get_folder_basic_info_api'),
+    path('api/analyze/dashboard-data/', analyze_views.analyze_dashboard_data_api, name='analyze_dashboard_data_api'),
     path('develop/', views.develop, name='develop'),
     path('label/', views.label, name='label'),
     path('control/', views.control, name='control'),

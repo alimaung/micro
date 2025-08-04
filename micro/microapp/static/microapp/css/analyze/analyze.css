@@ -724,7 +724,7 @@
     border: 1px solid #e2e8f0;
     border-radius: 8px;
     padding: 12px;
-    margin-bottom: 12px;
+    margin: 12px 0 12px;
 }
 
 .utilization-header {
@@ -1225,4 +1225,96 @@
     .path-cell {
         max-width: 150px;
     }
+} 
+
+/* ===== CACHE STATUS INDICATOR ===== */
+.cache-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    background: #f8f9fc;
+    border: 1px solid #e3e6f0;
+    border-radius: 6px;
+    font-size: 12px;
+    color: #6c757d;
+    margin-left: auto;
+}
+
+.cache-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.cache-icon {
+    color: #28a745;
+    font-size: 14px;
+}
+
+.cache-time {
+    font-weight: 500;
+}
+
+.cache-actions {
+    display: flex;
+    gap: 4px;
+    border-left: 1px solid #e3e6f0;
+    padding-left: 8px;
+}
+
+.btn-link {
+    background: none;
+    border: none;
+    color: #6c757d;
+    padding: 4px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s;
+}
+
+.btn-link:hover {
+    color: #495057;
+    background: #e9ecef;
+}
+
+.btn-link:active {
+    transform: scale(0.95);
+}
+
+/* Cache status animations */
+@keyframes cache-pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+.cache-status.loading .cache-icon {
+    animation: cache-pulse 1s infinite;
+}
+
+/* Error message styles */
+.error-message {
+    text-align: center;
+    padding: 60px 20px;
+    color: #6c757d;
+}
+
+.error-icon {
+    font-size: 48px;
+    color: #dc3545;
+    margin-bottom: 20px;
+}
+
+.error-message h3 {
+    color: #495057;
+    margin-bottom: 10px;
+}
+
+.error-message p {
+    margin-bottom: 20px;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
 } 
