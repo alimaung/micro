@@ -11,12 +11,12 @@
     
     <!-- Immediate dark mode initialization to prevent flash -->
     <script>
-        // Check if dark mode is saved in localStorage
-        const savedDarkMode = localStorage.getItem('microfilmDarkMode');
+        // Check if dark mode is saved in localStorage - use same key as main.js
+        const savedDarkMode = localStorage.getItem('dark-mode');
         
         // Apply dark mode immediately if needed
-        if (savedDarkMode === 'true' || 
-            (savedDarkMode !== 'false' && 
+        if (savedDarkMode === 'enabled' || 
+            (savedDarkMode !== 'disabled' && 
              window.matchMedia && 
              window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark-mode');

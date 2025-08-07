@@ -23,6 +23,98 @@
         </div>
     </div>
 
+    <!-- Development Run Planner -->
+    <div class="planner-section">
+        <div class="section-header">
+            <h2><i class="fas fa-calendar-alt"></i> Development Run Planner</h2>
+            <div class="section-actions">
+                <button id="refresh-planner" class="btn btn-sm btn-secondary">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </div>
+        </div>
+        <div class="planner-content" id="planner-content">
+            <!-- Loading state -->
+            <div class="loading-state" id="planner-loading">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Analyzing available rolls...</p>
+            </div>
+            
+            <!-- Planner results -->
+            <div class="planner-results" id="planner-results" style="display: none;">
+                <!-- Capacity and status info -->
+                <div class="planner-status">
+                    <div class="status-row">
+                        <div class="status-item">
+                            <span class="label">Chemical Capacity:</span>
+                            <span class="value" id="planner-capacity">0 m² remaining</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="label">Chemical Age:</span>
+                            <span class="value" id="planner-age">Fresh chemicals</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Suggested run details -->
+                <div class="suggested-run" id="suggested-run">
+                    <div class="run-summary">
+                        <h3>Suggested Development Run</h3>
+                        <div class="run-stats">
+                            <span class="stat">
+                                <i class="fas fa-film"></i>
+                                <span id="planner-roll-count">0</span> rolls
+                            </span>
+                            <span class="stat">
+                                <i class="fas fa-ruler"></i>
+                                <span id="planner-area">0.0</span> m²
+                            </span>
+                            <span class="stat">
+                                <i class="fas fa-clock"></i>
+                                <span id="planner-time">0</span> min
+                            </span>
+                            <span class="stat">
+                                <i class="fas fa-percentage"></i>
+                                <span id="planner-utilization">0</span>% utilization
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <!-- Project breakdown -->
+                    <div class="project-breakdown" id="project-breakdown">
+                        <!-- Projects will be populated here -->
+                    </div>
+                    
+                    <!-- Action buttons -->
+                    <div class="planner-actions">
+                        <button id="show-planner-details" class="btn btn-sm btn-outline-info">
+                            <i class="fas fa-eye"></i> Show Details
+                        </button>
+                        <button id="develop-suggested-rolls" class="btn btn-primary" disabled>
+                            <i class="fas fa-play"></i> Develop Suggested Rolls
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Detailed roll list (collapsible) -->
+                <div class="planner-details" id="planner-details" style="display: none;">
+                    <h4>Roll Details</h4>
+                    <div class="detailed-rolls" id="detailed-rolls">
+                        <!-- Detailed roll list will be populated here -->
+                    </div>
+                </div>
+                
+                <!-- Advice/warnings -->
+                <div class="planner-advice" id="planner-advice">
+                    <div class="advice-content">
+                        <i class="fas fa-info-circle"></i>
+                        <span id="planner-advice-text">Analyzing...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Status Overview -->
     <div class="status-overview">
         <div class="status-card">

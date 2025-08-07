@@ -1084,26 +1084,43 @@ class FilmNumberManager:
         """
         documents = analysis_data.get('analysisResults', {}).get('documents', [])
         
+        if not documents:
+            return
+        
+        # Extract all doc_ids from analysis data
+        doc_ids_from_analysis = [doc_data.get('name') for doc_data in documents if doc_data.get('name')]
+        
+        if not doc_ids_from_analysis:
+            return
+        
+        # Get existing document IDs in a single query
+        existing_doc_ids = set(
+            Document.objects.filter(
+                project=project,
+                doc_id__in=doc_ids_from_analysis
+            ).values_list('doc_id', flat=True)
+        )
+        
+        # Prepare new documents for bulk creation
+        documents_to_create = []
         for doc_data in documents:
             doc_id = doc_data.get('name')
             
-            # Check if document already exists
-            existing_doc = Document.objects.filter(
-                project=project,
-                doc_id=doc_id
-            ).first()
-            
-            if not existing_doc:
-                # Create new document
-                document = Document.objects.create(
-                    project=project,
-                    doc_id=doc_id,
-                    path=doc_data.get('path', ''),
-                    pages=doc_data.get('pages', 0),
-                    has_oversized=doc_data.get('hasOversized', False)
+            if doc_id and doc_id not in existing_doc_ids:
+                documents_to_create.append(
+                    Document(
+                        project=project,
+                        doc_id=doc_id,
+                        path=doc_data.get('path', ''),
+                        pages=doc_data.get('pages', 0),
+                        has_oversized=doc_data.get('hasOversized', False)
+                    )
                 )
-                
-                self.logger.info(f"Created document {doc_id} from analysis data") 
+        
+        # Bulk create new documents
+        if documents_to_create:
+            Document.objects.bulk_create(documents_to_create, ignore_conflicts=True)
+            self.logger.info(f"Bulk created {len(documents_to_create)} documents from analysis data") 
 
     def prepare_reference_sheet_data(self, project):
         """Prepare data for reference sheets using accurate roll information.

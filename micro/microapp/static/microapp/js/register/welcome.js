@@ -243,14 +243,14 @@ function setupCardHoverEffects() {
                 
 // --- Dark Mode Handling ---
 function initDarkMode() {
-    // Check if user has a saved preference
-    const savedDarkMode = localStorage.getItem('microfilmDarkMode');
+    // Check if user has a saved preference - use same key as main.js
+    const savedDarkMode = localStorage.getItem('dark-mode');
     
-    if (savedDarkMode === 'true') {
+    if (savedDarkMode === 'enabled') {
         // User has explicitly enabled dark mode
         document.body.classList.add('dark-mode');
         applyDarkModeAdjustments();
-    } else if (savedDarkMode === 'false') {
+    } else if (savedDarkMode === 'disabled') {
         // User has explicitly disabled dark mode
         document.body.classList.remove('dark-mode');
         applyLightModeAdjustments();
@@ -268,7 +268,7 @@ function initDarkMode() {
     if (window.matchMedia) {
         window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
             // Only apply if user hasn't set a manual preference
-            if (!localStorage.getItem('microfilmDarkMode')) {
+            if (!localStorage.getItem('dark-mode')) {
                 if (event.matches) {
                     document.body.classList.add('dark-mode');
                     applyDarkModeAdjustments();

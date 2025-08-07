@@ -196,6 +196,10 @@ class DevelopmentDashboard {
             this.loadInitialData();
         });
         
+        document.getElementById('refresh-planner').addEventListener('click', () => {
+            this.loadPlanner();
+        });
+        
         document.getElementById('refresh-rolls').addEventListener('click', () => {
             this.loadRolls();
         });
@@ -204,6 +208,15 @@ class DevelopmentDashboard {
             this.loadChemicalStatus();
         });
         
+        // Planner actions
+        document.getElementById('develop-suggested-rolls').addEventListener('click', () => {
+            this.developSuggestedRolls();
+        });
+        
+        document.getElementById('show-planner-details').addEventListener('click', () => {
+            this.togglePlannerDetails();
+        });
+
         // Development actions
         document.getElementById('start-development').addEventListener('click', () => {
             this.startDevelopment();
@@ -311,6 +324,7 @@ class DevelopmentDashboard {
             
             // Then load all data
             await Promise.all([
+                this.loadPlanner(),
                 this.loadRolls(),
                 this.loadChemicalStatus(),
                 this.loadDevelopmentHistory()
@@ -1639,10 +1653,284 @@ class DevelopmentDashboard {
         }
     }
     
+    // ===== DEVELOPMENT PLANNER METHODS =====
+    
+    async loadPlanner() {
+        try {
+            const response = await fetch('/api/development/planner/');
+            const data = await response.json();
+            
+            if (data.success) {
+                this.renderPlanner(data.run_plan);
+            } else {
+                throw new Error(data.error || 'Failed to load development plan');
+            }
+        } catch (error) {
+            console.error('Error loading development planner:', error);
+            this.showNotification('error', 'Error', 'Failed to load development planner');
+            this.showPlannerError(error.message);
+        }
+    }
+    
+    renderPlanner(runPlan) {
+        const loadingElement = document.getElementById('planner-loading');
+        const resultsElement = document.getElementById('planner-results');
+        
+        // Hide loading, show results
+        if (loadingElement) loadingElement.style.display = 'none';
+        if (resultsElement) resultsElement.style.display = 'block';
+        
+        // Update capacity info
+        const capacityElement = document.getElementById('planner-capacity');
+        const ageElement = document.getElementById('planner-age');
+        
+        if (capacityElement) {
+            const capacity = runPlan.chemistry.capacity_left_m2;
+            const utilization = runPlan.chemistry.utilization_percent || 0;
+            capacityElement.textContent = `${capacity} m² remaining (${utilization}% planned utilization)`;
+        }
+        
+        if (ageElement) {
+            if (runPlan.chemistry.age_warning) {
+                ageElement.textContent = 'Age warning - check chemical status';
+                ageElement.style.color = '#ffc107';
+            } else {
+                ageElement.textContent = 'Fresh chemicals';
+                ageElement.style.color = '#28a745';
+            }
+        }
+        
+        // Update run stats
+        document.getElementById('planner-roll-count').textContent = runPlan.totals.roll_count;
+        document.getElementById('planner-area').textContent = runPlan.totals.area_m2;
+        document.getElementById('planner-time').textContent = runPlan.totals.est_time_min;
+        document.getElementById('planner-utilization').textContent = runPlan.chemistry.utilization_percent || 0;
+        
+        // Update project breakdown
+        this.renderProjectBreakdown(runPlan.grouped_by_project);
+        
+        // Update detailed rolls
+        this.renderDetailedRolls(runPlan.rolls);
+        
+        // Update advice
+        this.updatePlannerAdvice(runPlan.advice, runPlan.chemistry);
+        
+        // Update action button state
+        const developButton = document.getElementById('develop-suggested-rolls');
+        if (developButton) {
+            const canDevelop = runPlan.totals.roll_count > 0 && 
+                              !runPlan.chemistry.age_warning && 
+                              runPlan.advice.includes('Ready');
+            
+            developButton.disabled = !canDevelop;
+            
+            if (canDevelop) {
+                developButton.innerHTML = `<i class="fas fa-play"></i> Develop ${runPlan.totals.roll_count} Rolls (${runPlan.totals.est_time_min} min)`;
+                developButton.className = 'btn btn-primary';
+            } else if (runPlan.totals.roll_count === 0) {
+                developButton.innerHTML = '<i class="fas fa-times"></i> No Rolls Available';
+                developButton.className = 'btn btn-secondary';
+            } else {
+                developButton.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Check Chemical Status';
+                developButton.className = 'btn btn-warning';
+            }
+        }
+        
+        // Store current plan for later use
+        this.currentPlan = runPlan;
+    }
+    
+    renderProjectBreakdown(projects) {
+        const container = document.getElementById('project-breakdown');
+        if (!container) return;
+        
+        if (projects.length === 0) {
+            container.innerHTML = `
+                <div class="no-projects">
+                    <i class="fas fa-info-circle"></i>
+                    <p>No rolls available for development</p>
+                </div>
+            `;
+            return;
+        }
+        
+        container.innerHTML = projects.map(project => `
+            <div class="project-item">
+                <div class="project-info">
+                    <span class="project-name">${project.project_name}</span>
+                    <span class="project-stats">
+                        ${project.roll_count} roll${project.roll_count !== 1 ? 's' : ''} 
+                        (${project.total_area.toFixed(3)} m²)
+                    </span>
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    renderDetailedRolls(rolls) {
+        const container = document.getElementById('detailed-rolls');
+        if (!container) return;
+        
+        if (rolls.length === 0) {
+            container.innerHTML = `
+                <div class="no-rolls">
+                    <i class="fas fa-info-circle"></i>
+                    <p>No rolls selected for development</p>
+                </div>
+            `;
+            return;
+        }
+        
+        container.innerHTML = rolls.map(roll => `
+            <div class="detailed-roll-item">
+                <div class="roll-info">
+                    <span class="roll-number">${roll.film_number}</span>
+                    <span class="roll-project">${roll.project_name}</span>
+                    <span class="roll-type">${roll.film_type}</span>
+                </div>
+                <div class="roll-stats">
+                    <span class="roll-pages">${roll.pages_used} pages</span>
+                    <span class="roll-area">${roll.area_m2.toFixed(3)} m²</span>
+                    <span class="roll-time">${roll.film_length_m.toFixed(1)} min</span>
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    updatePlannerAdvice(advice, chemistry) {
+        const adviceElement = document.getElementById('planner-advice-text');
+        const adviceContainer = document.getElementById('planner-advice');
+        
+        if (!adviceElement || !adviceContainer) return;
+        
+        adviceElement.textContent = advice;
+        
+        // Update advice styling based on content
+        adviceContainer.classList.remove('advice-success', 'advice-warning', 'advice-error', 'advice-info');
+        
+        if (advice.includes('Ready to start')) {
+            adviceContainer.classList.add('advice-success');
+            adviceElement.parentElement.querySelector('i').className = 'fas fa-check-circle';
+        } else if (advice.includes('Wait for more')) {
+            adviceContainer.classList.add('advice-info');
+            adviceElement.parentElement.querySelector('i').className = 'fas fa-clock';
+        } else if (advice.includes('age-locked') || advice.includes('No chemicals')) {
+            adviceContainer.classList.add('advice-error');
+            adviceElement.parentElement.querySelector('i').className = 'fas fa-exclamation-triangle';
+        } else {
+            adviceContainer.classList.add('advice-warning');
+            adviceElement.parentElement.querySelector('i').className = 'fas fa-info-circle';
+        }
+    }
+    
+    showPlannerError(message) {
+        const loadingElement = document.getElementById('planner-loading');
+        const resultsElement = document.getElementById('planner-results');
+        
+        if (loadingElement) {
+            loadingElement.innerHTML = `
+                <div class="error-state">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <p>Error loading planner</p>
+                    <small>${message}</small>
+                </div>
+            `;
+        }
+        
+        if (resultsElement) {
+            resultsElement.style.display = 'none';
+        }
+    }
+    
+    togglePlannerDetails() {
+        const detailsElement = document.getElementById('planner-details');
+        const button = document.getElementById('show-planner-details');
+        
+        if (!detailsElement || !button) return;
+        
+        const isVisible = detailsElement.style.display !== 'none';
+        
+        if (isVisible) {
+            detailsElement.style.display = 'none';
+            button.innerHTML = '<i class="fas fa-eye"></i> Show Details';
+        } else {
+            detailsElement.style.display = 'block';
+            button.innerHTML = '<i class="fas fa-eye-slash"></i> Hide Details';
+        }
+    }
+    
+    async developSuggestedRolls() {
+        if (!this.currentPlan || !this.currentPlan.rolls || this.currentPlan.rolls.length === 0) {
+            this.showNotification('error', 'Error', 'No rolls selected for development');
+            return;
+        }
+        
+        const rollIds = this.currentPlan.rolls.map(roll => roll.id);
+        
+        try {
+            const response = await fetch('/api/development/start/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.getCSRFToken()
+                },
+                body: JSON.stringify({
+                    roll_ids: rollIds,
+                    expert_mode: false
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                this.currentSession = data.session_id;
+                this.developmentDuration = data.duration_minutes;
+                this.filmLength = data.film_length_meters;
+                
+                // Save state to localStorage
+                this.saveStateToStorage();
+                
+                let successMessage = `Development started for ${data.roll_count} rolls - Duration: ${this.developmentDuration.toFixed(1)} minutes (${this.filmLength.toFixed(1)}m film)`;
+                
+                // Show chemical warnings if any (but still allow development to proceed)
+                if (data.chemical_warnings && data.chemical_warnings.length > 0) {
+                    this.showNotification('warning', 'Chemical Level Warning', 
+                        `Development started successfully, but note: ${data.chemical_warnings.join(', ')}`);
+                } else {
+                    this.showNotification('success', 'Development Started', successMessage);
+                }
+                
+                // Update UI and start local timer with actual duration
+                this.showDevelopmentTimer();
+                this.startLocalTimer(this.developmentDuration);
+                
+                // Clear roll selection and refresh data
+                this.selectedRoll = null;
+                this.loadPlanner();
+                this.loadRolls();
+                this.loadChemicalStatus();
+            } else {
+                if (data.locked_chemicals && data.expert_mode_available) {
+                    // Show expert mode option for age-locked chemicals
+                    this.showExpertModeDialog(data.error, data.warnings);
+                } else if (data.warnings && data.warnings.length > 0) {
+                    this.showNotification('error', 'Chemical Issues', 
+                        `Cannot start development: ${data.warnings.join(', ')}`);
+                } else {
+                    this.showNotification('error', 'Error', data.error || 'Failed to start development');
+                }
+            }
+        } catch (error) {
+            console.error('Error starting development:', error);
+            this.showNotification('error', 'Error', 'Failed to start development');
+        }
+    }
+    
     startAutoRefresh() {
         // Refresh data every 30 seconds
         this.refreshInterval = setInterval(() => {
             if (!this.currentSession) {
+                this.loadPlanner();
                 this.loadRolls();
                 this.loadChemicalStatus();
             }

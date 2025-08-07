@@ -356,6 +356,10 @@ function replaceSkeletonWithRealData(data) {
             realContent.style.display = 'block';
             realContent.classList.add('real-content-fade-in');
             
+            // Initialize controls after content loads
+            console.log('Initializing controls after skeleton replacement...');
+            initializeAnalyzePage();
+            
             // Update cache status after content loads
             updateCacheStatus();
         }, 300);
@@ -1073,24 +1077,65 @@ function initializeAnalyzePage() {
     initializeRawDataTabs();
     
     // Initialize sorting and view controls
+    console.log('About to initialize sorting and view controls...');
     initializeSortingAndViewControls();
+    
+    // Force refresh controls after a delay to ensure DOM is ready
+    setTimeout(() => {
+        console.log('Force refresh controls...');
+        const controlsContainer = document.querySelector('.controls-container');
+        console.log('Controls container exists:', !!controlsContainer);
+        if (controlsContainer) {
+            console.log('Controls container content:', controlsContainer.innerHTML);
+        }
+        
+        // Re-run initialization if controls are missing
+        if (!document.querySelector('.sort-controls') || !document.querySelector('.section-filters')) {
+            console.log('Missing controls detected, re-initializing...');
+            initializeSortingAndViewControls();
+        }
+    }, 500);
 }
 
 /**
  * Initialize sorting and view controls
  */
 function initializeSortingAndViewControls() {
-    // Initialize view toggle
-    initializeViewToggle();
+    console.log('Initializing sorting and view controls...');
     
-    // Initialize sorting controls
-    initializeSortingControls();
+    // Wait for DOM to be ready
+    setTimeout(() => {
+        // Initialize view toggle
+        initializeViewToggle();
+        
+        // Initialize section-specific filters
+        initializeSectionFilters();
+        
+        // Initialize sorting controls
+        initializeSortingControls();
+        
+        // Set initial sort control values
+        updateSortControlsFromState();
+        
+        // Apply initial view state
+        updateViewDisplay();
+    }, 100);
+}
+
+/**
+ * Initialize section-specific filters
+ */
+function initializeSectionFilters() {
+    console.log('Initializing section filters...');
     
-    // Set initial sort control values
-    updateSortControlsFromState();
+    // Remove existing filters first
+    const existingFilters = document.querySelector('.section-filters');
+    if (existingFilters) {
+        existingFilters.remove();
+    }
     
-    // Apply initial view state
-    updateViewDisplay();
+    // Create new filters for current section
+    createSectionFilters();
 }
 
 /**
@@ -1119,10 +1164,16 @@ function initializeViewToggle() {
  * Initialize sorting controls
  */
 function initializeSortingControls() {
-    // Create sort controls if they don't exist
-    if (!document.querySelector('.sort-controls')) {
-        createSortControls();
+    console.log('Initializing sorting controls...');
+    
+    // Remove existing sort controls first
+    const existingSortControls = document.querySelector('.sort-controls');
+    if (existingSortControls) {
+        existingSortControls.remove();
     }
+    
+    // Create new sort controls
+    createSortControls();
     
     // Add event listeners for sort controls
     const sortSelect = document.querySelector('.sort-select');
@@ -1171,35 +1222,202 @@ function createViewToggle() {
 }
 
 /**
+ * Create section-specific filters
+ */
+function createSectionFilters() {
+    const controlsContainer = document.querySelector('.controls-container');
+    console.log('Controls container found:', !!controlsContainer);
+    
+    if (!controlsContainer) {
+        console.warn('Controls container not found, cannot create filters');
+        return;
+    }
+    
+    // Check if filters already exist
+    if (controlsContainer.querySelector('.section-filters')) {
+        console.log('Filters already exist, skipping creation');
+        return;
+    }
+    
+    const currentSection = window.SECTION_FILTER || 'all';
+    const filters = getSectionFilterOptions(currentSection);
+    
+    console.log('Creating filters for section:', currentSection, 'filters:', filters.length);
+    
+    if (filters.length === 0) {
+        console.log('No filters available for section:', currentSection);
+        return; // No filters for this section
+    }
+    
+    const filtersContainer = document.createElement('div');
+    filtersContainer.className = 'section-filters';
+    filtersContainer.innerHTML = `
+        <div class="filters-group">
+            ${filters.map(filter => `
+                <div class="filter-item">
+                    <label for="filter-${filter.id}">${filter.label}:</label>
+                    <select id="filter-${filter.id}" class="filter-select" data-filter="${filter.id}">
+                        <option value="">All ${filter.label}</option>
+                        ${filter.options.map(option => `
+                            <option value="${option.value}">${option.label}</option>
+                        `).join('')}
+                    </select>
+                </div>
+            `).join('')}
+        </div>
+    `;
+    
+    controlsContainer.appendChild(filtersContainer);
+    console.log('Filters appended to controls container');
+    
+    // Add event listeners
+    filtersContainer.querySelectorAll('.filter-select').forEach(select => {
+        select.addEventListener('change', () => {
+            applyClientSideFilters();
+        });
+    });
+    
+    console.log('Filter event listeners added');
+}
+
+/**
+ * Get filter options for a specific section
+ */
+function getSectionFilterOptions(section) {
+    const commonFilters = [
+        {
+            id: 'location',
+            label: 'Location',
+            options: [
+                { value: 'OU', label: 'OU' },
+                { value: 'DW', label: 'DW' },
+                { value: 'main-archive', label: 'Main Archive' },
+                { value: 'satellite-office', label: 'Satellite Office' },
+                { value: 'remote-storage', label: 'Remote Storage' }
+            ]
+        }
+    ];
+    
+    switch (section) {
+        case 'unanalyzed':
+            return [
+                ...commonFilters,
+                {
+                    id: 'file-type',
+                    label: 'Primary File Type',
+                    options: [
+                        { value: 'pdf', label: 'PDF Heavy' },
+                        { value: 'excel', label: 'Excel Heavy' },
+                        { value: 'mixed', label: 'Mixed Files' },
+                        { value: 'other', label: 'Other Types' }
+                    ]
+                },
+                {
+                    id: 'size-range',
+                    label: 'Folder Size',
+                    options: [
+                        { value: 'small', label: 'Small (< 100MB)' },
+                        { value: 'medium', label: 'Medium (100MB - 1GB)' },
+                        { value: 'large', label: 'Large (1GB - 5GB)' },
+                        { value: 'xlarge', label: 'Very Large (> 5GB)' }
+                    ]
+                }
+            ];
+            
+        case 'analyzed':
+            return [
+                ...commonFilters,
+                {
+                    id: 'document-type',
+                    label: 'Document Type',
+                    options: [
+                        { value: 'archive', label: 'Archive' },
+                        { value: 'document', label: 'Document' },
+                        { value: 'book', label: 'Book' },
+                        { value: 'newspaper', label: 'Newspaper' },
+                        { value: 'correspondence', label: 'Correspondence' },
+                        { value: 'records', label: 'Records' }
+                    ]
+                },
+                {
+                    id: 'roll-count',
+                    label: 'Roll Count',
+                    options: [
+                        { value: 'low', label: 'Low (1-5 rolls)' },
+                        { value: 'medium', label: 'Medium (6-20 rolls)' },
+                        { value: 'high', label: 'High (21+ rolls)' }
+                    ]
+                },
+                {
+                    id: 'has-oversized',
+                    label: 'Has Oversized',
+                    options: [
+                        { value: 'true', label: 'Yes' },
+                        { value: 'false', label: 'No' }
+                    ]
+                }
+            ];
+            
+        case 'registered':
+            return [
+                ...commonFilters,
+                {
+                    id: 'project-status',
+                    label: 'Status',
+                    options: [
+                        { value: 'draft', label: 'Draft' },
+                        { value: 'processing', label: 'Processing' },
+                        { value: 'allocated', label: 'Film Allocated' },
+                        { value: 'complete', label: 'Complete' }
+                    ]
+                },
+                {
+                    id: 'completion-rate',
+                    label: 'Completion',
+                    options: [
+                        { value: 'not-started', label: 'Not Started (0%)' },
+                        { value: 'in-progress', label: 'In Progress (1-99%)' },
+                        { value: 'complete', label: 'Complete (100%)' }
+                    ]
+                }
+            ];
+            
+        default:
+            return commonFilters;
+    }
+}
+
+/**
  * Create sort controls
  */
 function createSortControls() {
     const controlsContainer = document.querySelector('.controls-container');
-    if (!controlsContainer) return;
+    console.log('Creating sort controls, container found:', !!controlsContainer);
+    
+    if (!controlsContainer) {
+        console.warn('Controls container not found, cannot create sort controls');
+        return;
+    }
     
     // Check if sort controls already exist
-    if (controlsContainer.querySelector('.sort-controls')) return;
+    if (controlsContainer.querySelector('.sort-controls')) {
+        console.log('Sort controls already exist, skipping creation');
+        return;
+    }
+    
+    const currentSection = window.SECTION_FILTER || 'all';
+    const sortOptions = getSectionSortOptions(currentSection);
+    
+    console.log('Creating sort controls for section:', currentSection, 'options:', sortOptions.length);
     
     const sortControls = document.createElement('div');
     sortControls.className = 'sort-controls';
     sortControls.innerHTML = `
         <div class="sort-group">
             <select class="sort-select">
-                <option value="name">Name</option>
-                <option value="size">Size</option>
-                <option value="files">Files</option>
-                <option value="pdfs">PDFs</option>
-                <option value="documents">Documents</option>
-                <option value="pages">Pages</option>
-                <option value="rolls">Rolls</option>
-                <option value="utilization">Utilization</option>
-                <option value="oversized">Oversized</option>
-                <option value="temp_created">Temp Rolls Created</option>
-                <option value="temp_used">Temp Rolls Used</option>
-                <option value="temp_strategy">Temp Roll Strategy</option>
-                <option value="location">Location</option>
-                <option value="status">Status</option>
-                <option value="date">Date</option>
+                ${sortOptions.map(option => `
+                    <option value="${option.value}">${option.label}</option>
+                `).join('')}
             </select>
             <button class="sort-direction" title="Sort Direction">
                 <i class="fas fa-sort-alpha-down"></i>
@@ -1208,6 +1426,56 @@ function createSortControls() {
     `;
     
     controlsContainer.appendChild(sortControls);
+    console.log('Sort controls appended to controls container');
+}
+
+/**
+ * Get sort options for a specific section
+ */
+function getSectionSortOptions(section) {
+    const commonOptions = [
+        { value: 'name', label: 'Name' },
+        { value: 'location', label: 'Location' }
+    ];
+    
+    switch (section) {
+        case 'unanalyzed':
+            return [
+                ...commonOptions,
+                { value: 'size', label: 'Size' },
+                { value: 'files', label: 'Files' },
+                { value: 'pdfs', label: 'PDFs' },
+                { value: 'documents', label: 'Documents' }
+            ];
+            
+        case 'analyzed':
+            return [
+                ...commonOptions,
+                { value: 'pages', label: 'Pages' },
+                { value: 'rolls', label: 'Rolls' },
+                { value: 'utilization', label: 'Utilization' },
+                { value: 'oversized', label: 'Oversized' },
+                { value: 'temp_created', label: 'Temp Rolls Created' },
+                { value: 'temp_used', label: 'Temp Rolls Used' },
+                { value: 'temp_strategy', label: 'Temp Roll Strategy' }
+            ];
+            
+        case 'registered':
+            return [
+                ...commonOptions,
+                { value: 'status', label: 'Status' },
+                { value: 'date', label: 'Date' },
+                { value: 'completion', label: 'Completion' }
+            ];
+            
+        default:
+            return [
+                ...commonOptions,
+                { value: 'size', label: 'Size' },
+                { value: 'files', label: 'Files' },
+                { value: 'status', label: 'Status' }
+            ];
+    }
 }
 
 /**
@@ -2303,9 +2571,15 @@ function analyzeFolder(folderPath) {
         hideLoadingModal();
         if (data.status === 'success') {
             showNotification('Folder analyzed successfully', 'success');
-            // Reload the page to show the analyzed folder in the analyzed section
+            
+            // Clear cache to ensure fresh data
+            clearAllCache();
+            
+            // Reload the page with cache busting to show the analyzed folder in the analyzed section
             setTimeout(() => {
-                window.location.reload();
+                const url = new URL(window.location);
+                url.searchParams.set('_t', Date.now());
+                window.location.href = url.toString();
             }, 1000);
         } else {
             showNotification(data.message || 'Failed to analyze folder', 'error');
@@ -2342,9 +2616,15 @@ function registerAnalyzedFolder(analyzedFolderId, projectData) {
         hideLoadingModal();
         if (data.status === 'success') {
             showNotification('Folder registered as project successfully', 'success');
-            // Reload the page to show the project in the registered section
+            
+            // Clear cache to ensure fresh data
+            clearAllCache();
+            
+            // Reload the page with cache busting to show the project in the registered section
             setTimeout(() => {
-                window.location.reload();
+                const url = new URL(window.location);
+                url.searchParams.set('_t', Date.now());
+                window.location.href = url.toString();
             }, 1000);
         } else {
             showNotification(data.message || 'Failed to register folder', 'error');
@@ -2376,19 +2656,41 @@ function getFolderInfo(folderPath) {
  * Switch between sections
  */
 function switchSection(sectionName) {
-    const url = new URL(window.location);
-    url.searchParams.set('section', sectionName);
-    if (url.searchParams.get('page')) {
-        url.searchParams.delete('page'); // Reset to first page when switching sections
+    console.log('Switching to section:', sectionName);
+    
+    // Clear cache when switching sections to ensure fresh data
+    clearAllCache();
+    
+    // Update global section filter
+    window.SECTION_FILTER = sectionName;
+    
+    if (window.SKELETON_MODE) {
+        // In skeleton mode, reload data immediately
+        loadRealData().then(() => {
+            // Re-initialize controls for the new section
+            console.log('Re-initializing controls after section switch...');
+            initializeSortingAndViewControls();
+        });
+    } else {
+        // In regular mode, redirect with cache busting
+        const url = new URL(window.location);
+        url.searchParams.set('section', sectionName);
+        url.searchParams.set('_t', Date.now()); // Cache busting parameter
+        
+        if (url.searchParams.get('page')) {
+            url.searchParams.delete('page'); // Reset to first page when switching sections
+        }
+        
+        // Maintain current sort parameters
+        if (currentSort && currentSort.field !== 'name') {
+            url.searchParams.set('sort', currentSort.field);
+        }
+        if (currentSort && currentSort.direction !== 'asc') {
+            url.searchParams.set('dir', currentSort.direction);
+        }
+        
+        window.location.href = url.toString();
     }
-    // Maintain current sort parameters
-    if (currentSort.field !== 'name') {
-        url.searchParams.set('sort', currentSort.field);
-    }
-    if (currentSort.direction !== 'asc') {
-        url.searchParams.set('dir', currentSort.direction);
-    }
-    window.location.href = url.toString();
 }
 
 /**
@@ -2780,6 +3082,220 @@ function applyFilter(section) {
 }
 
 /**
+ * Apply client-side filters to visible cards
+ */
+function applyClientSideFilters() {
+    const filterSelects = document.querySelectorAll('.filter-select');
+    const activeFilters = {};
+    
+    // Collect active filters
+    filterSelects.forEach(select => {
+        const filterId = select.dataset.filter;
+        const value = select.value;
+        if (value) {
+            activeFilters[filterId] = value;
+        }
+    });
+    
+    console.log('Applying client-side filters:', activeFilters);
+    
+    // Get current section and apply filters to cards
+    const currentSection = window.SECTION_FILTER || 'all';
+    const sectionContainers = document.querySelectorAll('.section-container');
+    
+    sectionContainers.forEach(container => {
+        if (currentSection !== 'all') {
+            // Only filter the current section
+            if (!container.classList.contains(`${currentSection}-section`)) {
+                return;
+            }
+        }
+        
+        const cards = container.querySelectorAll('.folder-card');
+        cards.forEach(card => {
+            const shouldShow = cardMatchesFilters(card, activeFilters, currentSection);
+            card.style.display = shouldShow ? 'block' : 'none';
+        });
+        
+        // Update empty state if no cards are visible
+        updateEmptyState(container);
+    });
+}
+
+/**
+ * Check if a card matches the applied filters
+ */
+function cardMatchesFilters(card, filters, section) {
+    for (const [filterId, filterValue] of Object.entries(filters)) {
+        if (!cardMatchesFilter(card, filterId, filterValue, section)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+/**
+ * Check if a card matches a specific filter
+ */
+function cardMatchesFilter(card, filterId, filterValue, section) {
+    switch (filterId) {
+        case 'location':
+            const locationElement = card.querySelector('.folder-path span[title], .project-location');
+            if (locationElement) {
+                const location = locationElement.textContent || locationElement.getAttribute('title') || '';
+                return location.toLowerCase().includes(filterValue.toLowerCase());
+            }
+            return false;
+            
+        case 'file-type':
+            // For unanalyzed section - check file type composition
+            const pdfCount = parseInt(card.querySelector('[data-metric="pdfs"] .metric-value')?.textContent || '0');
+            const excelCount = parseInt(card.querySelector('[data-metric="excel"] .metric-value')?.textContent || '0');
+            const totalFiles = parseInt(card.querySelector('[data-metric="files"] .metric-value')?.textContent || '0');
+            
+            if (totalFiles === 0) return filterValue === 'other';
+            
+            const pdfRatio = pdfCount / totalFiles;
+            const excelRatio = excelCount / totalFiles;
+            
+            switch (filterValue) {
+                case 'pdf': return pdfRatio > 0.6;
+                case 'excel': return excelRatio > 0.6;
+                case 'mixed': return pdfRatio > 0.1 && excelRatio > 0.1;
+                case 'other': return pdfRatio < 0.1 && excelRatio < 0.1;
+                default: return true;
+            }
+            
+        case 'size-range':
+            const sizeElement = card.querySelector('[data-metric="size"] .metric-value, .folder-size');
+            if (sizeElement) {
+                const sizeText = sizeElement.textContent;
+                const sizeBytes = parseSizeToBytes(sizeText);
+                
+                switch (filterValue) {
+                    case 'small': return sizeBytes < 100 * 1024 * 1024; // < 100MB
+                    case 'medium': return sizeBytes >= 100 * 1024 * 1024 && sizeBytes < 1024 * 1024 * 1024; // 100MB - 1GB
+                    case 'large': return sizeBytes >= 1024 * 1024 * 1024 && sizeBytes < 5 * 1024 * 1024 * 1024; // 1GB - 5GB
+                    case 'xlarge': return sizeBytes >= 5 * 1024 * 1024 * 1024; // > 5GB
+                    default: return true;
+                }
+            }
+            return false;
+            
+        case 'document-type':
+            const docTypeElement = card.querySelector('.document-type, [data-doc-type]');
+            if (docTypeElement) {
+                const docType = docTypeElement.textContent || docTypeElement.dataset.docType || '';
+                return docType.toLowerCase() === filterValue.toLowerCase();
+            }
+            return false;
+            
+        case 'roll-count':
+            const rollsElement = card.querySelector('[data-metric="rolls"] .metric-value');
+            if (rollsElement) {
+                const rollCount = parseInt(rollsElement.textContent || '0');
+                switch (filterValue) {
+                    case 'low': return rollCount >= 1 && rollCount <= 5;
+                    case 'medium': return rollCount >= 6 && rollCount <= 20;
+                    case 'high': return rollCount >= 21;
+                    default: return true;
+                }
+            }
+            return false;
+            
+        case 'has-oversized':
+            const oversizedElement = card.querySelector('[data-metric="oversized"] .metric-value, .oversized-indicator');
+            if (oversizedElement) {
+                const hasOversized = parseInt(oversizedElement.textContent || '0') > 0 || 
+                                   oversizedElement.classList.contains('has-oversized');
+                return filterValue === 'true' ? hasOversized : !hasOversized;
+            }
+            return filterValue === 'false';
+            
+        case 'project-status':
+            const statusElement = card.querySelector('.status-badge, .project-status');
+            if (statusElement) {
+                const status = statusElement.textContent.toLowerCase().trim();
+                return status.includes(filterValue.toLowerCase());
+            }
+            return false;
+            
+        case 'completion-rate':
+            const completionElement = card.querySelector('.completion-percentage, [data-completion]');
+            if (completionElement) {
+                const completion = parseInt(completionElement.textContent || completionElement.dataset.completion || '0');
+                switch (filterValue) {
+                    case 'not-started': return completion === 0;
+                    case 'in-progress': return completion > 0 && completion < 100;
+                    case 'complete': return completion === 100;
+                    default: return true;
+                }
+            }
+            return false;
+            
+        default:
+            return true;
+    }
+}
+
+/**
+ * Parse size string to bytes for comparison
+ */
+function parseSizeToBytes(sizeText) {
+    if (!sizeText) return 0;
+    
+    const units = {
+        'b': 1,
+        'kb': 1024,
+        'mb': 1024 * 1024,
+        'gb': 1024 * 1024 * 1024,
+        'tb': 1024 * 1024 * 1024 * 1024
+    };
+    
+    const match = sizeText.toLowerCase().match(/^([\d.]+)\s*([a-z]+)$/);
+    if (match) {
+        const value = parseFloat(match[1]);
+        const unit = match[2];
+        return value * (units[unit] || 1);
+    }
+    
+    return 0;
+}
+
+/**
+ * Update empty state for a section container
+ */
+function updateEmptyState(container) {
+    const cards = container.querySelectorAll('.folder-card');
+    const visibleCards = Array.from(cards).filter(card => card.style.display !== 'none');
+    
+    let emptyState = container.querySelector('.empty-state-message');
+    
+    if (visibleCards.length === 0) {
+        if (!emptyState) {
+            emptyState = document.createElement('div');
+            emptyState.className = 'empty-state-message';
+            emptyState.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-filter"></i>
+                    <h3>No items match your filters</h3>
+                    <p>Try adjusting your filter criteria to see more results.</p>
+                </div>
+            `;
+            const cardsGrid = container.querySelector('.cards-grid');
+            if (cardsGrid) {
+                cardsGrid.appendChild(emptyState);
+            }
+        }
+        emptyState.style.display = 'block';
+    } else {
+        if (emptyState) {
+            emptyState.style.display = 'none';
+        }
+    }
+}
+
+/**
  * Apply sorting with cache invalidation
  */
 function applySort(field, direction = null) {
@@ -2814,6 +3330,16 @@ function applySort(field, direction = null) {
     
     // Update sort indicators
     updateSortIndicators();
+}
+
+/**
+ * Update sort direction icons and indicators
+ */
+function updateSortIndicators() {
+    const sortDirectionBtn = document.querySelector('.sort-direction');
+    if (sortDirectionBtn) {
+        updateSortDirectionIcon();
+    }
 }
 
 /**
@@ -2862,10 +3388,16 @@ function refreshDashboardData() {
     
     if (window.SKELETON_MODE) {
         // Reload data in skeleton mode
-        loadRealData();
+        loadRealData().then(() => {
+            // Re-initialize controls after refresh
+            console.log('Re-initializing controls after data refresh...');
+            initializeSortingAndViewControls();
+        });
     } else {
-        // Reload page for non-skeleton mode
-        location.reload();
+        // Reload page for non-skeleton mode with cache busting
+        const url = new URL(window.location);
+        url.searchParams.set('_t', Date.now()); // Cache busting parameter
+        window.location.href = url.toString();
     }
 }
 

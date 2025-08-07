@@ -285,6 +285,146 @@
     color: #475569;
 }
 
+/* Section Filters */
+.section-filters {
+    display: flex;
+    align-items: center;
+    margin-right: 16px;
+}
+
+.filters-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 8px 12px;
+    border: 1px solid #e2e8f0;
+}
+
+.filter-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.filter-item label {
+    font-size: 0.75rem;
+    color: #64748b;
+    font-weight: 500;
+    margin: 0;
+}
+
+.filter-select {
+    padding: 4px 8px;
+    border: 1px solid #e2e8f0;
+    background: white;
+    color: #1e293b;
+    font-size: 0.75rem;
+    cursor: pointer;
+    border-radius: 4px;
+    min-width: 100px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.08);
+}
+
+.filter-select:hover {
+    border-color: #cbd5e1;
+}
+
+/* Empty state for filtered results */
+.empty-state-message {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 48px 24px;
+}
+
+.empty-state {
+    text-align: center;
+    color: #64748b;
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+.empty-state h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #1e293b;
+}
+
+.empty-state p {
+    font-size: 0.875rem;
+    margin: 0;
+}
+
+/* Responsive adjustments for filters */
+@media (max-width: 1024px) {
+    .controls-container {
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+    
+    .section-filters {
+        order: 2;
+        margin-right: 0;
+    }
+    
+    .filters-group {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .filter-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+    }
+    
+    .filter-select {
+        min-width: 80px;
+        font-size: 0.7rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .filters-group {
+        background: transparent;
+        border: none;
+        padding: 0;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+    
+    .filter-item {
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+        background: #f8fafc;
+        padding: 8px;
+        border-radius: 6px;
+        border: 1px solid #e2e8f0;
+    }
+    
+    .filter-select {
+        flex: 1;
+        min-width: 0;
+    }
+}
+
 /* Table View Styles */
 .table-container {
     display: none;

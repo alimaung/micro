@@ -51,7 +51,7 @@ def get_rolls_for_development(request):
                 'id': roll.id,
                 'film_number': roll.film_number,
                 'film_type': roll.film_type,
-                'project_name': roll.project.name,
+                'project_name': roll.project.archive_id,
                 'pages_used': roll.pages_used,
                 'filming_completed_at': roll.filming_completed_at.isoformat() if roll.filming_completed_at else None,
                 'development_status': roll.development_status,
@@ -167,39 +167,62 @@ def start_development(request):
     try:
         data = json.loads(request.body)
         roll_id = data.get('roll_id')
+        roll_ids = data.get('roll_ids', [])
         
-        if not roll_id:
+        # Support both single roll and multiple rolls
+        if roll_id:
+            roll_ids = [roll_id]
+        elif not roll_ids:
             return JsonResponse({
                 'success': False,
-                'error': 'Roll ID is required'
+                'error': 'Roll ID or roll IDs are required'
             }, status=400)
         
-        roll = get_object_or_404(Roll, pk=roll_id)
-        
-        # Check if roll is ready for development
-        if roll.filming_status != 'completed':
+        # Get all rolls
+        rolls = Roll.objects.filter(pk__in=roll_ids)
+        if not rolls.exists():
             return JsonResponse({
                 'success': False,
-                'error': 'Roll must be filmed before development can start'
+                'error': 'No valid rolls found'
             }, status=400)
         
-        if roll.development_status == 'developing':
-            return JsonResponse({
-                'success': False,
-                'error': 'Roll is already being developed'
-            }, status=400)
+        # Check if all rolls are ready for development
+        for roll in rolls:
+            if roll.filming_status != 'completed':
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Roll {roll.film_number} must be filmed before development can start'
+                }, status=400)
+            
+            if roll.development_status == 'developing':
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Roll {roll.film_number} is already being developed'
+                }, status=400)
         
-        # Check chemical capacity for this specific roll
-        # Calculate area needed for this roll
-        total_frames = roll.pages_used + 100  # Add leader/trailer
-        film_length_m = (total_frames * 1.0) / 100.0  # 1cm per frame, convert to meters
+        # Calculate total area needed for all rolls
+        total_area_needed = 0
+        total_film_length = 0
+        roll_details = []
         
-        if roll.film_type == FilmType.FILM_16MM:
-            film_height_m = 0.016  # 16mm in meters
-        else:  # 35mm
-            film_height_m = 0.035  # 35mm in meters
-        
-        area_needed = film_length_m * film_height_m
+        for roll in rolls:
+            total_frames = roll.pages_used + 100  # Add leader/trailer
+            film_length_m = (total_frames * 1.0) / 100.0  # 1cm per frame, convert to meters
+            
+            if roll.film_type == FilmType.FILM_16MM:
+                film_height_m = 0.016  # 16mm in meters
+            else:  # 35mm
+                film_height_m = 0.035  # 35mm in meters
+            
+            area_needed = film_length_m * film_height_m
+            total_area_needed += area_needed
+            total_film_length += film_length_m
+            
+            roll_details.append({
+                'roll': roll,
+                'area_needed': area_needed,
+                'film_length_m': film_length_m
+            })
         
         # Check for expert mode
         expert_mode = data.get('expert_mode', False)
@@ -219,7 +242,7 @@ def start_development(request):
             if not batch:
                 chemicals_ok = False
                 chemical_warnings.append(f"{display_name}: No active batch found")
-            elif not batch.can_process_roll(area_needed, expert_mode=expert_mode):
+            elif not batch.can_process_roll(total_area_needed, expert_mode=expert_mode):
                 chemicals_ok = False
                 remaining = batch.remaining_capacity
                 
@@ -227,7 +250,7 @@ def start_development(request):
                     hours_over = batch.hours_since_installation - (14 * 24 + 48)
                     locked_warnings.append(f"{display_name}: Age-locked ({hours_over:.1f} hours past expiry). Chemistry must be replaced.")
                 else:
-                    chemical_warnings.append(f"{display_name}: Insufficient capacity ({remaining:.3f} m² remaining, {area_needed:.3f} m² needed)")
+                    chemical_warnings.append(f"{display_name}: Insufficient capacity ({remaining:.3f} m² remaining, {total_area_needed:.3f} m² needed)")
             else:
                 # Check for warnings even if development can proceed
                 if batch.is_age_locked and expert_mode:
@@ -269,7 +292,8 @@ def start_development(request):
             'session_id': None,  # Will be set below
             'estimated_completion': None,  # Will be set below
             'duration_minutes': None,  # Will be set below
-            'film_length_meters': (roll.pages_used + 100) / 100.0,
+            'film_length_meters': total_film_length,
+            'roll_count': len(rolls),
             'expert_mode': expert_mode
         }
         
@@ -284,57 +308,63 @@ def start_development(request):
             response_data['chemical_warnings'] = all_warnings
         
         with transaction.atomic():
-            # Create development session
+            # Create development session for the batch
             session_id = f"dev_{uuid.uuid4().hex[:8]}"
+            
+            # For multiple rolls, we'll create one session and link all rolls to it
+            # Use the first roll as the primary roll for the session
+            primary_roll = rolls.first()
             
             session = DevelopmentSession.objects.create(
                 session_id=session_id,
-                roll=roll,
+                roll=primary_roll,
                 user=request.user,
                 status='developing',
-                development_duration_minutes=30,  # This will be updated below
+                development_duration_minutes=total_film_length,  # 1 minute per meter
                 started_at=timezone.now()
             )
             
-            # Calculate actual development duration based on film length
-            actual_duration = session.calculate_development_duration()
-            session.development_duration_minutes = actual_duration
-            session.estimated_completion = timezone.now() + timedelta(minutes=actual_duration)
+            # Set estimated completion
+            session.estimated_completion = timezone.now() + timedelta(minutes=total_film_length)
             session.save()
             
-            # Update roll status
-            roll.development_status = 'developing'
-            roll.development_started_at = timezone.now()
-            roll.development_progress_percent = 0.0
-            roll.save(update_fields=[
-                'development_status', 'development_started_at', 'development_progress_percent'
-            ])
+            # Update all roll statuses
+            roll_numbers = []
+            for roll_detail in roll_details:
+                roll = roll_detail['roll']
+                roll.development_status = 'developing'
+                roll.development_started_at = timezone.now()
+                roll.development_progress_percent = 0.0
+                roll.save(update_fields=[
+                    'development_status', 'development_started_at', 'development_progress_percent'
+                ])
+                roll_numbers.append(roll.film_number)
             
-            # Calculate and record chemical usage
-            session.calculate_chemical_usage()
-            session.save()
-            
-            # Update chemical batches with actual area used
-            chemical_area_used = session.chemical_usage_area
+            # Update chemical batches with total area used
             for chemical_type, _ in ChemicalBatch.CHEMICAL_TYPES:
                 batch = ChemicalBatch.objects.filter(
                     chemical_type=chemical_type,
                     is_active=True
                 ).first()
                 if batch:
-                    batch.add_roll_usage(roll.film_type, chemical_area_used)
+                    # Add usage for each roll type
+                    for roll_detail in roll_details:
+                        roll = roll_detail['roll']
+                        area_used = roll_detail['area_needed']
+                        batch.add_roll_usage(roll.film_type, area_used)
             
             # Log the start
+            roll_list = ", ".join(roll_numbers)
             DevelopmentLog.objects.create(
                 session=session,
                 level='info',
-                message=f"Development started for roll {roll.film_number} ({roll.film_type}) - Duration: {actual_duration:.1f} minutes"
+                message=f"Development started for {len(rolls)} rolls: {roll_list} - Total duration: {total_film_length:.1f} minutes"
             )
         
         response_data['session_id'] = session_id
         response_data['estimated_completion'] = session.estimated_completion.isoformat()
-        response_data['duration_minutes'] = actual_duration
-        response_data['film_length_meters'] = (roll.pages_used + 100) / 100.0
+        response_data['duration_minutes'] = total_film_length
+        response_data['film_length_meters'] = total_film_length
         
         return JsonResponse(response_data)
         
@@ -514,7 +544,7 @@ def get_development_history(request):
                 'roll_number': session.roll.roll_number,
                 'film_number': session.roll.film_number,
                 'film_type': session.roll.film_type,
-                'project_name': session.roll.project.name or session.roll.project.archive_id,
+                'project_name': session.roll.project.archive_id or session.roll.project.archive_id,
                 'status': session.status,
                 'progress': session.progress_percent,
                 'started_at': session.started_at.isoformat() if session.started_at else None,
@@ -759,6 +789,198 @@ def get_density_measurements(request):
         }, status=500)
 
 @require_http_methods(["GET"])
+def get_development_planner(request):
+    """
+    Get development run plan based on available rolls and chemical capacity.
+    Analyzes rolls and suggests optimal development runs.
+    """
+    try:
+        # Get all rolls that can be developed
+        rolls = Roll.objects.filter(
+            filming_status='completed',
+            development_status__in=['pending', 'failed']
+        ).select_related('project').order_by('project_id', 'pages_used')
+        
+        if not rolls.exists():
+            return JsonResponse({
+                'success': True,
+                'run_plan': {
+                    'rolls': [],
+                    'grouped_by_project': [],
+                    'totals': {'area_m2': 0, 'roll_count': 0, 'est_time_min': 0},
+                    'chemistry': {'capacity_left_m2': 0, 'capacity_after_run_m2': 0, 'age_warning': False, 'lockout_at': None},
+                    'advice': 'No rolls available for development',
+                    'generated_at': timezone.now().isoformat()
+                }
+            })
+        
+        # Get chemical capacity (limiting reagent)
+        min_remaining_capacity = float('inf')
+        chemical_status = {}
+        age_warning = False
+        earliest_lockout = None
+        
+        for chemical_type, display_name in ChemicalBatch.CHEMICAL_TYPES:
+            batch = ChemicalBatch.objects.filter(
+                chemical_type=chemical_type,
+                is_active=True
+            ).first()
+            
+            if batch:
+                min_remaining_capacity = min(min_remaining_capacity, batch.remaining_capacity)
+                chemical_status[chemical_type] = {
+                    'remaining_capacity': batch.remaining_capacity,
+                    'is_age_warning': batch.is_age_warning,
+                    'is_age_locked': batch.is_age_locked,
+                    'hours_until_lockout': batch.hours_until_lockout
+                }
+                
+                if batch.is_age_warning:
+                    age_warning = True
+                
+                if batch.is_age_locked:
+                    lockout_time = batch.installation_date + timedelta(days=14, hours=48)
+                    if earliest_lockout is None or lockout_time < earliest_lockout:
+                        earliest_lockout = lockout_time
+            else:
+                min_remaining_capacity = 0
+        
+        if min_remaining_capacity == float('inf'):
+            min_remaining_capacity = 0
+        
+        # Calculate roll areas and group by project
+        roll_data = []
+        project_groups = {}
+        
+        for roll in rolls:
+            # Calculate area needed
+            total_frames = roll.pages_used + 100  # Add leader/trailer
+            film_length_m = (total_frames * 1.0) / 100.0  # 1cm per frame
+            
+            if roll.film_type == FilmType.FILM_16MM:
+                film_height_m = 0.016  # 16mm
+            else:  # 35mm
+                film_height_m = 0.035  # 35mm
+            
+            area_m2 = film_length_m * film_height_m
+            
+            roll_info = {
+                'id': roll.id,
+                'film_number': roll.film_number,
+                'film_type': roll.film_type,
+                'project_id': roll.project.id,
+                'project_name': roll.project.archive_id,
+                'pages_used': roll.pages_used,
+                'area_m2': area_m2,
+                'film_length_m': film_length_m,
+                'ready_since': roll.filming_completed_at
+            }
+            
+            roll_data.append(roll_info)
+            
+            # Group by project
+            if roll.project.id not in project_groups:
+                project_groups[roll.project.id] = {
+                    'project_id': roll.project.id,
+                    'project_name': roll.project.archive_id,
+                    'total_area': 0,
+                    'roll_count': 0,
+                    'rolls': [],
+                    'ready_since': roll.filming_completed_at
+                }
+            
+            project_groups[roll.project.id]['total_area'] += area_m2
+            project_groups[roll.project.id]['roll_count'] += 1
+            project_groups[roll.project.id]['rolls'].append(roll_info)
+            
+            # Track earliest ready date for project
+            if roll.filming_completed_at < project_groups[roll.project.id]['ready_since']:
+                project_groups[roll.project.id]['ready_since'] = roll.filming_completed_at
+        
+        # Sort project groups by ready_since (older first), then by total_area (smaller first)
+        sorted_projects = sorted(project_groups.values(), 
+                               key=lambda p: (p['ready_since'], p['total_area']))
+        
+        # Packing algorithm - aim for 90% utilization
+        target_utilization = min_remaining_capacity * 0.9
+        selected_rolls = []
+        selected_projects = []
+        total_area = 0
+        total_time = 0
+        
+        for project in sorted_projects:
+            if total_area + project['total_area'] <= target_utilization:
+                # Add entire project
+                selected_projects.append(project)
+                selected_rolls.extend(project['rolls'])
+                total_area += project['total_area']
+                total_time += sum(roll['film_length_m'] for roll in project['rolls'])
+            else:
+                # Try to fit individual rolls from this project (smaller first)
+                project_rolls = sorted(project['rolls'], key=lambda r: r['area_m2'])
+                for roll in project_rolls:
+                    if total_area + roll['area_m2'] <= target_utilization:
+                        selected_rolls.append(roll)
+                        total_area += roll['area_m2']
+                        total_time += roll['film_length_m']
+                        
+                        # Add partial project group
+                        partial_project = next((p for p in selected_projects if p['project_id'] == project['project_id']), None)
+                        if not partial_project:
+                            partial_project = {
+                                'project_id': project['project_id'],
+                                'project_name': project['project_name'],
+                                'total_area': 0,
+                                'roll_count': 0,
+                                'rolls': []
+                            }
+                            selected_projects.append(partial_project)
+                        
+                        partial_project['total_area'] += roll['area_m2']
+                        partial_project['roll_count'] += 1
+                        partial_project['rolls'].append(roll)
+        
+        # Generate advice
+        if min_remaining_capacity == 0:
+            advice = "No chemicals available - install chemical batches first"
+        elif any(chemical_status[ct]['is_age_locked'] for ct, _ in ChemicalBatch.CHEMICAL_TYPES if ct in chemical_status):
+            advice = "Chemicals are age-locked - replace chemicals before development"
+        elif total_area < min_remaining_capacity * 0.5:  # Less than 50% utilization
+            needed_area = min_remaining_capacity * 0.8 - total_area
+            advice = f"Wait for more rolls (need {needed_area:.2f} m² more for efficient run)"
+        else:
+            advice = "Ready to start development run"
+        
+        return JsonResponse({
+            'success': True,
+            'run_plan': {
+                'rolls': selected_rolls,
+                'grouped_by_project': selected_projects,
+                'totals': {
+                    'area_m2': round(total_area, 3),
+                    'roll_count': len(selected_rolls),
+                    'est_time_min': round(total_time, 1)
+                },
+                'chemistry': {
+                    'capacity_left_m2': round(min_remaining_capacity, 3),
+                    'capacity_after_run_m2': round(min_remaining_capacity - total_area, 3),
+                    'utilization_percent': round((total_area / min_remaining_capacity * 100) if min_remaining_capacity > 0 else 0, 1),
+                    'age_warning': age_warning,
+                    'lockout_at': earliest_lockout.isoformat() if earliest_lockout else None
+                },
+                'advice': advice,
+                'generated_at': timezone.now().isoformat()
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Error generating development plan: {e}")
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+@require_http_methods(["GET"])
 def get_active_development_session(request):
     """
     Get the currently active development session for timer restoration.
@@ -785,7 +1007,7 @@ def get_active_development_session(request):
             'roll_id': active_session.roll.id,
             'film_number': active_session.roll.film_number,
             'film_type': active_session.roll.film_type,
-            'project_name': active_session.roll.project.name,
+            'project_name': active_session.roll.project.archive_id,
             'pages_used': active_session.roll.pages_used,
             'duration_minutes': development_duration,
             'film_length_meters': film_length_m,

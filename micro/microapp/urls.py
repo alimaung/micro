@@ -278,6 +278,7 @@ urlpatterns = [
     path('api/rolls/search/', views.list_rolls, name='search_rolls'),  # Placeholder
     
     # Development API Endpoints
+    path('api/development/planner/', views.get_development_planner, name='api_development_planner'),
     path('api/development/rolls/', views.get_rolls_for_development, name='api_development_rolls'),
     path('api/development/chemicals/', views.get_chemical_status, name='api_chemical_status'),
     path('api/development/start/', views.start_development, name='api_start_development'),
