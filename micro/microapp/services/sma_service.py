@@ -1078,6 +1078,7 @@ class SMAService:
                 capacity=roll.pages_remaining,
                 usable_capacity=usable_capacity,
                 status='available',
+                exists=True,  # Set to True since filming has completed and temp roll now physically exists
                 source_roll=roll
             )
             

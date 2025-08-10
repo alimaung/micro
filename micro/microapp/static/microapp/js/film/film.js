@@ -315,8 +315,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 throw new Error(data.error || 'Failed to load rolls');
             }
             
-            // Apply initial filtering
-            filteredRolls = allRolls;
+            // Apply initial filtering to match default filter values (ready status + 16mm)
+            filteredRolls = allRolls.filter(roll => {
+                // Only show rolls ready for filming
+                const rollStatus = roll.filming_status || 'ready';
+                const isReady = rollStatus === 'ready';
+                
+                // Only show 16mm rolls
+                const rollFilmType = roll.film_type || '16mm';
+                const is16mm = rollFilmType === '16mm';
+                
+                return isReady && is16mm;
+            });
             
             displayRolls(filteredRolls);
             
