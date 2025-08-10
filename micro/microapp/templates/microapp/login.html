@@ -50,6 +50,9 @@
             
             <form id="login-form" action="{% url 'login' %}" method="post">
                 {% csrf_token %}
+                {% if next %}
+                <input type="hidden" name="next" value="{{ next }}">
+                {% endif %}
                 
                 <div class="form-group">
                     <label for="username">Email or Username</label>
@@ -87,6 +90,12 @@
                 <div class="form-error">
                     {{ error }}
                 </div>
+                {% endif %}
+
+                {% if not error and messages %}
+                {% for message in messages %}
+                <div class="form-message {{ message.tags }}">{{ message }}</div>
+                {% endfor %}
                 {% endif %}
                 
                 <div class="form-group">

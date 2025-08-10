@@ -522,6 +522,11 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <i class="fas ${status === 'filming' ? 'fa-spinner fa-spin' : 'fa-exclamation-triangle'}"></i>
                                 ${status === 'filming' ? 'Currently Filming' : 'Not Ready'}
                             </span>
+                            ${status === 'filming' ? `
+                                <button class="revert-to-ready-btn" title="Revert to Ready">
+                                    <i class="fas fa-undo"></i>
+                                </button>
+                            ` : ''}
                         `}
                         <button class="roll-info-button" title="Roll details">
                             <i class="fas fa-info"></i>
@@ -582,6 +587,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 infoButton.addEventListener('click', function(e) {
                     e.stopPropagation();
                     showRollInfo(card.getAttribute('data-roll-id'));
+                });
+            }
+            
+            const revertBtn = card.querySelector('.revert-to-ready-btn');
+            if (revertBtn) {
+                revertBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const rollId = card.getAttribute('data-roll-id');
+                    revertRollToReady(rollId, card);
                 });
             }
         });
@@ -2321,6 +2335,78 @@ Directory Exists: ${roll.output_directory_exists ? 'Yes' : 'No'}`;
             console.error('Error cancelling session:', error);
             addLogEntry(`Error cancelling session: ${error.message}`, 'error');
             showNotification('error', 'Cancel Error', `Failed to cancel session: ${error.message}`);
+        }
+    }
+    
+    async function revertRollToReady(rollId, rollCardElement) {
+        try {
+            if (!confirm('Revert this roll to Ready? This will cancel any active session and reset its status.')) {
+                return;
+            }
+            addLogEntry(`Reverting roll ${rollId} to Ready...`, 'warning');
+            
+            // Attempt to cancel any active sessions for this roll
+            let cancelledSessions = 0;
+            try {
+                const sessionsResp = await fetch('/api/sma/active-sessions/', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCsrfToken()
+                    }
+                });
+                if (sessionsResp.ok) {
+                    const sessionsData = await sessionsResp.json();
+                    if (sessionsData.success && Array.isArray(sessionsData.active_sessions)) {
+                        const related = sessionsData.active_sessions.filter(s => String(s.roll_id) === String(rollId));
+                        await Promise.all(related.map(async (s) => {
+                            try {
+                                const cancelResp = await fetch(`/api/sma/session/${s.session_id}/cancel/`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRFToken': getCsrfToken()
+                                    }
+                                });
+                                const cancelData = await cancelResp.json();
+                                if (cancelResp.ok && cancelData.success) {
+                                    cancelledSessions += 1;
+                                }
+                            } catch (err) {
+                                console.warn('Failed to cancel session', s.session_id, err);
+                            }
+                        }));
+                    }
+                }
+            } catch (e) {
+                console.warn('Failed to query/cancel active sessions for roll', rollId, e);
+            }
+            
+            // Reset roll status to ready
+            const resp = await fetch(`/api/rolls/${rollId}/filming-status/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
+                },
+                body: JSON.stringify({ status: 'ready' })
+            });
+            const data = await resp.json();
+            
+            if (resp.ok && (data.status === 'success' || data.success)) {
+                showNotification('success', 'Reverted', `Roll reverted to Ready${cancelledSessions ? ` (cancelled ${cancelledSessions} session${cancelledSessions>1?'s':''})` : ''}`, 4000);
+                addLogEntry(`Roll ${rollId} set to Ready`, 'info');
+                
+                // Refresh list to reflect the new state
+                await loadRolls();
+                updateQuickStats();
+            } else {
+                throw new Error(data.message || data.error || 'Failed to update roll status');
+            }
+        } catch (error) {
+            console.error('Revert to Ready failed:', error);
+            showNotification('error', 'Revert Failed', error.message || 'Could not revert roll to Ready', 6000);
+            addLogEntry(`Revert failed: ${error.message}`, 'error');
         }
     }
     

@@ -42,8 +42,6 @@ function setupFormValidation() {
     
     // Form submission
     loginForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        
         const username = usernameInput.value.trim();
         const password = passwordInput.value;
         
@@ -51,44 +49,11 @@ function setupFormValidation() {
         const isPasswordValid = validatePassword(password);
         
         if (isUsernameValid && isPasswordValid) {
-            // Show loading state
+            // Allow normal form post to Django view; show loading state
             loginButton.classList.add('loading');
-            
-            // Simulate server validation (for demo)
-            setTimeout(function() {
-                // For demo purposes, check some mock credentials
-                if (username === 'admin@example.com' && password === 'password123') {
-                    // Show loading overlay
-                    showLoadingOverlay();
-                    
-                    // Either redirect or show 2FA
-                    const usesTwoFA = Math.random() > 0.5; // Randomly determine if 2FA is needed
-                    
-                    if (usesTwoFA) {
-                        setTimeout(function() {
-                            hideLoadingOverlay();
-                            show2FAModal();
-                        }, 1500);
-                    } else {
-                        // Redirect to dashboard
-                        setTimeout(function() {
-                            window.location.href = '/microapp/dashboard/';
-                        }, 2000);
-                    }
-                } else {
-                    // Show error
-                    showToast('Invalid username or password');
-                    loginButton.classList.remove('loading');
-                    
-                    // Shake form
-                    loginForm.classList.add('shake');
-                    setTimeout(function() {
-                        loginForm.classList.remove('shake');
-                    }, 600);
-                }
-            }, 1000);
+            showLoadingOverlay();
         } else {
-            // Shake form for invalid inputs
+            e.preventDefault();
             loginForm.classList.add('shake');
             setTimeout(function() {
                 loginForm.classList.remove('shake');
@@ -234,16 +199,12 @@ function setupOTPInputs() {
                 otp += input.value;
             });
             
-            // Validate (for demo, any 6-digit code works)
+            // Demo-only 2FA UI; not active when posting to Django
             if (otp.length === 6 && /^\d+$/.test(otp)) {
                 showLoadingOverlay();
-                
-                // Simulate verification
                 setTimeout(function() {
                     hide2FAModal();
-                    // Redirect to dashboard
-                    window.location.href = '/microapp/dashboard/';
-                }, 1500);
+                }, 800);
             } else {
                 // Show error
                 showToast('Invalid verification code');

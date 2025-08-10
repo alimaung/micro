@@ -224,7 +224,7 @@ function loadAnalysisData() {
                                 analysisState.totalReferences = referenceData.totalReferences;
                                 analysisState.totalPagesWithRefs = referenceData.totalPagesWithRefs;
                                 
-                                // Save updated data to localStorage
+                                // Save updated data to backend/localStorage hybrid
                                 if (typeof updateStoredAnalysisWithReferences === 'function') {
                                     updateStoredAnalysisWithReferences(referenceData);
                                 }
@@ -1001,6 +1001,30 @@ function callGlobalLoadStepData(stepKey) {
         return window.parent.loadStepData(stepKey);
     }
     return null;
+}
+
+// Dedicated save of analysis data
+async function saveAnalysisDataDedicated(projectId, data) {
+    try {
+        if (window.RegisterStorage) {
+            await window.RegisterStorage.saveKey(projectId, 'microfilmAnalysisData', {
+                projectId,
+                analysisResults: data,
+                lastUpdated: new Date().toISOString(),
+                completed: true
+            });
+        } else {
+            localStorage.setItem('microfilmAnalysisData', JSON.stringify({
+                projectId,
+                analysisResults: data,
+                lastUpdated: new Date().toISOString(),
+                completed: true
+            }));
+        }
+        console.log('[Analysis] Dedicated analysis data saved');
+    } catch (e) {
+        console.error('[Analysis] Error saving dedicated analysis data:', e);
+    }
 }
 
 // Export functions for use in other modules

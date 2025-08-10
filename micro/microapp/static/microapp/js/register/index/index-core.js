@@ -444,6 +444,31 @@ const IndexCore = (function() {
         // Show success message
         IndexUI.showToast('Index updated successfully', 'success');
     }
+
+    async function loadIndexData(projectId) {
+        try {
+            if (window.RegisterStorage) {
+                return await window.RegisterStorage.loadKey(projectId, 'microfilmIndexData');
+            }
+            return JSON.parse(localStorage.getItem('microfilmIndexData') || 'null');
+        } catch (e) {
+            console.error('[Index] Error loading index data:', e);
+            return null;
+        }
+    }
+
+    async function saveIndexData(projectId, payload) {
+        try {
+            if (window.RegisterStorage) {
+                await window.RegisterStorage.saveKey(projectId, 'microfilmIndexData', payload);
+            } else {
+                localStorage.setItem('microfilmIndexData', JSON.stringify(payload));
+            }
+            console.log('[Index] Index data saved');
+        } catch (e) {
+            console.error('[Index] Error saving index data:', e);
+        }
+    }
     
     // Return public API
     return {

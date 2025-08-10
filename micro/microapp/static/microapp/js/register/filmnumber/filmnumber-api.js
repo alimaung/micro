@@ -564,6 +564,29 @@ const FilmNumberAPI = (function() {
         }
     }
     
+    async function saveFilmNumberArtifacts(projectId, filmIndexData, filmNumberResults) {
+        try {
+            if (window.RegisterStorage) {
+                if (filmIndexData) {
+                    await window.RegisterStorage.saveKey(projectId, 'microfilmFilmIndexData', filmIndexData);
+                }
+                if (filmNumberResults) {
+                    await window.RegisterStorage.saveKey(projectId, 'microfilmFilmNumberResults', filmNumberResults);
+                }
+            } else {
+                if (filmIndexData) {
+                    localStorage.setItem('microfilmFilmIndexData', JSON.stringify(filmIndexData));
+                }
+                if (filmNumberResults) {
+                    localStorage.setItem('microfilmFilmNumberResults', JSON.stringify(filmNumberResults));
+                }
+            }
+            console.log('[FilmNumber] Artifacts saved');
+        } catch (e) {
+            console.error('[FilmNumber] Error saving artifacts:', e);
+        }
+    }
+    
     // Return public API
     return {
         startFilmNumberAllocationProcess,
@@ -572,7 +595,8 @@ const FilmNumberAPI = (function() {
         handleAllocationCompleted,
         handleAllocationError,
         saveResultsToLocalStorage,
-        getProgressText
+        getProgressText,
+        saveFilmNumberArtifacts
     };
 })();
 
