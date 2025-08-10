@@ -80,27 +80,16 @@
                         </div>
                     </div>
                     
-                    <!-- Project breakdown -->
-                    <div class="project-breakdown" id="project-breakdown">
-                        <!-- Projects will be populated here -->
+                    <!-- Combined Project + Rolls list -->
+                    <div class="project-breakdown project-rolls-list" id="project-rolls-list">
+                        <!-- Combined project list with nested roll details will be populated here -->
                     </div>
                     
                     <!-- Action buttons -->
                     <div class="planner-actions">
-                        <button id="show-planner-details" class="btn btn-sm btn-outline-info">
-                            <i class="fas fa-eye"></i> Show Details
-                        </button>
                         <button id="develop-suggested-rolls" class="btn btn-primary" disabled>
                             <i class="fas fa-play"></i> Develop Suggested Rolls
                         </button>
-                    </div>
-                </div>
-                
-                <!-- Detailed roll list (collapsible) -->
-                <div class="planner-details" id="planner-details" style="display: none;">
-                    <h4>Roll Details</h4>
-                    <div class="detailed-rolls" id="detailed-rolls">
-                        <!-- Detailed roll list will be populated here -->
                     </div>
                 </div>
                 
@@ -290,6 +279,9 @@
                 <div class="development-actions">
                     <button id="create-label" class="btn btn-info" style="display: none;">
                         <i class="fas fa-tag"></i> Create & Print Label
+                    </button>
+                    <button id="revert-to-filming-ready" class="btn btn-warning" style="display: none;">
+                        <i class="fas fa-undo"></i> Revert to Ready for Filming
                     </button>
                     <button id="start-development" class="btn btn-primary" disabled>
                         <i class="fas fa-play"></i> Start Development (auto duration)

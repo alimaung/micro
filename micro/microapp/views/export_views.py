@@ -15,6 +15,8 @@ from django.http import JsonResponse, FileResponse, Http404, HttpResponse
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import get_object_or_404
+from django.conf import settings
+from django.utils.encoding import force_str
 
 from microapp.models import Project
 from microapp.services.export_manager import ExportManager
@@ -396,3 +398,85 @@ def reveal_in_explorer(request, project_id):
             "status": "error",
             "message": f"Failed to reveal in explorer: {str(e)}"
         }, status=500)
+
+@require_http_methods(["POST"])  # Upsert a single key of registration state
+def save_register_state_key(request, project_id, key):
+    """
+    Save a single registration state key payload to a stable per-project state folder.
+
+    Writes to: MEDIA_ROOT/register_state/<project_id>/<key>.json
+    The request body should be a JSON object representing the value to store.
+    Optionally supports a top-level {"data": <payload>} wrapper; if present, uses that.
+    """
+    try:
+        project = get_object_or_404(Project, id=project_id)
+
+        try:
+            body = json.loads(request.body or b"{}")
+        except json.JSONDecodeError:
+            return JsonResponse({"status": "error", "message": "Invalid JSON data"}, status=400)
+
+        # Accept either raw JSON payload or {"data": payload}
+        payload = body.get("data") if isinstance(body, dict) and "data" in body else body
+
+        # Ensure state directory exists
+        state_dir = Path(settings.MEDIA_ROOT) / 'register_state' / str(project_id)
+        state_dir.mkdir(parents=True, exist_ok=True)
+        file_path = state_dir / f"{key}.json"
+
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(payload, f, indent=2)
+
+        return JsonResponse({
+            "status": "success",
+            "message": "State saved",
+            "path": str(file_path),
+        })
+    except Exception as e:
+        logger.error(f"Error saving register state key {key} for project {project_id}: {str(e)}")
+        return JsonResponse({"status": "error", "message": force_str(e)}, status=500)
+
+
+@require_http_methods(["GET"])  # Read a single key of registration state
+def get_register_state_key(request, project_id, key):
+    """
+    Get a stored registration state key payload.
+    Looks in: MEDIA_ROOT/register_state/<project_id>/<key>.json
+    """
+    try:
+        project = get_object_or_404(Project, id=project_id)
+        state_dir = Path(settings.MEDIA_ROOT) / 'register_state' / str(project_id)
+        file_path = state_dir / f"{key}.json"
+
+        if not file_path.exists():
+            return JsonResponse({"status": "error", "message": "Not found"}, status=404)
+
+        with open(file_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+
+        return JsonResponse({
+            "status": "success",
+            "data": data,
+        })
+    except Exception as e:
+        logger.error(f"Error reading register state key {key} for project {project_id}: {str(e)}")
+        return JsonResponse({"status": "error", "message": force_str(e)}, status=500)
+
+
+@require_http_methods(["DELETE"])  # Delete a single key of registration state
+def delete_register_state_key(request, project_id, key):
+    """
+    Delete a stored registration state key payload if present.
+    """
+    try:
+        project = get_object_or_404(Project, id=project_id)
+        state_dir = Path(settings.MEDIA_ROOT) / 'register_state' / str(project_id)
+        file_path = state_dir / f"{key}.json"
+
+        if file_path.exists():
+            file_path.unlink()
+
+        return JsonResponse({"status": "success", "message": "State deleted"})
+    except Exception as e:
+        logger.error(f"Error deleting register state key {key} for project {project_id}: {str(e)}")
+        return JsonResponse({"status": "error", "message": force_str(e)}, status=500)

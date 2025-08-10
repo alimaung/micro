@@ -41,6 +41,7 @@ urlpatterns = [
     path('report/', views.report, name='report'),
     path('settings/', views.settings_view, name='settings'),
     path('login/', views.login, name='login'),
+    path('logout/', views.logout_view, name='logout'),
     
     # Inactive TemplateURLs
     path('registerold/', views.oldregister, name='oldregister'),
@@ -213,6 +214,11 @@ urlpatterns = [
     path('api/export/<int:project_id>/list/', views.get_available_exports, name='get_available_exports'),
     path('api/export/<int:project_id>/reveal-in-explorer/', views.reveal_in_explorer, name='reveal_in_explorer'),
     
+    # Registration state persistence (large dataset-safe)
+    path('api/register/<int:project_id>/state/<str:key>/', views.get_register_state_key, name='get_register_state_key'),
+    path('api/register/<int:project_id>/state/<str:key>/save/', views.save_register_state_key, name='save_register_state_key'),
+    path('api/register/<int:project_id>/state/<str:key>/delete/', views.delete_register_state_key, name='delete_register_state_key'),
+    
     # New project export endpoints
     path('api/projects/export/excel/', views.export_projects_excel, name='export_projects_excel'),
     path('api/projects/export/pdf/', views.export_projects_pdf, name='export_projects_pdf'),
@@ -290,6 +296,7 @@ urlpatterns = [
     path('api/development/history/', views.get_development_history, name='api_development_history'),
     path('api/development/density/save/', views.save_density_measurement, name='api_save_density_measurement'),
     path('api/development/density/get/', views.get_density_measurements, name='api_get_density_measurements'),
+    path('api/development/revert-to-filming-ready/', views.revert_to_filming_ready, name='api_development_revert_to_filming_ready'),
     
     # Label API Endpoints
     path('api/labels/rolls/', views.get_rolls_for_labels, name='api_get_rolls_for_labels'),

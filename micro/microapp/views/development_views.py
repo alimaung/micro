@@ -567,6 +567,77 @@ def get_development_history(request):
 
 @csrf_exempt
 @require_http_methods(["POST"])
+def revert_to_filming_ready(request):
+    """
+    Revert a roll from development back to ready for filming.
+    - Cancels any active development session for the roll (marks as cancelled)
+    - Resets development status and timestamps on the roll
+    - Resets filming status to 'ready' and clears filming session/timestamps
+    """
+    try:
+        data = json.loads(request.body)
+        roll_id = data.get('roll_id')
+        if not roll_id:
+            return JsonResponse({
+                'success': False,
+                'error': 'roll_id is required'
+            }, status=400)
+        
+        roll = get_object_or_404(Roll, pk=roll_id)
+        
+        with transaction.atomic():
+            # Cancel any active development sessions for this roll
+            active_sessions = DevelopmentSession.objects.filter(roll=roll, status='developing')
+            cancelled = 0
+            for session in active_sessions:
+                session.status = 'cancelled'
+                session.completed_at = timezone.now()
+                session.progress_percent = session.progress_percent or 0.0
+                session.save(update_fields=['status', 'completed_at', 'progress_percent'])
+                DevelopmentLog.objects.create(
+                    session=session,
+                    level='warning',
+                    message=f"Development cancelled by user for roll {roll.film_number} to revert to filming"
+                )
+                cancelled += 1
+            
+            # Reset development fields on roll
+            roll.development_status = 'pending'
+            roll.development_started_at = None
+            roll.development_completed_at = None
+            roll.development_progress_percent = 0.0
+            
+            # Reset filming fields to ready
+            roll.filming_status = 'ready'
+            roll.filming_session_id = None
+            roll.filming_started_at = None
+            roll.filming_completed_at = None
+            roll.filming_progress_percent = 0.0
+            
+            roll.save(update_fields=[
+                'development_status', 'development_started_at', 'development_completed_at', 'development_progress_percent',
+                'filming_status', 'filming_session_id', 'filming_started_at', 'filming_completed_at', 'filming_progress_percent'
+            ])
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Roll reverted to ready for filming',
+            'cancelled_sessions': cancelled
+        })
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'success': False,
+            'error': 'Invalid JSON data'
+        }, status=400)
+    except Exception as e:
+        logger.error(f"Error reverting roll to filming ready: {e}")
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+@csrf_exempt
+@require_http_methods(["POST"])
 def insert_chemicals(request):
     """
     Insert/replace all chemical batches at once.

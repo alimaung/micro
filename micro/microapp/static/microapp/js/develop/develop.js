@@ -9,6 +9,7 @@ class DevelopmentDashboard {
         this.refreshInterval = null;
         this.isLightMode = undefined;
         this.isRelayConnected = false;
+        this.plannerDetailsVisible = false;
         
         // Timer state for restoration
         this.startTime = null;
@@ -212,10 +213,7 @@ class DevelopmentDashboard {
         document.getElementById('develop-suggested-rolls').addEventListener('click', () => {
             this.developSuggestedRolls();
         });
-        
-        document.getElementById('show-planner-details').addEventListener('click', () => {
-            this.togglePlannerDetails();
-        });
+        // No details toggle; list is always compact
 
         // Development actions
         document.getElementById('start-development').addEventListener('click', () => {
@@ -229,6 +227,14 @@ class DevelopmentDashboard {
         document.getElementById('cancel-development').addEventListener('click', () => {
             this.cancelDevelopment();
         });
+        
+        // Revert to Ready for Filming
+        const revertBtn = document.getElementById('revert-to-filming-ready');
+        if (revertBtn) {
+            revertBtn.addEventListener('click', () => {
+                this.revertToFilmingReady();
+            });
+        }
         
         // Create and print label button
         document.getElementById('create-label').addEventListener('click', () => {
@@ -353,17 +359,20 @@ class DevelopmentDashboard {
             const data = await response.json();
             
             if (data.success) {
+                this.lastLoadedRolls = data.rolls;
                 this.renderRolls(data.rolls);
                 this.updateStatusCounts(data.rolls);
                 
                 // Handle pending roll selections after rolls are loaded
                 this.handlePendingRollSelection(data.rolls);
+                return data.rolls;
             } else {
                 throw new Error(data.error || 'Failed to load rolls');
             }
         } catch (error) {
             console.error('Error loading rolls:', error);
             this.showNotification('error', 'Error', 'Failed to load rolls for development');
+            return [];
         }
     }
     
@@ -546,6 +555,13 @@ class DevelopmentDashboard {
         document.getElementById('selected-film-type').textContent = roll.film_type;
         document.getElementById('selected-project').textContent = roll.project_name;
         document.getElementById('selected-pages').textContent = `${roll.pages_used} pages (${filmLengthM.toFixed(1)}m film, ${developmentDuration.toFixed(1)} min dev)`;
+        
+        // Toggle Revert button visibility: show when roll is developing or failed
+        const revertBtn = document.getElementById('revert-to-filming-ready');
+        if (revertBtn) {
+            const shouldShow = ['developing', 'failed', 'pending', 'completed'].includes(roll.development_status);
+            revertBtn.style.display = shouldShow ? 'inline-flex' : 'none';
+        }
         
         infoContainer.style.display = 'block';
         noSelectionMessage.style.display = 'none';
@@ -1706,11 +1722,8 @@ class DevelopmentDashboard {
         document.getElementById('planner-time').textContent = runPlan.totals.est_time_min;
         document.getElementById('planner-utilization').textContent = runPlan.chemistry.utilization_percent || 0;
         
-        // Update project breakdown
-        this.renderProjectBreakdown(runPlan.grouped_by_project);
-        
-        // Update detailed rolls
-        this.renderDetailedRolls(runPlan.rolls);
+        // Render combined project + rolls list
+        this.renderProjectRollsCombined(runPlan.grouped_by_project, runPlan.rolls);
         
         // Update advice
         this.updatePlannerAdvice(runPlan.advice, runPlan.chemistry);
@@ -1736,15 +1749,23 @@ class DevelopmentDashboard {
             }
         }
         
+        // Sync Show/Hide details button label
+        const detailsButton = document.getElementById('show-planner-details');
+        if (detailsButton) {
+            detailsButton.innerHTML = this.plannerDetailsVisible 
+                ? '<i class="fas fa-eye-slash"></i> Hide Details'
+                : '<i class="fas fa-eye"></i> Show Details';
+        }
+        
         // Store current plan for later use
         this.currentPlan = runPlan;
     }
     
-    renderProjectBreakdown(projects) {
-        const container = document.getElementById('project-breakdown');
+    renderProjectRollsCombined(projects, rolls) {
+        const container = document.getElementById('project-rolls-list');
         if (!container) return;
         
-        if (projects.length === 0) {
+        if (!projects || projects.length === 0) {
             container.innerHTML = `
                 <div class="no-projects">
                     <i class="fas fa-info-circle"></i>
@@ -1754,17 +1775,25 @@ class DevelopmentDashboard {
             return;
         }
         
-        container.innerHTML = projects.map(project => `
-            <div class="project-item">
-                <div class="project-info">
-                    <span class="project-name">${project.project_name}</span>
-                    <span class="project-stats">
-                        ${project.roll_count} roll${project.roll_count !== 1 ? 's' : ''} 
-                        (${project.total_area.toFixed(3)} m²)
-                    </span>
+        container.innerHTML = projects.map(project => {
+            const projectRolls = rolls.filter(r => r.project_name === project.project_name);
+            const rollsHtml = projectRolls.map(roll => `
+                <span class="compact-roll" style="display:inline-flex; gap:6px; align-items:center; padding:2px 8px; border-radius:12px; background:#f5f5f5; margin-left:8px; cursor:pointer;" onclick="window.developmentDashboard.selectRollById(${roll.id})">
+                    <span class="roll-number">${roll.film_number}</span>
+                    <span class="roll-type" style="opacity:0.7;">${roll.film_type}</span>
+                </span>
+            `).join('');
+            
+            return `
+                <div class="project-item" style="padding:6px 0;">
+                    <div class="project-line" style="display:flex; align-items:center; flex-wrap:wrap; gap:8px;">
+                        <span class="project-name" style="font-weight:600;">${project.project_name}</span>
+                        <span class="project-stats" style="opacity:0.8;">${project.roll_count} roll${project.roll_count !== 1 ? 's' : ''} (${project.total_area.toFixed(3)} m²)</span>
+                        ${rollsHtml}
+                    </div>
                 </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
     }
     
     renderDetailedRolls(rolls) {
@@ -1843,19 +1872,20 @@ class DevelopmentDashboard {
     }
     
     togglePlannerDetails() {
-        const detailsElement = document.getElementById('planner-details');
         const button = document.getElementById('show-planner-details');
         
-        if (!detailsElement || !button) return;
+        this.plannerDetailsVisible = !this.plannerDetailsVisible;
         
-        const isVisible = detailsElement.style.display !== 'none';
+        if (button) {
+            if (this.plannerDetailsVisible) {
+                button.innerHTML = '<i class="fas fa-eye-slash"></i> Hide Details';
+            } else {
+                button.innerHTML = '<i class="fas fa-eye"></i> Show Details';
+            }
+        }
         
-        if (isVisible) {
-            detailsElement.style.display = 'none';
-            button.innerHTML = '<i class="fas fa-eye"></i> Show Details';
-        } else {
-            detailsElement.style.display = 'block';
-            button.innerHTML = '<i class="fas fa-eye-slash"></i> Hide Details';
+        if (this.currentPlan) {
+            this.renderProjectRollsCombined(this.currentPlan.grouped_by_project, this.currentPlan.rolls);
         }
     }
     
@@ -2218,6 +2248,72 @@ class DevelopmentDashboard {
                 createLabelBtn.className = 'btn btn-info';
                 createLabelBtn.disabled = false;
             }
+        }
+    }
+
+    async selectRollById(rollId) {
+        // Ensure we have the latest rolls
+        if (!this.lastLoadedRolls || !Array.isArray(this.lastLoadedRolls)) {
+            await this.loadRolls();
+        }
+        const rolls = this.lastLoadedRolls || [];
+        const roll = rolls.find(r => r.id === rollId);
+        if (roll) {
+            this.selectRoll(roll);
+            // Scroll into view
+            const card = document.querySelector(`[data-roll-id="${rollId}"]`);
+            if (card) {
+                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        } else {
+            this.showNotification('warning', 'Roll Not Found', 'Could not find the selected roll in ready list');
+        }
+    }
+
+    async revertToFilmingReady() {
+        if (!this.selectedRoll) {
+            this.showNotification('error', 'No Roll Selected', 'Select a roll to revert');
+            return;
+        }
+        
+        if (!confirm('Revert this roll back to Ready for Filming? This will cancel any active development and reset filming status.')) {
+            return;
+        }
+        
+        try {
+            // Best-effort: cancel local timer/state
+            if (this.currentSession) {
+                this.stopLocalTimer();
+                this.hideDevelopmentTimer();
+            }
+            
+            // Call backend revert endpoint
+            const response = await fetch('/api/development/revert-to-filming-ready/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.getCSRFToken()
+                },
+                body: JSON.stringify({ roll_id: this.selectedRoll.id })
+            });
+            const data = await response.json();
+            
+            if (response.ok && data.success) {
+                this.showNotification('success', 'Reverted', `Roll set to Ready for Filming${data.cancelled_sessions ? ` (cancelled ${data.cancelled_sessions} dev session${data.cancelled_sessions>1?'s':''})` : ''}`);
+                // Clear local session state
+                this.currentSession = null;
+                this.startTime = null;
+                this.totalDuration = null;
+                
+                // Refresh lists
+                await this.loadRolls();
+                this.updateStatusOverview();
+            } else {
+                throw new Error(data.error || 'Failed to revert');
+            }
+        } catch (error) {
+            console.error('Error reverting to filming ready:', error);
+            this.showNotification('error', 'Revert Failed', error.message || 'Could not revert roll');
         }
     }
 }

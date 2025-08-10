@@ -164,7 +164,7 @@ const AllocationCore = (function() {
     /**
      * Save the current state to localStorage
      */
-    function saveState() {
+    async function saveState() {
         try {
             // Update workflow state in localStorage
             const workflowState = JSON.parse(localStorage.getItem('microfilmWorkflowState') || '{}');
@@ -192,12 +192,21 @@ const AllocationCore = (function() {
                 
                 // Also save to dedicated allocation storage
                 try {
-                    localStorage.setItem('microfilmAllocationData', JSON.stringify({
-                        allocationResults: state.allocationResults,
-                        lastUpdated: new Date().toISOString(),
-                        projectId: state.projectId,
-                        completed: true
-                    }));
+                    if (window.RegisterStorage) {
+                        await window.RegisterStorage.saveKey(state.projectId, 'microfilmAllocationData', {
+                            allocationResults: state.allocationResults,
+                            lastUpdated: new Date().toISOString(),
+                            projectId: state.projectId,
+                            completed: true
+                        });
+                    } else {
+                        localStorage.setItem('microfilmAllocationData', JSON.stringify({
+                            allocationResults: state.allocationResults,
+                            lastUpdated: new Date().toISOString(),
+                            projectId: state.projectId,
+                            completed: true
+                        }));
+                    }
                     console.log('[Allocation] Saved to dedicated allocation storage');
                 } catch (error) {
                     console.error('[Allocation] Error saving to dedicated storage:', error);
