@@ -188,6 +188,7 @@ class Roll(models.Model):
         ('filming', 'Currently Filming'),
         ('completed', 'Filming Completed'),
         ('error', 'Filming Error'),
+        ('rework', 'Rework'),
     ], default='ready', help_text="Current filming status of this roll")
     filming_session_id = models.CharField(max_length=100, blank=True, null=True, 
                                          help_text="ID of the current/last filming session")

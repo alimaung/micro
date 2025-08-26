@@ -849,6 +849,7 @@ def get_temp_rolls(request):
         search = request.GET.get('search')
         sort_field = request.GET.get('sort_field', 'temp_roll_id')
         sort_direction = request.GET.get('sort_direction', 'desc')
+        exists_param = request.GET.get('exists')
         
         # Build queryset
         queryset = TempRoll.objects.all()
@@ -858,6 +859,10 @@ def get_temp_rolls(request):
             queryset = queryset.filter(film_type=film_type)
         if status:
             queryset = queryset.filter(status=status)
+        if exists_param is not None:
+            # Treat any truthy string ("1","true","True") as True
+            exists_bool = str(exists_param).lower() in ['1', 'true', 'yes', 'y']
+            queryset = queryset.filter(exists=exists_bool)
         if min_capacity:
             queryset = queryset.filter(usable_capacity__gte=int(min_capacity))
         if search:
@@ -885,6 +890,7 @@ def get_temp_rolls(request):
                 'capacity': temp_roll.capacity,
                 'usable_capacity': temp_roll.usable_capacity,
                 'status': temp_roll.status,
+                    'exists': getattr(temp_roll, 'exists', False),
                 'creation_date': temp_roll.creation_date.isoformat() if temp_roll.creation_date else None,
                 'source_roll_id': temp_roll.source_roll_id,
                 'used_by_roll_id': temp_roll.used_by_roll_id,

@@ -99,6 +99,8 @@ class SMAFilmingView(View):
             film_type = data.get('film_type', '16mm')
             recovery = data.get('recovery', False)
             re_filming = data.get('re_filming', False)
+            chosen_temp_roll_id = data.get('chosen_temp_roll_id')
+            force_new_roll = data.get('force_new_roll', False)
             
             # Enhanced validation
             validation_errors = []
@@ -134,7 +136,9 @@ class SMAFilmingView(View):
                 film_type=film_type,
                 recovery=recovery,
                 re_filming=re_filming,
-                user_id=request.user.id
+                user_id=request.user.id,
+                chosen_temp_roll_id=chosen_temp_roll_id,
+                force_new_roll=force_new_roll
             )
             
             # Enhanced response with additional context
@@ -669,6 +673,18 @@ def project_rolls(request, project_id):
             # Get filming priority information
             from ..services import FilmingOrderService
             priority_info = FilmingOrderService.get_filming_priority(roll)
+            # Compute number of unique documents on this roll (based on allocation segments)
+            try:
+                from ..models import DocumentSegment
+                documents_on_roll = DocumentSegment.objects.filter(roll=roll).values('document_id').distinct().count()
+            except Exception:
+                documents_on_roll = 0
+            # Compute number of unique documents on this roll (based on allocation segments)
+            try:
+                from ..models import DocumentSegment
+                documents_on_roll = DocumentSegment.objects.filter(roll=roll).values('document_id').distinct().count()
+            except Exception:
+                documents_on_roll = 0
             
             # Use getattr with defaults for fields that might not exist
             roll_info = {
@@ -1144,6 +1160,13 @@ def all_rolls(request):
             from ..services import FilmingOrderService
             priority_info = FilmingOrderService.get_filming_priority(roll)
             
+            # Compute number of unique documents on this roll (based on allocation segments)
+            try:
+                from ..models import DocumentSegment
+                documents_on_roll = DocumentSegment.objects.filter(roll=roll).values('document_id').distinct().count()
+            except Exception:
+                documents_on_roll = 0
+
             # Use getattr with defaults for fields that might not exist
             roll_info = {
                 'id': roll.id,
@@ -1157,7 +1180,7 @@ def all_rolls(request):
                 'capacity': getattr(roll, 'capacity', 0),
                 'pages_used': getattr(roll, 'pages_used', 0),
                 'pages_remaining': getattr(roll, 'pages_remaining', 0),
-                'document_count': getattr(roll, 'document_count', 0),
+                'document_count': documents_on_roll,
                 'output_directory': getattr(roll, 'output_directory', None),
                 'output_directory_exists': roll.output_directory_exists if hasattr(roll, 'output_directory_exists') else False,
                 'created_at': roll.creation_date.isoformat() if hasattr(roll, 'creation_date') and roll.creation_date else None,

@@ -32,7 +32,8 @@ class SMAService:
     
     @classmethod
     def start_filming_session(cls, roll_id: int, film_type: str, 
-                            recovery: bool = False, re_filming: bool = False, user_id: Optional[int] = None) -> Dict[str, Any]:
+                            recovery: bool = False, re_filming: bool = False, user_id: Optional[int] = None,
+                            chosen_temp_roll_id: Optional[int] = None, force_new_roll: bool = False) -> Dict[str, Any]:
         """Start a new SMA filming session with enhanced error handling and validation."""
         try:
             # Validate roll input
@@ -163,6 +164,20 @@ class SMAService:
                     'filming_status', 'filming_session_id', 'filming_started_at', 'filming_progress_percent'
                 ])
             
+            # If user selected a specific existing temp roll for re-filming, record it for downstream use
+            selected_temp_roll_info = None
+            if re_filming and chosen_temp_roll_id and not force_new_roll:
+                try:
+                    temp_roll = TempRoll.objects.get(temp_roll_id=int(chosen_temp_roll_id), exists=True, status='available')
+                    selected_temp_roll_info = {
+                        'temp_roll_id': temp_roll.temp_roll_id,
+                        'usable_capacity': temp_roll.usable_capacity,
+                        'film_type': temp_roll.film_type,
+                    }
+                    logger.info(f"User selected temp roll #{temp_roll.temp_roll_id} for re-filming roll {roll.roll_number}")
+                except Exception as e:
+                    logger.warning(f"Chosen temp roll {chosen_temp_roll_id} not usable: {e}")
+
             # Prepare project data for SMA process using roll's information
             project_data = {
                 'folder_path': roll.output_directory,  # Use roll's output directory directly
@@ -175,7 +190,9 @@ class SMAService:
                 'film_type': film_type,
                 'capacity': roll.capacity,
                 'pages_used': roll.pages_used,
-                're_filming': re_filming  # Pass re-filming flag to SMA process
+                're_filming': re_filming,  # Pass re-filming flag to SMA process
+                'selected_temp_roll': selected_temp_roll_info,
+                'force_new_roll': bool(force_new_roll) if re_filming else False
             }
             
             # Create SMA process manager with enhanced configuration
@@ -201,13 +218,18 @@ class SMAService:
                 session.save(update_fields=['status', 'started_at'])
                 
                 # Cache session info for quick access
-                cls._cache_session_info(session_id, {
+                cache_info = {
                     'project_name': project.name,
                     'roll_number': roll.roll_number,
                     'film_type': film_type,
                     'started_at': session.started_at.isoformat(),
-                    're_filming': re_filming  # Cache re-filming status for quick access
-                })
+                    're_filming': re_filming
+                }
+                if re_filming and force_new_roll:
+                    cache_info['force_new_roll'] = True
+                if re_filming and chosen_temp_roll_id:
+                    cache_info['selected_temp_roll_id'] = int(chosen_temp_roll_id)
+                cls._cache_session_info(session_id, cache_info)
                 
                 logger.info(f"Started SMA filming session {session_id} for roll {roll.roll_number} (re-filming: {re_filming})")
                 
@@ -223,7 +245,9 @@ class SMAService:
                     'message': f'Started {"re-" if re_filming else ""}filming roll {roll_display_name}',
                     'project_name': project_display_name,
                     'roll_number': roll_display_name,
-                    're_filming': re_filming
+                    're_filming': re_filming,
+                    'force_new_roll': bool(force_new_roll) if re_filming else False,
+                    'selected_temp_roll': selected_temp_roll_info
                 }
             else:
                 # Failed to start process - rollback database changes
@@ -990,10 +1014,11 @@ class SMAService:
             
             logger.info(f"Re-filming {roll_display}: need to film {pages_needed} pages")
             
-            # Step 1: Check for available temp rolls that can handle the pages needed
+            # Step 1: Check for available temp rolls that physically exist and can handle the pages needed
             available_temp_rolls = TempRoll.objects.filter(
                 film_type=roll.film_type,
                 status='available',
+                exists=True,
                 usable_capacity__gte=pages_needed
             ).order_by('usable_capacity')
             
@@ -1007,6 +1032,8 @@ class SMAService:
                 temp_roll.usable_capacity -= pages_needed
                 if temp_roll.usable_capacity <= 0:
                     temp_roll.status = 'exhausted'
+                    # Mark as non-existent once fully consumed to reflect physical usage
+                    temp_roll.exists = False
                 temp_roll.used_by_roll = roll
                 temp_roll.save()
                 
@@ -1247,10 +1274,11 @@ class SMAService:
         
         logger.info(f"Managing temp rolls for re-filming roll {roll.id}")
         
-        # Find available temp rolls (same logic as registration)
+        # Find available temp rolls that physically exist (same logic as registration, but ensure existence)
         available_temp_rolls = TempRoll.objects.filter(
             film_type=film_type,
             status='available',
+            exists=True,
             usable_capacity__gte=required_pages
         ).order_by('usable_capacity')  # Best fit: prefer smallest roll that fits
         

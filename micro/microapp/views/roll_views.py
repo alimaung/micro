@@ -126,7 +126,7 @@ def update_roll_filming_status(request, roll_id):
     
     Expected JSON payload:
     {
-        "status": "filming|completed|error|ready",
+        "status": "filming|completed|error|ready|rework",
         "session_id": "optional_session_id",
         "progress_percent": 0-100,
         "error_message": "optional_error_message"
@@ -140,7 +140,7 @@ def update_roll_filming_status(request, roll_id):
         session_id = data.get('session_id')
         progress_percent = data.get('progress_percent', 0)
         
-        if status not in ['ready', 'filming', 'completed', 'error']:
+        if status not in ['ready', 'filming', 'completed', 'error', 'rework']:
             return JsonResponse({
                 'status': 'error',
                 'message': 'Invalid status. Must be one of: ready, filming, completed, error'
@@ -160,6 +160,10 @@ def update_roll_filming_status(request, roll_id):
             elif status == 'completed':
                 roll.filming_completed_at = timezone.now()
                 roll.filming_progress_percent = 100.0
+            elif status == 'rework':
+                # Rework behaves logically like completed for downstream workflows, but distinct visually
+                if not roll.filming_completed_at:
+                    roll.filming_completed_at = timezone.now()
             elif status == 'ready':
                 # Reset filming timestamps if going back to ready
                 roll.filming_started_at = None

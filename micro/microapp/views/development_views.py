@@ -29,9 +29,9 @@ def get_rolls_for_development(request):
     Shows all completed rolls so user can choose which ones to develop.
     """
     try:
-        # Get all rolls with filming completed status, regardless of development status
+        # Get rolls with filming completed OR marked rework
         rolls = Roll.objects.filter(
-            filming_status='completed'
+            filming_status__in=['completed', 'rework']
         ).select_related('project').order_by('-filming_completed_at')
         
         rolls_data = []
@@ -42,8 +42,8 @@ def get_rolls_for_development(request):
                 status='developing'
             ).first()
             
-            # Determine if roll can be developed
-            can_develop = roll.development_status in ['pending', 'failed']
+            # Determine if roll can be developed (block if filming is rework)
+            can_develop = (roll.development_status in ['pending', 'failed']) and (roll.filming_status != 'rework')
             is_developing = roll.development_status == 'developing'
             is_completed = roll.development_status == 'completed'
             
@@ -569,10 +569,10 @@ def get_development_history(request):
 @require_http_methods(["POST"])
 def revert_to_filming_ready(request):
     """
-    Revert a roll from development back to ready for filming.
+    Mark a roll for development rework.
     - Cancels any active development session for the roll (marks as cancelled)
-    - Resets development status and timestamps on the roll
-    - Resets filming status to 'ready' and clears filming session/timestamps
+    - Resets development status and timestamps on the roll back to 'pending'
+    - Keeps filming status unchanged (typically 'completed') so re-filming logic can consider temp rolls
     """
     try:
         data = json.loads(request.body)
@@ -607,21 +607,15 @@ def revert_to_filming_ready(request):
             roll.development_completed_at = None
             roll.development_progress_percent = 0.0
             
-            # Reset filming fields to ready
-            roll.filming_status = 'ready'
-            roll.filming_session_id = None
-            roll.filming_started_at = None
-            roll.filming_completed_at = None
-            roll.filming_progress_percent = 0.0
+            # Keep filming fields as-is to preserve completed state
             
             roll.save(update_fields=[
-                'development_status', 'development_started_at', 'development_completed_at', 'development_progress_percent',
-                'filming_status', 'filming_session_id', 'filming_started_at', 'filming_completed_at', 'filming_progress_percent'
+                'development_status', 'development_started_at', 'development_completed_at', 'development_progress_percent'
             ])
         
         return JsonResponse({
             'success': True,
-            'message': 'Roll reverted to ready for filming',
+            'message': 'Roll marked for development rework',
             'cancelled_sessions': cancelled
         })
     except json.JSONDecodeError:

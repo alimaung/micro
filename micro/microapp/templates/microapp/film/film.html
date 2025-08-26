@@ -59,6 +59,7 @@
                         <option value="ready" selected>Ready for Filming</option>
                         <option value="filming">Currently Filming</option>
                         <option value="completed">Completed</option>
+                         <option value="rework">Rework</option>
                     </select>
                     <select id="film-type-filter">
                         <option value="all">All Film Types</option>
@@ -72,7 +73,9 @@
                                 <div class="toggle-slider" id="toggle-slider"></div>
                                 <div class="toggle-positions">
                                     <div class="toggle-position left" data-location="ou"></div>
-                                    <div class="toggle-position center active" data-location="all"></div>
+                                    <div class="toggle-position center active" data-location="all">
+                                        <span class="toggle-center-label">ALL</span>
+                                    </div>
                                     <div class="toggle-position right" data-location="dw"></div>
                                 </div>
                             </div>
@@ -187,6 +190,14 @@
                         </button>
                     </div>
                     <div class="checklist-items">
+                        <div class="checklist-item re-filming-only" id="roll-source-item" style="display: none;">
+                            <label>
+                                <i class="fas fa-exchange-alt"></i>
+                                Roll source
+                            </label>
+                            <select id="roll-source-selector" class="form-select" style="margin-top: 6px; min-width: 260px;"></select>
+                            <div class="checklist-details" id="roll-source-details" style="display:none;"></div>
+                        </div>
                         <div class="checklist-item">
                             <input type="checkbox" id="check-camera-head">
                             <label for="check-camera-head">

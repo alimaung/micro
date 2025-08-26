@@ -1,9 +1,9 @@
- 1. [] Index list scroll container 
- 2. [] Film list scroll container
+ 1. [x] Index list scroll container 
+ 2. [x] Film list scroll container
  3. [] Fixed/persistent light mode toggle key (control.js [DOUBLE PRESS SPACE for dark mode, SPACE for light mode, and only when in dark mode [ENTER] toggles the monitor on/off.])
- 4. [] Label list scroll container
- 5. [] Handoff list scroll container
- 6. [] Fix Film localstorage (shows the last film session)
+ 4. [x] Label list scroll container
+ 5. [x] Handoff list scroll container
+ 6. [x] Fix Film localstorage (shows the last film session)
  7. [] Fix Filming session restoration (doesnt restore a current filming session)
  8. [] Fix Developer session duration (add 0,5 working time)
  9. [] Fix Label generation card (show recently generated and historical seperate)
@@ -11,7 +11,7 @@
 11. [] Implement offline transfer module
 12. [x] Implement motor control on films with full rolls (spool the remaining film)
 13. [] Fix large datasets issues (localstorage)
-14. [] 
+14. [x] Refilming needs to consider existing temp roll property
 15. [] 
 16. [] 
 17. [] 

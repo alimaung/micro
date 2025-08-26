@@ -13,11 +13,15 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize the application
     initializeApp();
+    // Re-filming roll source state
+    let rollSourceChoice = { value: 'auto' };
+    let availableTempRollsCache = [];
+    let lastPreviewStrategy = null;
     
     async function initializeApp() {
         console.log('🎬 Initializing SMA Filming Interface...');
         
-        // Check for active sessions FIRST before showing any UI
+        // Check for active sessions wing any UI
         const activeSessions = await checkForActiveSessions();
         
         if (activeSessions && activeSessions.length > 0) {
@@ -362,7 +366,65 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        rollsGrid.innerHTML = rolls.map(roll => {
+        // Helper: find dependents of a creator roll
+        const getDependents = (creatorRoll) => {
+            if (!creatorRoll || !creatorRoll.created_temp_roll) return [];
+            const tempId = creatorRoll.created_temp_roll.temp_roll_id;
+            return allRolls.filter(r => r.source_temp_roll && r.source_temp_roll.temp_roll_id === tempId);
+        };
+        // Helper: find creator of a consumer roll
+        const getCreator = (consumerRoll) => {
+            if (!consumerRoll || !consumerRoll.source_temp_roll) return null;
+            const tempId = consumerRoll.source_temp_roll.temp_roll_id;
+            return allRolls.find(r => r.created_temp_roll && r.created_temp_roll.temp_roll_id === tempId) || null;
+        };
+
+        // Sort: priority (creator/immediate) → waiting → ready → others, then by film number ascending
+        const getCategoryIndex = (r) => {
+            const status = r.filming_status || 'ready';
+            if (status === 'ready') {
+                const tier = r.filming_priority?.priority_tier;
+                // Priority creator/immediate first if marked
+                if (tier === 'creator' || tier === 'immediate') return 0;
+                // Determine waiting by dependency if priority metadata missing
+                const isWaiting = (tier === 'waiting') || (r.source_temp_roll && r.source_temp_roll.exists === false);
+                if (isWaiting) return 1; // waiting
+                return 2; // other ready
+            }
+            return 3; // non-ready statuses
+        };
+        const getFilmNum = (r) => {
+            const num = parseInt(r.film_number, 10);
+            return Number.isFinite(num) ? num : Number.MAX_SAFE_INTEGER;
+        };
+        const sortedRolls = [...rolls].sort((a, b) => {
+            const ca = getCategoryIndex(a) - getCategoryIndex(b);
+            if (ca !== 0) return ca;
+            return getFilmNum(a) - getFilmNum(b);
+        });
+
+        // Debug: Sorting diagnostics
+        try {
+            const catName = (r) => {
+                const idx = getCategoryIndex(r);
+                return idx === 0 ? 'priority' : idx === 1 ? 'waiting' : idx === 2 ? 'ready' : 'other';
+            };
+            const tierOf = (r) => r?.filming_priority?.priority_tier || '-';
+            const counts = sortedRolls.reduce((acc, r) => { const n = catName(r); acc[n] = (acc[n]||0)+1; return acc; }, {});
+            console.groupCollapsed('[Roll Sort] categories and order');
+            console.log('Category counts:', counts);
+            console.table(sortedRolls.slice(0, 25).map(r => ({
+                id: r.id,
+                film_number: r.film_number,
+                status: r.filming_status,
+                tier: tierOf(r),
+                category: catName(r),
+                film_num_numeric: getFilmNum(r)
+            })));
+            console.groupEnd();
+        } catch (e) { /* noop */ }
+
+        rollsGrid.innerHTML = sortedRolls.map(roll => {
             const status = roll.filming_status || 'ready';
             const statusClass = getStatusClass(status);
             const filmNumber = roll.film_number || 'Unknown';
@@ -372,62 +434,60 @@ document.addEventListener('DOMContentLoaded', function() {
             const documentCount = roll.document_count || 0;
             const pageCount = roll.pages_used || 0;
             const progressPercent = roll.filming_progress_percent || 0;
-            const isCompleted = status === 'completed';
+            const isCompleted = status === 'completed' || status === 'rework';
             const isReFilming = roll.is_re_filming || false;
             
             // Determine dependency information
             let dependencyInfo = '';
             let dependencyClass = '';
-            
+
+            // Base dependency badges visible for all statuses (ready, completed, rework, etc.)
+            if (roll.source_temp_roll && roll.created_temp_roll) {
+                // Chain: show both the roll it waits for (uses) and the rolls it enables (creates)
+                const creator = getCreator(roll);
+                const creatorLabel = creator ? (creator.film_number ? `#${creator.film_number}` : `#${creator.id}`) : '';
+                const useLink = creator ? ` • uses <a href="#" class="roll-link" data-target-roll-id="${creator.id}">${creatorLabel}</a>` : '';
+                const dependents = getDependents(roll);
+                const count = dependents.length;
+                const links = dependents.slice(0, 3).map(d => `<a href="#" class="roll-link" data-target-roll-id="${d.id}" title="${d.film_number}">#${d.film_number || d.id}</a>`).join(', ');
+                const more = count > 3 ? ` +${count - 3} more` : '';
+                const createPart = ` • creates (${count})${count ? ` • ${links}${more}` : ''}`;
+                dependencyInfo = `<i class="fas fa-exchange-alt" title="Uses temp roll and creates temp roll"></i> Chain${useLink}${createPart}`;
+                dependencyClass = 'dependency-chain';
+            } else if (roll.source_temp_roll) {
+                const creator = getCreator(roll);
+                const creatorLabel = creator ? (creator.film_number ? `#${creator.film_number}` : `#${creator.id}`) : '';
+                const linkHtml = creator ? ` • needs <a href="#" class="roll-link" data-target-roll-id="${creator.id}">${creatorLabel}</a>` : '';
+                dependencyInfo = `<i class="fas fa-arrow-right" title="Uses temp roll - may depend on other rolls"></i> Uses Temp${linkHtml}`;
+                dependencyClass = 'dependency-consumer';
+            } else if (roll.created_temp_roll) {
+                const dependents = getDependents(roll);
+                const count = dependents.length;
+                const links = dependents.slice(0, 3).map(d => `<a href="#" class="roll-link" data-target-roll-id="${d.id}" title="${d.film_number}">#${d.film_number || d.id}</a>`).join(', ');
+                const more = count > 3 ? ` +${count - 3} more` : '';
+                dependencyInfo = `<i class="fas fa-arrow-left" title="Creates temp roll for other rolls"></i> Creates Temp (${count})${count ? ` • ${links}${more}` : ''}`;
+                dependencyClass = 'dependency-creator';
+            } else {
+                dependencyInfo = `<i class="fas fa-circle" title="Independent roll - no temp roll dependencies"></i> Independent`;
+                dependencyClass = 'dependency-independent';
+            }
+
+            // Overlay priority hints for ready rolls when available
             if (status === 'ready' && roll.filming_priority) {
                 const priority = roll.filming_priority;
-                
                 switch (priority.priority_tier) {
                     case 'creator':
-                        dependencyInfo = `<i class="fas fa-star" title="Creates temp roll for ${priority.blocks_count || 0} other rolls"></i> Priority: Creates for ${priority.blocks_count || 0} rolls`;
                         dependencyClass = 'priority-creator';
                         break;
                     case 'immediate':
-                        dependencyInfo = `<i class="fas fa-check-circle" title="Ready to film immediately"></i> Ready Now`;
                         dependencyClass = 'priority-immediate';
                         break;
                     case 'waiting':
-                        dependencyInfo = `<i class="fas fa-clock" title="Waiting for dependencies"></i> Waiting`;
                         dependencyClass = 'priority-waiting';
                         break;
                     case 'problem':
-                        dependencyInfo = `<i class="fas fa-exclamation-triangle" title="Has issues that need resolution"></i> Needs Attention`;
                         dependencyClass = 'priority-problem';
                         break;
-                    default:
-                        if (roll.source_temp_roll && roll.created_temp_roll) {
-                            dependencyInfo = `<i class="fas fa-exchange-alt" title="Uses temp roll and creates temp roll"></i> Chain`;
-                            dependencyClass = 'dependency-chain';
-                        } else if (roll.source_temp_roll) {
-                            dependencyInfo = `<i class="fas fa-arrow-right" title="Uses temp roll - may depend on other rolls"></i> Uses Temp`;
-                            dependencyClass = 'dependency-consumer';
-                        } else if (roll.created_temp_roll) {
-                            dependencyInfo = `<i class="fas fa-arrow-left" title="Creates temp roll for other rolls"></i> Creates Temp`;
-                            dependencyClass = 'dependency-creator';
-                        } else {
-                            dependencyInfo = `<i class="fas fa-circle" title="Independent roll - no temp roll dependencies"></i> Independent`;
-                            dependencyClass = 'dependency-independent';
-                        }
-                }
-            } else {
-                // Fallback to old logic for non-ready rolls
-                if (roll.source_temp_roll && roll.created_temp_roll) {
-                    dependencyInfo = `<i class="fas fa-exchange-alt" title="Uses temp roll and creates temp roll"></i> Chain`;
-                    dependencyClass = 'dependency-chain';
-                } else if (roll.source_temp_roll) {
-                    dependencyInfo = `<i class="fas fa-arrow-right" title="Uses temp roll - may depend on other rolls"></i> Uses Temp`;
-                    dependencyClass = 'dependency-consumer';
-                } else if (roll.created_temp_roll) {
-                    dependencyInfo = `<i class="fas fa-arrow-left" title="Creates temp roll for other rolls"></i> Creates Temp`;
-                    dependencyClass = 'dependency-creator';
-                } else {
-                    dependencyInfo = `<i class="fas fa-circle" title="Independent roll - no temp roll dependencies"></i> Independent`;
-                    dependencyClass = 'dependency-independent';
                 }
             }
             
@@ -449,12 +509,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                     ` : ''}
                     
-                    ${isCompleted ? `
-                        <div class="completed-badge">
-                            <i class="fas fa-check-circle"></i>
-                            <span>Completed</span>
-                        </div>
-                    ` : ''}
+                        ${(isCompleted || status === 'rework') ? `
+                            <div class="${status==='rework' ? 'rework-badge' : 'completed-badge'}">
+                                <i class="fas ${status==='rework' ? 'fa-exclamation-circle' : 'fa-check-circle'}"></i>
+                                <span>${status==='rework' ? 'Rework' : 'Completed'}</span>
+                            </div>
+                        ` : ''}
                     
                     <div class="roll-header">
                         <div class="roll-title">
@@ -513,17 +573,22 @@ document.addEventListener('DOMContentLoaded', function() {
                     ` : ''}
                     
                     <div class="roll-actions">
-                        ${status === 'ready' || isCompleted ? `
+                        ${status === 'ready' || isCompleted || status === 'rework' ? `
                             <span class="action-hint">
-                                ${isCompleted ? 'Click to re-film' : 'Click to select'}
+                                ${(isCompleted || status === 'rework') ? 'Click to re-film' : 'Click to select'}
                             </span>
+                            ${isCompleted && status !== 'rework' ? `
+                                <button class="mark-rework-btn" title="Mark as Rework">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                </button>
+                            ` : ''}
                         ` : `
                             <span class="status-text ${status}">
                                 <i class="fas ${status === 'filming' ? 'fa-spinner fa-spin' : 'fa-exclamation-triangle'}"></i>
                                 ${status === 'filming' ? 'Currently Filming' : 'Not Ready'}
                             </span>
                             ${status === 'filming' ? `
-                                <button class="revert-to-ready-btn" title="Revert to Ready">
+                                <button class="reset-to-ready-btn" title="Reset to Ready">
                                     <i class="fas fa-undo"></i>
                                 </button>
                             ` : ''}
@@ -538,6 +603,20 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Attach event listeners to roll cards
         attachRollEventListeners();
+        // Add navigation for dependency links
+        rollsGrid.querySelectorAll('.roll-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const targetId = e.currentTarget.getAttribute('data-target-roll-id');
+                if (!targetId) return;
+                const targetCard = document.querySelector(`.roll-card[data-roll-id="${targetId}"]`);
+                if (targetCard) {
+                    targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    targetCard.classList.add('selected');
+                    setTimeout(() => targetCard.classList.remove('selected'), 1500);
+                }
+            });
+        });
     }
     
     // Get CSS class for status
@@ -546,6 +625,7 @@ document.addEventListener('DOMContentLoaded', function() {
             case 'ready': return 'ready';
             case 'filming': return 'filming';
             case 'completed': return 'completed';
+            case 'rework': return 'rework';
             case 'error': return 'error';
             default: return 'pending';
         }
@@ -573,12 +653,20 @@ document.addEventListener('DOMContentLoaded', function() {
             const infoButton = card.querySelector('.roll-info-button');
             const status = card.dataset.status;
             
-            // Allow selection of ready rolls and completed rolls (for re-filming)
-            if (status === 'ready' || status === 'completed') {
+            // Allow selection of ready, completed, and rework rolls (rework behaves like completed)
+            if (status === 'ready' || status === 'completed' || status === 'rework') {
+                // Single click: highlight only
                 card.addEventListener('click', function(e) {
-                    // Don't select if clicking on info button
                     if (!e.target.closest('.roll-info-button')) {
                         highlightRoll(card);
+                    }
+                });
+
+                // Double click: highlight and proceed
+                card.addEventListener('dblclick', function(e) {
+                    if (!e.target.closest('.roll-info-button')) {
+                        highlightRoll(card);
+                        proceedWithSelectedRoll(card);
                     }
                 });
             }
@@ -590,12 +678,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             }
             
-            const revertBtn = card.querySelector('.revert-to-ready-btn');
-            if (revertBtn) {
-                revertBtn.addEventListener('click', function(e) {
+            // Reset to ready when filming
+            const resetBtn = card.querySelector('.reset-to-ready-btn');
+            if (resetBtn) {
+                resetBtn.addEventListener('click', function(e) {
                     e.stopPropagation();
                     const rollId = card.getAttribute('data-roll-id');
-                    revertRollToReady(rollId, card);
+                    resetRollToReady(rollId);
+                });
+            }
+
+            // Mark as rework when completed
+            const markReworkBtn = card.querySelector('.mark-rework-btn');
+            if (markReworkBtn) {
+                markReworkBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const rollId = card.getAttribute('data-roll-id');
+                    markRollRework(rollId, card);
                 });
             }
         });
@@ -768,7 +867,69 @@ document.addEventListener('DOMContentLoaded', function() {
     function displayTempRollPreview(strategy, isReFilming = true) {
         // Get refilming status from strategy if available, fallback to parameter
         const actuallyReFilming = strategy.is_refilming !== undefined ? strategy.is_refilming : isReFilming;
+        lastPreviewStrategy = strategy;
+
+        // Consolidated roll source selector (re-filming only)
+        const sourceItem = document.getElementById('roll-source-item');
+        const sourceSelect = document.getElementById('roll-source-selector');
+        const sourceDetails = document.getElementById('roll-source-details');
+        if (sourceItem) {
+            sourceItem.style.display = actuallyReFilming ? 'block' : 'none';
+        }
+        let forcedNew = false;
+        if (actuallyReFilming && sourceSelect) {
+            // Load available temp rolls and build a unified selector
+            const requiredPages = parseInt(document.getElementById('validation-page-count')?.textContent || '0') || 0;
+            const filmType = document.getElementById('validation-film-type')?.textContent || '16mm';
+            const url = `/api/temp-rolls/?film_type=${encodeURIComponent(filmType)}&status=available&exists=true&min_capacity=${requiredPages}&sort_field=usable_capacity&sort_direction=asc&page_size=100`;
+            fetch(url, { headers: { 'X-CSRFToken': getCsrfToken() }})
+                .then(r => r.json())
+                .then(data => {
+                    const list = data.temp_rolls || [];
+                    availableTempRollsCache = list;
+                    const options = [
+                        { value: 'auto', label: 'Auto-select best temp roll' },
+                        ...list.map(tr => ({ value: `temp:${tr.temp_roll_id}`, label: `Temp #${tr.temp_roll_id} • ${tr.usable_capacity} pages` })),
+                        { value: 'new', label: 'Use a NEW roll' }
+                    ];
+                    const prev = rollSourceChoice.value || 'auto';
+                    sourceSelect.innerHTML = options.map(o => `<option value="${o.value}">${o.label}</option>`).join('');
+                    sourceSelect.value = options.find(o => o.value === prev) ? prev : 'auto';
+                    rollSourceChoice.value = sourceSelect.value;
+                    if (sourceDetails) {
+                        sourceDetails.style.display = 'block';
+                        sourceDetails.textContent = 'Choose a temp roll or force a NEW roll. Auto-select picks the best fit.';
+                    }
+                    applyRollSourceSelectionToPreview();
+                })
+                .catch(() => {
+                    if (sourceDetails) {
+                        sourceDetails.style.display = 'block';
+                        sourceDetails.textContent = 'Could not load temp rolls. You can still choose NEW roll.';
+                    }
+                    availableTempRollsCache = [];
+                    sourceSelect.innerHTML = `<option value="auto">Auto-select best temp roll</option><option value="new">Use a NEW roll</option>`;
+                    const prev = rollSourceChoice.value || 'auto';
+                    sourceSelect.value = (prev === 'new') ? 'new' : 'auto';
+                    rollSourceChoice.value = sourceSelect.value;
+                    applyRollSourceSelectionToPreview();
+                });
+
+            sourceSelect.onchange = () => {
+                const val = sourceSelect.value;
+                rollSourceChoice.value = val;
+                forcedNew = (val === 'new');
+                // Reflect immediately in preview text
+                applyRollSourceSelectionToPreview();
+            };
+        }
         
+        // If re-filming with source selector, let the selection renderer handle preview and return early
+        if (actuallyReFilming && sourceSelect) {
+            applyRollSourceSelectionToPreview();
+            return;
+        }
+
         if (strategy.use_temp_roll) {
             // Will use existing temp roll
             const tempRoll = strategy.temp_roll;
@@ -835,6 +996,39 @@ document.addEventListener('DOMContentLoaded', function() {
         if (strategy.reason) {
             showStrategyReason(strategy.reason);
         }
+    }
+
+    function applyRollSourceSelectionToPreview() {
+        if (!lastPreviewStrategy) return;
+        const strategy = lastPreviewStrategy;
+        const val = rollSourceChoice.value || 'auto';
+        // NEW roll selected or strategy says no temp
+        if (val === 'new' || !strategy.use_temp_roll) {
+            updateRollSourceDisplay('New Roll (Re-filming)', 'new-roll');
+            let instructionDetails = strategy.will_create_temp_roll ? 'Will create temp roll after filming.' : 'Roll will be fully used.';
+            updateTempRollInstruction(`Insert new ${strategy.film_type} film roll`, instructionDetails);
+            showTempRollPreviewInfo(strategy, true);
+            return;
+        }
+        // TEMP selected: specific or auto
+        let chosenMeta = null;
+        if (val.startsWith('temp:')) {
+            const chosenId = parseInt(val.split(':')[1]);
+            chosenMeta = availableTempRollsCache.find(tr => tr.temp_roll_id === chosenId) || null;
+        }
+        let tempId = strategy.temp_roll?.temp_roll_id;
+        let remaining = strategy.temp_roll?.remaining_capacity;
+        if (chosenMeta) {
+            tempId = chosenMeta.temp_roll_id;
+            remaining = chosenMeta.usable_capacity;
+        }
+        updateRollSourceDisplay(`Temp Roll #${tempId} (${remaining} pages available)`, 'temp-roll');
+        updateTempRollInstruction(`Insert Temp Roll #${tempId}`, `Re-filming: Using available temp roll with ${remaining} pages capacity. Will use ${strategy.pages_to_use} pages.`);
+        const synthesized = { ...strategy };
+        if (chosenMeta) {
+            synthesized.temp_roll = { temp_roll_id: tempId, remaining_capacity: remaining };
+        }
+        showTempRollPreviewInfo(synthesized, true);
     }
     
     // Update roll source display
@@ -1039,10 +1233,23 @@ document.addEventListener('DOMContentLoaded', function() {
         const activeTogglePosition = document.querySelector('.toggle-position.active');
         const dependencyInfoPanel = document.getElementById('dependency-info-panel');
         
-        const searchTerm = searchElement ? searchElement.value.toLowerCase() : '';
+        const searchTerm = searchElement ? searchElement.value.trim().toLowerCase() : '';
+        
+        // Support condensed notation like "1x12" → "10000012" or "2x44" → "20000044"
+        const normalizeCondensedFilm = (term) => {
+            const match = term.match(/^([12])x(\d{1,6})$/i);
+            if (!match) return null;
+            const locationDigit = match[1];
+            const suffix = match[2];
+            const TOTAL_LENGTH = 8; // Standard length for film numbers like 10000012
+            const zerosNeeded = Math.max(0, TOTAL_LENGTH - 1 - suffix.length);
+            return `${locationDigit}${'0'.repeat(zerosNeeded)}${suffix}`;
+        };
+        const normalizedFilmSearch = searchTerm ? normalizeCondensedFilm(searchTerm) : null;
         const statusFilter = statusFilterElement ? statusFilterElement.value : 'all';
         const filmTypeFilter = filmTypeFilterElement ? filmTypeFilterElement.value : 'all';
-        const locationFilter = activeTogglePosition ? activeTogglePosition.dataset.position : 'all';
+        // Determine location filter from the active toggle position (data-location)
+        const locationFilter = activeTogglePosition ? (activeTogglePosition.dataset.location || 'all') : 'all';
         
         // Show dependency info panel only for "ready" status
         if (dependencyInfoPanel) {
@@ -1051,8 +1258,10 @@ document.addEventListener('DOMContentLoaded', function() {
         
         filteredRolls = allRolls.filter(roll => {
             // Search filter
-            const matchesSearch = !searchTerm || 
-                (roll.film_number && roll.film_number.toLowerCase().includes(searchTerm)) ||
+            const filmNum = roll.film_number ? String(roll.film_number) : '';
+            const filmNumLower = filmNum.toLowerCase();
+            const matchesSearch = !searchTerm ||
+                (filmNum && (filmNumLower.includes(searchTerm) || (normalizedFilmSearch && filmNum === normalizedFilmSearch))) ||
                 (roll.project_name && roll.project_name.toLowerCase().includes(searchTerm)) ||
                 (roll.project_archive_id && roll.project_archive_id.toLowerCase().includes(searchTerm));
             
@@ -1270,6 +1479,24 @@ Directory Exists: ${roll.output_directory_exists ? 'Yes' : 'No'}`;
                 recovery: isRecovery,
                 re_filming: isReFilming  // Add re-filming flag
             };
+
+            // Attach optional flags (re-filming only)
+            if (isReFilming) {
+                const sourceSelect = document.getElementById('roll-source-selector');
+                const val = sourceSelect ? sourceSelect.value : 'auto';
+                if (val === 'new') {
+                    requestData.force_new_roll = true;
+                    addLogEntry('Roll source: NEW roll', 'warning');
+                } else if (val && val.startsWith('temp:')) {
+                    const tempId = parseInt(val.split(':')[1]);
+                    if (tempId) {
+                        requestData.chosen_temp_roll_id = tempId;
+                        addLogEntry(`Roll source: temp roll #${tempId}`, 'info');
+                    }
+                } else {
+                    addLogEntry('Roll source: auto-select best temp roll', 'info');
+                }
+            }
             
             // Add initial log entry
             addLogEntry('Starting SMA filming session...', 'info');
@@ -2338,12 +2565,12 @@ Directory Exists: ${roll.output_directory_exists ? 'Yes' : 'No'}`;
         }
     }
     
-    async function revertRollToReady(rollId, rollCardElement) {
+    async function markRollRework(rollId, rollCardElement) {
         try {
-            if (!confirm('Revert this roll to Ready? This will cancel any active session and reset its status.')) {
+            if (!confirm('Mark this roll as Development Rework? This will reset development back to pending.')) {
                 return;
             }
-            addLogEntry(`Reverting roll ${rollId} to Ready...`, 'warning');
+            addLogEntry(`Marking roll ${rollId} as rework...`, 'warning');
             
             // Attempt to cancel any active sessions for this roll
             let cancelledSessions = 0;
@@ -2382,21 +2609,31 @@ Directory Exists: ${roll.output_directory_exists ? 'Yes' : 'No'}`;
                 console.warn('Failed to query/cancel active sessions for roll', rollId, e);
             }
             
-            // Reset roll status to ready
-            const resp = await fetch(`/api/rolls/${rollId}/filming-status/`, {
+            // Mark development rework (backend keeps filming status)
+            const resp = await fetch(`/api/development/revert-to-filming-ready/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': getCsrfToken()
                 },
-                body: JSON.stringify({ status: 'ready' })
+                body: JSON.stringify({ roll_id: rollId })
             });
             const data = await resp.json();
             
             if (resp.ok && (data.status === 'success' || data.success)) {
-                showNotification('success', 'Reverted', `Roll reverted to Ready${cancelledSessions ? ` (cancelled ${cancelledSessions} session${cancelledSessions>1?'s':''})` : ''}`, 4000);
-                addLogEntry(`Roll ${rollId} set to Ready`, 'info');
-                
+                // Mark filming status as rework for visual separation
+                try {
+                    const fsResp = await fetch(`/api/rolls/${rollId}/filming-status/`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
+                        body: JSON.stringify({ status: 'rework' })
+                    });
+                    await fsResp.json();
+                } catch (e) { /* non-fatal */ }
+
+                showNotification('success', 'Marked as Rework', `Development reset to Pending${cancelledSessions ? ` (cancelled ${cancelledSessions} session${cancelledSessions>1?'s':''})` : ''}`, 4000);
+                addLogEntry(`Roll ${rollId} marked for rework`, 'info');
+
                 // Refresh list to reflect the new state
                 await loadRolls();
                 updateQuickStats();
@@ -2404,9 +2641,30 @@ Directory Exists: ${roll.output_directory_exists ? 'Yes' : 'No'}`;
                 throw new Error(data.message || data.error || 'Failed to update roll status');
             }
         } catch (error) {
-            console.error('Revert to Ready failed:', error);
-            showNotification('error', 'Revert Failed', error.message || 'Could not revert roll to Ready', 6000);
-            addLogEntry(`Revert failed: ${error.message}`, 'error');
+            console.error('Mark rework failed:', error);
+            showNotification('error', 'Rework Failed', error.message || 'Could not mark roll as rework', 6000);
+            addLogEntry(`Rework failed: ${error.message}`, 'error');
+        }
+    }
+
+    async function resetRollToReady(rollId) {
+        try {
+            if (!confirm('Reset this roll to Ready for Filming?')) return;
+            const resp = await fetch(`/api/rolls/${rollId}/filming-status/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
+                body: JSON.stringify({ status: 'ready' })
+            });
+            const data = await resp.json();
+            if (resp.ok && (data.status === 'success' || data.success)) {
+                showNotification('success', 'Reset', 'Roll reset to Ready', 3000);
+                await loadRolls();
+                updateQuickStats();
+            } else {
+                throw new Error(data.message || data.error || 'Failed to reset');
+            }
+        } catch (e) {
+            showNotification('error', 'Reset Failed', e.message || 'Could not reset roll');
         }
     }
     
@@ -3022,6 +3280,10 @@ Directory Exists: ${roll.output_directory_exists ? 'Yes' : 'No'}`;
                     <div class="stat-item priority-problem-stat">
                         <div class="stat-number">${priorityCounts.problem}</div>
                         <div class="stat-label">Need Attention<br/><small>Have issues</small></div>
+                    </div>
+                    <div class="stat-item rework-stat" style="border-color:#0d6efd">
+                        <div class="stat-number">${rolls.filter(r => r.filming_status === 'rework').length}</div>
+                        <div class="stat-label">Rework<br/><small>Needs re-filming</small></div>
                     </div>
                 </div>
         `;

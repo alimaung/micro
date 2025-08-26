@@ -2276,7 +2276,7 @@ class DevelopmentDashboard {
             return;
         }
         
-        if (!confirm('Revert this roll back to Ready for Filming? This will cancel any active development and reset filming status.')) {
+        if (!confirm('Mark this roll as Development Rework? This will cancel any active development and set development status to pending. Filming status will be kept.')) {
             return;
         }
         
@@ -2299,7 +2299,7 @@ class DevelopmentDashboard {
             const data = await response.json();
             
             if (response.ok && data.success) {
-                this.showNotification('success', 'Reverted', `Roll set to Ready for Filming${data.cancelled_sessions ? ` (cancelled ${data.cancelled_sessions} dev session${data.cancelled_sessions>1?'s':''})` : ''}`);
+                this.showNotification('success', 'Marked as Rework', `Development reset to Pending${data.cancelled_sessions ? ` (cancelled ${data.cancelled_sessions} dev session${data.cancelled_sessions>1?'s':''})` : ''}`);
                 // Clear local session state
                 this.currentSession = null;
                 this.startTime = null;

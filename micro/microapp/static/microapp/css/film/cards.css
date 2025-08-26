@@ -222,13 +222,13 @@
     transition: var(--film-transition);
 }
 
-.toggle-switch-container {
+.three-way-toggle .toggle-switch-container {
     position: relative;
-    width: 60px;
-    height: 24px;
+    width: 78px; /* wider for clearer 3 steps */
+    height: 28px;
 }
 
-.toggle-track {
+.three-way-toggle .toggle-track {
     position: relative;
     width: 100%;
     height: 100%;
@@ -238,21 +238,21 @@
     cursor: pointer;
 }
 
-.toggle-slider {
+.three-way-toggle .toggle-slider {
     position: absolute;
-    top: 2px;
-    left: 2px;
-    width: 18px;
-    height: 20px;
+    top: 3px;
+    left: 3px;
+    width: 22px;
+    height: 22px;
     background-color: white;
     border-radius: 10px;
     transition: all 0.3s ease;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
     z-index: 2;
-    transform: translateX(20px); /* Default to center position */
+    transform: translateX(26px); /* Default to center position */
 }
 
-.toggle-positions {
+.three-way-toggle .toggle-positions {
     position: absolute;
     top: 0;
     left: 0;
@@ -262,36 +262,39 @@
     z-index: 1;
 }
 
-.toggle-position {
+.three-way-toggle .toggle-position {
     flex: 1;
     cursor: pointer;
     transition: background-color 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* Position-based styling */
-.toggle-position.left.active {
+.three-way-toggle .toggle-position.left.active {
     background-color: #2196F3;
 }
 
-.toggle-position.center.active {
+.three-way-toggle .toggle-position.center.active {
     background-color: #6c757d;
 }
 
-.toggle-position.right.active {
+.three-way-toggle .toggle-position.right.active {
     background-color: #FF9800;
 }
 
 /* Slider positions */
-.toggle-slider.left {
+.three-way-toggle .toggle-slider.left {
     transform: translateX(0px);
 }
 
-.toggle-slider.center {
-    transform: translateX(20px);
+.three-way-toggle .toggle-slider.center {
+    transform: translateX(26px);
 }
 
-.toggle-slider.right {
-    transform: translateX(40px);
+.three-way-toggle .toggle-slider.right {
+    transform: translateX(52px);
 }
 
 /* Text highlighting based on active position */
@@ -309,6 +312,19 @@
 .three-way-toggle.all-active .dw-text {
     color: #6c757d;
     font-weight: 600;
+}
+
+/* Center label styling */
+.three-way-toggle .toggle-center-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--film-text-light);
+    opacity: 0.9;
+    pointer-events: none;
+}
+.three-way-toggle .toggle-position.center.active .toggle-center-label {
+    color: #ffffff;
+    opacity: 1;
 }
 
 /* Location indicator dots for film numbers */

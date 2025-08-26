@@ -6,6 +6,8 @@
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 24px;
     margin-bottom: 24px;
+    max-height: 60vh; /* limit height */
+    overflow: auto; /* scroll when overflowing */
 }
 
 /* Roll card styling */
@@ -26,9 +28,11 @@
     transform: translateY(-2px);
 }
 
+/* Selected state: clearer, high-contrast without clutter */
 .roll-card.selected {
     border-color: var(--film-primary);
-    background-color: rgba(var(--film-primary-rgb), 0.1);
+    box-shadow: 0 0 0 3px rgba(var(--film-primary-rgb), 0.2);
+    background-color: var(--film-surface);
 }
 
 /* Ensure selected state overrides completed state */
@@ -54,14 +58,41 @@
     background-color: rgba(var(--film-primary-rgb), 0.05);
 }
 
+/* Rework styling: visually distinct (red border/accent), but otherwise like completed */
+.roll-card.rework {
+    border-color: #dc3545;
+    border-left: 5px solid #dc3545;
+    background-color: rgba(220, 53, 69, 0.06);
+}
+
+.roll-card .rework-badge,
+.completed-badge:has(+ .rework) {
+    position: absolute;
+    right: 16px;
+    background-color: #dc3545;
+    color: #fff;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    z-index: 2;
+}
+
+/* Simplify completed styling to reduce color noise */
 .roll-card.completed {
-    border-color: var(--film-success);
-    background-color: rgba(var(--film-success-rgb), 0.05);
+    border-color: var(--film-border);
+    background-color: var(--film-background);
+    opacity: 0.9;
 }
 
 .roll-card.completed:hover {
-    border-color: var(--film-warning);
-    background-color: rgba(var(--film-warning-rgb), 0.05);
+    border-color: var(--film-border);
+    background-color: var(--film-background);
 }
 
 /* Completed badge */
@@ -129,20 +160,21 @@
     line-height: 1.2;
 }
 
+/* Status badge palette: primary (filming), success (ready), neutral (completed) */
 .roll-status-badge.ready {
-    background-color: rgba(var(--film-success-rgb), 0.2);
+    background-color: rgba(var(--film-success-rgb), 0.15);
     color: var(--film-success);
 }
 
 .roll-status-badge.filming {
-    background-color: rgba(var(--film-primary-rgb), 0.2);
+    background-color: rgba(var(--film-primary-rgb), 0.15);
     color: var(--film-primary);
     animation: pulse 2s infinite;
 }
 
 .roll-status-badge.completed {
-    background-color: rgba(var(--film-success-rgb), 0.2);
-    color: var(--film-success);
+    background-color: rgba(108,117,125,0.15); /* neutral */
+    color: #6c757d;
 }
 
 .roll-status-badge.not-ready {
@@ -434,32 +466,15 @@
     }
 }
 
-/* Filming Priority Indicators */
-.roll-card.priority-creator {
-    border-left: 5px solid #dc3545; /* Red - highest priority */
-    background: linear-gradient(135deg, rgba(220, 53, 69, 0.05) 0%, transparent 100%);
-}
-
-.roll-card.priority-immediate {
-    border-left: 5px solid #28a745; /* Green - ready to go */
-    background: linear-gradient(135deg, rgba(40, 167, 69, 0.05) 0%, transparent 100%);
-}
-
-.roll-card.priority-waiting {
-    border-left: 5px solid #ffc107; /* Yellow - waiting */
-    background: linear-gradient(135deg, rgba(255, 193, 7, 0.05) 0%, transparent 100%);
-}
-
-.roll-card.priority-problem {
-    border-left: 5px solid #fd7e14; /* Orange - needs attention */
-    background: linear-gradient(135deg, rgba(253, 126, 20, 0.05) 0%, transparent 100%);
-}
+/* Simplify priority indicators to subtle left border only */
+.roll-card.priority-creator { border-left: 4px solid #e5534b; }
+.roll-card.priority-immediate { border-left: 4px solid #28a745; }
+.roll-card.priority-waiting { border-left: 4px solid #ffc107; }
+.roll-card.priority-problem { border-left: 4px solid #fd7e14; }
 
 /* Priority badges in dependency info */
-.dependency-info .priority-creator .fas.fa-star {
-    color: #dc3545;
-    animation: pulse 2s infinite;
-}
+/* Tone down icons; remove animation */
+.dependency-info .priority-creator .fas.fa-star { color: #e5534b; }
 
 .dependency-info .priority-immediate .fas.fa-check-circle {
     color: #28a745;
@@ -469,10 +484,7 @@
     color: #ffc107;
 }
 
-.dependency-info .priority-problem .fas.fa-exclamation-triangle {
-    color: #fd7e14;
-    animation: pulse 2s infinite;
-}
+.dependency-info .priority-problem .fas.fa-exclamation-triangle { color: #fd7e14; }
 
 /* Pulse animation for high priority items */
 @keyframes pulse {
@@ -482,9 +494,9 @@
 }
 
 /* Enhanced roll card priority styling */
-.roll-card.priority-creator .roll-header {
+/* .roll-card.priority-creator .roll-header {
     background: linear-gradient(135deg, rgba(220, 53, 69, 0.1) 0%, rgba(220, 53, 69, 0.05) 100%);
-}
+} */
 
 .roll-card.priority-creator .roll-header h3 {
     color: #dc3545;
@@ -495,20 +507,8 @@
     background: linear-gradient(135deg, rgba(40, 167, 69, 0.1) 0%, rgba(40, 167, 69, 0.05) 100%);
 } */
 
-/* Priority order visual indicators */
-.roll-card.priority-creator::before {
-    content: "🔥 HIGH PRIORITY";
-    position: absolute;
-    top: -1px;
-    right: -1px;
-    background: #dc3545;
-    color: white;
-    font-size: 10px;
-    font-weight: bold;
-    padding: 2px 6px;
-    border-radius: 0 8px 0 8px;
-    z-index: 10;
-}
+/* Remove loud corner ribbon for less clutter */
+.roll-card.priority-creator::before { content: none; }
 
 /* Dark mode support for priority indicators */
 .dark-mode .roll-card.priority-creator {
