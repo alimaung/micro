@@ -1,0 +1,4 @@
+pystray>=0.19.4
+pillow>=9.0.0
+psutil>=5.8.0
+requests>=2.25.0
