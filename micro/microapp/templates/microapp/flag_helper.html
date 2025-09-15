@@ -1,0 +1,11 @@
+
+{% comment %}
+Flag image helper template
+Usage: {% include 'microapp/flag_helper.html' with country='us' size='20x15' %}
+{% endcomment %}
+
+{% load static %}
+<img src="{% static 'microapp/offline/images/flags/' %}{{ country }}_{{ size }}.png" 
+     alt="{{ country|upper }}" 
+     width="{{ size|split:'x'|first }}" 
+     height="{{ size|split:'x'|last }}">

@@ -1,0 +1,887 @@
+/* Roll Selection and Roll-specific Styles */
+
+/* Rolls grid layout */
+.rolls-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 24px;
+    margin-bottom: 24px;
+    max-height: 60vh; /* limit height */
+    overflow: auto; /* scroll when overflowing */
+}
+
+/* Roll card styling */
+.roll-card {
+    background-color: var(--film-background);
+    border: 1px solid var(--film-border);
+    border-radius: 12px;
+    padding: 24px;
+    cursor: pointer;
+    transition: var(--film-transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.roll-card:hover {
+    border-color: var(--film-primary);
+    box-shadow: 0 4px 12px var(--film-shadow);
+    transform: translateY(-2px);
+}
+
+/* Selected state: clearer, high-contrast without clutter */
+.roll-card.selected {
+    border-color: var(--film-primary);
+    box-shadow: 0 0 0 3px rgba(var(--film-primary-rgb), 0.2);
+    background-color: var(--film-surface);
+}
+
+/* Ensure selected state overrides completed state */
+.roll-card.completed.selected {
+    border-color: var(--film-primary);
+    background-color: rgba(var(--film-primary-rgb), 0.1);
+    box-shadow: 0 0 0 2px rgba(var(--film-primary-rgb), 0.2);
+}
+
+.roll-card.not-ready {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.roll-card.not-ready:hover {
+    transform: none;
+    border-color: var(--film-border);
+    box-shadow: none;
+}
+
+.roll-card.filming {
+    border-color: var(--film-primary);
+    background-color: rgba(var(--film-primary-rgb), 0.05);
+}
+
+/* Rework styling: visually distinct (red border/accent), but otherwise like completed */
+.roll-card.rework {
+    border-color: #dc3545;
+    border-left: 5px solid #dc3545;
+    background-color: rgba(220, 53, 69, 0.06);
+}
+
+.roll-card .rework-badge,
+.completed-badge:has(+ .rework) {
+    position: absolute;
+    right: 16px;
+    background-color: #dc3545;
+    color: #fff;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    z-index: 2;
+}
+
+/* Simplify completed styling to reduce color noise */
+.roll-card.completed {
+    border-color: var(--film-border);
+    background-color: var(--film-background);
+    opacity: 0.9;
+}
+
+.roll-card.completed:hover {
+    border-color: var(--film-border);
+    background-color: var(--film-background);
+}
+
+/* Completed badge */
+.completed-badge {
+    position: absolute;
+    /* top: 20px; */
+    right: 16px;
+    background-color: var(--film-success);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex
+;
+    align-items: center;
+    gap: 6px;
+    z-index: 2;
+}
+
+.completed-badge i {
+    font-size: 10px;
+}
+
+/* Roll header */
+.roll-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+}
+
+.roll-title {
+    flex: 1;
+}
+
+.roll-film-number {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--film-text);
+    margin-bottom: 4px;
+}
+
+.roll-film-type {
+    font-size: 12px;
+    color: var(--film-text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.roll-status-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    min-width: 80px;
+    min-height: 24px;
+    line-height: 1.2;
+}
+
+/* Status badge palette: primary (filming), success (ready), neutral (completed) */
+.roll-status-badge.ready {
+    background-color: rgba(var(--film-success-rgb), 0.15);
+    color: var(--film-success);
+}
+
+.roll-status-badge.filming {
+    background-color: rgba(var(--film-primary-rgb), 0.15);
+    color: var(--film-primary);
+    animation: pulse 2s infinite;
+}
+
+.roll-status-badge.completed {
+    background-color: rgba(108,117,125,0.15); /* neutral */
+    color: #6c757d;
+}
+
+.roll-status-badge.not-ready {
+    background-color: rgba(var(--film-warning-rgb), 0.2);
+    color: var(--film-warning);
+}
+
+/* Project information */
+.roll-project-info {
+    margin-bottom: 16px;
+    padding: 12px;
+    background-color: var(--film-surface);
+    border-radius: 8px;
+    border: none;
+}
+
+.roll-project-info .project-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--film-text);
+    margin-bottom: 4px;
+}
+
+.roll-project-info .archive-id {
+    font-size: 12px;
+    color: var(--film-text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Roll details */
+.roll-details {
+    margin-bottom: 16px;
+}
+
+.roll-detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+    font-size: 14px;
+}
+
+.roll-detail-label {
+    color: var(--film-text-light);
+}
+
+.roll-detail-value {
+    color: var(--film-text);
+    font-weight: 500;
+    margin-left: 10px;
+
+    direction: rtl;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Roll progress bar */
+.roll-progress {
+    margin-bottom: 16px;
+}
+
+.roll-progress-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+    font-size: 12px;
+    color: var(--film-text-light);
+}
+
+.roll-progress-bar {
+    height: 6px;
+    background-color: var(--film-surface);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.roll-progress-fill {
+    height: 100%;
+    background-color: var(--film-primary);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+.roll-progress-fill.completed {
+    background-color: var(--film-success);
+}
+
+/* Roll actions */
+.roll-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+
+.action-hint {
+    font-size: 12px;
+    color: var(--film-text-light);
+    font-style: italic;
+    flex: 1;
+}
+
+.roll-card.completed .action-hint {
+    color: var(--film-warning);
+    font-weight: 500;
+}
+
+.status-text {
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+}
+
+.status-text.filming {
+    color: var(--film-primary);
+}
+
+.status-text i {
+    font-size: 10px;
+}
+
+.roll-select-button {
+    flex: 1;
+    padding: 8px 16px;
+    background-color: var(--film-primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--film-transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.roll-select-button:hover {
+    background-color: var(--film-primary-dark);
+}
+
+.roll-select-button:disabled {
+    background-color: var(--film-text-muted);
+    cursor: not-allowed;
+}
+
+.roll-info-button {
+    padding: 8px;
+    background-color: var(--film-background);
+    border: 1px solid var(--film-border);
+    border-radius: 8px;
+    color: var(--film-text-light);
+    cursor: pointer;
+    transition: var(--film-transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+}
+
+.roll-info-button:hover {
+    background-color: var(--film-primary);
+    color: white;
+    border-color: var(--film-primary);
+}
+
+/* Directory status indicator */
+.directory-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    margin-top: 6px;
+}
+
+.directory-status.exists {
+    color: var(--film-success);
+}
+
+.directory-status.missing {
+    color: var(--film-danger);
+}
+
+.directory-status i {
+    font-size: 10px;
+}
+
+/* Filming progress indicator for active rolls */
+.filming-progress-indicator {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background-color: var(--film-surface);
+    overflow: hidden;
+}
+
+.filming-progress-fill {
+    height: 100%;
+    background-color: var(--film-primary);
+    transition: width 0.3s ease;
+    position: relative;
+}
+
+.filming-progress-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.3),
+        transparent
+    );
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+/* Roll empty state */
+.rolls-empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--film-text-light);
+}
+
+.rolls-empty-state i {
+    font-size: 40px;
+    margin-bottom: 16px;
+    opacity: 0.6;
+}
+
+.rolls-empty-state h3 {
+    font-size: 18px;
+    margin-bottom: 8px;
+    color: var(--film-text);
+    font-weight: 500;
+}
+
+.rolls-empty-state p {
+    font-size: 14px;
+    margin-bottom: 16px;
+}
+
+/* Responsive design for rolls */
+@media (max-width: 768px) {
+    .rolls-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    .roll-card {
+        padding: 16px;
+    }
+    
+    .roll-header {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .roll-actions {
+        flex-direction: column;
+        gap: 8px;
+    }
+}
+
+@media (max-width: 576px) {
+    .roll-film-number {
+        font-size: 15px;
+    }
+    
+    .roll-detail-item {
+        font-size: 13px;
+    }
+}
+
+/* Simplify priority indicators to subtle left border only */
+.roll-card.priority-creator { border-left: 4px solid #e5534b; }
+.roll-card.priority-immediate { border-left: 4px solid #28a745; }
+.roll-card.priority-waiting { border-left: 4px solid #ffc107; }
+.roll-card.priority-problem { border-left: 4px solid #fd7e14; }
+
+/* Priority badges in dependency info */
+/* Tone down icons; remove animation */
+.dependency-info .priority-creator .fas.fa-star { color: #e5534b; }
+
+.dependency-info .priority-immediate .fas.fa-check-circle {
+    color: #28a745;
+}
+
+.dependency-info .priority-waiting .fas.fa-clock {
+    color: #ffc107;
+}
+
+.dependency-info .priority-problem .fas.fa-exclamation-triangle { color: #fd7e14; }
+
+/* Pulse animation for high priority items */
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.6; }
+    100% { opacity: 1; }
+}
+
+/* Enhanced roll card priority styling */
+/* .roll-card.priority-creator .roll-header {
+    background: linear-gradient(135deg, rgba(220, 53, 69, 0.1) 0%, rgba(220, 53, 69, 0.05) 100%);
+} */
+
+.roll-card.priority-creator .roll-header h3 {
+    color: #dc3545;
+    font-weight: 600;
+}
+
+/* .roll-card.priority-immediate .roll-header {
+    background: linear-gradient(135deg, rgba(40, 167, 69, 0.1) 0%, rgba(40, 167, 69, 0.05) 100%);
+} */
+
+/* Remove loud corner ribbon for less clutter */
+.roll-card.priority-creator::before { content: none; }
+
+/* Dark mode support for priority indicators */
+.dark-mode .roll-card.priority-creator {
+    border-left-color: #e74c3c;
+    background: linear-gradient(135deg, rgba(231, 76, 60, 0.1) 0%, transparent 100%);
+}
+
+.dark-mode .roll-card.priority-immediate {
+    border-left-color: #27ae60;
+    background: linear-gradient(135deg, rgba(39, 174, 96, 0.1) 0%, transparent 100%);
+}
+
+.dark-mode .roll-card.priority-waiting {
+    border-left-color: #f39c12;
+    background: linear-gradient(135deg, rgba(243, 156, 18, 0.1) 0%, transparent 100%);
+}
+
+.dark-mode .roll-card.priority-problem {
+    border-left-color: #e67e22;
+    background: linear-gradient(135deg, rgba(230, 126, 34, 0.1) 0%, transparent 100%);
+}
+
+.dark-mode .roll-card.priority-creator::before {
+    background: #e74c3c;
+}
+
+/* Temp Roll Dependency Indicators */
+.dependency-info {
+    border-top: 1px solid var(--film-border);
+    padding-top: 8px;
+    margin-top: 8px;
+}
+
+.dependency-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+/* Dependency type indicators */
+.roll-card.dependency-creator {
+    border-left: 4px solid #28a745; /* Green - creates temp rolls for others */
+}
+
+.roll-card.dependency-consumer {
+    border-left: 4px solid #fd7e14; /* Orange - uses temp rolls, may have dependencies */
+}
+
+.roll-card.dependency-chain {
+    border-left: 4px solid #6f42c1; /* Purple - both uses and creates temp rolls */
+}
+
+.roll-card.dependency-independent {
+    border-left: 4px solid #6c757d; /* Gray - no dependencies */
+}
+
+/* Dependency badge colors */
+.dependency-creator .dependency-badge {
+    background-color: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+}
+
+.dependency-consumer .dependency-badge {
+    background-color: rgba(253, 126, 20, 0.1);
+    color: #fd7e14;
+}
+
+.dependency-chain .dependency-badge {
+    background-color: rgba(111, 66, 193, 0.1);
+    color: #6f42c1;
+}
+
+.dependency-independent .dependency-badge {
+    background-color: rgba(108, 117, 125, 0.1);
+    color: #6c757d;
+}
+
+/* Dark mode support */
+.dark-mode .dependency-info {
+    border-top-color: var(--color-dark-border);
+}
+
+.dark-mode .roll-card.dependency-creator {
+    border-left-color: #34ce57;
+}
+
+.dark-mode .roll-card.dependency-consumer {
+    border-left-color: #ff922b;
+}
+
+.dark-mode .roll-card.dependency-chain {
+    border-left-color: #845ef7;
+}
+
+.dark-mode .roll-card.dependency-independent {
+    border-left-color: #868e96;
+}
+
+/* Dependency Info Panel */
+.dependency-info-panel {
+    background-color: rgba(var(--film-primary-rgb), 0.05);
+    border: 1px solid rgba(var(--film-primary-rgb), 0.2);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.dependency-info-panel h4 {
+    margin: 0 0 8px 0;
+    color: var(--film-primary);
+    font-size: 16px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.dependency-info-panel p {
+    margin: 0 0 12px 0;
+    color: var(--film-text);
+    font-size: 14px;
+}
+
+.dependency-legend {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 8px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--film-text);
+}
+
+.legend-indicator {
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+.legend-indicator.dependency-creator {
+    background-color: #28a745;
+}
+
+.legend-indicator.dependency-consumer {
+    background-color: #fd7e14;
+}
+
+.legend-indicator.dependency-chain {
+    background-color: #6f42c1;
+}
+
+.legend-indicator.dependency-independent {
+    background-color: #6c757d;
+}
+
+/* Dark mode support */
+.dark-mode .dependency-info-panel {
+    background-color: rgba(var(--color-dark-primary-rgb), 0.1);
+    border-color: rgba(var(--color-dark-primary-rgb), 0.3);
+}
+
+.dark-mode .dependency-info-panel h4 {
+    color: var(--color-dark-primary);
+}
+
+.dark-mode .dependency-info-panel p,
+.dark-mode .legend-item {
+    color: var(--color-dark-text);
+} 
+
+/* Filming Priority Summary Panel */
+.priority-summary-panel {
+    background: linear-gradient(135deg, var(--film-surface) 0%, rgba(var(--film-primary-rgb), 0.02) 100%);
+    border: 1px solid var(--film-border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.priority-summary-header {
+    margin-bottom: 16px;
+}
+
+.priority-summary-header h4 {
+    margin: 0;
+    color: var(--film-primary);
+    font-size: 18px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.priority-summary-content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.priority-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 16px;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 12px;
+    border-radius: 8px;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.stat-number {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: var(--film-text-muted);
+    line-height: 1.3;
+}
+
+.stat-label small {
+    opacity: 0.8;
+}
+
+/* Individual stat styling */
+.priority-creator-stat {
+    background: rgba(220, 53, 69, 0.1);
+    border-color: rgba(220, 53, 69, 0.2);
+}
+.priority-creator-stat .stat-number { color: #dc3545; }
+
+.priority-immediate-stat {
+    background: rgba(40, 167, 69, 0.1);
+    border-color: rgba(40, 167, 69, 0.2);
+}
+.priority-immediate-stat .stat-number { color: #28a745; }
+
+.priority-waiting-stat {
+    background: rgba(255, 193, 7, 0.1);
+    border-color: rgba(255, 193, 7, 0.2);
+}
+.priority-waiting-stat .stat-number { color: #ffc107; }
+
+.priority-problem-stat {
+    background: rgba(253, 126, 20, 0.1);
+    border-color: rgba(253, 126, 20, 0.2);
+}
+.priority-problem-stat .stat-number { color: #fd7e14; }
+
+/* Recommended next section */
+.recommended-next {
+    background: linear-gradient(135deg, rgba(var(--film-primary-rgb), 0.1) 0%, rgba(var(--film-primary-rgb), 0.05) 100%);
+    border: 2px solid rgba(var(--film-primary-rgb), 0.2);
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.recommendation-header {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--film-primary);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.recommendation-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.recommendation-reason {
+    color: var(--film-text-muted);
+    font-size: 14px;
+    font-style: italic;
+}
+
+.btn-film-recommended {
+    background: var(--film-primary);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-film-recommended:hover {
+    background: var(--film-primary-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(var(--film-primary-rgb), 0.3);
+}
+
+/* No ready rolls message */
+.no-ready-rolls {
+    background: rgba(108, 117, 125, 0.1);
+    border: 1px solid rgba(108, 117, 125, 0.2);
+    border-radius: 6px;
+    padding: 12px;
+    text-align: center;
+    color: var(--film-text-muted);
+    font-style: italic;
+}
+
+/* Dark mode support */
+.dark-mode .priority-summary-panel {
+    background: linear-gradient(135deg, var(--color-dark-surface) 0%, rgba(var(--film-primary-rgb), 0.05) 100%);
+    border-color: var(--color-dark-border);
+}
+
+.dark-mode .priority-creator-stat {
+    background: rgba(231, 76, 60, 0.15);
+    border-color: rgba(231, 76, 60, 0.3);
+}
+
+.dark-mode .priority-immediate-stat {
+    background: rgba(39, 174, 96, 0.15);
+    border-color: rgba(39, 174, 96, 0.3);
+}
+
+.dark-mode .priority-waiting-stat {
+    background: rgba(243, 156, 18, 0.15);
+    border-color: rgba(243, 156, 18, 0.3);
+}
+
+.dark-mode .priority-problem-stat {
+    background: rgba(230, 126, 34, 0.15);
+    border-color: rgba(230, 126, 34, 0.3);
+}
+
+.dark-mode .no-ready-rolls {
+    background: rgba(108, 117, 125, 0.2);
+    border-color: rgba(108, 117, 125, 0.3);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .priority-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .recommendation-content {
+        flex-direction: column;
+        align-items: stretch;
+        text-align: center;
+    }
+    
+    .btn-film-recommended {
+        justify-content: center;
+        width: 100%;
+    }
+} 

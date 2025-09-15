@@ -5,7 +5,8 @@ This command reads the comlist Excel files for projects and updates the Document
 with the COM IDs that may have been missed during initial processing.
 
 Usage:
-    python manage.py restore_com_ids                    # Process all projects
+    python manage.py restore_com_ids                    # Process all projects with comlist_path
+    python manage.py restore_com_ids --batch           # Process only projects with missing COM IDs
     python manage.py restore_com_ids --project-id 123   # Process specific project
     python manage.py restore_com_ids --dry-run          # Show what would be updated without saving
 """
@@ -115,6 +116,11 @@ class Command(BaseCommand):
             help='Process only the specified project ID',
         )
         parser.add_argument(
+            '--batch',
+            action='store_true',
+            help='Process all projects with missing COM IDs (requires comlist_path)',
+        )
+        parser.add_argument(
             '--dry-run',
             action='store_true',
             help='Show what would be updated without actually saving changes',
@@ -134,6 +140,7 @@ class Command(BaseCommand):
         self.dry_run = options['dry_run']
         self.force = options['force']
         self.verbose = options['verbose']
+        self.batch = options['batch']
         
         if self.dry_run:
             self.stdout.write(
@@ -146,13 +153,21 @@ class Command(BaseCommand):
                 projects = [Project.objects.get(id=options['project_id'])]
             except Project.DoesNotExist:
                 raise CommandError(f'Project with ID {options["project_id"]} does not exist')
+        elif self.batch:
+            # Get projects with missing COM IDs that have comlist_path
+            projects = self.get_projects_with_missing_com_ids()
         else:
             projects = Project.objects.filter(comlist_path__isnull=False).exclude(comlist_path='')
         
         if not projects:
-            self.stdout.write(
-                self.style.WARNING('No projects found with comlist_path set')
-            )
+            if self.batch:
+                self.stdout.write(
+                    self.style.SUCCESS('No projects found with missing COM IDs and comlist_path')
+                )
+            else:
+                self.stdout.write(
+                    self.style.WARNING('No projects found with comlist_path set')
+                )
             return
         
         self.stdout.write(f'Processing {len(projects)} project(s)...\n')
@@ -197,6 +212,33 @@ class Command(BaseCommand):
             self.stdout.write(
                 self.style.WARNING('  (DRY RUN - No actual changes made)')
             )
+
+    def get_projects_with_missing_com_ids(self):
+        """Get projects that have documents with missing COM IDs and have comlist_path set."""
+        from django.db.models import Q
+        
+        # Get all projects with comlist_path
+        projects_with_comlist = Project.objects.filter(
+            comlist_path__isnull=False
+        ).exclude(comlist_path='')
+        
+        projects_with_missing_com_ids = []
+        
+        for project in projects_with_comlist:
+            # Check if this project has documents without COM IDs
+            documents_without_com_ids = Document.objects.filter(
+                project=project
+            ).filter(
+                Q(com_id__isnull=True) | Q(com_id='')
+            ).count()
+            
+            if documents_without_com_ids > 0:
+                projects_with_missing_com_ids.append(project)
+        
+        if self.verbose:
+            self.stdout.write(f'Found {len(projects_with_missing_com_ids)} projects with missing COM IDs')
+        
+        return projects_with_missing_com_ids
 
     def process_project(self, project):
         """Process a single project to restore COM IDs."""

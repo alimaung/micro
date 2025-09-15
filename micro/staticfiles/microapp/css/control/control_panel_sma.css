@@ -1,0 +1,1098 @@
+/* Machine Control Card and Relay Control Card */
+.machine-control-card,
+.relay-control-card,
+.sma-control-card {
+    display: flex;
+    flex-direction: column;
+}
+
+.card-content {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 5px 0;
+}
+
+@media (max-width: 768px) {
+    .card-content {
+        flex-direction: column;
+    }
+}
+
+
+
+/* Placeholder states for machine stats */
+.gauge.placeholder .gauge-value {
+    color: #888;
+    font-style: italic;
+}
+
+.gauge.placeholder .gauge-body {
+    opacity: 0.5;
+    background-color: rgba(200, 200, 200, 0.05);
+}
+
+/* Placeholder styling for motor position values */
+.placeholder-text {
+    color: #999;
+    font-style: italic;
+    display: inline-block;
+    min-width: 50px;
+    padding: 3px 8px;
+    background-color: rgba(153, 153, 153, 0.1);
+    border-radius: 4px;
+    text-align: center;
+}
+
+.dark-mode .placeholder-text {
+    color: #777;
+    background-color: rgba(153, 153, 153, 0.15);
+}
+
+.motor-state.disconnected {
+    color: #888;
+    background-color: rgba(150, 150, 150, 0.1);
+}
+
+.refresh-button.disabled {
+    pointer-events: none;
+    opacity: 0.5;
+}
+
+/* Make sure the refresh button only appears if connected */
+#stats-connection-status.critical + .close-button + .refresh-button {
+    display: none;
+}
+
+/* Adaptations for the disconnected state tooltips */
+.stats-card .tooltip {
+    position: relative;
+    display: inline-block;
+    cursor: help;
+}
+
+.stats-card .tooltip .tooltip-text {
+    visibility: hidden;
+    width: 200px;
+    background-color: rgba(50, 50, 50, 0.9);
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 8px;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -100px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    font-size: 0.8rem;
+    pointer-events: none;
+}
+
+.stats-card .tooltip:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}
+
+.stats-card .tooltip .tooltip-text::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: rgba(50, 50, 50, 0.9) transparent transparent transparent;
+}
+
+/* Animation for appearing stats card */
+.stats-card.animate-in {
+    animation: fadeIn 0.3s ease-in-out forwards;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#machine-stats-card {
+    width: 100%;
+    margin-bottom: 30px;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+#relay-controls {
+    width: 100%;
+    margin-bottom: 30px;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Z-index control for overlapping cards (when both are visible) */
+#relay-controls.active {
+    z-index: 2;
+}
+
+#machine-stats-card.active {
+    z-index: 1;
+}
+
+/* Make sure when both cards are visible, they have proper spacing */
+#relay-controls + #machine-stats-card,
+#machine-stats-card + #relay-controls {
+    margin-top: 20px;
+}
+
+/* Close button enhancements */
+.fancy-close-button {
+    background-color: rgba(0, 0, 0, 0.1);
+    color: var(--color-text-light);
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 5;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.fancy-close-button:hover {
+    background-color: rgba(255, 69, 58, 0.2);
+    color: #ff453a;
+    transform: rotate(90deg);
+}
+
+.dark-mode .fancy-close-button {
+    background-color: rgba(255, 255, 255, 0.15);
+    color: var(--color-dark-text);
+}
+
+.dark-mode .fancy-close-button:hover {
+    background-color: rgba(255, 69, 58, 0.3);
+    color: #ff453a;
+}
+
+.fancy-close-button i {
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Card reveal animation */
+@keyframes cardReveal {
+    0% { opacity: 0; transform: translateY(-20px) scale(0.98); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.card-reveal {
+    animation: cardReveal 0.3s ease-out forwards;
+}
+
+/* Machine Stats Card Improvements */
+.machine-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.motors-grid {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+}
+
+.motor-stat-group {
+    background-color: var(--color-surface);
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+    padding: 16px;
+    transition: all 0.3s ease;
+}
+
+.dark-mode .motor-stat-group {
+    background-color: rgba(255, 255, 255, 0.03);
+    border-color: var(--color-dark-border);
+}
+
+.motor-stat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.motor-stat-header h4 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--color-text);
+}
+
+.dark-mode .motor-stat-header h4 {
+    color: var(--color-dark-text);
+}
+
+.motor-stat-items {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+}
+
+.machine-stat-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 8px;
+    background-color: var(--color-background);
+    border: 1px solid var(--color-border);
+    transition: all 0.3s ease;
+}
+
+.dark-mode .machine-stat-item {
+    background-color: rgba(255, 255, 255, 0.03);
+    border-color: var(--color-dark-border);
+}
+
+.machine-stat-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: rgba(var(--color-primary-rgb), 0.1);
+    color: var(--color-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+}
+
+.machine-stat-icon.motor {
+    color: #5ac8fa;
+    background-color: rgba(90, 200, 250, 0.1);
+}
+
+.machine-stat-content {
+    flex: 1;
+}
+
+.machine-stat-value {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--color-text);
+    display: block;
+}
+
+.dark-mode .machine-stat-value {
+    color: var(--color-dark-text);
+}
+
+.machine-stat-label {
+    font-size: 12px;
+    color: var(--color-text-light);
+    display: block;
+    margin-top: 2px;
+}
+
+.dark-mode .machine-stat-label {
+    color: var(--color-dark-text-light);
+}
+
+/* Placeholder styles for the machine stat values */
+.machine-stat-value.placeholder {
+    color: #999;
+    font-style: italic;
+}
+
+.dark-mode .machine-stat-value.placeholder {
+    color: #777;
+} 
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+} 
+
+/* Machine Stats Card */
+.stats-card {
+    width: 100%;
+    margin-bottom: 30px;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    max-width: 100%;
+}
+
+/* Improved gauge container for better space usage */
+.gauge-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 30px;
+    justify-content: space-around;
+}
+
+/* Slightly wider gauges */
+.gauge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 120px;
+    margin-bottom: 15px;
+}
+
+/* Wider gauge body */
+.gauge-body {
+    width: 45px;
+    height: 130px;
+}
+
+/* Improved motor stats to use space better */
+.motor-stats {
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.motor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.motor-header h4 {
+    margin: 0;
+    font-size: 1rem;
+    color: #555;
+}
+
+.motor-state {
+    font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 8px;
+    border-radius: 12px;
+    background-color: rgba(150, 150, 150, 0.1);
+}
+
+.motor-state i {
+    margin-right: 5px;
+}
+
+.motor-state.stopped {
+    color: #888;
+}
+
+.motor-state.running-cw {
+    color: #30d158;
+    background-color: rgba(48, 209, 88, 0.1);
+}
+
+.motor-state.running-ccw {
+    color: #5ac8fa;
+    background-color: rgba(90, 200, 250, 0.1);
+}
+
+.motor-state.error {
+    color: #ff453a;
+    background-color: rgba(255, 69, 58, 0.1);
+}
+
+.motor-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.motor-position {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 10px;
+    padding: 5px;
+    background-color: rgba(200, 200, 200, 0.05);
+    border-radius: 5px;
+}
+
+.position-label {
+    font-size: 0.85rem;
+    color: #777;
+    margin-right: 5px;
+}
+
+.position-value {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #444;
+}
+
+/* Responsive adjustments */
+@media (min-width: 768px) {
+    .motor-details {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .motor-position {
+        margin-top: 0;
+        margin-left: 15px;
+    }
+}
+
+/* Animation for loading state */
+.stats-card.loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(1px);
+    border-radius: inherit;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+}
+
+.stats-card.loading::before {
+    content: '';
+    position: absolute;
+    top: calc(50% - 15px);
+    left: calc(50% - 15px);
+    width: 30px;
+    height: 30px;
+    border: 3px solid rgba(90, 200, 250, 0.3);
+    border-top: 3px solid #5ac8fa;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    z-index: 11;
+}
+
+/* Fancy refresh button */
+.refresh-button {
+    background-color: rgba(0, 0, 0, 0.1);
+    color: var(--color-text-light);
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 5;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-left: 10px;
+    vertical-align: middle;
+}
+
+.refresh-button:hover {
+    background-color: rgba(52, 199, 89, 0.2);
+    color: #30d158;
+}
+
+.dark-mode .refresh-button {
+    background-color: rgba(255, 255, 255, 0.15);
+    color: var(--color-dark-text);
+}
+
+.dark-mode .refresh-button:hover {
+    background-color: rgba(52, 199, 89, 0.3);
+    color: #30d158;
+}
+
+.refresh-button i {
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.refresh-button i.spinning,
+.refresh-button-relay i.spinning {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(960deg); }
+}
+
+/* ===== SMA Machine Controls Styles ===== */
+
+/* SMA Control Card Layout */
+.sma-control-card .card-content {
+    flex-direction: column;
+    /* gap: 25px; */
+}
+
+/* Section Headers */
+.sma-control-card h3 {
+    color: var(--primary-color);
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--border-color);
+}
+
+/* Connection Section */
+.sma-connection-section {
+    background-color: var(--card-bg-secondary);
+    border-radius: 8px;
+    padding: 20px;
+    border: 1px solid var(--border-color);
+}
+
+.connection-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-items: flex-end;
+}
+
+.connection-settings {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.setting-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 120px;
+}
+
+.setting-group label {
+    font-weight: 500;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.setting-group select,
+.setting-group input {
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background-color: var(--input-bg);
+    color: var(--text-primary);
+    font-size: 0.9rem;
+}
+
+.connection-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* I/O Controls Section */
+.sma-io-section {
+    background-color: var(--card-bg-secondary);
+    border-radius: 8px;
+    padding: 0px 20px 0 20px;
+    border: 1px solid var(--border-color);
+}
+
+.io-controls-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.io-control-group {
+    background-color: var(--card-bg);
+    border-radius: 6px;
+    padding: 15px;
+    border: 1px solid var(--border-light);
+}
+
+.io-control-group h4 {
+    color: var(--text-primary);
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.io-status {
+    margin-bottom: 12px;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.io-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.io-buttons .control-button {
+    flex: 1;
+    min-width: 60px;
+    padding: 6px 10px;
+    font-size: 0.85rem;
+}
+
+/* Sensor Readings */
+.sensor-readings {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.sensor-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 8px;
+    background-color: var(--input-bg);
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.sensor-item .control-button.small {
+    padding: 4px 8px;
+    font-size: 0.8rem;
+    min-width: auto;
+}
+
+/* Motor Controls Section */
+.sma-motor-section {
+    background-color: var(--card-bg-secondary);
+    border-radius: 8px;
+    padding: 0px 20px 0 20px;
+    border: 1px solid var(--border-color);
+}
+
+.motor-controls-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 15px;
+}
+
+.motor-control-group {
+    background-color: var(--card-bg);
+    border-radius: 6px;
+    padding: 12px;
+    border: 1px solid var(--border-light);
+}
+
+.motor-control-group h4 {
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+    border-bottom: 1px solid var(--border-light);
+    padding-bottom: 6px;
+}
+
+/* Motor Configuration */
+.motor-config {
+    margin-bottom: 15px;
+}
+
+.config-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    padding: 4px 0;
+}
+
+.config-row label {
+    font-weight: 500;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    min-width: 70px;
+}
+
+.config-row input[type="number"] {
+    width: 80px;
+    padding: 4px 6px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: var(--input-bg);
+    color: var(--text-primary);
+    font-size: 0.85rem;
+}
+
+/* Radio Group */
+.radio-group {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.radio-group input[type="radio"] {
+    margin: 0 3px 0 0;
+    width: 14px;
+    height: 14px;
+}
+
+.radio-group label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-right: 8px;
+    min-width: auto;
+    cursor: pointer;
+}
+
+/* Toggle Switch */
+.toggle-switch {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.toggle-switch input[type="checkbox"] {
+    display: none;
+}
+
+.toggle-label {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+    cursor: pointer;
+}
+
+.toggle-switch-slider {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    border-radius: 24px;
+    transition: 0.3s;
+    max-width: 43px;
+    height: 23px;
+}
+
+.toggle-switch-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    border-radius: 50%;
+    transition: 0.3s;
+}
+
+.toggle-switch input:checked + .toggle-label .toggle-switch-slider {
+    background-color: var(--primary-color, #007bff);
+}
+
+.toggle-switch input:checked + .toggle-label .toggle-switch-slider:before {
+    transform: translateX(20px);
+}
+
+.toggle-text {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    min-width: 50px;
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+/* Motor 0 (Shutter) has 3 buttons */
+.motor-control-group:first-child .action-buttons {
+    grid-template-columns: 1fr 1fr 1fr;
+}
+
+.action-btn {
+    padding: 12px 8px;
+    border-radius: 6px;
+    border: 2px solid;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+}
+
+.action-btn.start-btn {
+    background-color: var(--success-color, #28a745);
+    border-color: var(--success-color, #28a745);
+    color: white;
+}
+
+.action-btn.start-btn:hover {
+    background-color: #218838;
+    border-color: #218838;
+    transform: translateY(-1px);
+}
+
+.action-btn.stop-btn {
+    background-color: var(--danger-color, #dc3545);
+    border-color: var(--danger-color, #dc3545);
+    color: white;
+}
+
+.action-btn.stop-btn:hover {
+    background-color: #c82333;
+    border-color: #c82333;
+    transform: translateY(-1px);
+}
+
+.action-btn.home-btn {
+    background-color: #007bff;
+    border-color: #007bff;
+    color: white;
+}
+
+.action-btn.home-btn:hover {
+    background-color: #0056b3;
+    border-color: #0056b3;
+    transform: translateY(-1px);
+}
+
+.action-btn:active {
+    transform: translateY(0);
+}
+
+
+
+/* Configuration Section */
+.sma-config-section {
+    background-color: var(--card-bg-secondary);
+    border-radius: 8px;
+    padding: 0px 20px 0 20px;
+    border: 1px solid var(--border-color);
+}
+
+.config-controls-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 15px;
+}
+
+.config-motor-group {
+    background-color: var(--card-bg);
+    border-radius: 6px;
+    padding: 12px;
+    border: 1px solid var(--border-light);
+}
+
+.config-motor-group h4 {
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+    border-bottom: 1px solid var(--border-light);
+    padding-bottom: 6px;
+}
+
+.config-compact {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.config-compact-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.config-compact-row label {
+    font-weight: 500;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    min-width: 80px;
+}
+
+.config-compact-row input {
+    width: 70px;
+    padding: 4px 6px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: var(--input-bg);
+    color: var(--text-primary);
+    font-size: 0.85rem;
+}
+
+.config-btn {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    background-color: var(--primary-color, #007bff);
+    color: white;
+    border: 1px solid var(--primary-color, #007bff);
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 35px;
+}
+
+.config-btn:hover {
+    background-color: #0056b3;
+    border-color: #0056b3;
+}
+
+/* Status Classes */
+.status-good {
+    color: var(--success-color, #28a745);
+    font-weight: 600;
+}
+
+.status-warning {
+    color: var(--warning-color, #ffc107);
+    font-weight: 600;
+}
+
+.status-error {
+    color: var(--danger-color, #dc3545);
+    font-weight: 600;
+}
+
+.status-neutral {
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .connection-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .connection-settings {
+        justify-content: space-between;
+    }
+    
+    .io-controls-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .motor-controls-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .config-controls-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .motor-buttons {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    /* Granular controls responsive */
+    .movement-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .direction-buttons {
+        width: 100%;
+    }
+
+    .direction-buttons .control-button.direction {
+        flex: 1;
+    }
+
+    .quick-step-buttons {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+    }
+
+    .joystick-controls {
+        flex-direction: column;
+    }
+
+    .continuous-settings {
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    
+    .motor-buttons {
+        grid-template-columns: 1fr;
+    }
+    
+    .io-buttons {
+        flex-direction: column;
+    }
+    
+    .config-compact-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 4px;
+    }
+    
+    .config-compact-row label {
+        min-width: auto;
+        text-align: center;
+    }
+
+    .config-compact-row input {
+        width: 100%;
+    }
+
+    .config-btn {
+        align-self: center;
+        min-width: 60px;
+    }
+
+    /* Granular controls mobile */
+    .motor-controls-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .quick-step-buttons {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+
+    .quick-step-buttons .control-button.small {
+        padding: 8px 4px;
+        font-size: 0.8rem;
+    }
+
+    .continuous-settings {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .continuous-settings input {
+        width: 100%;
+    }
+
+    .joystick-controls .control-button.joystick {
+        padding: 16px 8px;
+        font-size: 0.9rem;
+    }
+}

@@ -13,7 +13,7 @@
     <meta name="msapplication-TileImage" content="{% static 'microapp/img/app-logo.png' %}">
     <meta name="msapplication-TileColor" content="#1a73e8">
     <!-- Font Awesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'microapp/offline/css/fontawesome-6.4.0.min.css' %}">
     <!-- Load our main CSS file -->
     <link rel="stylesheet" href="{% static 'microapp/css/styles.css' %}">
     {% block extra_css %}{% endblock %}
@@ -48,8 +48,8 @@
                 href="{% url 'toggle_language' %}?next={{ request.get_full_path }}"
                 title="{% trans 'Toggle language' %}">
                 <img
-                src="https://flagcdn.com/20x15/{% if LANGUAGE_CODE == 'en' %}us{% elif LANGUAGE_CODE == 'de' %}de{% else %}{{ LANGUAGE_CODE }}{% endif %}.png"
-                srcset="https://flagcdn.com/40x30/{% if LANGUAGE_CODE == 'en' %}us{% elif LANGUAGE_CODE == 'de' %}de{% else %}{{ LANGUAGE_CODE }}{% endif %}.png 2x, https://flagcdn.com/60x45/{% if LANGUAGE_CODE == 'en' %}us{% elif LANGUAGE_CODE == 'de' %}de{% else %}{{ LANGUAGE_CODE }}{% endif %}.png 3x"
+                src="{% static 'microapp/offline/images/flags/' %}20x15/{% if LANGUAGE_CODE == 'en' %}us{% elif LANGUAGE_CODE == 'de' %}de{% else %}{{ LANGUAGE_CODE }}{% endif %}.png"
+                srcset="{% static 'microapp/offline/images/flags/' %}40x30/{% if LANGUAGE_CODE == 'en' %}us{% elif LANGUAGE_CODE == 'de' %}de{% else %}{{ LANGUAGE_CODE }}{% endif %}.png 2x, {% static 'microapp/offline/images/flags/' %}60x45/{% if LANGUAGE_CODE == 'en' %}us{% elif LANGUAGE_CODE == 'de' %}de{% else %}{{ LANGUAGE_CODE }}{% endif %}.png 3x"
                 width="20"
                 height="15"
                 alt="{{ LANGUAGE_CODE|upper }}">
@@ -174,7 +174,7 @@
     </footer>
     
     <!-- jQuery -->
-    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script src="{% static 'microapp/offline/js/jquery-3.6.4.min.js' %}"></script>
     <!-- Main JavaScript file -->
     <script src="{% static 'microapp/js/main.js' %}"></script>
     <!-- Footer JavaScript -->

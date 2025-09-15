@@ -6,9 +6,9 @@
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'microapp/css/handoff/handoff.css' %}">
     <!-- Load modern fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="{% static 'microapp/offline/css/inter-font.css' %}" rel="stylesheet">
 {% endblock %}
 
 {% block content %}

@@ -26,7 +26,7 @@
 {% endblock %}
 
 {% block extra_js %}
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="{% static 'microapp/offline/js/chart.js' %}"></script>
     <!-- Refactored modular scripts in dependency order -->
     <!-- Core utilities first -->
     <script src="{% static 'microapp/js/control/utils.js' %}"></script>

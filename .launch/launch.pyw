@@ -224,13 +224,14 @@ def run_caddy():
 def open_chrome_kiosk(url):
     """Open Chrome/Chromium in kiosk mode pointing to `url`."""
     chrome = get_chrome_path()
+    print(chrome)
     if not chrome:
         print_status("Could not find Chrome. Please install it or adjust get_chrome_path().", Colors.RED)
         return False
 
     print_status(f"Opening Chrome kiosk at {url}", Colors.MAGENTA)
-    args = [chrome, "--kiosk", "--app=" + url, "--start-fullscreen"]
-
+    args = [chrome, "--kiosk", "--app=" + url, "--start-fullscreen" "--profile-directory=Profile 13"]
+    print(args)
     subprocess.Popen(args)
     return True
 

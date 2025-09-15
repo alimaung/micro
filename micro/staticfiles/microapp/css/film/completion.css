@@ -1,0 +1,458 @@
+/* Completion Card and Toast Notification Styles */
+
+/* Completion content */
+.completion-content {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    text-align: center;
+}
+
+.completion-summary {
+    padding: 24px;
+    background-color: var(--film-background);
+    border-radius: 12px;
+    border: 1px solid var(--film-border);
+    box-shadow: 0 1px 3px var(--film-shadow), 
+                0 2px 8px var(--film-shadow);
+}
+
+.completion-icon {
+    margin-bottom: 24px;
+}
+
+.completion-icon i {
+    font-size: 56px;
+    color: var(--film-success);
+    animation: bounceIn 0.6s ease-out;
+}
+
+@keyframes bounceIn {
+    0% {
+        transform: scale(0.3);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    70% {
+        transform: scale(0.9);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.completion-summary h3 {
+    font-size: 24px;
+    font-weight: 500;
+    color: var(--film-text);
+    margin-bottom: 16px;
+}
+
+.completion-summary p {
+    font-size: 16px;
+    color: var(--film-text-light);
+    line-height: 1.5;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* Completion stats */
+.completion-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 24px;
+    padding: 24px;
+    background-color: var(--film-background);
+    border-radius: 12px;
+    border: 1px solid var(--film-border);
+    box-shadow: 0 1px 3px var(--film-shadow), 
+                0 2px 8px var(--film-shadow);
+}
+
+.completion-stats .stat-item {
+    padding: 20px;
+    background-color: var(--film-surface);
+    border-radius: 12px;
+    border: 1px solid var(--film-border);
+    transition: var(--film-transition);
+}
+
+.completion-stats .stat-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px var(--film-shadow);
+}
+
+.completion-stats .stat-value {
+    font-size: 32px;
+    font-weight: 500;
+    color: var(--film-success);
+    margin-bottom: 4px;
+    display: block;
+}
+
+.completion-stats .stat-label {
+    font-size: 14px;
+    color: var(--film-text-light);
+    font-weight: 500;
+}
+
+/* Completion actions */
+.completion-actions {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    padding-top: 24px;
+    border-top: 1px solid var(--film-border);
+}
+
+.completion-actions .primary-button,
+.completion-actions .secondary-button {
+    min-width: 180px;
+    padding: 12px 24px;
+    font-size: 16px;
+    border-radius: 8px;
+    font-weight: 500;
+}
+
+/* Temp Roll Instructions */
+.temp-roll-instructions {
+    margin: 32px 0;
+}
+
+.temp-roll-instruction-card {
+    background-color: var(--film-background);
+    border-radius: 12px;
+    border: 1px solid var(--film-border);
+    padding: 24px;
+    text-align: left;
+    box-shadow: 0 1px 3px var(--film-shadow), 
+                0 2px 8px var(--film-shadow);
+}
+
+.temp-roll-instruction-card.discard {
+    border-left: 4px solid var(--film-success);
+}
+
+.temp-roll-instruction-card:not(.discard) {
+    border-left: 4px solid var(--film-warning);
+}
+
+.instruction-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--film-border);
+}
+
+.instruction-header i {
+    font-size: 24px;
+    color: var(--film-warning);
+}
+
+.temp-roll-instruction-card.discard .instruction-header i {
+    color: var(--film-success);
+}
+
+.instruction-header h4 {
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--film-text);
+    margin: 0;
+}
+
+.instruction-content p {
+    font-size: 16px;
+    color: var(--film-text);
+    margin-bottom: 16px;
+    font-weight: 500;
+    line-height: 1.5;
+}
+
+.instruction-list {
+    list-style: none;
+    padding: 0;
+    margin: 16px 0;
+}
+
+.instruction-list li {
+    padding: 8px 0;
+    font-size: 14px;
+    color: var(--film-text-light);
+    border-bottom: 1px solid var(--film-border);
+}
+
+.instruction-list li:last-child {
+    border-bottom: none;
+}
+
+.instruction-list li strong {
+    color: var(--film-text);
+    font-weight: 500;
+    display: inline-block;
+    min-width: 140px;
+}
+
+.instruction-note {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 16px;
+    background-color: var(--film-surface);
+    border-radius: 8px;
+    border: 1px solid var(--film-border);
+    margin-top: 16px;
+}
+
+.instruction-note i {
+    font-size: 16px;
+    color: var(--film-primary);
+}
+
+.temp-roll-instruction-card.discard .instruction-note i {
+    color: var(--film-success);
+}
+
+.instruction-note {
+    font-size: 14px;
+    color: var(--film-text-light);
+    font-style: italic;
+}
+
+/* Toast notifications */
+#toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-width: 400px;
+}
+
+.toast {
+    background-color: var(--film-background);
+    border: 1px solid var(--film-border);
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 4px 12px var(--film-shadow);
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    animation: slideInRight 0.3s ease-out;
+    position: relative;
+    overflow: hidden;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.toast.success {
+    border-left: 4px solid var(--film-success);
+}
+
+.toast.error {
+    border-left: 4px solid var(--film-danger);
+}
+
+.toast.warning {
+    border-left: 4px solid var(--film-warning);
+}
+
+.toast.info {
+    border-left: 4px solid var(--film-primary);
+}
+
+.toast-icon {
+    font-size: 20px;
+    margin-top: 2px;
+}
+
+.toast.success .toast-icon {
+    color: var(--film-success);
+}
+
+.toast.error .toast-icon {
+    color: var(--film-danger);
+}
+
+.toast.warning .toast-icon {
+    color: var(--film-warning);
+}
+
+.toast.info .toast-icon {
+    color: var(--film-primary);
+}
+
+.toast-content {
+    flex: 1;
+}
+
+.toast-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--film-text);
+    margin-bottom: 4px;
+}
+
+.toast-message {
+    font-size: 13px;
+    color: var(--film-text-light);
+    line-height: 1.4;
+}
+
+.toast-close {
+    background: none;
+    border: none;
+    color: var(--film-text-light);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 0;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: var(--film-transition);
+}
+
+.toast-close:hover {
+    background-color: var(--film-surface);
+    color: var(--film-text);
+}
+
+.toast-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background-color: var(--film-primary);
+    transition: width linear;
+}
+
+.toast.success .toast-progress {
+    background-color: var(--film-success);
+}
+
+.toast.error .toast-progress {
+    background-color: var(--film-danger);
+}
+
+.toast.warning .toast-progress {
+    background-color: var(--film-warning);
+}
+
+/* Fade out animation for toasts */
+.toast.fade-out {
+    animation: fadeOut 0.3s ease-out forwards;
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+}
+
+/* Responsive design for completion */
+@media (max-width: 768px) {
+    .completion-content {
+        gap: 24px;
+    }
+    
+    .completion-summary {
+        padding: 24px;
+    }
+    
+    .completion-icon i {
+        font-size: 48px;
+    }
+    
+    .completion-summary h3 {
+        font-size: 20px;
+    }
+    
+    .completion-summary p {
+        font-size: 15px;
+    }
+    
+    .completion-stats {
+        grid-template-columns: 1fr;
+        gap: 16px;
+        padding: 16px;
+    }
+    
+    .completion-stats .stat-value {
+        font-size: 28px;
+    }
+    
+    .completion-actions {
+        flex-direction: column;
+        gap: 16px;
+    }
+    
+    .completion-actions .primary-button,
+    .completion-actions .secondary-button {
+        width: 100%;
+        min-width: auto;
+    }
+    
+    #toast-container {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+        max-width: none;
+    }
+    
+    .toast {
+        margin: 0;
+    }
+}
+
+@media (max-width: 576px) {
+    .completion-summary {
+        padding: 16px;
+    }
+    
+    .completion-icon i {
+        font-size: 40px;
+    }
+    
+    .completion-summary h3 {
+        font-size: 18px;
+    }
+    
+    .completion-summary p {
+        font-size: 14px;
+    }
+    
+    .completion-stats .stat-item {
+        padding: 16px;
+    }
+    
+    .completion-stats .stat-value {
+        font-size: 24px;
+    }
+    
+    .completion-stats .stat-label {
+        font-size: 13px;
+    }
+} 
