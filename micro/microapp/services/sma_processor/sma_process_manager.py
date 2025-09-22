@@ -3,6 +3,12 @@ SMA Process Manager - Manages SMA subprocess lifecycle and communication.
 
 This module provides the bridge between the Django web service and the standalone
 SMA processor, handling process lifecycle, real-time communication, and state management.
+
+File Creation Control:
+- By default, file creation is DISABLED (enable_file_creation=False)
+- This prevents creation of log files, progress files, command files, checkpoint files, and W:/sma directories
+- Set enable_file_creation=True to enable file-based communication and logging
+- When disabled, the manager relies on stdout/stderr parsing for monitoring and WebSocket for communication
 """
 
 import subprocess
@@ -24,11 +30,12 @@ logger = logging.getLogger(__name__)
 class SMAProcessManager:
     """Manages SMA subprocess lifecycle and communication."""
     
-    def __init__(self, session_id: str, project_data: Dict[str, Any], film_type: str, recovery: bool = False):
+    def __init__(self, session_id: str, project_data: Dict[str, Any], film_type: str, recovery: bool = False, enable_file_creation: bool = False):
         self.session_id = session_id
         self.project_data = project_data
         self.film_type = film_type
         self.recovery = recovery
+        self.enable_file_creation = enable_file_creation  # Disabled by default
         
         # Process management
         self.process: Optional[subprocess.Popen] = None
@@ -75,24 +82,32 @@ class SMAProcessManager:
     
     def _get_log_file_path(self) -> str:
         """Get the path for SMA process logs."""
+        if not self.enable_file_creation:
+            return None
         log_dir = Path("W:/sma") / "logs" / "sessions"
         log_dir.mkdir(parents=True, exist_ok=True)
         return str(log_dir / f"sma_session_{self.session_id}.log")
     
     def _get_progress_file_path(self) -> str:
         """Get the path for progress communication file."""
+        if not self.enable_file_creation:
+            return None
         progress_dir = Path("W:/sma") / "progress"
         progress_dir.mkdir(parents=True, exist_ok=True)
         return str(progress_dir / f"progress_{self.session_id}.json")
     
     def _get_checkpoint_file_path(self) -> str:
         """Get the path for checkpoint data."""
+        if not self.enable_file_creation:
+            return None
         checkpoint_dir = Path("W:/sma") / "checkpoints"
         checkpoint_dir.mkdir(parents=True, exist_ok=True)
         return str(checkpoint_dir / f"checkpoint_{self.session_id}.json")
     
     def _get_command_pipe_path(self) -> str:
         """Get the path for command communication pipe."""
+        if not self.enable_file_creation:
+            return None
         pipe_dir = Path("W:/sma") / "pipes"
         pipe_dir.mkdir(parents=True, exist_ok=True)
         return str(pipe_dir / f"commands_{self.session_id}.pipe")
@@ -119,11 +134,18 @@ class SMAProcessManager:
             # Set up environment variables for communication
             env = os.environ.copy()
             env['SMA_SESSION_ID'] = self.session_id
-            env['SMA_PROGRESS_FILE'] = self.progress_file_path
-            env['SMA_CHECKPOINT_FILE'] = self.checkpoint_file_path
-            env['SMA_COMMAND_PIPE'] = self.command_pipe_path
             env['SMA_CALLBACK_MODE'] = 'true'
             env['SMA_RECOVERY_MODE'] = 'true' if self.recovery else 'false'
+            env['SMA_FILE_CREATION_ENABLED'] = 'true' if self.enable_file_creation else 'false'
+            
+            # Only set file paths if file creation is enabled
+            if self.enable_file_creation:
+                if self.progress_file_path:
+                    env['SMA_PROGRESS_FILE'] = self.progress_file_path
+                if self.checkpoint_file_path:
+                    env['SMA_CHECKPOINT_FILE'] = self.checkpoint_file_path
+                if self.command_pipe_path:
+                    env['SMA_COMMAND_PIPE'] = self.command_pipe_path
             
             # Create command pipe for two-way communication
             self._create_command_pipe()
@@ -178,6 +200,9 @@ class SMAProcessManager:
     
     def _create_command_pipe(self):
         """Create a named pipe for command communication."""
+        if not self.enable_file_creation or not self.command_pipe_path:
+            return
+            
         try:
             if os.path.exists(self.command_pipe_path):
                 os.remove(self.command_pipe_path)
@@ -195,6 +220,10 @@ class SMAProcessManager:
     
     def _load_recovery_data(self):
         """Load recovery data from checkpoint file."""
+        if not self.enable_file_creation or not self.checkpoint_file_path:
+            self.recovery_data = {}
+            return
+            
         try:
             if os.path.exists(self.checkpoint_file_path):
                 with open(self.checkpoint_file_path, 'r') as f:
@@ -214,6 +243,9 @@ class SMAProcessManager:
     
     def _save_checkpoint(self):
         """Save current state to checkpoint file."""
+        if not self.enable_file_creation or not self.checkpoint_file_path:
+            return
+            
         try:
             checkpoint_data = {
                 'session_id': self.session_id,
@@ -292,8 +324,8 @@ class SMAProcessManager:
         
         while self.is_running and self.process and self.process.poll() is None:
             try:
-                # Check for progress file updates
-                if os.path.exists(self.progress_file_path):
+                # Check for progress file updates only if file creation is enabled
+                if self.enable_file_creation and self.progress_file_path and os.path.exists(self.progress_file_path):
                     with open(self.progress_file_path, 'r') as f:
                         progress_data = json.load(f)
                     
@@ -303,6 +335,10 @@ class SMAProcessManager:
                     # Notify callback handler
                     if self.callback_handler:
                         self.callback_handler.on_progress_update(progress_data)
+                elif not self.enable_file_creation:
+                    # When file creation is disabled, we rely solely on stdout parsing
+                    # Progress updates will come through _monitor_logs via workflow state detection
+                    pass
                 
                 time.sleep(1)  # Check every second
                 
@@ -580,6 +616,10 @@ class SMAProcessManager:
     
     def _write_log_entry(self, log_entry: Dict[str, Any]):
         """Write log entry to file."""
+        # Only write to file if file creation is enabled
+        if not self.enable_file_creation or not self.log_file_path:
+            return
+            
         try:
             with open(self.log_file_path, 'a') as f:
                 f.write(json.dumps(log_entry) + '\n')
@@ -590,6 +630,11 @@ class SMAProcessManager:
         """Send control commands to SMA process."""
         try:
             if not self.is_running or not self.process:
+                return False
+            
+            # If file creation is disabled, we can't send commands via files
+            if not self.enable_file_creation or not self.command_pipe_path:
+                logger.warning(f"Cannot send command '{command}' - file creation is disabled")
                 return False
             
             command_data = {
@@ -711,16 +756,23 @@ class SMAProcessManager:
                 health_status['healthy'] = False
                 health_status['issues'].append('Process not found or access denied')
         
-        # Check file system health
-        required_files = [self.progress_file_path, self.log_file_path]
-        for file_path in required_files:
-            if not os.path.exists(file_path):
-                health_status['warnings'].append(f'Missing file: {file_path}')
+        # Check file system health only if file creation is enabled
+        if self.enable_file_creation:
+            required_files = [self.progress_file_path, self.log_file_path]
+            for file_path in required_files:
+                if file_path and not os.path.exists(file_path):
+                    health_status['warnings'].append(f'Missing file: {file_path}')
+        else:
+            health_status['warnings'].append('File creation is disabled - using memory-only monitoring')
         
         return health_status
     
     def force_checkpoint(self) -> bool:
         """Force save a checkpoint immediately."""
+        if not self.enable_file_creation:
+            logger.warning("Cannot force checkpoint - file creation is disabled")
+            return False
+            
         try:
             self._save_checkpoint()
             return True
@@ -789,17 +841,24 @@ class SMAProcessManager:
     
     def _cleanup_files(self):
         """Clean up temporary files and resources."""
+        # Only clean up files if file creation was enabled
+        if not self.enable_file_creation:
+            return
+            
         try:
-            files_to_clean = [
-                self.progress_file_path,
-                self.command_pipe_path
-            ]
+            files_to_clean = []
+            
+            # Add files that exist
+            if self.progress_file_path:
+                files_to_clean.append(self.progress_file_path)
+            if self.command_pipe_path:
+                files_to_clean.append(self.command_pipe_path)
             
             # Don't clean up checkpoint and log files - they may be needed for recovery
             
             for file_path in files_to_clean:
                 try:
-                    if os.path.exists(file_path):
+                    if file_path and os.path.exists(file_path):
                         os.remove(file_path)
                         logger.debug(f"Cleaned up file: {file_path}")
                 except Exception as e:
@@ -816,7 +875,9 @@ class SMAProcessManager:
             'log_file': self.log_file_path,
             'last_checkpoint': self.last_checkpoint.isoformat() if self.last_checkpoint else None,
             'recovery_data': self.recovery_data,
-            'can_recover': os.path.exists(self.checkpoint_file_path)
+            'can_recover': (self.enable_file_creation and 
+                           self.checkpoint_file_path and 
+                           os.path.exists(self.checkpoint_file_path))
         }
     
     def __del__(self):

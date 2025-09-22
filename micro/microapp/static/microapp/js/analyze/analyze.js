@@ -1080,21 +1080,14 @@ function initializeAnalyzePage() {
     console.log('About to initialize sorting and view controls...');
     initializeSortingAndViewControls();
     
-    // Force refresh controls after a delay to ensure DOM is ready
+    // Ensure controls are properly initialized
     setTimeout(() => {
-        console.log('Force refresh controls...');
         const controlsContainer = document.querySelector('.controls-container');
-        console.log('Controls container exists:', !!controlsContainer);
-        if (controlsContainer) {
-            console.log('Controls container content:', controlsContainer.innerHTML);
-        }
-        
-        // Re-run initialization if controls are missing
-        if (!document.querySelector('.sort-controls') || !document.querySelector('.section-filters')) {
-            console.log('Missing controls detected, re-initializing...');
+        if (controlsContainer && !controlsContainer.querySelector('.sort-controls')) {
+            console.log('Controls missing, re-initializing...');
             initializeSortingAndViewControls();
         }
-    }, 500);
+    }, 100);
 }
 
 /**
@@ -1103,23 +1096,25 @@ function initializeAnalyzePage() {
 function initializeSortingAndViewControls() {
     console.log('Initializing sorting and view controls...');
     
-    // Wait for DOM to be ready
-    setTimeout(() => {
-        // Initialize view toggle
-        initializeViewToggle();
-        
-        // Initialize section-specific filters
-        initializeSectionFilters();
-        
-        // Initialize sorting controls
-        initializeSortingControls();
-        
-        // Set initial sort control values
-        updateSortControlsFromState();
-        
-        // Apply initial view state
-        updateViewDisplay();
-    }, 100);
+    // Check if controls container exists
+    const controlsContainer = document.querySelector('.controls-container');
+    if (!controlsContainer) {
+        console.warn('Controls container not found');
+        return;
+    }
+    
+    // Clear any existing controls to prevent duplicates
+    const existingControls = controlsContainer.querySelectorAll('.view-toggle, .sort-controls, .section-filters');
+    existingControls.forEach(control => control.remove());
+    
+    // Initialize controls
+    initializeViewToggle();
+    initializeSectionFilters();
+    initializeSortingControls();
+    
+    // Set initial values and state
+    updateSortControlsFromState();
+    updateViewDisplay();
 }
 
 /**
@@ -1127,12 +1122,6 @@ function initializeSortingAndViewControls() {
  */
 function initializeSectionFilters() {
     console.log('Initializing section filters...');
-    
-    // Remove existing filters first
-    const existingFilters = document.querySelector('.section-filters');
-    if (existingFilters) {
-        existingFilters.remove();
-    }
     
     // Create new filters for current section
     createSectionFilters();
@@ -1142,10 +1131,10 @@ function initializeSectionFilters() {
  * Initialize view toggle (card/table)
  */
 function initializeViewToggle() {
-    // Create view toggle if it doesn't exist
-    if (!document.querySelector('.view-toggle')) {
-        createViewToggle();
-    }
+    console.log('Initializing view toggle...');
+    
+    // Create view toggle
+    createViewToggle();
     
     // Add event listeners for view toggle
     const cardViewBtn = document.querySelector('.view-toggle .card-view');
@@ -1165,12 +1154,6 @@ function initializeViewToggle() {
  */
 function initializeSortingControls() {
     console.log('Initializing sorting controls...');
-    
-    // Remove existing sort controls first
-    const existingSortControls = document.querySelector('.sort-controls');
-    if (existingSortControls) {
-        existingSortControls.remove();
-    }
     
     // Create new sort controls
     createSortControls();
@@ -1200,14 +1183,15 @@ function initializeSortingControls() {
  */
 function createViewToggle() {
     const controlsContainer = document.querySelector('.controls-container');
-    if (!controlsContainer) return;
-    
-    // Check if view toggle already exists
-    if (controlsContainer.querySelector('.view-toggle')) return;
+    if (!controlsContainer) {
+        console.warn('Controls container not found for view toggle');
+        return;
+    }
     
     const viewToggle = document.createElement('div');
     viewToggle.className = 'view-toggle';
     viewToggle.innerHTML = `
+        <label style="font-size: 14px; color: var(--color-text); margin-right: 10px; font-weight: 500;">View:</label>
         <div class="toggle-group">
             <button class="toggle-btn card-view active" title="Card View">
                 <i class="fas fa-th-large"></i>
@@ -1219,6 +1203,7 @@ function createViewToggle() {
     `;
     
     controlsContainer.appendChild(viewToggle);
+    console.log('View toggle created');
 }
 
 /**
@@ -1226,16 +1211,9 @@ function createViewToggle() {
  */
 function createSectionFilters() {
     const controlsContainer = document.querySelector('.controls-container');
-    console.log('Controls container found:', !!controlsContainer);
     
     if (!controlsContainer) {
         console.warn('Controls container not found, cannot create filters');
-        return;
-    }
-    
-    // Check if filters already exist
-    if (controlsContainer.querySelector('.section-filters')) {
-        console.log('Filters already exist, skipping creation');
         return;
     }
     
@@ -1252,6 +1230,7 @@ function createSectionFilters() {
     const filtersContainer = document.createElement('div');
     filtersContainer.className = 'section-filters';
     filtersContainer.innerHTML = `
+        <label style="font-size: 14px; color: var(--color-text); margin-right: 15px; font-weight: 500;">Filters:</label>
         <div class="filters-group">
             ${filters.map(filter => `
                 <div class="filter-item">
@@ -1392,16 +1371,9 @@ function getSectionFilterOptions(section) {
  */
 function createSortControls() {
     const controlsContainer = document.querySelector('.controls-container');
-    console.log('Creating sort controls, container found:', !!controlsContainer);
     
     if (!controlsContainer) {
         console.warn('Controls container not found, cannot create sort controls');
-        return;
-    }
-    
-    // Check if sort controls already exist
-    if (controlsContainer.querySelector('.sort-controls')) {
-        console.log('Sort controls already exist, skipping creation');
         return;
     }
     
@@ -1413,6 +1385,7 @@ function createSortControls() {
     const sortControls = document.createElement('div');
     sortControls.className = 'sort-controls';
     sortControls.innerHTML = `
+        <label style="font-size: 14px; color: var(--color-text); margin-right: 10px; font-weight: 500;">Sort by:</label>
         <div class="sort-group">
             <select class="sort-select">
                 ${sortOptions.map(option => `
@@ -3099,6 +3072,18 @@ function applyClientSideFilters() {
     
     console.log('Applying client-side filters:', activeFilters);
     
+    // If no filters are active, show all cards
+    if (Object.keys(activeFilters).length === 0) {
+        document.querySelectorAll('.folder-card, .project-card').forEach(card => {
+            card.style.display = '';
+        });
+        // Clear any empty state messages
+        document.querySelectorAll('.empty-state-message').forEach(msg => {
+            msg.style.display = 'none';
+        });
+        return;
+    }
+    
     // Get current section and apply filters to cards
     const currentSection = window.SECTION_FILTER || 'all';
     const sectionContainers = document.querySelectorAll('.section-container');
@@ -3111,14 +3096,17 @@ function applyClientSideFilters() {
             }
         }
         
-        const cards = container.querySelectorAll('.folder-card');
+        const cards = container.querySelectorAll('.folder-card, .project-card');
+        let visibleCount = 0;
+        
         cards.forEach(card => {
             const shouldShow = cardMatchesFilters(card, activeFilters, currentSection);
-            card.style.display = shouldShow ? 'block' : 'none';
+            card.style.display = shouldShow ? '' : 'none';
+            if (shouldShow) visibleCount++;
         });
         
         // Update empty state if no cards are visible
-        updateEmptyState(container);
+        updateEmptyState(container, visibleCount === 0);
     });
 }
 
@@ -3140,18 +3128,35 @@ function cardMatchesFilters(card, filters, section) {
 function cardMatchesFilter(card, filterId, filterValue, section) {
     switch (filterId) {
         case 'location':
-            const locationElement = card.querySelector('.folder-path span[title], .project-location');
+            // Check for location badge in registered projects
+            const locationBadge = card.querySelector('.location-badge');
+            if (locationBadge) {
+                const location = locationBadge.textContent.trim().toLowerCase();
+                return location === filterValue.toLowerCase();
+            }
+            
+            // Fallback to folder path for unanalyzed/analyzed
+            const locationElement = card.querySelector('.folder-path span[title]');
             if (locationElement) {
-                const location = locationElement.textContent || locationElement.getAttribute('title') || '';
-                return location.toLowerCase().includes(filterValue.toLowerCase());
+                const path = locationElement.getAttribute('title') || '';
+                return path.toLowerCase().includes(filterValue.toLowerCase());
             }
             return false;
             
         case 'file-type':
             // For unanalyzed section - check file type composition
-            const pdfCount = parseInt(card.querySelector('[data-metric="pdfs"] .metric-value')?.textContent || '0');
-            const excelCount = parseInt(card.querySelector('[data-metric="excel"] .metric-value')?.textContent || '0');
-            const totalFiles = parseInt(card.querySelector('[data-metric="files"] .metric-value')?.textContent || '0');
+            // Find metrics by their labels since data attributes may not be set
+            const metrics = card.querySelectorAll('.metric');
+            let pdfCount = 0, excelCount = 0, totalFiles = 0;
+            
+            metrics.forEach(metric => {
+                const label = metric.querySelector('.metric-label')?.textContent.toLowerCase();
+                const value = parseInt(metric.querySelector('.metric-value')?.textContent || '0');
+                
+                if (label === 'pdfs') pdfCount = value;
+                else if (label === 'excel') excelCount = value;
+                else if (label === 'total files') totalFiles = value;
+            });
             
             if (totalFiles === 0) return filterValue === 'other';
             
@@ -3167,9 +3172,17 @@ function cardMatchesFilter(card, filterId, filterValue, section) {
             }
             
         case 'size-range':
-            const sizeElement = card.querySelector('[data-metric="size"] .metric-value, .folder-size');
-            if (sizeElement) {
-                const sizeText = sizeElement.textContent;
+            // Find size metric by label
+            let sizeText = '';
+            const sizeMetrics = card.querySelectorAll('.metric');
+            sizeMetrics.forEach(metric => {
+                const label = metric.querySelector('.metric-label')?.textContent.toLowerCase();
+                if (label === 'size') {
+                    sizeText = metric.querySelector('.metric-value')?.textContent || '';
+                }
+            });
+            
+            if (sizeText) {
                 const sizeBytes = parseSizeToBytes(sizeText);
                 
                 switch (filterValue) {
@@ -3204,13 +3217,23 @@ function cardMatchesFilter(card, filterId, filterValue, section) {
             return false;
             
         case 'has-oversized':
-            const oversizedElement = card.querySelector('[data-metric="oversized"] .metric-value, .oversized-indicator');
-            if (oversizedElement) {
-                const hasOversized = parseInt(oversizedElement.textContent || '0') > 0 || 
-                                   oversizedElement.classList.contains('has-oversized');
-                return filterValue === 'true' ? hasOversized : !hasOversized;
+            // Find oversized metric by label or class
+            let hasOversized = false;
+            const oversizedMetrics = card.querySelectorAll('.metric');
+            oversizedMetrics.forEach(metric => {
+                const label = metric.querySelector('.metric-label')?.textContent.toLowerCase();
+                if (label === 'oversized') {
+                    const value = parseInt(metric.querySelector('.metric-value')?.textContent || '0');
+                    hasOversized = value > 0;
+                }
+            });
+            
+            // Also check for oversized alert
+            if (!hasOversized) {
+                hasOversized = !!card.querySelector('.oversized-alert');
             }
-            return filterValue === 'false';
+            
+            return filterValue === 'true' ? hasOversized : !hasOversized;
             
         case 'project-status':
             const statusElement = card.querySelector('.status-badge, .project-status');
@@ -3265,9 +3288,11 @@ function parseSizeToBytes(sizeText) {
 /**
  * Update empty state for a section container
  */
-function updateEmptyState(container) {
-    const cards = container.querySelectorAll('.folder-card');
-    const visibleCards = Array.from(cards).filter(card => card.style.display !== 'none');
+function updateEmptyState(container, isEmpty = null) {
+    const cards = container.querySelectorAll('.folder-card, .project-card');
+    const visibleCards = isEmpty === null 
+        ? Array.from(cards).filter(card => card.style.display !== 'none')
+        : (isEmpty ? [] : cards);
     
     let emptyState = container.querySelector('.empty-state-message');
     

@@ -1,0 +1,11 @@
+$ PDF:
+
+REQ1: match_string_prio= pdf, <archive_id>, importiert
+REQ2: filetype=, .pdf, n<2, (+excl.)
+XEP3: takerrules_examples= pdf&importiert ->pdf, <archive_id>&any&importiert -> <archive_id>, importiert -> importiert
+
+$ COM:
+
+REQ1: match_string=com, liste, <archive_id>
+REQ2: filetype= .xlsx, .xls, .xlsb, .xlsm
+REQ3: header= A1B1

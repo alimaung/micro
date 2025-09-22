@@ -7,8 +7,10 @@ generation of blip codes for documents.
 
 import json
 import logging
+import time
+import threading
 from datetime import datetime
-from django.db import transaction
+from django.db import transaction, connection
 from django.db.models import Sum, Count, Q
 from django.conf import settings
 from django.core.cache import cache
@@ -26,7 +28,16 @@ TEMP_ROLL_PADDING_16MM = 100
 TEMP_ROLL_PADDING_35MM = 100
 TEMP_ROLL_MIN_USABLE_PAGES = 150
 
+# Database lock retry settings
+MAX_RETRIES = 3
+RETRY_DELAY = 1.0  # seconds
+TRANSACTION_TIMEOUT = 30  # seconds
+
 logger = logging.getLogger(__name__)
+
+# Thread-local lock for ensuring single-threaded allocation per project
+_allocation_locks = {}
+_lock_manager_lock = threading.Lock()
 
 class FilmNumberManager:
     """
@@ -49,7 +60,6 @@ class FilmNumberManager:
         if self.debug:
             self.logger.setLevel(logging.DEBUG)
             self.logger.debug("FilmNumberManager initialized in debug mode")
-    @transaction.atomic
     def allocate_film_numbers(self, project_id, project_data=None, analysis_data=None, allocation_data=None, index_data=None):
         """
         Allocate film numbers to all rolls in the project.
@@ -64,91 +74,137 @@ class FilmNumberManager:
         Returns:
             Tuple of (updated project, updated index data)
         """
+        # Ensure only one film allocation process runs per project at a time
+        with self._get_project_lock(project_id):
+            return self._allocate_film_numbers_with_retry(project_id, project_data, analysis_data, allocation_data, index_data)
+    
+    def _get_project_lock(self, project_id):
+        """Get or create a project-specific lock to prevent concurrent allocations."""
+        with _lock_manager_lock:
+            if project_id not in _allocation_locks:
+                _allocation_locks[project_id] = threading.Lock()
+            return _allocation_locks[project_id]
+    
+    def _allocate_film_numbers_with_retry(self, project_id, project_data=None, analysis_data=None, allocation_data=None, index_data=None):
+        """Allocate film numbers with database lock retry logic."""
+        last_exception = None
+        
+        for attempt in range(MAX_RETRIES):
+            try:
+                return self._allocate_film_numbers_impl(project_id, project_data, analysis_data, allocation_data, index_data)
+            except Exception as e:
+                error_str = str(e).lower()
+                if 'database is locked' in error_str or 'database table is locked' in error_str:
+                    last_exception = e
+                    if attempt < MAX_RETRIES - 1:
+                        self.logger.warning(f"Database locked on attempt {attempt + 1}, retrying in {RETRY_DELAY} seconds...")
+                        time.sleep(RETRY_DELAY * (attempt + 1))  # Exponential backoff
+                        # Force close any stale database connections
+                        connection.close()
+                        continue
+                    else:
+                        self.logger.error(f"Database still locked after {MAX_RETRIES} attempts")
+                        raise Exception(f"Database is locked after {MAX_RETRIES} attempts. Please try again later.") from e
+                else:
+                    # Non-lock related error, don't retry
+                    raise
+        
+        # If we get here, all retries failed
+        raise last_exception
+    
+    def _allocate_film_numbers_impl(self, project_id, project_data=None, analysis_data=None, allocation_data=None, index_data=None):
+        """Implementation of film number allocation with proper transaction handling."""
         try:
-            # Get basic project from database for DB operations
-            project = Project.objects.get(pk=project_id)
-            self.logger.info(f"Starting film number allocation for project {project.archive_id}")
-            
-            # Update has_oversized flag from analysis data if provided
-            if analysis_data:
-                # Try to extract the hasOversized flag from different possible locations
-                has_oversized = False
+            # Use a shorter timeout for the atomic transaction
+            with transaction.atomic():
+                # Set a timeout for the transaction if using SQLite
+                if connection.vendor == 'sqlite':
+                    with connection.cursor() as cursor:
+                        cursor.execute(f"PRAGMA busy_timeout = {TRANSACTION_TIMEOUT * 1000}")  # Convert to milliseconds
+                # Get basic project from database for DB operations
+                project = Project.objects.get(pk=project_id)
+                self.logger.info(f"Starting film number allocation for project {project.archive_id}")
                 
-                if 'analysisResults' in analysis_data:
-                    has_oversized = analysis_data['analysisResults'].get('hasOversized', False)
-                elif 'hasOversized' in analysis_data:
-                    has_oversized = analysis_data['hasOversized']
-                elif 'oversizedPages' in analysis_data and analysis_data['oversizedPages'] > 0:
-                    has_oversized = True
-                
-                # Update project if needed
-                if has_oversized != project.has_oversized:
-                    self.logger.info(f"Updating project has_oversized flag from {project.has_oversized} to {has_oversized}")
-                    project.has_oversized = has_oversized
-                    project.save(update_fields=['has_oversized'])
-            
-            # If frontend data is provided, use it to reconstruct the complete project state
-            if project_data and allocation_data:
-                self.logger.info("Using data provided from frontend for film number allocation")
-                
-                # Create or update film allocation record for this project
-                film_allocation, created = FilmAllocation.objects.get_or_create(
-                    project=project,
-                    defaults={
-                        'total_rolls_16mm': allocation_data.get('allocationResults', {}).get('results', {}).get('total_rolls_16mm', 0),
-                        'total_rolls_35mm': allocation_data.get('allocationResults', {}).get('results', {}).get('total_rolls_35mm', 0),
-                        'total_pages_16mm': allocation_data.get('allocationResults', {}).get('results', {}).get('total_pages_16mm', 0),
-                        'total_pages_35mm': allocation_data.get('allocationResults', {}).get('results', {}).get('total_pages_35mm', 0)
-                    }
-                )
-                
-                # Create rolls from allocation data if they don't exist in DB
-                self._create_rolls_from_allocation_data(project, allocation_data)
-                
-                # If analysis data is provided and documents don't exist, create them
+                # Update has_oversized flag from analysis data if provided
                 if analysis_data:
-                    self._create_documents_from_analysis_data(project, analysis_data)
+                    # Try to extract the hasOversized flag from different possible locations
+                    has_oversized = False
                     
-            else:
-                # Check if project has a film allocation in database
-                try:
-                    film_allocation = project.film_allocation_info
-                except FilmAllocation.DoesNotExist:
-                    film_allocation = None
+                    if 'analysisResults' in analysis_data:
+                        has_oversized = analysis_data['analysisResults'].get('hasOversized', False)
+                    elif 'hasOversized' in analysis_data:
+                        has_oversized = analysis_data['hasOversized']
+                    elif 'oversizedPages' in analysis_data and analysis_data['oversizedPages'] > 0:
+                        has_oversized = True
                     
-                if not film_allocation:
-                    self.logger.error("No film allocation found for project and no allocation data provided")
-                    raise ValueError("No film allocation found for project")
-                    
-            # Store current project for document lookups
-            self.current_project = project
-            
-            # Process 16mm rolls
-            self._process_16mm_rolls(project)
-            
-            # Process 35mm rolls if project has oversized pages
-            if project.has_oversized:
-                self._process_35mm_rolls(project)
-            else:
-                self.logger.info(f"\033[31mNo 35mm rolls to process for project {project}\033[0m")
+                    # Update project if needed
+                    if has_oversized != project.has_oversized:
+                        self.logger.info(f"Updating project has_oversized flag from {project.has_oversized} to {has_oversized}")
+                        project.has_oversized = has_oversized
+                        project.save(update_fields=['has_oversized'])
                 
-            # Update index data with film numbers if provided
-            if index_data:
-                updated_index = self._update_index(index_data, project)
-            else:
-                updated_index = None
-            
-            # Update film allocation statistics
-            if hasattr(project, 'film_allocation_info'):
-                project.film_allocation_info.update_statistics()
-            
-            # Mark film allocation as complete
-            project.film_allocation_complete = True
-            project.save()
-            
-            self.logger.info(f"Film number allocation completed successfully for project {project.archive_id}")
-            
-            return project, updated_index
+                # If frontend data is provided, use it to reconstruct the complete project state
+                if project_data and allocation_data:
+                    self.logger.info("Using data provided from frontend for film number allocation")
+                    
+                    # Create or update film allocation record for this project
+                    film_allocation, created = FilmAllocation.objects.get_or_create(
+                        project=project,
+                        defaults={
+                            'total_rolls_16mm': allocation_data.get('allocationResults', {}).get('results', {}).get('total_rolls_16mm', 0),
+                            'total_rolls_35mm': allocation_data.get('allocationResults', {}).get('results', {}).get('total_rolls_35mm', 0),
+                            'total_pages_16mm': allocation_data.get('allocationResults', {}).get('results', {}).get('total_pages_16mm', 0),
+                            'total_pages_35mm': allocation_data.get('allocationResults', {}).get('results', {}).get('total_pages_35mm', 0)
+                        }
+                    )
+                    
+                    # Create rolls from allocation data if they don't exist in DB
+                    self._create_rolls_from_allocation_data(project, allocation_data)
+                    
+                    # If analysis data is provided and documents don't exist, create them
+                    if analysis_data:
+                        self._create_documents_from_analysis_data(project, analysis_data)
+                        
+                else:
+                    # Check if project has a film allocation in database
+                    try:
+                        film_allocation = project.film_allocation_info
+                    except FilmAllocation.DoesNotExist:
+                        film_allocation = None
+                        
+                    if not film_allocation:
+                        self.logger.error("No film allocation found for project and no allocation data provided")
+                        raise ValueError("No film allocation found for project")
+                        
+                # Store current project for document lookups
+                self.current_project = project
+                
+                # Process 16mm rolls
+                self._process_16mm_rolls(project)
+                
+                # Process 35mm rolls if project has oversized pages
+                if project.has_oversized:
+                    self._process_35mm_rolls(project)
+                else:
+                    self.logger.info(f"\033[31mNo 35mm rolls to process for project {project}\033[0m")
+                    
+                # Update index data with film numbers if provided
+                if index_data:
+                    updated_index = self._update_index(index_data, project)
+                else:
+                    updated_index = None
+                
+                # Update film allocation statistics
+                if hasattr(project, 'film_allocation_info'):
+                    project.film_allocation_info.update_statistics()
+                
+                # Mark film allocation as complete
+                project.film_allocation_complete = True
+                project.save()
+                
+                self.logger.info(f"Film number allocation completed successfully for project {project.archive_id}")
+                
+                return project, updated_index
             
         except Exception as e:
             self.logger.error(f"Error allocating film numbers: {str(e)}")
@@ -718,7 +774,9 @@ class FilmNumberManager:
         Returns:
             Tuple of (temp_roll_id, source_roll_id, usable_capacity) if found, None otherwise
         """
-        temp_roll = TempRoll.objects.filter(
+        # Use select_for_update to prevent race conditions when multiple processes
+        # are trying to allocate temp rolls simultaneously
+        temp_roll = TempRoll.objects.select_for_update(skip_locked=True).filter(
             film_type=film_type,
             status="available",
             usable_capacity__gte=pages_needed
@@ -818,7 +876,9 @@ class FilmNumberManager:
         if location:
             query &= Q(project__location=location)
         
-        roll = Roll.objects.filter(query).order_by('-creation_date').first()
+        # Use select_for_update to prevent race conditions when multiple processes
+        # are trying to allocate to the same roll
+        roll = Roll.objects.select_for_update(skip_locked=True).filter(query).order_by('-creation_date').first()
         
         if roll:
             self.logger.debug(f"Found active 35mm roll: ID={roll.pk}, film_number={roll.film_number}, remaining={roll.pages_remaining}")

@@ -1,0 +1,606 @@
+[VERSION]
+VERSION=6.00.00-97
+
+[frmErrorLoadingDocumentStructure]
+lblInfo=The latest loaded Documents are no longer available.
+lblInfo2=Therefore the Film Documents have to be reloaded now.
+
+
+[frmSucheNullpunkt]
+Label1=Locating End Switch
+cmdCancel=Cancel
+
+[frmSelectRoll]
+Caption=Select a Roll
+cmdGo=Reexpose Roll
+
+[frmGetAddRollFrameLines]
+Caption=Enter the Data for the additional Roll Index Frame
+cmdClear=Clear Fields
+cmdOK=Done
+
+[frmPathsInfo]
+Caption=Documents which will be exposed
+
+
+[frmmenu]
+caption=file-converter 16/35 Main Menu
+cmdQuickExpose=Continue Exposure
+cmdEnd=End
+cmdProt=Protocols
+cmdContinue=New Exposure
+
+[frmsmamain]
+label.1=Continue Exposure
+label.2=New Exposure
+label.3=Protocol
+label.6=Login
+label.7=EXIT
+
+
+caption=file-converter 16/35 Main Menu
+cmdQuickExpose=Continue Exposure
+cmdEnd=End
+cmdProt=Protocols
+cmdContinue=New Exposure
+
+
+[frmGetFilmNo]
+Caption=Enter New Film Number
+label2=Next Film Number
+
+[frmImportStatus]
+cmdCancel=Cancel
+Label2=Document
+
+[frmGetUpdateParams]
+Caption=Assignment of Templates
+label3=Please assign the present templates to the belonging camera heads
+label4=add. Infoss
+label2.0=16mm Head
+label2.1=35mm Head
+label1=Monitor Height on Film
+label2.3=Assigned Head
+cmdSet=Set
+cmdCancel=Cancel
+
+[frmImportFormats]
+Caption=Select of Document Type
+Frame1=Source Folder
+Frame2=Destination Folder
+cmdImport=Import
+
+[frmLoading]
+caption=Loading Images
+Label1=Images are analyzed
+
+[frmProt]
+Caption=Protocols
+cmdPrint=Print
+cmdExit=Back
+label1=Template
+label2=Roll No.
+
+[frmSystem]
+frame2=Shutter
+frame3=Film Motor
+frame1=Leader and Trailer Length
+frame4.0=Monitor Orientation
+frame4.1=Monitor Orientation
+frame4.2=Monitor Orientation
+frame4.3=Monitor Orientation
+label5=Step Count Full Resolution
+label2=Delay
+label39=Step Count Limit Switch
+label55=Count of Exposure Slits
+label6=Delay after Vacuum on
+label54=Steps per mm
+label90=Timeout Vacuum on
+label93=Timeout Vacuum off
+label10=Delay before Film Motor
+label11=Delay after Film Motor
+caption=System
+label3=Leader
+label4=Trailer
+cmdSave=Save
+cmdBack=Cancel
+label97.0=Frame Counter
+label97.1=Frame Counter
+label97.2=Frame Counter
+label97.3=Frame Counter
+label95.0=Monitor Height exposed on Film
+label95.1=Monitor Height exposed on Film
+label95.2=Monitor Height exposed on Film
+label95.3=Monitor Height exposed on Film
+label95.10=# images per film
+label95.11=# available images
+label95.4=# images per film
+label95.5=# available images
+label95.6=# images per film
+label95.7=# available images
+label95.8=# images per film
+label95.9=# available images
+
+label9.0=free Film Length
+label9.1=free Film Length
+label9.2=free Film Length
+label9.3=free Film Length
+label18.0=Film Length
+label18.1=Film Length
+label18.2=Film Length
+label18.3=Film Length
+frame5.1=Resolution
+frame6.1=Resolution
+frame6.2=Resolution
+frame6.3=Resolution
+frame6.4=Resolution
+Label54.1=Steps/mm
+Label54.2=Steps/mm
+Label54.0=Steps/mm
+Label54.3=Steps/mm
+Label54.4=Steps/pixel
+Label54.5=Steps/pixel
+Label54.6=Steps/pixel
+Label54.7=Steps/pixel
+
+frame7=Vacuum
+cmdRestoreDefaults=Restore Factory Settings
+cmdSaveDefaults=Save as Factory Settings
+
+[frmFilmAbspulen]
+Caption=Winding Film Roll
+Label1=Rest Length
+Label2=Status
+cmdStop=Stop Winding
+
+[frmFilmPreview]
+chkSimDupFilenames=Simplex + Duplex Filenames
+chkTwoLines=Two Line Text Annotation
+
+label1.7=on Film
+label1.8=internal
+chk1PAgePDFs.0=PDFs containing only one page represent Level 2 Documents
+chk1PAgePDFs.1=TIFFs containing only one page represent Level 2 Documents
+chkJPEG=Enable faster processing of large JPEG Files
+chkLateStart=Don't count start symbols
+frame3=Alignment
+optOben=Top
+optUnten=Bottom
+optCenter=Center
+optLagerichtig=Optimal Alignment has Priority
+Label9=add. motor steps
+Label34=last filmed document
+chkA4LSDrehen=Rotate A4 Landscape
+chkA3PortraitDrehen=Rotate A3 Portrait
+label.32=Tolerance for format limit
+label.33=Reduction factor
+label.49=Width
+label.50=Width
+label.61=Width
+label38.0=Width
+label.51=Height
+label.52=Height
+label.60=Height
+label38.1=Height
+chkSmallLeft=Rotate small Docs anti clockwise
+label.10=Dist.
+frame_.2=Anno. Window
+chkDuplex=Duplex Exposure
+cmdSetLastDoc=modify
+Label.3=Last exposed Document
+chkFesteBelegzahl=expose a fix number of pages per roll
+cmdRefilm=Reexpose a single roll
+chkAddRollFrame=man. Index
+Label29=Size
+Label31=max Len
+chkAddRollFrameInput=Show last Input
+Frame12=Positions Index
+Label8=Add. Step for new Document (Level 2)
+Label22=Add. Step for new Volume (Level 3)
+label_.6=Apply Continuation at
+chkAutoAlign180=Rotate documents which don't need auto-alignment by 180 degrees
+cmdCalcSpace=Calculate Film-Demand
+frame4=Inversion of Images
+chkTrailerInfoFrames=Use Start and End Frames after Autotrailers
+Label41=Insert a trailer automatically each
+Label40=Trailerlength
+
+cmdAbspulen=Wind Film Roll
+cmdVorspann=Make Trailer
+chkInvers=Invert Images
+chkFrame=Draw Frame
+
+frame_.3=Info Window
+label49=Width
+label52=Height
+
+label30=Frame Distance
+label26=Shutter Speed
+label25=add. Expose Time
+label35=Number of Exposures
+chkStepsImageToImage=Distance between Images on Film
+
+chkSplit=Split Large Documents
+Label2=Minimal Document Size To Split
+label17=Width
+label18=Height
+label20=Split Count
+label28=Split Tile Oversize
+
+label73=Weight
+label72=Size
+label.11=Orientation
+Label50=Width
+Label61=Width
+Label51=Height
+Label60=Height
+
+Frame_.4=Annotation
+frame_.0=Image Window
+Frame_.1=Blip Window
+chkNoPreview=deactivate Thumbnails
+label1.4=large
+label59=medium
+label58=small
+label57=Width
+label56=Height
+frame8=BLIP Sizes
+chkOneToOne=1:1 Exposure
+Label33=Reduction Ratio
+Label32=Tolerance for Max-Document
+label1.3=Head
+tabFrames.0=Roll Start
+tabFrames.1=Separator Frame	
+tabFrames.2=Continuation Rolls
+tabFrames.3=Roll End
+chkRollEndFrame=Roll End Frame
+chkUseFrameNo=Expose Frame No.
+tabSettings.0=Alignment
+tabSettings.1=BLIP
+tabSettings.2=Annotation
+tabSettings.3=Info Frames
+tabSettings.4=Windows
+tabSettings.6=Steps
+Caption=Film Preview
+chkAutoAlign=Automatic Alignment
+label7=The shown metrics are not representative!
+label2=Options
+chkBlip=Page BLIP
+frbAusrichtung=Automatic Alignment
+opt90=90 deg clockwise
+opt270=90 deg counter clockwise
+frame1=Fix Alignment
+optFest0=without
+optFest90=90 deg clockwise
+optFest180=180 deg
+optFest270=90 deg counter clockwise
+label13=Last Doc exposed
+label1.5=Free Film Len
+cmdNewRoll=New Roll
+label1.2=Roll-No
+cmdChangeFilmNo=Change
+cmdSet=Change
+cmdNeu=Reexpose all Documents
+label15=Page
+chkAnnotation=Use Annotations
+optNamen=File Names
+optNummer=Numbers
+optMulti=Multi-Level
+optDatei=From File
+chkNullen=Leading 0s
+Label12=Separator
+label4=Length
+label3=Length
+chkStartFrame=Roll Start Frame
+chkSeparateFrame=Separator Frame
+cmdStart=Expose
+cmdCancel=Back
+label6=Template
+cmdSaveTemplate=Save Template
+cmdNewTemplate=New Template
+optNebenBlip=Beside BLIP
+optUeberBlip=Over BLIP
+chkShowSize=Use the Papersize (in mm) as Annotation
+chkInvers=Invert Images
+Frame7=Autotrailer
+Frame9=1:1 Exposure
+label27=For large Documents the reduction of the Rendering Resolution
+label42=might be useful in order to accelerate the exposure process.
+;Log File
+chkUseLogFile=Generate Log-File
+Label.5=Folder for Log-Files
+Label.4=Delimiter
+Label36=Header
+Label.1=Records
+lstHeader.0=Rollnumber
+lstHeader.1=Date
+lstHeader.2=Date/Time
+lstHeader.3=User
+lstHeader.4=Computer
+lstRecords.0=Filename
+lstRecords.1=Full Filename
+lstRecords.2=Documentsize
+lstRecords.3=Extension
+lstRecords.4=BLIP-Positions
+lstRecords.5=Linear Frame Pos
+lstRecords.6=Filesize
+lstRecords.7=Modification-Date
+lstRecords.8=Page Number
+lstTrailer.0=first filename on film
+lstTrailer.1=last filename on film
+lstTrailer.2=# of exposed frames
+lstTrailer.3=# of exposed images
+lstTrailer.4=# of Lev 2 documents
+lstTrailer.5=# of Lev 3 folders
+lstTrailer.6=Date
+lstTrailer.7=Date/Time
+chkFramesWiederholen=# of frames to be repeated
+chkBaende=don't split volumes
+chkRollewirdfortgesetzt=Roll will be continued
+chkRolleistFortsetzung=Roll is a continuation
+Label75=Fontsize
+Label76=Prefix
+Label77=Postfix
+Label78=Length
+chkZusatzStartSymbole=add Roll Start Symbols
+chkZusatzEndSymbole=add Roll End Symbols
+chkNoSpecialSmybolesWhenContinuation=Continuation Symbols replace Roll Start and End Frames
+
+Label.12=Orientation
+label55=Size
+Label80=Linespace
+label54=Weight
+
+[frmService]
+frame1=Testing Output Lines
+cmdTestFilming=Test Filming
+Caption=Service Functions
+chkvakuumpumpe=Vacuum Pump
+chkVentil=Vacuum Valve
+chkBlendenMotor=Start Shutter
+cmdSensorCheck=Check Sensors
+chkFrameLighting=Frame Exposure
+chkFilmMotor=Start Film Motor
+cmdNull=Calibrate Shutter
+label3=Speed 
+label2=Distance
+label4=Steps
+Label5=Time
+label10=Speed
+label11=Vacuum Sensor
+frame2=Resolution
+frame3=Resolution
+label8=Steps per mm
+label7=Steps
+
+[frmSensors]
+Caption=Check Sensors
+label1.0=Lid Switch
+label1.1=Coil Switch
+label1.2=Shutter Switch
+label1.3=Vacuum Sensor
+label1.4=End of Film
+
+[frmCheckImages]
+Label7=Passed
+Label5=Remaining
+chkAnzeige=Don't refresh Image
+Caption=Evaluate Document Structure
+label1=Batch
+label2=Documents
+
+[frmQuickfilm]
+chkTestImages=Check Document while reading the Document Structure
+Caption=Select Document Source
+label1=Job
+label3=Image Path
+cmdCancel=Cancel
+CmdContinue=Continue old Roll
+Frame1=Read-Order of Documents
+chkNoPreview=deactivate thumbnails
+cmdAlteRolle=Continue Old Roll
+optSaved=original
+optNum=by Name(Numbers)
+optText=by Name(Text)
+optDate=by Date
+optXP=by Name like XP (Text)
+
+[frmFilmEinlegen]
+Caption=Insert Film Roll
+Label1=Please insert a new film roll and press <Start>
+CmdCancel=Cancel
+
+[frmFilming]
+Label8=on Film
+label15=Time Remaining
+label13=Exposed Frames
+label10=Filename
+label12=Folder
+Caption=Exposure of Documents
+cmdEnd=Stop Exposure
+label1=to expose
+label4=remaining free film
+label11=Remaining frames on roll
+label3=Roll number
+label7=current Document
+label9=current Page
+
+[frmGetFilmNo]
+Caption=Enter the new Roll Number
+
+[frmGetFirstDoc]
+Caption=Enter the Last Document Exposed
+label1=Last Document
+label2=Page
+
+[frmRestFrames]
+Caption=Enter Remaining Frames
+label1=Remaining Frames
+
+[frmSelectDir]
+Caption=Select Folder
+CmdCreate=New
+cmdCancel=Cancel
+
+[frmSelectDirUnicode]
+Caption=Select Folder
+CmdCreate=New
+cmdCancel=Cancel
+
+[frmFilmTransport]
+label1=Film is Transporting !!!
+
+[TEXTE]
+TXT_REXPOSE_DOCUMENTS=Really reexpose all the Documents?
+TXT_INSERT_NEW_ROLL=Do your really want to insert a new film roll?
+TXT_USE_NEW_ROLL=Do you want to use a new film roll?
+TXT_MISSING_SEP_FILE=Separation Image (TRENNBLATT.BMP) is missing!
+TXT_STOP_EXPOSURE=Sure to stop the Exposure?
+TXT_SELECT_HEAD=Please select a Camera Head first
+TXT_SELECT_PATH=Please select an Image Path first
+TXT_ORIENTATION_CHANGED=Attention. You changed the default Orientation of this Camera Head!
+TXT_ROLL_NO_NUMERICAL=Roll Number must be a numerical Value!
+TXT_COULD_NOT_READ=Could not read the Directory:
+TXT_ANALYZING=Analyzing Data Carrier
+TXT_EXPOSE_CANCELLED=Exposing stopped!
+TXT_NO_DOCS=No Document to be filmed
+TXT_NO_VACUUM=Vaccum couldn't be generated!
+TXT_END_EXPOSE=Terminate Exposing?
+TXT_TRAILER=Generate a Trailer?
+TXT_NEW_TEMPLATE=Please enter the name of the new template!
+TXT_NEXT=Next Page
+TXT_PREV=Previous Page
+TXT_NEXT_DOC=Next Document
+TXT_PREV_DOC=Previous Document
+TXT_FIRST=First Page
+TXT_LAST=Last Page
+TXT_MONITOR=Please ensure that the file-converter monitor is switched on!
+TXT_UPDATE_TEXT1=Warning!! The Templates have not been corrected!!
+TXT_UPDATE_TEXT2=The file-converter system won't work in that state unless you adapt all parameters manually!
+
+TXT_UPDATE_INFO1=This version supports a new template structure.
+TXT_UPDATE_INFO2=Therefor parts of the system parameters have to be transferred into the templates.
+TXT_UPDATE_INFO3=The following parameters are now included in the templates:
+TXT_UPDATE_INFO4=1. Window Definitions for Image and Blip Area
+TXT_UPDATE_INFO5=2. The Blip-Dimensions (now in mm)
+TXT_UPDATE_INFO6=3. Expose Time and Steps
+TXT_UPDATE_INFO7=The software adapts the templates automatically, it just has to be defined
+TXT_UPDATE_INFO8=for which camera head the separate templates are valid
+TXT_UPDATE_INFO9=The preset values for the monitor height are used for the conversion of several
+TXT_UPDATE_INFO10=parameters. Its not necessary to modify them.
+
+TXT_MOTOR_STOP=Stop Motor
+TXT_MOTOR_RUNNING=Motor runs
+TXT_MOTOR_START=Start Filmmotor
+
+TXT_ERROR_LOADING_DOCUMENT=Error while loading Document:
+TXT_ERRORS_FILMING1=While Filming one or more errors occured.
+TXT_ERRORS_FILMING2=Please check the following report!
+
+TXT_MOTOR_ERR81=Speed and Table Adress must correlate!
+TXT_MOTOR_ERR82=Distance is to small for the desired speed!
+TXT_MOTOR_PROBLEM_EXPOSURE_STOP=There was a problem moving the shutter! There might be an error in the motor parameters. Please check them.
+
+TXT_ERR_VACUUM_OFF=Vacuum couldn't be turned off
+TXT_ERR_VACUUM_ON=Vacuum couldn't be turned on
+TXT_SET_LOGFILE_FOLDER=Please set a folder for the log-files!
+TXT_REALLY_FULL_WIND=Really rewind the whole film roll?
+TXT_MOTOR_WILL_STOP=Motor will stop
+TXT_CHECK_DISTANCE1=The Frame-Distance should be in the range from 1 to 5 mm!
+TXT_CHECK_DISTANCE2=The Frame-Distance should be at least the monitor height on the film to avoid overlapping images!
+TXT_NO_JOBNAME=Please enter a template name
+TXT_NO_HEAD=Please select a camera head
+TXT_CAPTION_CALC_FILM=Calculation of Film Demand
+TXT_FILM_NEEDED=needed Film Length
+TXT_END_CALC=Stop Calculation
+TXT_OVERWRITE_DEFAULTS=Overwrite Factory Settings?
+TXT_RESTORE_DEFAULTS=Restore Factory Settings?
+TXT_DOCUMENTS_NEED1=Documents need
+TXT_DOCUMENTS_NEED2=m of free Film Length
+TXT_STOP_CALCULATION=Stop Calculation of Film Length?
+TXT_NO_SHUTTER_STEPS=Please enter the number of exposures
+TXT_WRONG_SHUTTER_STEPS=The number of exposures should be between 1 and 128
+TXT_ADD_SYMBOLS_PATH_MISSING=Please specify the path to the additional symbols
+TXT_ENTER_REPEAT_FRAMES=Please enter a numerical value for the number of repetition frames
+TXT_BAENDE_AND_REPEAT_CHECKED=You can't repeat frames if volumes aren't split over multiple rolls
+TXT_NO_FONT_SIZE_ROLLNO=Please enter a font size for the roll number
+TXT_NO_LEN_ROLLNO=Please enter a numerical value for the roll number length
+TXT_WRONG_LEN_ROLLNO=Please enter a value > 0 for the roll number length
+TXT_CANCEL_ANALYSIS=Do you really want to cancel the Document Evaluation?
+TXT_LOW_PRIO=The Level of the user priority is too low to view the user accounts
+TXT_WRONG_USER=Wrong User or Password
+
+TXT_ALL_FILMED1=All documents have been exposed!
+TXT_ALL_FILMED2=Should now the end symbols be exposed?
+
+TXT_INFO_FILMLEN=Filmlen
+TXT_INFO_STEPWIDTH=Spacing
+TXT_INFO_ROLLS=Rolls
+TXT_INFO_SPACE=Allocation last roll
+TXT_FREE_DOCS=available pages
+TXT_FREE_FILM=Free Film Len
+
+TXT_DOC_NOT_FOUND=Document not found! Changes can't be set!
+
+TXT_ROLL_IS_CONT=Roll is a Continuation
+TXT_ROLL_IS_NOT_CONT=Roll is NOT a Continuation
+TXT_ANNOWIN_MISSING=Please enter the dimensions of the annotation window
+TXT_ANNOWIN_CHECK=BLip window and Annotation Window are identical. Please check this!
+
+TXT_DUPLEX_INFO1=Changing the Duplex-Filming is only affected
+TXT_DUPLEX_INFO2=if the documents are reloaded via (New Exposure)!
+TXT_INPUT_POS=Please enter the frame number
+
+TXT_MONITOR_SERVICE1=The Exposure can not be continued, please call the service!
+TXT_MONITOR_SERVICE2=The Exposure can be continued but the service should be called immediately!
+TXT_MONITOR_SERVICE3=Do you want to start exposing now?
+TXT_INSERT_CAMERA=Insert the Camera back into the system. Exposure will start right afterwards.
+TXT_REMOVE_CAMERA=Remove the Camera Unit now.
+TXT_REMOVE_CAMERA2=Caution, after confirming this dialog the shutter opens!
+TXT_EXPOSING_STOP=The exposure can not be continued!
+TXT_ERROR_SHUTTER=Shutter couldn't be calibrated, exposing is not possible!
+TXT_MONITOR_ERROR=Caution, it couldn't be determined if the Expose-Unit is working correctly!
+TXT_MONITOR_ERROR2=Do you want to check the Expose-Unit manually?
+
+
+[frmImportStatus]
+cmdCancel=Cancel
+
+[frmFilmTest]
+Caption=Test Filming
+label1=Film Counter
+label2=Vacuum Errors
+cmdEndTest=Stop Film Test
+
+[frmLogin]
+Caption=Login for Parameter Modification
+label1=Username
+label2=Password
+cmdCancel=Cancel
+
+[frmNewJob]
+label2=Template
+label1=Head
+cmdCancel=Cancel
+
+[frmEditLogin]
+Caption=Edit Login
+label2=Login
+label3=Password
+label4=Level
+cmdSave=Save
+cmdCancel=Cancel
+
+[frmLogins]
+cmdDelete=Delete
+cmdAdd=Add
+cmdBack=Back
+cmdEdit=Edit
+
+[frmDuplex]
+lblDuplex=Documents are prepared for Duplex Exposure
+
+[frmManuellerMonitorTest]
+label2=Is the following displayed on the Expose-Unit?
+cmdJa=Yes
+cmdNein=No

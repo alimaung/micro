@@ -163,10 +163,13 @@ class SMAController:
             tpl_file_path, self.filmlogs_dir, self.config['template_name'], self.logger
         )
         
-        # Update INI file
-        self.config_manager.update_ini_file(
+        # Update INI UC file (original functionality)
+        self.config_manager.update_iniuc_file(
             self.config['ini_file_path'], self.config['folder_path'], self.logger
         )
+        
+        # Copy docufile.ini to Y:\SMA\file-converter-64
+        self.config_manager.update_ini_file(self.logger)
         
         self.logger.info("Environment setup completed")
     

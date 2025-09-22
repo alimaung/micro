@@ -1,0 +1,688 @@
+[VERSION]
+VERSION=6.00.00-97
+
+[frmMessage]
+_cmdBut_3=Ja
+_cmdBut_4=Nein
+_cmdBut_2=OK
+_cmdBut_5=Abbruch
+
+[frmVacuum]
+Caption=Vakuum Problem erkannt
+cmdContinue=Fortsetzen
+cmdEmpty=Filmrolle ist leer
+cmdEnd=Beenden
+Label1=Vakuum konnte nicht erzeugt werden! Bitte überprüfen!
+
+[frmErrorLoadingDocumentStructure]
+lblInfo=The latest loaded Documents are no longer available.
+lblInfo2=Therefore the Film Documents have to be reloaded now.
+
+[frmJPEGAufbereiter]
+Caption=JPEG Prozessor
+Label1=Der Dokumenten Aufbereiter wird eingerichtet
+
+[frmSucheNullpunkt]
+Label1=Suche Nullpunkt 
+cmdCancel=Abbrechen
+
+[frmSelectRoll]
+Caption=Rolle zum Nachverfilmen auswählen
+cmdGo=Rolle nachverfilmen
+
+[frmGetAddRollFrameLines]
+Caption=Enter the Data for the additional Roll Index Frame
+cmdClear=Clear Fields
+cmdOK=Done
+
+[frmPathsInfo]
+Caption=Zu verfilmende Dokumente
+
+
+[frmmenu]
+caption=file-converter 16/35 Main Menu
+cmdQuickExpose=Continue Exposure
+cmdEnd=End
+cmdProt=Protocols
+cmdContinue=New Exposure
+
+[frmsmamain]
+_Label_1=Verfilmung fortsetzen
+_Label_2=Neue Verfilmung
+_Label_3=Protokolle
+_Label_4=System
+_Label_5=Service Funktionen
+_Label_6=Benutzer
+_Label_7=Ende
+
+
+caption=file-converter 16/35 Main Menu
+cmdQuickExpose=Continue Exposure
+cmdEnd=End
+cmdProt=Protocols
+cmdContinue=New Exposure
+
+
+[frmGetFilmNo]
+Caption=Filmnummer eingeben
+label2=Nächste Filmnummer
+cmdOK=OK
+
+[frmImportStatus]
+cmdCancel=Cancel
+Label2=Document
+
+[frmGetUpdateParams]
+Caption=Assignment of Templates
+label3=Please assign the present templates to the belonging camera heads
+label4=add. Infoss
+label2.0=16mm Head
+label2.1=35mm Head
+label1=Monitor Height on Film
+label2.3=Assigned Head
+cmdSet=Set
+cmdCancel=Cancel
+
+[frmImportFormats]
+Caption=Select of Document Type
+Frame1=Source Folder
+Frame2=Destination Folder
+cmdImport=Import
+
+[frmLoading]
+caption=Dokumente werden von der Quelle geladen
+Label1=Analyse der Bilddateien
+
+[frmProt]
+Caption=Protokolle
+cmdPrint=Drucken
+cmdExit=Cancel
+label1=Template
+label2=Rollennr.
+
+[frmSystem]
+_Frame5_1=Auflösung
+cmdLogon=Anmelden
+frame2=Verschluss
+frame3=Film Motor
+frame1=Vor- und Nachspann
+_Frame4_0=Monitor Ausrichtung
+_Frame4_1=Monitor Ausrichtung
+_Frame4_2=Monitor Ausrichtung
+_Frame4_3=Monitor Ausrichtung
+label5=Schritte volle Umdrehung
+label2=Delay
+label39=Step Count Limit Switch
+label55=Anzahl Belicht. Schlitze
+label6=Warte nach Vakuum ein
+label54=Steps per mm
+label90=Warten auf Vakuum an
+label93=Warten auf Vakuum aus
+label10=Warte vor Filmmotortransport
+label11=Warte nach Filmmotortransport
+caption=System
+label3=Vorspann
+label4=Nachspann
+cmdSave=Speichern
+cmdBack=Abbruch
+label97.0=Frame Counter
+label97.1=Frame Counter
+label97.2=Frame Counter
+label97.3=Frame Counter
+_label95_0=Abbildung der Monitorhöhe auf Film
+_label95_1=Abbildung der Monitorhöhe auf Film
+_label95_2=Abbildung der Monitorhöhe auf Film
+_label95_3=Abbildung der Monitorhöhe auf Film
+_label95_4=# Belege pro Film
+_label95_6=# Belege pro Film
+_label95_8=# Belege pro Film
+_label95_10=# Belege pro Film
+_label95_11=# verfügbarer Belege
+_label95_5=# verfügbarer Belege
+_label95_7=# verfügbarer Belege
+_label95_9=# verfügbarer Belege
+
+_label9_0=davon noch verfügbar
+_label9_1=davon noch verfügbar
+_label9_2=davon noch verfügbar
+_label9_3=davon noch verfügbar
+_Label18_0=Filmlänge
+_Label18_1=Filmlänge
+_Label18_2=Filmlänge
+_Label18_3=Filmlänge
+
+_Frame6_1=Auflösung
+_Frame6_2=Auflösung
+_Frame6_3=Auflösung
+_Frame6_4=Auflösung
+_Label54_1=Schritte/mm
+_Label54_2=Schritte/mm
+_Label54_0=Schritte/mm
+_Label54_3=Schritte/mm
+_Label54_4=Schritte/pixel
+_Label54_5=Schritte/pixel
+_Label54_6=Schritte/pixel
+_Label54_7=Schritte/pixel
+
+frame7=Vakuum
+cmdRestoreDefaults=Werkseinstellung wiederherstellen
+cmdSaveDefaults=Als Werkseinstellung speichern
+
+[frmFilmAbspulen]
+Caption=Film abspulen
+Label1=Restlänge
+Label2=Status
+cmdStop=Abspulen beenden
+
+[frmFilmPreview]
+chkSimDupFilenames=Simplex + Duplex Dateinamen
+chkTwoLines=Zweizeilige Annotation
+
+_Label_1=Records
+_Label_3=Header
+_Label_2=Trailer
+Label65=Position
+Label69=Position
+_Frame__5=Info
+cmdTestPortrait=Test
+chkUseIndex=Index
+
+chkStartBlipAtOne=3er Blips starten mit 1 im Protokoll
+Label5=Start
+frbFormat=Annotation Format
+frmPosition=Position
+frame2=BLIP-Format
+_Label_0=Limit
+_Label_10=Abst.
+_label1_7=auf Film
+_label1_8=intern
+_label1_2=FilmNr
+_Label1_5=verfügbare Filmlänge
+_Label1_3=Kopf
+_Label1_6=Job
+
+cmdFortsetzung=Rolle ist keine Fortsetzung
+Caption=Vorschau des Filmes
+label1.7=on Film
+label1.8=internal
+_chk1PAgePDFs_0=Einseitge PDFs sind Level 2 Dokumente
+_chk1PAgePDFs_1=Einseitge TIFFs sind Level 2 Dokumente
+chkJPEG=Schnellere Verarbeitung von großen Dokumenten aktivieren
+chkLateStart=Rollenstartsymbole nicht zählen
+frame3=Ausrichtung
+optOben=Oben
+optUnten=Unten
+optCenter=Zentriert
+optLagerichtig=Optimale Lage hat immer Priorität
+Label9=zus. Schritte
+Label34=letztes verfilmtes Dokument
+chkA4LSDrehen=A4-Querfomat drehen
+chkA3PortraitDrehen=A3-Hochformat drehen
+_label_32=Toleranz für Formatgrenze
+_Label_33=Verkleinerungsfaktor
+_label_49=Breite
+_Label_50=Breite
+_label_61=Breite
+_label38_0=Breite
+_label_51=Höhe
+_label_52=Höhe
+_label_60=Höhe
+_label38_1=Höhe
+chkSmallLeft=Kleine Docs gegen UZ-Sinn drehen
+chkBigLeft=Große Docs gegen UZ-Sinn drehen
+_label_10=Dist.
+_Frame__2=Annofenster
+chkDuplex=Duplex Verfilmung
+cmdSetLastDoc=verändern
+Label.3=Last exposed Document
+chkFesteBelegzahl=feste Anzahl von Belegen pro Rolle verfilmen
+cmdRefilm=Einzelne Rolle neu verfilmen
+chkAddRollFrame=man. Index
+Label29=Größe
+Label31=max. Länge
+chkAddRollFrameInput=letzte Eingabe anz.
+Frame12=Position Index
+Label8=zus. Schritte bei neuem Dokument (Level 2)
+Label22=zus. Schritte bei neuem Band (Level 3)
+_label__6=Fortsetzung anweden für
+chkAutoAlign180=nicht auszurichtende Images um 180 Grad drehen
+cmdCalcSpace=Calculate Film-Demand
+frame4=Invertierung von Images
+chkTrailerInfoFrames=Rollenstart und -ende Frames bei Autotrailern verwenden
+Label41=Trailer automatisch alle
+Label40=Trailerlänge
+
+cmdAbspulen=Film abspulen
+cmdVorspann=Nachspann fahren
+chkInvers=Images invertieren
+chkFrame=Rahmen zeichnen
+label1=Breite
+
+_Frame__3=Infofenster
+label49=Width
+label52=Height
+
+label30=Schrittweite
+label26=Verschlussgeschwindigkeit
+label25=zus. Belichtungszeit
+label35=Anzahl Belichtungen
+chkStepsImageToImage=definiert Bildabstand (und nicht Frame-Abstand)
+
+chkSplit=Große Dokumente splitten
+Label2=Split durchführen ab Dokumenten größer als
+label17=Breite
+label18=Länge
+label20=Splitanzahl
+label28=Split-Übergröße
+
+label73=Gewicht
+_label72=Fontgröße
+_Label_11=Ausrichtung
+_Label50=Breite
+_Label61=Breite
+_Label51=Höhe
+_Label60=Höhe
+
+_Frame__4=Annotation
+_Frame__0=Verfilmfenster
+_Frame__1=Blipfenster
+chkNoPreview=Miniaturansichten deaktivieren
+_Label1_4=groß
+label59=mittel
+label58=klein
+label57=Breite
+label56=Höhe
+frame8=BLIP-Größen
+chkOneToOne=1:1 Verfilmung aktivieren
+Label33=Reduction Ratio
+Label32=Tolerance for Max-Document
+label1.3=Head
+tabFrames.0=Roll Start
+tabFrames.1=Separator Frame	
+tabFrames.2=Continuation Rolls
+tabFrames.3=Roll End
+chkRollEndFrame=Rollenendframe
+chkUseFrameNo=Frame-Nr einbelichten
+_tabFrames_tabPage0=Rollenstart
+_tabFrames_tabPage1=Trennbogen
+_tabFrames_tabPage2=Fortgesetzte Rollen
+_tabFrames_tabPage3=Rollenende
+_tabSettings_TabPage0=Ausrichtung
+_tabSettings_TabPage1=BLIP
+_tabSettings_TabPage2=Annotation
+_tabSettings_TabPage3=Info Frames
+_tabSettings_TabPage4=Fenster
+_tabSettings_TabPage5=Split
+_tabSettings_TabPage6=Schritte
+_tabSettings_TabPage7=PDF/JPEG
+_tabSettings_TabPage8=Pos/Neg
+_tabSettings_TabPage9=Log
+chkAutoAlign=Automatisch ausrichten
+label7=Die dargestellten Maße (Frames, Abstände, usw.) sind nicht repräsentativ sondern ergeben sich aus den Systemeinstellungen!
+label2=Options
+chkBlip=Seiten BLIP
+frbAusrichtung=Automatische Ausrichtung um
+opt90=90 Grad nach rechts
+opt270=90 Grad nach links
+frame1=feste Drehrichtung
+optFest0=ohne
+optFest90=90 Grad nach rechts
+optFest180=180 Grad
+optFest270=90 Grad nach links
+label13=Last Doc exposed
+label1.5=Free Film Len
+cmdNewRoll=Neue Rolle
+label1.2=Roll-No
+cmdChangeFilmNo=Change
+cmdSet=Change
+cmdNeu=Dokumente nachverfilmen
+label15=Page
+chkAnnotation=Annotation schreiben
+optNamen=Dateinamen
+optNummer=laufende Nummer
+optMulti=Multi-Level Annotation
+optDatei=aus Datei
+chkNullen=Führende Nullen
+Label12=Trennz.
+label4=Länge
+label3=Länge
+optDreiTeilig=Nr  |  Faktor  |  Name
+chkStartFrame=Rollenstartframe
+chkSeparateFrame=Trennbogen
+cmdStart=Verfilmen starten
+cmdCancel=Zurück
+label6=Template
+cmdSaveTemplate=Job speichern
+cmdNewTemplate=Neuer Job
+optNebenBlip=neben BLIP
+optUeberBlip=über BLIP
+chkShowSize=Papiergröße (in mm) zus. als Annotation ausgeben
+chkInvers=Invert Images
+Frame7=Autotrailer
+Frame9=1:1 Verfilmung
+label27=Für großformatige Dokumente ist es nützlich die Renderauflösung
+label42=herabzusetzen, um den Verfilmvorgang zu beschleunigen.
+;Log File
+chkUseLogFile=Protokoll schreiben
+_Label_5=Verzeichnis
+_Label_4=Trennzeichen
+Label36=Header
+Label.1=Records
+lstHeader.0=Rollennummer
+lstHeader.1=Datum
+lstHeader.2=Datum/Zeit
+lstHeader.3=Benutzer
+lstHeader.4=Computer
+lstRecords.0=Dateiname
+lstRecords.1=Vollst. Dateiname
+lstRecords.2=Dokumentengröße
+lstRecords.3=Erweiterung
+lstRecords.4=BLIP-Position
+lstRecords.5=Lineare Frame Position
+lstRecords.6=Dateigröße
+lstRecords.7=Änderungsdatum
+lstRecords.8=Seitenzahl
+lstTrailer.0=erste Datei auf Film
+lstTrailer.1=letzte Datei auf Film
+lstTrailer.2=# belichteter Frames
+lstTrailer.3=# belichteter Dokumente
+lstTrailer.4=# von Level 2 Dokumenten
+lstTrailer.5=# von Level 3 Stapeln
+lstTrailer.6=Datum
+lstTrailer.7=Datum/Uhrzeit
+chkFramesWiederholen=zu wiederholende Frames
+chkBaende=Akten vollständig auf eine Rolle bringen
+chkRollewirdfortgesetzt=Symbole "Rolle wird fortgesetzt"
+chkRolleistFortsetzung=Symbole "Rolle ist Fortsetzung"
+Label75=Fontgröße
+Label76=Präfix
+Label77=Postfix
+Label78=Länge
+chkZusatzStartSymbole=zus. Rollenstart-Symbole
+chkZusatzEndSymbole=zus.Rollenende-Symbole
+chkNoSpecialSmybolesWhenContinuation=Fortsetzungssymbole ersetzen Rollenstart und -ende Symbole
+_Label_12=Ausrichtung
+Label55=Größe
+Label80=Zeilenabst.
+Label54=Gewicht
+
+[frmService]
+cmdExit=Zurück
+cmdLogon=Anmelden
+
+cmdTestFilming=Verfilmen testen
+butExitDemo=Ende Demo Modus
+frame1=Testing Output Lines
+cmdTestFilming=Test Filming
+Caption=Service Funktionen
+chkvakuumpumpe=Vakuumpumpe
+chkVentil=Vakuum Ventil
+chkBlendenMotor=Start Verschlussmotor
+cmdSensorCheck=Sensoren prüfen
+chkFrameLighting=Frame Belichtung
+chkFilmMotor=Start Filmmotor
+cmdNull=Verschlussmotor auf Nullpunkt
+label3=Geschwindigkeit
+label2=Distanz
+label4=Schritte
+Label5=Belichtung
+label10=Geschwindigkeit
+label11=Vakuumsensor
+frame2=Auflösung
+frame3=Auflösung
+label8=Schritte per mm
+label7=Schritte
+
+[frmSensors]
+cmdExit=Zurück
+Caption=Sensoren prüfen
+_Label1_0=Deckelschalter
+_Label1_1=Lichtsensor
+_Label1_2=Verschlussschalter
+_Label1_3=Vakuumsensor
+_Label1_4=Filmende-Sensor
+
+[frmCheckImages]
+Label7=Verstrichen:
+Label5=Restdauer:
+chkAnzeige=Anzeige nicht aktualisieren
+Caption=Datenträgerauswertung
+label1=Stapel
+label2=Dokumente
+Label3=Bilder
+Label8=Datei
+Label10=Seite
+cmdStop=Stop
+
+[frmQuickfilm]
+optExplorer=nach Dateiname wie der Windows-Explorer
+chkTestImages=Beim Lesen der Dokumentenstruktur Dokumente überprüfen
+Caption=Datenquelle auswählen
+label1=Job:
+label3=Dokumente:
+Button1=Abbruch
+CmdNewRoll=Neue Rolle beginnen
+Frame1=Reihenfolge der Dokumente beim Lesen
+chkNoPreview=deactivate thumbnails
+cmdContinue=Alte Rolle fortsetzen
+optSaved=wie gespeichert
+optNum=nach Namen(Zahlen)
+optText=nach Namen(Text)
+optDate=nach Datum
+optXP=nach Namen wie XP (Text)
+
+[frmFilmEinlegen]
+Caption=Film einlegen
+Label1=Bitte einen Film einlegen und anschließend <Start> drücken
+CmdCancel=Abbruch
+cmdStart=Start
+
+[frmFilming]
+Label8=auf Film
+label15= Restdauer ca.
+label13=verfilmte Frames
+label10=Dateiname
+label12=Verzeichnis
+Caption=Verfilmen der Dokumente
+cmdEnd=Verfilmen beenden
+label1=zu verfilmen
+label4=verfügbarer Film
+label11=verfügbare Frames
+label3=Nr der Rolle
+label7=aktuelles Dokument
+label9=aktuelles Seite
+label2=Splitten
+
+[frmGetFilmNo]
+Button1=OK
+label1=Bitte geben Sie an, welche Rollen-Nr als nächstes verfilmt werden soll
+Caption=Filmnummer eingeben
+Label2=Filmnr.
+
+[frmGetFirstDoc]
+Caption=Eingabe des letzten verfilmten Dokuments
+label1=Letztes Dokument
+label2=Seite
+cmdOK=OK
+
+[frmRestFrames]
+Caption=Enter Remaining Frames
+label1=Remaining Frames
+
+[frmSelectDir]
+Caption=Select Folder
+CmdCreate=New
+cmdCancel=Cancel
+
+[frmSelectDirUnicode]
+Caption=Select Folder
+CmdCreate=New
+cmdCancel=Cancel
+
+[frmFilmTransport]
+caption=Filmtransport
+label1=Film wird transportiert !!!
+
+[TEXTE]
+TXT_FILE_PRESENT=JA
+TXT_REXPOSE_DOCUMENTS=Sollen die Daten tatsächlich vollständig nachverfilmt werden?
+TXT_INSERT_NEW_ROLL=Wollen Sie tatsächlich eine neue Rolle einlegen
+TXT_USE_NEW_ROLL=Wollen Sie einen neuen Film einlegen?
+TXT_MISSING_SEP_FILE=Es fehlt das Trennblatt-Image (Trennblatt.bmp)!
+TXT_STOP_EXPOSURE=Verfilmen wirklich beenden?
+TXT_SELECT_HEAD=Bitte erst einen Kamerakopf auswählen!
+TXT_SELECT_PATH=Bitte erst einen Dokumentenpfad einstellen!
+TXT_ORIENTATION_CHANGED=Attention. You changed the default Orientation of this Camera Head!
+TXT_ROLL_NO_NUMERICAL=Filmnummer muss numerisch sein!
+TXT_COULD_NOT_READ=Folgendes Verzeichnis konnte nicht gelesen werden:
+TXT_ANALYZING=Datenträger wird analysiert
+TXT_EXPOSE_CANCELLED=Verfilmen wurde abgebrochen!
+TXT_NO_DOCS=Keine zu verfilmenden Dokumente vorhanden!
+TXT_NO_VACUUM=Vakuum konnte nicht erzeugt werden!
+TXT_END_EXPOSE=Verfilmen beenden?
+TXT_TRAILER=Soll ein Nachspann abgefahren werden?
+TXT_NEW_TEMPLATE=Name für die neue Vorlage:
+TXT_NEXT=Nächste Seite anzeigen
+TXT_PREV=Vorherige Seite anzeigen
+TXT_NEXT_DOC=Nächstes Dokument anzeigen
+TXT_PREV_DOC=Vorheriges Dokument anzeigen
+TXT_FIRST=Erste Seite anzeigen
+TXT_LAST=Letzte Seite anzeigen
+TXT_MONITOR=Please ensure that the file-converter monitor is switched on!
+TXT_UPDATE_TEXT1=Warning!! The Templates have not been corrected!!
+TXT_UPDATE_TEXT2=The file-converter system won't work in that state unless you adapt all parameters manually!
+
+TXT_UPDATE_INFO1=This version supports a new template structure.
+TXT_UPDATE_INFO2=Therefor parts of the system parameters have to be transferred into the templates.
+TXT_UPDATE_INFO3=The following parameters are now included in the templates:
+TXT_UPDATE_INFO4=1. Window Definitions for Image and Blip Area
+TXT_UPDATE_INFO5=2. The Blip-Dimensions (now in mm)
+TXT_UPDATE_INFO6=3. Expose Time and Steps
+TXT_UPDATE_INFO7=The software adapts the templates automatically, it just has to be defined
+TXT_UPDATE_INFO8=for which camera head the separate templates are valid
+TXT_UPDATE_INFO9=The preset values for the monitor height are used for the conversion of several
+TXT_UPDATE_INFO10=parameters. Its not necessary to modify them.
+
+TXT_MOTOR_STOP=Stop Motor
+TXT_MOTOR_RUNNING=Motor läuft
+TXT_MOTOR_START=Start Filmmotor
+
+TXT_ERROR_LOADING_DOCUMENT=Fehler beim Laden des Dokuments: 
+TXT_ERRORS_FILMING1=Es sind Fehler beim Verfilmen aufgetreten!
+TXT_ERRORS_FILMING2=Bitte folgenden Report überprüfen!
+
+TXT_MOTOR_ERR81=Speed und SpeedTabAdr müssen korrelieren
+TXT_MOTOR_ERR82=Weg zu klein für angestrebte Speed
+TXT_MOTOR_PROBLEM_EXPOSURE_STOP=Ein Problem beim Fahren des Verschlussmotors ist aufgetreten! Bitte Motorparameter entsprechend überprüfen!"
+
+TXT_ERR_VACUUM_OFF=Vakuum konnte nicht ausgeschaltet werden!
+TXT_ERR_VACUUM_ON=Vakuum konnte nicht angeschaltet werden!
+TXT_SET_LOGFILE_FOLDER=Bitte einen Ordner für die Log-Dateien festlegen!
+TXT_REALLY_FULL_WIND=Soll der Film tatsächlich abgespult werden?
+TXT_MOTOR_WILL_STOP=Motor wird angehalten
+TXT_CHECK_DISTANCE1=Der Frameabstand sollte im Bereich von 1-5 mm liegen! Bitte überprüfen sie die Eingabe!
+TXT_CHECK_DISTANCE2=Der Frameabstand sollte mindestens so groß wie die Monitorhöhe auf dem Film sein, um Überlappungen zu vermeiden!
+TXT_NO_JOBNAME=Es muss ein Jobname vergeben werden!
+TXT_NO_HEAD=Es muss ein Kamerakopf selektiert werden!
+TXT_CAPTION_CALC_FILM=Berechnung der notwendigen Filmlänge
+TXT_FILM_NEEDED=notw. Filmlänge
+TXT_END_CALC=Berechnung beenden
+TXT_OVERWRITE_DEFAULTS=Werkseinstellungen überschreiben?
+TXT_RESTORE_DEFAULTS=Werkseinstellungen wieder herstellen?
+TXT_DOCUMENTS_NEED1=Dokumente benötigen
+TXT_DOCUMENTS_NEED2=m verfügbaren Films
+TXT_STOP_CALCULATION=Filmlängenberechnung wirklich beenden?
+TXT_NO_SHUTTER_STEPS=Bitte die Anzahl der Belichtungen angeben!
+TXT_WRONG_SHUTTER_STEPS=Die Anzahl der Belichtungen sollte zwischen 1 und 128 liegen!
+TXT_ADD_SYMBOLS_PATH_MISSING=Bitte einen Pfad zu den Zusatzsymbolen angeben!
+TXT_ENTER_REPEAT_FRAMES=Bitte einen numerischen Wert für die Anzahl der zu wiederholenden Frames eingeben!
+TXT_BAENDE_AND_REPEAT_CHECKED=Wenn Bände nicht gesplittet werden, kann die Frame-Wiederholung nicht aktiviert werden!
+TXT_NO_FONT_SIZE_ROLLNO=Bitte einen Wert für die Schriftgröße der Rollennummer angeben!!
+TXT_NO_LEN_ROLLNO=Bitte einen Wert für die Länge der Rollennummer angeben!!
+TXT_WRONG_LEN_ROLLNO=Bitte einen Wert größer Null für die Länge der Rollennummer angeben!!
+TXT_CANCEL_ANALYSIS=Soll die Datenträgeranalyse wirklich abgebrochen werden?
+TXT_LOW_PRIO=Benutzerlevel zu niederig um Benutzerkonten anzuzeigen!
+TXT_WRONG_USER=Falscher Benutzer oder falsches Kennwort
+
+TXT_ALL_FILMED1=Alle Dokumente wurden verfilmt!
+TXT_ALL_FILMED2=Sollen jetzt die Endsymbole verfilmt werden?
+
+TXT_INFO_FILMLEN=Filmlänge
+TXT_INFO_STEPWIDTH=Schrittweite
+TXT_INFO_ROLLS=Rollen
+TXT_INFO_SPACE=Belegung letzte Rolle
+TXT_FREE_DOCS=# verfilmbare Belege
+TXT_FREE_FILM=verfügbare Filmlänge
+
+TXT_DOC_NOT_FOUND=Dokument nicht gefunden! Auswahl kann nicht gesetzt werden!
+
+TXT_ROLL_IS_CONT=Rolle ist Fortsetzung
+TXT_ROLL_IS_NOT_CONT=Rolle ist keine Fortsetzung
+TXT_ANNOWIN_MISSING=Die Breite und Höhe des Annotationfensters müssen gesetzt sein!
+TXT_ANNOWIN_CHECK=Annotationfenster und Blipfenster sind identisch! Bitte überpüfen!
+
+TXT_DUPLEX_INFO1=Das Ändern der Duplex Verfilmart wirkt sich erst aus,
+TXT_DUPLEX_INFO2=wenn die Dokumente erneut über 'Neue Verfilmung' geladen werden!
+TXT_INPUT_POS=Bitte Frame-Nr eingeben!
+
+TXT_MONITOR_SERVICE1=TDas Verfilmen kann nicht fortgesetzt werden, bitte den Service sofort informieren!
+TXT_MONITOR_SERVICE2=Das Verfilmen kann fortgesetzt werden aber der Service sollte umgehend informiert werden
+TXT_MONITOR_SERVICE3=Soll jetzt verfilmt werden?
+TXT_INSERT_CAMERA=Setzen Sie nun die Kameraeinheit wieder in das System ein, das Verfilmen wird dann gestartet.
+TXT_REMOVE_CAMERA=Bitte entfernen Sie jetzt die Kameraeinheit!
+TXT_REMOVE_CAMERA2=Vorsicht, nach dem Bestätigen wird der Verschluss geöffnet!
+TXT_EXPOSING_STOP=Das Verfilmen kann nicht fortgesetzt werden!
+TXT_ERROR_SHUTTER=Fehler beim Abnullen des Verschlusses aufgetreten, Verfilmen ist nicht möglich!
+TXT_MONITOR_ERROR=Achtung, es konnte nicht festgestellt werden, ob die Belichtungseinheit korrekt arbeitet!
+TXT_MONITOR_ERROR2=Wollen Sie die Belichtungseinheit manuell überprüfen?
+TXT_STOP_EXPOSURE=     Verfilmen wirklich beenden?     
+TXT_TRAILER=Soll ein Nachspann abgefahren werden?
+TXT_CANCEL_DUPLEX="Soll die Duplex Aufbereitung wirklich abgebrochen werden?"
+
+[frmImportStatus]
+cmdCancel=Cancel
+
+[frmFilmTest]
+Caption=Test Filming
+label1=Film Counter
+label2=Vacuum Errors
+cmdEndTest=Stop Film Test
+
+[frmLogin]
+Caption=Login für Parameter Veränderung
+label1=Benutzername
+label2=Kennwort
+cmdCancel=Abbruch
+cmdOK=OK
+
+[frmNewJob]
+Caption=Neuen Job anlegen
+label2=Jobname
+label1=Kopf
+cmdCancel=Abbruch
+cmdOK=OK
+
+[frmEditLogin]
+Caption=Login bearbeiten
+label2=Login
+label3=Passwort
+label4=Priorität
+cmdSave=Speichern
+cmdCancel=Abbruch
+
+[frmLogins]
+Caption=Logins
+cmdDelete=Login entfernen
+cmdAdd=Login hinzufügen
+cmdBack=Zurück
+cmdEdit=Login bearbeiten
+
+[frmDuplex]
+Caption=Duplex Verfilmung
+lblDuplex=Aufbereiten der Dokumente zur Duplex-Verfilmung
+butCancel=Abbrechen
+
+[frmManuellerMonitorTest]
+label2=Is the following displayed on the Expose-Unit?
+cmdJa=Yes
+cmdNein=No

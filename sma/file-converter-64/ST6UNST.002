@@ -1,0 +1,145 @@
+ %% PLEASE DO NOT MODIFY OR DELETE THIS FILE! %% 
+ %% This file contains information about the installation of an application. %% 
+ %% It will be used to automatically remove all application components from your computer if you choose to do so. %% 
+
+
+NOTE: Beginning of the bootstrapper section
+
+CONFIG: Title: "File Converter English"
+
+ACTION: RegKey: "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion", "SharedDLLs"
+
+ACTION: SystemFile: "C:\Windows\System32\VB6STKIT.DLL"
+(File currently on disk was already up to date)
+
+ACTION: SystemFile: "C:\Windows\System32\COMCAT.DLL"
+(File currently on disk was already up to date)
+
+ACTION: SystemFile: "C:\Windows\System32\MSVCRT40.DLL"
+(File currently on disk was already up to date)
+
+ACTION: SystemFile: "C:\Windows\System32\olepro32.dll"
+(File currently on disk was already up to date)
+
+ACTION: SystemFile: "C:\Windows\System32\asycfilt.dll"
+(File currently on disk was already up to date)
+
+ACTION: SystemFile: "C:\Windows\System32\oleaut32.dll"
+(File currently on disk was already up to date)
+
+ACTION: SystemFile: "C:\Windows\System32\stdole2.tlb"
+(File currently on disk was already up to date)
+
+ACTION: SystemFile: "C:\Windows\System32\msvbvm60.dll"
+(File currently on disk was already up to date)
+
+ACTION: DllSelfRegister: "C:\WINDOWS\SYSTEM32\COMCAT.DLL"
+
+ACTION: DllSelfRegister: "C:\WINDOWS\SYSTEM32\olepro32.dll"
+
+ACTION: DllSelfRegister: "C:\WINDOWS\SYSTEM32\oleaut32.dll"
+
+ACTION: TLBRegister: "C:\WINDOWS\SYSTEM32\stdole2.tlb"
+
+ACTION: DllSelfRegister: "C:\WINDOWS\SYSTEM32\msvbvm60.dll"
+
+NOTE: End of the bootstrapper section
+
+NOTE: Now spawning the main Setup program 'Setup1.exe'....
+
+ACTION: SharedFile: "C:\Windows\system32\PegasusImaging.Worker.PdfXpress1.dll"
+(File currently on disk was already up to date)
+
+ACTION: SharedFile: "C:\Windows\system32\ImagXRA7.dll"
+(File was not found or was an older version -- new file copied)
+
+ACTION: SharedFile: "C:\Windows\system32\ImagXR7.dll"
+(File was not found or was an older version -- new file copied)
+
+ACTION: SharedFile: "C:\Windows\system32\ImagX7.dll"
+(File currently on disk was already up to date)
+
+ACTION: PrivateFile: "C:\Program Files\file-converter\fileconverter.txt"
+(File currently on disk was already up to date)
+
+ACTION: SharedFile: "C:\Windows\system32\COMCTL32.OCX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: SharedFile: "C:\Windows\system32\TABCTL32.OCX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: SharedFile: "C:\Windows\system32\MSCOMM32.OCX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: SystemFile: "C:\Windows\system32\MFC40.DLL"
+(File currently on disk was already up to date)
+
+ACTION: SharedFile: "C:\Windows\system32\Threed32.ocx"
+(File was not found or was an older version -- new file copied)
+
+ACTION: SharedFile: "C:\Windows\system32\COMCT332.OCX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: SharedFile: "C:\Windows\system32\MSCOMCTL.OCX"
+(File was not found or was an older version -- new file copied)
+
+ACTION: SharedFile: "C:\Windows\system32\Comdlg32.ocx"
+(File was not found or was an older version -- new file copied)
+
+ACTION: SystemFile: "C:\Windows\system32\msvcrt.dll"
+(File currently on disk was already up to date)
+
+ACTION: SharedFile: "C:\Windows\system32\scrrun.dll"
+(File currently on disk was already up to date)
+
+ACTION: SharedFile: "C:\Windows\system32\ImagXpr7.dll"
+(File currently on disk was already up to date)
+
+ACTION: SharedFile: "C:\Windows\system32\PegasusImaging.ActiveX.PdfXpress1.dll"
+(File currently on disk was already up to date)
+
+ACTION: SharedFile: "C:\Windows\system32\TIFFDLL.dll"
+(File was not found or was an older version -- new file copied)
+
+ACTION: SharedFile: "C:\Windows\system32\Gearpd.dll"
+(File was not found or was an older version -- new file copied)
+
+ACTION: SharedFile: "C:\Windows\system32\docufile.dll"
+(File was not found or was an older version -- new file copied)
+
+ACTION: PrivateFile: "C:\Program Files\file-converter\file-converter2_0_0.exe"
+(File was not found or was an older version -- new file copied)
+
+ACTION: DllSelfRegister: "C:\Windows\system32\COMCTL32.OCX"
+
+ACTION: DllSelfRegister: "C:\Windows\system32\TABCTL32.OCX"
+
+ACTION: DllSelfRegister: "C:\Windows\system32\MSCOMM32.OCX"
+
+*** ERROR: DllRegisterServer() in the file 'C:\Windows\system32\MFC40.DLL' returned failure
+*** DURING THIS ACTION: DllSelfRegister: "C:\Windows\system32\MFC40.DLL"
+
+*** ERROR: An error occurred while registering the file 'C:\Windows\system32\MFC40.DLL'
+*** ERROR: (User Responded with 'Ignore')
+*** DURING THIS ACTION: DllSelfRegister: "C:\Windows\system32\MFC40.DLL"
+
+ACTION: DllSelfRegister: "C:\Windows\system32\Threed32.ocx"
+
+ACTION: DllSelfRegister: "C:\Windows\system32\COMCT332.OCX"
+
+ACTION: DllSelfRegister: "C:\Windows\system32\MSCOMCTL.OCX"
+
+ACTION: DllSelfRegister: "C:\Windows\system32\Comdlg32.ocx"
+
+ACTION: DllSelfRegister: "C:\Windows\system32\scrrun.dll"
+
+ACTION: DllSelfRegister: "C:\Windows\system32\ImagXpr7.dll"
+
+ACTION: DllSelfRegister: "C:\Windows\system32\PegasusImaging.ActiveX.PdfXpress1.dll"
+
+ACTION: ShellLink: "File Converter English", "File Converter English"
+
+ACTION: RegKey: "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion", "App Paths\file-converter2_0_0.exe"
+
+ACTION: RegValue: "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\file-converter2_0_0.exe", ""
+

@@ -105,6 +105,11 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': 'W:\\db.sqlite3' if os.getlogin() == 'user1' else BASE_DIR / 'db.sqlite3',
+        'OPTIONS': {
+            'init_command': 'PRAGMA busy_timeout=30000;',  # 30 second timeout
+            'timeout': 30,
+        },
+        'CONN_MAX_AGE': 0,  # Don't reuse connections to prevent stale locks
     }
 }
 

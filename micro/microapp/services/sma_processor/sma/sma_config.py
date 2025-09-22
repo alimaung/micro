@@ -8,6 +8,7 @@ argument parsing, configuration file management, and system path setup.
 import configparser
 import argparse
 import os
+import shutil
 from .sma_exceptions import SMAConfigurationError, SMAFileError, SMAINIError, SMATemplateError
 
 class SMAConfig:
@@ -135,8 +136,8 @@ class SMAConfig:
                 details={'template_path': template_path, 'log_dir': log_dir}
             )
     
-    def update_ini_file(self, ini_path, folder_path, logger):
-        """Update INI file with folder path."""
+    def update_iniuc_file(self, ini_path, folder_path, logger):
+        """Update INI UC file with folder path."""
         try:
             # Create a ConfigParser object
             config = configparser.ConfigParser()
@@ -152,14 +153,58 @@ class SMAConfig:
             with open(ini_path, 'w', encoding='utf-16') as configfile:
                 config.write(configfile)
             
-            logger.info(f"PFAD updated to: {folder_path}")
+            logger.info(f"PFAD updated in INI UC file to: {folder_path}")
             return True
             
         except Exception as e:
             raise SMAINIError(
                 ini_path=ini_path,
-                message=f"Error updating INI file: {str(e)}",
+                message=f"Error updating INI UC file: {str(e)}",
                 details={'folder_path': folder_path}
+            )
+    
+    def update_ini_file(self, logger):
+        """Copy docufile.ini from config directory to Y:\SMA\file-converter-64."""
+        try:
+            # Get the directory where this script is located
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            
+            # Source file path (relative to controller: ../config/docufile.ini)
+            source_path = os.path.join(script_dir, '..', 'config', 'docufile.ini')
+            source_path = os.path.normpath(source_path)
+            
+            # Destination file path
+            dest_path = r"Y:\SMA\file-converter-64\docufile.ini"
+            
+            # Verify source file exists
+            if not os.path.exists(source_path):
+                raise SMAFileError(
+                    file_path=source_path,
+                    operation="copy_ini_file",
+                    message=f"Source docufile.ini not found: {source_path}"
+                )
+            
+            # Verify destination directory exists
+            dest_dir = os.path.dirname(dest_path)
+            if not os.path.exists(dest_dir):
+                raise SMAFileError(
+                    file_path=dest_dir,
+                    operation="copy_ini_file",
+                    message=f"Destination directory not found: {dest_dir}"
+                )
+            
+            # Copy the file
+            shutil.copy2(source_path, dest_path)
+            
+            logger.info(f"Successfully copied docufile.ini from {source_path} to {dest_path}")
+            return True
+            
+        except Exception as e:
+            raise SMAINIError(
+                ini_path=source_path if 'source_path' in locals() else "Unknown",
+                message=f"Error copying INI file: {str(e)}",
+                details={'source': source_path if 'source_path' in locals() else "Unknown", 
+                        'destination': dest_path if 'dest_path' in locals() else "Unknown"}
             )
     
     def get_template_path(self, template_name):
@@ -230,7 +275,12 @@ def update_template_file(template_path, log_dir, template_name, logger):
     config_manager = SMAConfig()
     return config_manager.update_template_file(template_path, log_dir, template_name, logger)
 
-def update_ini_file(ini_path, folder_path, logger):
-    """Update INI file with folder path."""
+def update_iniuc_file(ini_path, folder_path, logger):
+    """Update INI UC file with folder path."""
     config_manager = SMAConfig()
-    return config_manager.update_ini_file(ini_path, folder_path, logger) 
+    return config_manager.update_iniuc_file(ini_path, folder_path, logger)
+
+def update_ini_file(logger):
+    """Copy docufile.ini from config directory to Y:\SMA\file-converter-64."""
+    config_manager = SMAConfig()
+    return config_manager.update_ini_file(logger) 
