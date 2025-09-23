@@ -1,0 +1,162 @@
+# Mikrofilm-Management-Platform
+
+Diese Software soll als Einheitliche Management-Platform zur Verwaltung von Archivaufträgen, 
+spezifisch für alle Prozesse rund um die Erstellung von Mikrofilmen dienen.
+
+.
+
+## Allgemein:
+
+RRDXXX-YYYY -> Archivauftragsnummer
+OU, DW      -> Lagerort
+DOCTYPE     -> Dokumententyp
+Bildnummer  -> 6-Stellige Nummer (entspricht der Bildnummer des Barcodes in der COM-Liste, z.B. 620001)
+Barcode     -> 14-Stellige Nummer (entspricht dem Namen des Dokuments, z.B. 1427007501013191)
+
+
+
+## Funktionen:
+
+### Transfer/Explorer-Tools:
+
+Die Ordnerstruktur der Archivaufträge folgt einem einheitlichem Muster:
+
+microfilm-archive (X:)/
+└── RRD001-2025_OU_Zertifikate/
+    ├── PDF/
+    │   ├── 1427007501013191.pdf
+    │   └── 1427007501013192.pdf
+    │   └── ...
+    └── RRD001-2025_COM-Liste.xlsx
+└── RRD123-2023_DW_Prüfakten/
+    ├── PDF/
+    │   ├── 142000578000001.pdf
+    │   └── 142000578000002.pdf
+    │   └── ...
+    └── RRD123-2023_COM-Liste.xlsx
+└── ... 
+
+
+
+
+microfilm-archive (X:)      -> Festplatte X beinhaltet alle Archivaufträge
+
+
+RRDXXX-YYYY_LL_DOCTYPE      -> Ordner des Archivauftrags
+
+- Variationen im Namen sind möglich, z.B. durch Schreibfehler
+- Möglichkeit, Archivauftragsnummer, Standort und Dokumententyp zu ändern
+# Für Automatisierte Erkennung: listdir(folders in X)
+
+
+PDF/                        -> Ordner mit den PDF-Dateien
+
+- Variationen im Namen sind möglich, z.B. durch Schreibfehler
+- Möglichkeit, PDF-Ordner auszuwählen
+# Für Automatisierte Erkennung: lowercase(x == pdf or importiert) 
+
+
+RRDXXX-YYYY_COM-Liste.xlsx  -> COM-Liste des Archivauftrags
+- Variationen im Namen sind möglich, z.B. durch Schreibfehler etc.
+- Möglichkeit, COM-Liste auszuwählen
+# Für Automatisierte Erkennung: lowercase(x == com)
+
+
+
+### Dokumenten-Analyse-Tools:
+
+Tools zur Analyse der Dokumente:
+
+1. Anzahl der Seiten
+2. Erkennung von Großformaten (>A3)
+3. Anzahl der Großformate
+4. Position der Großformate relativ zum Dokument (Blip)
+
+### Referenzblatt:
+
+Erstellung von Referenzblättern mit automatischer Erkennung der Blips unter Berücksichtigung der Filmnummer
+
+Beinhaltet:
+
+1. Archivauftragsnummer
+
+
+### Filmmanagement:
+
+
+
+### Rollenmanagement:
+
+Im Prinzip die Fuktion "Akten auf eine vollständige Rolle bringen"
+Teilt den PDF Ordner in Rollen ein und kopiert diese in einen separaten Ordner mit der Filmnummer
+Gibt die Möglichkeit nochmal zu verfilmen
+
+
+### Entwicklungs-/ Chemikalienmanagement:
+
+Überwachung von Chemikalien mit 
+
+
+### Labelmanagement:
+
+Automatische Generierung der Labels für jede Filmrolle mit:
+
+- Filmnummer
+- Archivauftragsnummer
+- Dokumententyp
+
+
+
+### Bliperstellung:
+
+Automatische Erstellung der Blips für jede Filmrolle mit:
+
+Blipformat:
+
+Filmnummer-Dokumentindex.FrameStart
+z.B. 10000001-0001.00001
+
+Filmnummer      -> 7-Stellige Nummer (entspricht der Filmnummer der physischen Filmrolle, vergeben in der Datenbank bei Registrierung)
+Dokumentenindex -> 4-Stellige Nummer (entspricht der relativen Position des Dokuments auf der Filmrolle)
+FrameStart      -> 5-Stellige Nummer (entspricht der relativen Position der ersten Seite des Dokuments auf der Filmrolle)
+
+Zu beachten:
+
+Der FrameStart wird bei einem neuen Dokuemnt zurückgesetzt! z.B.:
+
+10000001-0001.00001
+10000001-0001.00002
+10000001-0001.00003
+10000001-0002.00001
+10000001-0002.00002
+10000001-0002.00003
+
+
+Konvertierung der Blips vom Legacy-Format:
+
+z.B.:
+
+1427013700003307.pdf;0-1-0;0.00;1
+...
+1427013700003307.pdf;0-1-9;0.09;10
+1427013700003308.pdf;0-2-0;0.10;1
+...
+1427013700003308.pdf;0-2-7;0.17;8
+1427013700003309.pdf;0-3-0;0.18;1
+...
+1427013700003309.pdf;0-3-7;0.25;8
+
+
+Hierbei:
+
+1427013700003307.pdf -> Dokument
+0-1-9 -> Blip (Frames fortlaufend)
+0.09 -> relative Position der Seite
+10 -> Seite des Dokuments
+
+
+
+### 
+
+
+
