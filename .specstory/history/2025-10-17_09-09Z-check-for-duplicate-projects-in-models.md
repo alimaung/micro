@@ -54,6 +54,167 @@ Now I'll create a script to check for duplicate projects based on the criteria y
 
 Tool use: **write**
 
+
+<details><summary>Edit file: check_duplicate_projects.py</summary>
+
+**Chunk 1**
+Lines added: 148, lines removed: 1
+
+```diff
+@@ -1,1 +1,148 @@
+- 
++ #!/usr/bin/env python3
++ """
++ Script to check for duplicate projects based on archive_id, location, and doc_type.
++ This script can be run standalone or as a Django management command.
++ """
++ 
++ import os
++ import sys
++ import django
++ from collections import defaultdict
++ 
++ # Add the project directory to Python path
++ project_dir = os.path.join(os.path.dirname(__file__), 'micro')
++ sys.path.insert(0, project_dir)
++ 
++ # Setup Django
++ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'micro.settings')
++ django.setup()
++ 
++ from microapp.models import Project
++ 
++ def check_duplicate_projects():
++     """
++     Check for duplicate projects based on archive_id, location, and doc_type.
++     Returns a dictionary of duplicates grouped by the combination of these fields.
++     """
++     print("Checking for duplicate projects...")
++     print("=" * 60)
++     
++     # Get all projects
++     projects = Project.objects.all().values(
++         'id', 'archive_id', 'location', 'doc_type', 'name', 
++         'created_at', 'owner__username', 'processing_complete',
++         'film_allocation_complete', 'distribution_complete', 'handoff_complete'
++     )
++     
++     # Group projects by the combination of archive_id, location, doc_type
++     grouped_projects = defaultdict(list)
++     
++     for project in projects:
++         # Create a key from archive_id, location, doc_type
++         # Handle None values by converting to string
++         key = (
++             project['archive_id'] or 'None',
++             project['location'] or 'None', 
++             project['doc_type'] or 'None'
++         )
++         grouped_projects[key].append(project)
++     
++     # Find duplicates (groups with more than one project)
++     duplicates = {key: projects for key, projects in grouped_projects.items() if len(projects) > 1}
++     
++     if not duplicates:
++         print("✅ No duplicate projects found!")
++         return
++     
++     print(f"🔍 Found {len(duplicates)} sets of duplicate projects:")
++     print()
++     
++     total_duplicate_projects = 0
++     
++     for i, (key, duplicate_projects) in enumerate(duplicates.items(), 1):
++         archive_id, location, doc_type = key
++         total_duplicate_projects += len(duplicate_projects)
++         
++         print(f"Duplicate Set #{i}")
++         print(f"Archive ID: {archive_id}")
++         print(f"Location: {location}")
++         print(f"Doc Type: {doc_type}")
++         print(f"Number of duplicates: {len(duplicate_projects)}")
++         print("-" * 40)
++         
++         # Sort by creation date (oldest first)
++         sorted_projects = sorted(duplicate_projects, key=lambda x: x['created_at'])
++         
++         for j, project in enumerate(sorted_projects, 1):
++             status_indicators = []
++             if project['processing_complete']:
++                 status_indicators.append("✅ Processed")
++             if project['film_allocation_complete']:
++                 status_indicators.append("🎬 Film Allocated")
++             if project['distribution_complete']:
++                 status_indicators.append("📦 Distributed")
++             if project['handoff_complete']:
++                 status_indicators.append("📧 Handed Off")
++             
++             status_str = " | ".join(status_indicators) if status_indicators else "❌ Not Processed"
++             
++             print(f"  {j}. Project ID: {project['id']}")
++             print(f"     Name: {project['name'] or 'No name'}")
++             print(f"     Owner: {project['owner__username'] or 'Unknown'}")
++             print(f"     Created: {project['created_at'].strftime('%Y-%m-%d %H:%M:%S')}")
++             print(f"     Status: {status_str}")
++             print()
++         
++         print("=" * 60)
++         print()
++     
++     print(f"📊 Summary:")
++     print(f"   Total duplicate sets: {len(duplicates)}")
++     print(f"   Total duplicate projects: {total_duplicate_projects}")
++     print(f"   Total projects in database: {Project.objects.count()}")
++     
++     # Provide recommendations
++     print()
++     print("💡 Recommendations:")
++     print("   1. Review each duplicate set to determine which projects should be kept")
++     print("   2. Consider merging data from duplicate projects if needed")
++     print("   3. Delete unnecessary duplicate projects to clean up the database")
++     print("   4. Implement unique constraints to prevent future duplicates")
++ 
++ def get_project_details(project_id):
++     """Get detailed information about a specific project."""
++     try:
++         project = Project.objects.get(id=project_id)
++         print(f"Project Details for ID {project_id}:")
++         print(f"  Archive ID: {project.archive_id}")
++         print(f"  Name: {project.name}")
++         print(f"  Location: {project.location}")
++         print(f"  Doc Type: {project.doc_type}")
++         print(f"  Project Path: {project.project_path}")
++         print(f"  Owner: {project.owner.username if project.owner else 'None'}")
++         print(f"  Created: {project.created_at}")
++         print(f"  Processing Complete: {project.processing_complete}")
++         print(f"  Film Allocation Complete: {project.film_allocation_complete}")
++         print(f"  Distribution Complete: {project.distribution_complete}")
++         print(f"  Handoff Complete: {project.handoff_complete}")
++         print(f"  Total Pages: {project.total_pages}")
++         print(f"  Documents Count: {project.documents.count()}")
++         print(f"  Rolls Count: {project.rolls.count()}")
++         return project
++     except Project.DoesNotExist:
++         print(f"❌ Project with ID {project_id} not found")
++         return None
++ 
++ if __name__ == "__main__":
++     if len(sys.argv) > 1 and sys.argv[1] == "details":
++         if len(sys.argv) > 2:
++             project_id = sys.argv[2]
++             try:
++                 get_project_details(int(project_id))
++             except ValueError:
++                 print("❌ Invalid project ID. Please provide a numeric ID.")
++         else:
++             print("❌ Please provide a project ID after 'details'")
++             print("Usage: python check_duplicate_projects.py details <project_id>")
++     else:
++         check_duplicate_projects()
+```
+
+</details>
+
 ---
 
 Now let's run the script to check for duplicate projects:
@@ -184,6 +345,386 @@ I'll create a comprehensive script to check the integrity of projects, rolls, an
 ---
 
 Tool use: **write**
+
+
+<details><summary>Edit file: check_filesystem_integrity.py</summary>
+
+**Chunk 1**
+Lines added: 367, lines removed: 1
+
+```diff
+@@ -1,1 +1,367 @@
+- 
++ #!/usr/bin/env python3
++ """
++ Script to check filesystem integrity against database records.
++ Validates projects, rolls, and documents to find mismatches and orphaned files.
++ """
++ 
++ import os
++ import sys
++ import django
++ from pathlib import Path
++ from collections import defaultdict
++ import json
++ 
++ # Add the project directory to Python path
++ project_dir = os.path.join(os.path.dirname(__file__), 'micro')
++ sys.path.insert(0, project_dir)
++ 
++ # Setup Django
++ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'micro.settings')
++ django.setup()
++ 
++ from microapp.models import Project, Roll, Document, ProcessedDocument
++ 
++ class FilesystemIntegrityChecker:
++     def __init__(self):
++         self.issues = defaultdict(list)
++         self.stats = {
++             'projects_checked': 0,
++             'rolls_checked': 0,
++             'documents_checked': 0,
++             'orphaned_directories': 0,
++             'missing_directories': 0,
++             'document_mismatches': 0,
++             'valid_projects': 0
++         }
++     
++     def check_all_projects(self):
++         """Check all projects for filesystem integrity."""
++         print("🔍 Starting filesystem integrity check...")
++         print("=" * 80)
++         
++         projects = Project.objects.all().order_by('id')
++         
++         for project in projects:
++             self.check_project_integrity(project)
++         
++         self.print_summary()
++         self.print_detailed_issues()
++     
++     def check_project_integrity(self, project):
++         """Check a single project's integrity."""
++         self.stats['projects_checked'] += 1
++         project_issues = []
++         
++         print(f"\n📁 Checking Project {project.id}: {project.archive_id} ({project.location})")
++         
++         # Check project directory
++         if project.project_path:
++             project_path = Path(project.project_path)
++             if not project_path.exists():
++                 issue = f"Project directory missing: {project.project_path}"
++                 project_issues.append(issue)
++                 print(f"  ❌ {issue}")
++                 self.stats['missing_directories'] += 1
++             else:
++                 print(f"  ✅ Project directory exists: {project.project_path}")
++         
++         # Check output directory
++         if project.output_dir:
++             output_path = Path(project.output_dir)
++             if not output_path.exists():
++                 issue = f"Output directory missing: {project.output_dir}"
++                 project_issues.append(issue)
++                 print(f"  ❌ {issue}")
++                 self.stats['missing_directories'] += 1
++             else:
++                 print(f"  ✅ Output directory exists: {project.output_dir}")
++                 # Check rolls in output directory
++                 self.check_rolls_in_output_directory(project, output_path, project_issues)
++         
++         # Check rolls and their documents
++         rolls = project.rolls.all()
++         print(f"  📼 Checking {rolls.count()} rolls...")
++         
++         for roll in rolls:
++             self.check_roll_integrity(project, roll, project_issues)
++         
++         if not project_issues:
++             self.stats['valid_projects'] += 1
++             print(f"  ✅ Project {project.id} is valid")
++         else:
++             self.issues[f"Project {project.id} ({project.archive_id})"] = project_issues
++     
++     def check_rolls_in_output_directory(self, project, output_path, project_issues):
++         """Check rolls in the output directory against database."""
++         if not output_path.exists():
++             return
++         
++         # Get roll directories from filesystem
++         fs_roll_dirs = set()
++         for item in output_path.iterdir():
++             if item.is_dir() and item.name.startswith(('Roll_', 'roll_')):
++                 fs_roll_dirs.add(item.name)
++         
++         # Get roll directories from database
++         db_rolls = set()
++         for roll in project.rolls.all():
++             if roll.output_directory:
++                 roll_dir_name = Path(roll.output_directory).name
++                 db_rolls.add(roll_dir_name)
++         
++         # Find orphaned directories (in filesystem but not in database)
++         orphaned = fs_roll_dirs - db_rolls
++         if orphaned:
++             for orphan in orphaned:
++                 issue = f"Orphaned roll directory: {output_path / orphan}"
++                 project_issues.append(issue)
++                 print(f"    ❌ {issue}")
++                 self.stats['orphaned_directories'] += 1
++         
++         # Find missing directories (in database but not in filesystem)
++         missing = db_rolls - fs_roll_dirs
++         if missing:
++             for missing_dir in missing:
++                 issue = f"Missing roll directory: {output_path / missing_dir}"
++                 project_issues.append(issue)
++                 print(f"    ❌ {issue}")
++                 self.stats['missing_directories'] += 1
++     
++     def check_roll_integrity(self, project, roll, project_issues):
++         """Check a single roll's integrity."""
++         self.stats['rolls_checked'] += 1
++         
++         print(f"    📼 Roll {roll.roll_id}: {roll.film_number}")
++         
++         # Check roll output directory
++         if roll.output_directory:
++             roll_path = Path(roll.output_directory)
++             if not roll_path.exists():
++                 issue = f"Roll directory missing: {roll.output_directory}"
++                 project_issues.append(issue)
++                 print(f"      ❌ {issue}")
++                 self.stats['missing_directories'] += 1
++                 return
++             else:
++                 print(f"      ✅ Roll directory exists: {roll.output_directory}")
++                 # Check documents in roll directory
++                 self.check_documents_in_roll_directory(project, roll, roll_path, project_issues)
++         else:
++             print(f"      ⚠️  No output directory set for roll {roll.roll_id}")
++     
++     def check_documents_in_roll_directory(self, project, roll, roll_path, project_issues):
++         """Check documents in roll directory against database."""
++         if not roll_path.exists():
++             return
++         
++         # Get PDF files from filesystem
++         fs_documents = set()
++         pdf_files = list(roll_path.glob("*.pdf"))
++         for pdf_file in pdf_files:
++             # Extract document ID from filename (assuming format like "12345.pdf")
++             doc_name = pdf_file.stem
++             fs_documents.add(doc_name)
++         
++         # Get documents from database (via ProcessedDocument or DocumentSegment)
++         db_documents = set()
++         
++         # Check ProcessedDocument entries for this roll
++         processed_docs = ProcessedDocument.objects.filter(roll=roll)
++         for proc_doc in processed_docs:
++             if proc_doc.output_path:
++                 output_file = Path(proc_doc.output_path)
++                 if output_file.suffix.lower() == '.pdf':
++                     db_documents.add(output_file.stem)
++         
++         # Also check DocumentSegments for this roll
++         segments = roll.document_segments.all()
++         for segment in segments:
++             # Try to find the expected filename pattern
++             doc_id = segment.document.doc_id
++             db_documents.add(doc_id)
++         
++         print(f"        📄 Found {len(fs_documents)} PDF files, expected {len(db_documents)} documents")
++         
++         # Check for exact match
++         if fs_documents == db_documents:
++             print(f"        ✅ Document count matches exactly")
++         else:
++             self.stats['document_mismatches'] += 1
++             
++             # Find orphaned files (in filesystem but not in database)
++             orphaned_docs = fs_documents - db_documents
++             if orphaned_docs:
++                 for orphan in sorted(orphaned_docs):
++                     issue = f"Orphaned document file: {roll_path / (orphan + '.pdf')}"
++                     project_issues.append(issue)
++                     print(f"        ❌ {issue}")
++             
++             # Find missing files (in database but not in filesystem)
++             missing_docs = db_documents - fs_documents
++             if missing_docs:
++                 for missing in sorted(missing_docs):
++                     issue = f"Missing document file: {roll_path / (missing + '.pdf')}"
++                     project_issues.append(issue)
++                     print(f"        ❌ {issue}")
++         
++         # Update document count
++         self.stats['documents_checked'] += len(fs_documents)
++     
++     def find_orphaned_output_directories(self):
++         """Find output directories that don't belong to any project."""
++         print("\n🗂️  Checking for orphaned output directories...")
++         
++         # Common output directory patterns to check
++         common_paths = [
++             Path("X:/"),  # Common project drive
++             Path("Y:/"),  # Alternative drive
++             Path("Z:/"),  # Another alternative
++         ]
++         
++         # Get all project output directories from database
++         db_output_dirs = set()
++         for project in Project.objects.all():
++             if project.output_dir:
++                 db_output_dirs.add(Path(project.output_dir).resolve())
++             if project.project_path:
++                 db_output_dirs.add(Path(project.project_path).resolve())
++         
++         orphaned_dirs = []
++         
++         for base_path in common_paths:
++             if not base_path.exists():
++                 continue
++             
++             try:
++                 # Look for directories that match project patterns
++                 for item in base_path.iterdir():
++                     if item.is_dir():
++                         # Check if this looks like a project directory
++                         if self.looks_like_project_directory(item):
++                             item_resolved = item.resolve()
++                             if item_resolved not in db_output_dirs:
++                                 orphaned_dirs.append(item)
++             except PermissionError:
++                 print(f"      ⚠️  Permission denied accessing {base_path}")
++                 continue
++         
++         if orphaned_dirs:
++             print(f"      ❌ Found {len(orphaned_dirs)} potentially orphaned directories:")
++             for orphan_dir in sorted(orphaned_dirs):
++                 print(f"        - {orphan_dir}")
++                 self.issues["Orphaned Directories"].append(str(orphan_dir))
++         else:
++             print(f"      ✅ No orphaned directories found")
++     
++     def looks_like_project_directory(self, directory):
++         """Check if a directory looks like a project directory."""
++         dir_name = directory.name
++         
++         # Check for common project patterns
++         patterns = [
++             "RRD",  # Archive ID pattern
++             "_OU_", "_DW_",  # Location patterns
++         ]
++         
++         for pattern in patterns:
++             if pattern in dir_name:
++                 return True
++         
++         # Check if it contains roll subdirectories
++         try:
++             for item in directory.iterdir():
++                 if item.is_dir() and item.name.startswith(('Roll_', 'roll_')):
++                     return True
++         except PermissionError:
++             pass
++         
++         return False
++     
++     def print_summary(self):
++         """Print summary statistics."""
++         print("\n" + "=" * 80)
++         print("📊 INTEGRITY CHECK SUMMARY")
++         print("=" * 80)
++         print(f"Projects checked: {self.stats['projects_checked']}")
++         print(f"Rolls checked: {self.stats['rolls_checked']}")
++         print(f"Documents checked: {self.stats['documents_checked']}")
++         print(f"Valid projects: {self.stats['valid_projects']}")
++         print(f"Projects with issues: {len(self.issues)}")
++         print(f"Orphaned directories: {self.stats['orphaned_directories']}")
++         print(f"Missing directories: {self.stats['missing_directories']}")
++         print(f"Document mismatches: {self.stats['document_mismatches']}")
++     
++     def print_detailed_issues(self):
++         """Print detailed issues found."""
++         if not self.issues:
++             print("\n✅ No issues found! All projects are in sync with filesystem.")
++             return
++         
++         print("\n" + "=" * 80)
++         print("🚨 DETAILED ISSUES")
++         print("=" * 80)
++         
++         for entity, issue_list in self.issues.items():
++             print(f"\n❌ {entity}:")
++             for issue in issue_list:
++                 print(f"   - {issue}")
++         
++         print("\n💡 RECOMMENDATIONS:")
++         print("1. Review orphaned directories - they may be safe to delete")
++         print("2. Check missing directories - projects may need to be re-processed")
++         print("3. Investigate document mismatches - files may have been moved or deleted")
++         print("4. Consider running cleanup scripts for orphaned directories")
++     
++     def export_issues_to_json(self, filename="filesystem_issues.json"):
++         """Export issues to JSON file for further processing."""
++         export_data = {
++             'timestamp': str(django.utils.timezone.now()),
++             'stats': self.stats,
++             'issues': dict(self.issues)
++         }
++         
++         with open(filename, 'w') as f:
++             json.dump(export_data, f, indent=2, default=str)
++         
++         print(f"\n📄 Issues exported to: {filename}")
++ 
++ def main():
++     """Main function to run the integrity check."""
++     checker = FilesystemIntegrityChecker()
++     
++     if len(sys.argv) > 1:
++         if sys.argv[1] == "project":
++             # Check specific project
++             if len(sys.argv) > 2:
++                 try:
++                     project_id = int(sys.argv[2])
++                     project = Project.objects.get(id=project_id)
++                     checker.check_project_integrity(project)
++                 except (ValueError, Project.DoesNotExist):
++                     print(f"❌ Invalid project ID: {sys.argv[2]}")
++             else:
++                 print("❌ Please provide a project ID")
++                 print("Usage: python check_filesystem_integrity.py project <project_id>")
++         elif sys.argv[1] == "orphans":
++             # Check for orphaned directories only
++             checker.find_orphaned_output_directories()
++         elif sys.argv[1] == "export":
++             # Run full check and export results
++             checker.check_all_projects()
++             checker.find_orphaned_output_directories()
++             filename = sys.argv[2] if len(sys.argv) > 2 else "filesystem_issues.json"
++             checker.export_issues_to_json(filename)
++         else:
++             print("❌ Unknown command")
++             print("Usage:")
++             print("  python check_filesystem_integrity.py                    # Full check")
++             print("  python check_filesystem_integrity.py project <id>       # Check specific project")
++             print("  python check_filesystem_integrity.py orphans            # Find orphaned directories")
++             print("  python check_filesystem_integrity.py export [filename]  # Export results to JSON")
++     else:
++         # Run full check
++         checker.check_all_projects()
++         checker.find_orphaned_output_directories()
++ 
++ if __name__ == "__main__":
++     main()
+```
+
+</details>
 
 ---
 
@@ -831,6 +1372,160 @@ Now let me create a simpler test script to check just the specific cases you men
 
 Tool use: **write**
 
+
+<details><summary>Edit file: test_specific_cases.py</summary>
+
+**Chunk 1**
+Lines added: 141, lines removed: 1
+
+```diff
+@@ -1,1 +1,141 @@
+- 
++ #!/usr/bin/env python3
++ """
++ Test script to check specific filesystem cases mentioned by the user.
++ """
++ 
++ import os
++ import sys
++ import django
++ from pathlib import Path
++ 
++ # Add the project directory to Python path
++ project_dir = os.path.join(os.path.dirname(__file__), 'micro')
++ sys.path.insert(0, project_dir)
++ 
++ # Setup Django
++ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'micro.settings')
++ django.setup()
++ 
++ from microapp.models import Project, Roll, Document, ProcessedDocument
++ 
++ def test_specific_cases():
++     """Test the specific cases mentioned by the user."""
++     
++     print("🔍 Testing specific filesystem cases...")
++     print("=" * 60)
++     
++     # Test case 1: Missing roll directory
++     missing_dir = r"X:\RRD058-2021_OU_Nacharbeitspläne\.output\10000004"
++     print(f"\n1. Testing missing directory: {missing_dir}")
++     
++     missing_path = Path(missing_dir)
++     print(f"   Path exists: {missing_path.exists()}")
++     
++     if missing_path.exists():
++         print(f"   ✅ Directory actually exists!")
++         # List contents
++         try:
++             contents = list(missing_path.iterdir())
++             print(f"   📁 Contains {len(contents)} items:")
++             for item in contents[:10]:  # Show first 10 items
++                 print(f"      - {item.name}")
++             if len(contents) > 10:
++                 print(f"      ... and {len(contents) - 10} more items")
++         except PermissionError:
++             print(f"   ❌ Permission denied to list contents")
++     else:
++         print(f"   ❌ Directory is indeed missing")
++         # Check parent directory
++         parent = missing_path.parent
++         print(f"   Parent directory exists: {parent.exists()}")
++         if parent.exists():
++             try:
++                 siblings = [d.name for d in parent.iterdir() if d.is_dir()]
++                 print(f"   Sibling directories: {siblings}")
++             except PermissionError:
++                 print(f"   ❌ Permission denied to list parent contents")
++     
++     # Test case 2: Orphaned document file
++     orphan_file = r"X:\RRD013-2022_OU_Arbeitspläne\.output\10000001\1427004807000278.pdf"
++     print(f"\n2. Testing orphaned file: {orphan_file}")
++     
++     orphan_path = Path(orphan_file)
++     print(f"   File exists: {orphan_path.exists()}")
++     
++     if orphan_path.exists():
++         print(f"   ✅ File actually exists!")
++         print(f"   File size: {orphan_path.stat().st_size} bytes")
++         
++         # Extract document ID from filename
++         doc_name = orphan_path.stem  # Remove .pdf extension
++         print(f"   Document ID from filename: {doc_name}")
++         
++         # Try to find this document in the database
++         # First, find the project
++         project_path_parts = orphan_path.parts
++         project_name = None
++         for part in project_path_parts:
++             if "RRD013-2022" in part:
++                 project_name = part
++                 break
++         
++         if project_name:
++             print(f"   Project directory name: {project_name}")
++             
++             # Find project in database
++             projects = Project.objects.filter(archive_id__contains="RRD013-2022")
++             print(f"   Found {projects.count()} matching projects in database:")
++             
++             for project in projects:
++                 print(f"      Project {project.id}: {project.archive_id} - {project.location}")
++                 print(f"         Project path: {project.project_path}")
++                 print(f"         Output dir: {project.output_dir}")
++                 
++                 # Check if this document exists in the project
++                 documents = project.documents.filter(doc_id=doc_name)
++                 print(f"         Documents with ID '{doc_name}': {documents.count()}")
++                 
++                 # Check rolls
++                 rolls = project.rolls.all()
++                 print(f"         Total rolls: {rolls.count()}")
++                 
++                 for roll in rolls:
++                     if roll.film_number == "10000001" or "10000001" in str(roll.output_directory or ""):
++                         print(f"         Roll {roll.id}: {roll.film_number}")
++                         print(f"            Output dir: {roll.output_directory}")
++                         
++                         # Check processed documents
++                         proc_docs = ProcessedDocument.objects.filter(roll=roll)
++                         print(f"            Processed documents: {proc_docs.count()}")
++                         
++                         for proc_doc in proc_docs:
++                             if doc_name in str(proc_doc.path or "") or doc_name in str(proc_doc.output_path or ""):
++                                 print(f"               Found matching processed doc: {proc_doc.path}")
++     else:
++         print(f"   ❌ File is indeed missing")
++     
++     # Test case 3: Double PDF extension
++     double_pdf = r"X:\RRD073-2025_OU_R&O WAP\.output\10000052\1427004500479394.pdf.pdf"
++     print(f"\n3. Testing double PDF extension: {double_pdf}")
++     
++     double_pdf_path = Path(double_pdf)
++     print(f"   File exists: {double_pdf_path.exists()}")
++     
++     if double_pdf_path.exists():
++         print(f"   ✅ File with double extension exists!")
++         print(f"   File size: {double_pdf_path.stat().st_size} bytes")
++         
++         # Test our filename parsing logic
++         filename = double_pdf_path.name
++         if filename.lower().endswith('.pdf.pdf'):
++             doc_name = filename[:-8]  # Remove .pdf.pdf
++             print(f"   Parsed document ID: {doc_name}")
++         
++         # Check if there's also a single .pdf version
++         single_pdf = double_pdf_path.parent / (doc_name + '.pdf')
++         print(f"   Single PDF version exists: {single_pdf.exists()}")
++     else:
++         print(f"   ❌ File with double extension is missing")
++ 
++ if __name__ == "__main__":
++     test_specific_cases()
+```
+
+</details>
+
 ---
 
 Let's run this test script to understand what's actually happening with these specific cases:
@@ -1128,6 +1823,106 @@ Now let me create a simple test to run on a specific project to see what's happe
 
 Tool use: **write**
 
+
+<details><summary>Edit file: test_project_88.py</summary>
+
+**Chunk 1**
+Lines added: 87, lines removed: 1
+
+```diff
+@@ -1,1 +1,87 @@
+- 
++ #!/usr/bin/env python3
++ """
++ Test script to check project 88 specifically.
++ """
++ 
++ import os
++ import sys
++ import django
++ from pathlib import Path
++ 
++ # Add the project directory to Python path
++ project_dir = os.path.join(os.path.dirname(__file__), 'micro')
++ sys.path.insert(0, project_dir)
++ 
++ # Setup Django
++ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'micro.settings')
++ django.setup()
++ 
++ from microapp.models import Project, Roll
++ 
++ def test_project_88():
++     """Test project 88 specifically."""
++     
++     try:
++         project = Project.objects.get(id=88)
++         print(f"Project 88: {project.archive_id} ({project.location})")
++         print(f"Project path: {project.project_path}")
++         print(f"Output dir: {project.output_dir}")
++         
++         # Check what's in the output directory
++         if project.output_dir:
++             output_path = Path(project.output_dir)
++             print(f"\nOutput directory exists: {output_path.exists()}")
++             
++             if output_path.exists():
++                 print("Contents of output directory:")
++                 try:
++                     for item in output_path.iterdir():
++                         if item.is_dir():
++                             print(f"  📁 {item.name}")
++                             # Check if it looks like a roll directory
++                             if (item.name.isdigit() and 
++                                 len(item.name) == 8 and 
++                                 item.name.startswith(('1', '2'))):
++                                 print(f"      ✅ This is a valid roll directory")
++                             else:
++                                 print(f"      ❌ This is NOT a roll directory")
++                         else:
++                             print(f"  📄 {item.name}")
++                 except PermissionError:
++                     print("  ❌ Permission denied")
++             
++             # Check for .output subdirectory
++             dot_output = output_path / '.output'
++             print(f"\n.output subdirectory exists: {dot_output.exists()}")
++             
++             if dot_output.exists():
++                 print("Contents of .output subdirectory:")
++                 try:
++                     for item in dot_output.iterdir():
++                         if item.is_dir():
++                             print(f"  📁 {item.name}")
++                             # Check if it looks like a roll directory
++                             if (item.name.isdigit() and 
++                                 len(item.name) == 8 and 
++                                 item.name.startswith(('1', '2'))):
++                                 print(f"      ✅ This is a valid roll directory")
++                             else:
++                                 print(f"      ❌ This is NOT a roll directory")
++                         else:
++                             print(f"  📄 {item.name}")
++                 except PermissionError:
++                     print("  ❌ Permission denied")
++         
++         # Check database rolls
++         rolls = project.rolls.all()
++         print(f"\nDatabase rolls ({rolls.count()}):")
++         for roll in rolls:
++             print(f"  Roll {roll.id}: film_number={roll.film_number}")
++             print(f"    Output directory: {roll.output_directory}")
++             print(f"    Roll number: {roll.roll_number}")
++             
++     except Project.DoesNotExist:
++         print("Project 88 not found")
++ 
++ if __name__ == "__main__":
++     test_project_88()
+```
+
+</details>
+
 ---
 
 Now let me create a summary of what I've fixed and what the different types of "orphaned" items mean:
@@ -1135,6 +1930,115 @@ Now let me create a summary of what I've fixed and what the different types of "
 ---
 
 Tool use: **write**
+
+
+<details><summary>Edit file: filesystem_check_explanation.md</summary>
+
+**Chunk 1**
+Lines added: 96, lines removed: 1
+
+```diff
+@@ -1,1 +1,96 @@
+- 
++ # Filesystem Integrity Check - Explanation
++ 
++ ## What the script checks:
++ 
++ ### 1. **Orphaned Roll Directories**
++ - **Location**: Inside project `.output` directories
++ - **Format**: 8-digit numbers starting with 1 or 2 (e.g., `10000001`, `20000001`)
++ - **Problem**: These directories exist on the filesystem but have no corresponding Roll record in the database
++ - **Cause**: Usually happens when:
++   - Projects are deleted from database but files remain
++   - Roll records are deleted but directories remain
++   - Manual file operations outside the application
++ 
++ ### 2. **Orphaned Directories** (top-level)
++ - **Location**: Root drives (X:\, Y:\, Z:\)
++ - **Format**: Project directory names (e.g., `RRD072-2023_OU_Triebwerksakten`)
++ - **Problem**: Entire project directories exist but have no Project record in database
++ - **Cause**: Projects deleted from database but directories not cleaned up
++ 
++ ### 3. **Orphaned Document Files**
++ - **Location**: Inside roll directories (e.g., `X:\Project\.output\10000001\`)
++ - **Format**: PDF files (e.g., `1427004807000278.pdf`)
++ - **Problem**: PDF files exist but have no corresponding Document or ProcessedDocument record
++ - **Cause**: 
++   - Document records deleted but files remain
++   - Files copied manually
++   - Processing errors
++ 
++ ## Fixes Applied:
++ 
++ ### 1. **Improved Roll Directory Detection**
++ ```python
++ # OLD (too broad):
++ if dir_name.isdigit() and len(dir_name) >= 8:
++     return True
++ 
++ # NEW (specific format):
++ if (dir_name.isdigit() and 
++     len(dir_name) == 8 and 
++     dir_name.startswith(('1', '2'))):
++     return True
++ ```
++ 
++ ### 2. **Better Path Handling**
++ - Added Unicode path support for German characters (ä, ö, ü)
++ - Added proper error handling for permission issues
++ - Added case-insensitive file extension matching (.pdf, .PDF)
++ 
++ ### 3. **Improved Document Matching**
++ - Handle double extensions (.pdf.pdf)
++ - Fuzzy matching for document IDs
++ - Better database query logic
++ 
++ ### 4. **Enhanced Directory Structure Logic**
++ - Look for `.output` subdirectories first
++ - Fall back to main directory if no `.output` found
++ - Only check actual roll directories (8-digit format)
++ 
++ ## Example Issues and Solutions:
++ 
++ ### Issue 1: False "Missing Directory"
++ ```
++ "Missing roll directory: X:\RRD203-2019_DW_PSTA_Nachlieferungen\.output\20000001"
++ ```
++ **Cause**: Directory exists but script couldn't find it due to Unicode or case issues
++ **Fix**: Better path resolution and case-insensitive checking
++ 
++ ### Issue 2: False "Orphaned Document"
++ ```
++ "Orphaned document file: X:\RRD013-2022_OU_Arbeitspläne\.output\10000001\1427004807000278.pdf"
++ ```
++ **Cause**: Document exists in database but matching logic was too strict
++ **Fix**: Improved fuzzy matching and better database queries
++ 
++ ### Issue 3: Wrong "Orphaned Roll Directory"
++ ```
++ "Orphaned roll directory: X:\RRD072-2023_OU_Triebwerksakten\PDFs zu RRD072-2023"
++ ```
++ **Cause**: Script was checking non-roll directories as if they were roll directories
++ **Fix**: Strict 8-digit format checking for roll directories only
++ 
++ ## Usage:
++ 
++ ```bash
++ # Full check with export
++ python check_filesystem_integrity.py export results.json
++ 
++ # Debug mode (shows detailed matching info)
++ python check_filesystem_integrity.py debug
++ 
++ # Check specific project
++ python check_filesystem_integrity.py project 88
++ 
++ # Find only orphaned directories
++ python check_filesystem_integrity.py orphans
++ ```
+```
+
+</details>
 
 ---
 
@@ -1240,7 +2144,7 @@ Let me create a comprehensive solution for you:
 
 ---
 
-Tool use: **write**
+Cancelled
 
 ---
 
@@ -1338,6 +2242,215 @@ I'll check those projects and compare their documents to see if they're duplicat
 ---
 
 Tool use: **write**
+
+
+<details><summary>Edit file: check_project_documents.py</summary>
+
+**Chunk 1**
+Lines added: 196, lines removed: 1
+
+```diff
+@@ -1,1 +1,196 @@
+- 
++ #!/usr/bin/env python3
++ """
++ Script to check and compare documents across multiple projects.
++ """
++ 
++ import os
++ import sys
++ import django
++ from collections import defaultdict
++ 
++ # Add the project directory to Python path
++ project_dir = os.path.join(os.path.dirname(__file__), 'micro')
++ sys.path.insert(0, project_dir)
++ 
++ # Setup Django
++ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'micro.settings')
++ django.setup()
++ 
++ from microapp.models import Project, Document
++ 
++ def check_projects(project_ids):
++     """Check and compare documents across specified projects."""
++     
++     print("🔍 Checking projects for duplicate documents...")
++     print("=" * 80)
++     
++     projects_data = {}
++     all_documents = defaultdict(list)  # doc_id -> list of projects that have it
++     
++     # Collect data for each project
++     for project_id in project_ids:
++         try:
++             project = Project.objects.get(id=project_id)
++             documents = project.documents.all()
++             
++             project_info = {
++                 'project': project,
++                 'documents': list(documents),
++                 'doc_ids': set(doc.doc_id for doc in documents),
++                 'document_count': documents.count(),
++                 'total_pages': sum(doc.pages for doc in documents if doc.pages),
++             }
++             
++             projects_data[project_id] = project_info
++             
++             # Track which projects have which documents
++             for doc in documents:
++                 all_documents[doc.doc_id].append(project_id)
++             
++             print(f"\n📁 Project {project_id}: {project.archive_id} ({project.location})")
++             print(f"   Name: {project.name or 'No name'}")
++             print(f"   Doc Type: {project.doc_type or 'No doc type'}")
++             print(f"   Project Path: {project.project_path}")
++             print(f"   Documents: {project_info['document_count']}")
++             print(f"   Total Pages: {project_info['total_pages']}")
++             print(f"   Created: {project.created_at.strftime('%Y-%m-%d %H:%M:%S')}")
++             print(f"   Owner: {project.owner.username if project.owner else 'No owner'}")
++             
++         except Project.DoesNotExist:
++             print(f"❌ Project {project_id} not found")
++             continue
++     
++     # Find duplicate documents
++     print("\n" + "=" * 80)
++     print("🔍 DOCUMENT OVERLAP ANALYSIS")
++     print("=" * 80)
++     
++     duplicate_docs = {doc_id: project_list for doc_id, project_list in all_documents.items() 
++                      if len(project_list) > 1}
++     
++     if duplicate_docs:
++         print(f"\n📄 Found {len(duplicate_docs)} documents that appear in multiple projects:")
++         
++         for doc_id, project_list in sorted(duplicate_docs.items()):
++             print(f"\n   Document ID: {doc_id}")
++             print(f"   Appears in projects: {project_list}")
++             
++             # Show details for each occurrence
++             for proj_id in project_list:
++                 if proj_id in projects_data:
++                     doc = next((d for d in projects_data[proj_id]['documents'] if d.doc_id == doc_id), None)
++                     if doc:
++                         print(f"      Project {proj_id}: {doc.pages} pages, path: {doc.path}")
++     else:
++         print("\n✅ No duplicate documents found across these projects")
++     
++     # Compare project similarities
++     print("\n" + "=" * 80)
++     print("🔍 PROJECT SIMILARITY ANALYSIS")
++     print("=" * 80)
++     
++     project_pairs = []
++     project_ids_list = list(projects_data.keys())
++     
++     for i, proj_id1 in enumerate(project_ids_list):
++         for proj_id2 in project_ids_list[i+1:]:
++             if proj_id1 in projects_data and proj_id2 in projects_data:
++                 proj1 = projects_data[proj_id1]
++                 proj2 = projects_data[proj_id2]
++                 
++                 # Calculate overlap
++                 common_docs = proj1['doc_ids'] & proj2['doc_ids']
++                 total_unique_docs = len(proj1['doc_ids'] | proj2['doc_ids'])
++                 overlap_percentage = (len(common_docs) / total_unique_docs * 100) if total_unique_docs > 0 else 0
++                 
++                 project_pairs.append({
++                     'proj1_id': proj_id1,
++                     'proj2_id': proj_id2,
++                     'proj1': proj1['project'],
++                     'proj2': proj2['project'],
++                     'common_docs': len(common_docs),
++                     'overlap_percentage': overlap_percentage,
++                     'proj1_only': len(proj1['doc_ids'] - proj2['doc_ids']),
++                     'proj2_only': len(proj2['doc_ids'] - proj1['doc_ids']),
++                 })
++     
++     # Sort by overlap percentage (highest first)
++     project_pairs.sort(key=lambda x: x['overlap_percentage'], reverse=True)
++     
++     for pair in project_pairs:
++         print(f"\n📊 Projects {pair['proj1_id']} vs {pair['proj2_id']}:")
++         print(f"   {pair['proj1'].archive_id} vs {pair['proj2'].archive_id}")
++         print(f"   Common documents: {pair['common_docs']}")
++         print(f"   Overlap: {pair['overlap_percentage']:.1f}%")
++         print(f"   Project {pair['proj1_id']} only: {pair['proj1_only']} documents")
++         print(f"   Project {pair['proj2_id']} only: {pair['proj2_only']} documents")
++         
++         # Check if they have the same basic info
++         same_archive_id = pair['proj1'].archive_id == pair['proj2'].archive_id
++         same_location = pair['proj1'].location == pair['proj2'].location
++         same_doc_type = pair['proj1'].doc_type == pair['proj2'].doc_type
++         
++         if same_archive_id and same_location and same_doc_type:
++             print(f"   🚨 POTENTIAL DUPLICATES: Same archive_id, location, and doc_type!")
++         elif same_archive_id:
++             print(f"   ⚠️  Same archive_id but different location/doc_type")
++         
++         if pair['overlap_percentage'] > 80:
++             print(f"   🚨 HIGH OVERLAP: {pair['overlap_percentage']:.1f}% document overlap!")
++         elif pair['overlap_percentage'] > 50:
++             print(f"   ⚠️  MODERATE OVERLAP: {pair['overlap_percentage']:.1f}% document overlap")
++     
++     # Summary
++     print("\n" + "=" * 80)
++     print("📊 SUMMARY")
++     print("=" * 80)
++     
++     total_projects = len(projects_data)
++     total_documents = sum(len(proj['doc_ids']) for proj in projects_data.values())
++     unique_documents = len(all_documents)
++     
++     print(f"Projects analyzed: {total_projects}")
++     print(f"Total documents (with duplicates): {total_documents}")
++     print(f"Unique documents: {unique_documents}")
++     print(f"Duplicate documents: {len(duplicate_docs)}")
++     
++     if len(duplicate_docs) > 0:
++         duplicate_instances = sum(len(project_list) for project_list in duplicate_docs.values())
++         print(f"Total duplicate instances: {duplicate_instances - len(duplicate_docs)}")
++     
++     # Recommendations
++     print("\n💡 RECOMMENDATIONS:")
++     
++     high_overlap_pairs = [p for p in project_pairs if p['overlap_percentage'] > 80]
++     if high_overlap_pairs:
++         print("   🚨 HIGH PRIORITY - Review these project pairs for potential merging:")
++         for pair in high_overlap_pairs:
++             print(f"      - Projects {pair['proj1_id']} and {pair['proj2_id']} ({pair['overlap_percentage']:.1f}% overlap)")
++     
++     duplicate_project_pairs = [p for p in project_pairs if 
++                               p['proj1'].archive_id == p['proj2'].archive_id and
++                               p['proj1'].location == p['proj2'].location and
++                               p['proj1'].doc_type == p['proj2'].doc_type]
++     if duplicate_project_pairs:
++         print("   🚨 DUPLICATE PROJECTS - Same archive_id, location, and doc_type:")
++         for pair in duplicate_project_pairs:
++             print(f"      - Projects {pair['proj1_id']} and {pair['proj2_id']} ({pair['proj1'].archive_id})")
++ 
++ def main():
++     """Main function."""
++     if len(sys.argv) > 1:
++         # Use command line arguments
++         try:
++             project_ids = [int(arg) for arg in sys.argv[1:]]
++         except ValueError:
++             print("❌ Please provide valid project IDs as arguments")
++             print("Usage: python check_project_documents.py 106 111 112 113 114")
++             return
++     else:
++         # Default project IDs
++         project_ids = [106, 111, 112, 113, 114]
++     
++     check_projects(project_ids)
++ 
++ if __name__ == "__main__":
++     main()
+```
+
+</details>
 
 ---
 

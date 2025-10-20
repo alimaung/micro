@@ -351,15 +351,30 @@ Tool use: **codebase_search**
 
 ---
 
-Tool use: **grep**
+Search failed: rg: microapp/services: IO error for operation on microapp/services: The system cannot find the path specified. (os error 3) (exit 2, root: y:/micro)
+
+---
+
+Search failed: rg: microapp: IO error for operation on microapp: The system cannot find the file specified. (os error 2) (exit 2, root: y:/micro)
 
 ---
 
 Tool use: **grep**
 
----
+<details>
+<summary>Grep for "heartbeat_timeout" in "micro" • 3 matches</summary>
 
-Tool use: **grep**
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `.\micro\microapp\services\sma_processor\sma_process_manager.py` | `self.heartbeat_timeout = 60  # seconds` | L76 |
+| `.\micro\microapp\services\sma_processor\sma_process_manager.py` | `if datetime.now() - self.last_heartbeat > timedelta(seconds=self.heartbeat_timeout):` | L588 |
+| `.\micro\microapp\services\sma_processor\sma_process_manager.py` | `if heartbeat_age > timedelta(seconds=self.heartbeat_timeout):` | L751 |
+
+
+</details>
 
 ---
 
@@ -530,6 +545,22 @@ Tool use: **codebase_search**
 
 Tool use: **grep**
 
+<details>
+<summary>Grep for "No progress for 60 seconds" in "micro" • 4 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `.\micro\microapp\services\sma_processor\sma\progress_monitor.py` | `self.logger.warning("No progress for 60 seconds. Film process may be stalled or complete.")` | L108 |
+| `.\sma\processor\old\sma_backup.py` | `logger.warning("No progress for 60 seconds. Film process may be stalled or complete.")` | L1450 |
+| `.\sma\processor\old\sma.py` | `logger.warning("No progress for 60 seconds. Film process may be stalled or complete.")` | L1451 |
+| `.\sma\processor\sma\progress_monitor.py` | `self.logger.warning("No progress for 60 seconds. Film process may be stalled or complete.")` | L108 |
+
+
+</details>
+
 ---
 
 Found it! Let me examine the progress monitor:
@@ -647,11 +678,39 @@ Let me look for window checking functions:
 
 ---
 
-Tool use: **grep**
+Search failed: rg: microapp/services/sma_processor/sma: IO error for operation on microapp/services/sma_processor/sma: The system cannot find the path specified. (os error 3) (exit 2, root: y:/micro)
 
 ---
 
 Tool use: **grep**
+
+<details>
+<summary>Grep for "window.*exists" in "micro" • 16 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `.\micro\microapp\services\sma_processor\sma\ui_automation.py` | `if verfilmen_window.exists():` | L47 |
+| `.\micro\microapp\services\sma_processor\sma\ui_automation.py` | `if verfilmen_window.exists():` | L73 |
+| `.\micro\microapp\services\sma_processor\sma\ui_automation.py` | `if window and window.exists():` | L154 |
+| `.\micro\microapp\services\sma_processor\sma\ui_automation.py` | `if window is None or not window.exists():` | L165 |
+| `.\sma\processor\old\sma_backup.py` | `if verfilmen_window.exists():` | L389 |
+| `.\sma\processor\old\sma_backup.py` | `if verfilmen_window.exists():` | L458 |
+| `.\sma\processor\old\sma_backup.py` | `if window and window.exists():` | L509 |
+| `.\sma\processor\old\sma_backup.py` | `if window is None or not window.exists():` | L520 |
+| `.\sma\processor\old\sma.py` | `if verfilmen_window.exists():` | L389 |
+| `.\sma\processor\old\sma.py` | `if verfilmen_window.exists():` | L458 |
+| `.\sma\processor\old\sma.py` | `if window and window.exists():` | L509 |
+| `.\sma\processor\old\sma.py` | `if window is None or not window.exists():` | L520 |
+| `.\sma\processor\sma\ui_automation.py` | `if verfilmen_window.exists():` | L46 |
+| `.\sma\processor\sma\ui_automation.py` | `if verfilmen_window.exists():` | L72 |
+| `.\sma\processor\sma\ui_automation.py` | `if window and window.exists():` | L153 |
+| `.\sma\processor\sma\ui_automation.py` | `if window is None or not window.exists():` | L164 |
+
+
+</details>
 
 ---
 
@@ -740,6 +799,19 @@ Now let me check for any linting errors in the modified file:
 
 Tool use: **read_lints**
 
+<details>
+          <summary>Read lints for 1 file</summary>
+      
+Lint paths:
+
+- `micro/microapp/services/sma_processor/sma/progress_monitor.py`
+
+Lint results
+
+
+**No lint errors found**
+</details>
+
 ---
 
 Perfect! Now let me also check if there are any other places where similar timeout issues might occur. Let me also address the database timezone error I saw in the logs:
@@ -748,9 +820,72 @@ Perfect! Now let me also check if there are any other places where similar timeo
 
 Tool use: **grep**
 
+<details>
+<summary>Grep for "datetime\.timezone\.now" in "micro" • 0 matches</summary>
+
+Output mode: content
+
+
+_No matches found_
+
+</details>
+
 ---
 
 Tool use: **grep**
+
+<details>
+<summary>Grep for "timezone\.now" in "micro" • 41 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `.\micro\microapp\services\sma_processor\sma_process_manager.py` | `session.completed_at = timezone.now()` | L1039 |
+| `.\micro\microapp\services\sma_processor\sma_process_manager.py` | `session.completed_at = timezone.now()` | L1073 |
+| `.\micro\microapp\services\sma_service.py` | `roll.filming_started_at = timezone.now()` | L161 |
+| `.\micro\microapp\services\sma_service.py` | `session.started_at = timezone.now()` | L217 |
+| `.\micro\microapp\services\sma_service.py` | `session.completed_at = timezone.now()` | L439 |
+| `.\micro\microapp\services\sma_service.py` | `session.completed_at = timezone.now()` | L463 |
+| `.\micro\microapp\services\sma_service.py` | `cutoff_time = timezone.now() - timedelta(hours=max_age_hours)` | L685 |
+| `.\micro\microapp\services\sma_service.py` | `current_duration = timezone.now() - session.started_at` | L755 |
+| `.\micro\microapp\services\sma_service.py` | `roll.filming_completed_at = timezone.now()` | L958 |
+| `.\micro\microapp\models.py` | `installation_date = models.DateTimeField(default=timezone.now, help_text="When this batch was installed in the machine")` | L808 |
+| `.\micro\microapp\models.py` | `return (timezone.now() - self.installation_date).days` | L835 |
+| `.\micro\microapp\models.py` | `return (timezone.now() - self.installation_date).total_seconds() / 3600` | L841 |
+| `.\micro\microapp\models.py` | `self.downloaded_at = timezone.now()` | L1092 |
+| `.\micro\microapp\models.py` | `self.queued_at = timezone.now()` | L1101 |
+| `.\micro\microapp\models.py` | `self.printed_at = timezone.now()` | L1108 |
+| `.\micro\microapp\models.py` | `self.completed_at = timezone.now()` | L1112 |
+| `.\micro\microapp\models.py` | `self.completed_at = timezone.now()` | L1119 |
+| `.\micro\microapp\models.py` | `self.sent_at = timezone.now()` | L1239 |
+| `.\micro\microapp\models.py` | `self.last_retry_at = timezone.now()` | L1249 |
+| `.\micro\microapp\models.py` | `self.acknowledged_at = timezone.now()` | L1255 |
+| `.\micro\microapp\models.py` | `self.completed_at = timezone.now()` | L1261 |
+| `.\micro\microapp\views\roll_views.py` | `roll.filming_started_at = timezone.now()` | L159 |
+| `.\micro\microapp\views\roll_views.py` | `roll.filming_completed_at = timezone.now()` | L161 |
+| `.\micro\microapp\views\roll_views.py` | `roll.filming_completed_at = timezone.now()` | L166 |
+| `.\micro\microapp\views\development_views.py` | `elapsed = timezone.now() - active_session.started_at` | L70 |
+| `.\micro\microapp\views\development_views.py` | `started_at=timezone.now()` | L324 |
+| `.\micro\microapp\views\development_views.py` | `session.estimated_completion = timezone.now() + timedelta(minutes=total_film_length)` | L328 |
+| `.\micro\microapp\views\development_views.py` | `roll.development_started_at = timezone.now()` | L336 |
+| `.\micro\microapp\views\development_views.py` | `session.completed_at = timezone.now()` | L405 |
+| `.\micro\microapp\views\development_views.py` | `roll.development_completed_at = timezone.now()` | L412 |
+| `.\micro\microapp\views\development_views.py` | `elapsed = timezone.now() - session.started_at` | L456 |
+| `.\micro\microapp\views\development_views.py` | `installation_date=timezone.now()` | L505 |
+| `.\micro\microapp\views\development_views.py` | `session.completed_at = timezone.now()` | L594 |
+| `.\micro\microapp\views\development_views.py` | `current_batch.replaced_at = timezone.now()` | L663 |
+| `.\micro\microapp\views\development_views.py` | `batch_id = f"\{chemical_type\}_\{timezone.now().strftime('%Y%m%d_%H%M%S')\}"` | L667 |
+| `.\micro\microapp\views\development_views.py` | `'generated_at': timezone.now().isoformat()` | L878 |
+| `.\micro\microapp\views\development_views.py` | `'generated_at': timezone.now().isoformat()` | L1037 |
+| `.\micro\microapp\migrations\0022_chemicalbatch_installation_date_temproll_exists.py` | `field=models.DateTimeField(default=django.utils.timezone.now, help_text='When this batch was installed in the machine'),` | L17 |
+| `.\micro\microapp\views\handoff_views.py` | `'timestamp': timezone.now().isoformat()` | L656 |
+| `.\micro\microapp\views\handoff_views.py` | `'timestamp': timezone.now().isoformat()` | L667 |
+| `.\micro\microapp\management\commands\update_filming_status.py` | `filming_completed_at=timezone.now()` | L46 |
+
+
+</details>
 
 ---
 
@@ -759,6 +894,19 @@ The timezone usage looks correct in most places. Let me search for the specific 
 ---
 
 Tool use: **grep**
+
+<details>
+<summary>Grep for "Error updating database workflow state" in "micro" • 1 match</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `.\micro\microapp\services\sma_processor\sma_process_manager.py` | `logger.error(f"Error updating database workflow state: \{e\}")` | L1048 |
+
+
+</details>
 
 ---
 
@@ -808,6 +956,19 @@ Lines added: 1, lines removed: undefined
 ---
 
 Tool use: **read_lints**
+
+<details>
+          <summary>Read lints for 1 file</summary>
+      
+Lint paths:
+
+- `micro/microapp/services/sma_processor/sma_process_manager.py`
+
+Lint results
+
+
+**No lint errors found**
+</details>
 
 ---
 
