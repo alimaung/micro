@@ -21,7 +21,7 @@ def send_notification(title, body, message_id):
     )
 
     # Send the message
-    response = messaging.send(message)
+    #response = messaging.send(message)
     #print('Successfully sent message:', response)
 
 # Example usage

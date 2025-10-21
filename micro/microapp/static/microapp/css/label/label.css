@@ -257,7 +257,7 @@
 .btn {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     padding: 8px 16px;
     border-radius: 8px;
     font-size: 14px;
@@ -267,6 +267,8 @@
     border: none;
     text-decoration: none;
     white-space: nowrap;
+    min-width: fit-content;
+    box-sizing: border-box;
 }
 
 .btn:disabled {
@@ -309,8 +311,10 @@
 }
 
 .btn-small {
-    padding: 6px 12px;
-    font-size: 13px;
+    padding: 6px 10px;
+    font-size: 12px;
+    min-width: fit-content;
+    white-space: nowrap;
 }
 
 .btn-info {
@@ -612,66 +616,168 @@
     display: none;
 }
 
-/* Generated Labels */
-.roll-label-container {
-    background-color: var(--color-background);
-    border: 1px solid var(--color-border);
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 24px;
-    transition: all 0.2s ease;
+/* Filter Controls */
+.filter-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    background-color: var(--color-background-secondary);
+    border-bottom: 1px solid var(--color-border);
+    gap: 16px;
 }
 
-.dark-mode .roll-label-container {
+.dark-mode .filter-controls {
+    background-color: var(--color-dark-background-secondary);
+    border-color: var(--color-dark-border);
+}
+
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.filter-group label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-text);
+    white-space: nowrap;
+}
+
+.dark-mode .filter-group label {
+    color: var(--color-dark-text);
+}
+
+.filter-group select {
+    min-width: 150px;
+}
+
+.filter-actions {
+    display: flex;
+    gap: 8px;
+}
+
+@media (max-width: 768px) {
+    .filter-controls {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+    
+    .filter-group {
+        justify-content: space-between;
+    }
+    
+    .filter-actions {
+        justify-content: center;
+    }
+}
+
+/* Generated Labels */
+.generated-labels {
+    padding: 24px;
+}
+
+.generated-labels-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: 24px;
+}
+
+.label-card {
+    background-color: var(--color-background);
+    border-radius: 12px;
+    border: 1px solid var(--color-border);
+    padding: 20px;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: visible;
+    min-height: fit-content;
+}
+
+.dark-mode .label-card {
     background-color: var(--color-dark-surface);
     border-color: var(--color-dark-border);
 }
 
-.roll-label-container:hover {
+.label-card:hover {
     border-color: var(--color-primary);
+    transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.dark-mode .roll-label-container:hover {
+.dark-mode .label-card:hover {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
-.roll-label-header {
+.label-card.completed {
+    border-color: #30d158;
+    background-color: rgba(48, 209, 88, 0.05);
+}
+
+.dark-mode .label-card.completed {
+    background-color: rgba(48, 209, 88, 0.1);
+}
+
+.label-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
     margin-bottom: 16px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid var(--color-border);
 }
 
-.dark-mode .roll-label-header {
-    border-color: var(--color-dark-border);
+.label-title {
+    flex: 1;
 }
 
-.roll-label-header h4 {
-    color: var(--color-text);
-    margin: 0 0 8px 0;
+.label-film-number {
     font-size: 16px;
     font-weight: 500;
+    color: var(--color-text);
+    margin-bottom: 4px;
 }
 
-.dark-mode .roll-label-header h4 {
+.dark-mode .label-film-number {
     color: var(--color-dark-text);
 }
 
-.roll-label-header p {
+.label-archive-id {
+    font-size: 12px;
     color: var(--color-text-secondary);
-    margin: 0 0 4px 0;
-    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 500;
 }
 
-.roll-label-header small {
-    color: var(--color-text-tertiary);
+.label-status-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 12px;
+    border-radius: 20px;
     font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    line-height: 1.2;
+    min-width: 90px;
+    min-height: 28px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.label-details {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    margin-bottom: 16px;
 }
 
 .version-containers {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
     gap: 16px;
+    margin-top: 16px;
 }
 
 .version-container {
@@ -680,6 +786,7 @@
     border-radius: 8px;
     padding: 16px;
     transition: all 0.2s ease;
+    min-height: fit-content;
 }
 
 .dark-mode .version-container {
@@ -704,7 +811,9 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    gap: 8px;
 }
 
 .version-header h5 {
@@ -759,8 +868,10 @@
 
 .version-actions {
     display: flex;
+    flex-wrap: wrap;
     gap: 8px;
     margin-bottom: 8px;
+    align-items: center;
 }
 
 .print-info {
@@ -769,16 +880,48 @@
     font-style: italic;
 }
 
+/* Medium screens - adjust grid and button layout */
+@media (max-width: 1024px) {
+    .generated-labels-grid {
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    }
+    
+    .version-actions {
+        gap: 6px;
+    }
+    
+    .btn-small {
+        padding: 5px 8px;
+        font-size: 11px;
+        gap: 4px;
+    }
+}
+
 @media (max-width: 768px) {
+    .generated-labels-grid {
+        grid-template-columns: 1fr;
+    }
+    
     .version-containers {
         grid-template-columns: 1fr;
     }
     
     .version-actions {
         flex-direction: column;
+        align-items: stretch;
+        gap: 6px;
+    }
+    
+    .version-actions .btn {
+        justify-content: center;
+        margin-bottom: 0;
     }
     
     .roll-card {
+        padding: 16px;
+    }
+    
+    .label-card {
         padding: 16px;
     }
 }

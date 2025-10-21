@@ -398,12 +398,47 @@ def mark_label_printed(request, label_id):
 @require_http_methods(["GET"])
 def get_generated_labels(request):
     """
-    Get all generated labels with their current status.
+    Get generated labels with their current status.
+    Supports filtering by project, status, and pagination.
     """
     try:
-        labels = FilmLabel.objects.select_related(
+        # Get query parameters
+        project_id = request.GET.get('project_id')
+        status = request.GET.get('status')
+        limit = request.GET.get('limit', '100')  # Default to 100, allow override
+        offset = request.GET.get('offset', '0')
+        
+        # Convert to integers with validation
+        try:
+            limit = int(limit)
+            offset = int(offset)
+            # Cap limit at 500 for performance
+            limit = min(limit, 500)
+        except ValueError:
+            limit = 100
+            offset = 0
+        
+        # Build query
+        labels_query = FilmLabel.objects.select_related(
             'roll', 'project'
-        ).order_by('-generated_at')[:50]  # Limit to recent 50 labels
+        )
+        
+        # Apply filters
+        if project_id:
+            try:
+                project_id = int(project_id)
+                labels_query = labels_query.filter(project_id=project_id)
+            except ValueError:
+                pass  # Ignore invalid project_id
+                
+        if status:
+            labels_query = labels_query.filter(status=status)
+        
+        # Get total count before pagination
+        total_count = labels_query.count()
+        
+        # Apply ordering and pagination
+        labels = labels_query.order_by('-generated_at')[offset:offset + limit]
         
         labels_data = []
         for label in labels:
@@ -426,7 +461,13 @@ def get_generated_labels(request):
         
         return JsonResponse({
             'success': True,
-            'labels': labels_data
+            'labels': labels_data,
+            'pagination': {
+                'total_count': total_count,
+                'limit': limit,
+                'offset': offset,
+                'has_more': offset + limit < total_count
+            }
         })
         
     except Exception as e:

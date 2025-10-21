@@ -615,8 +615,20 @@ class DevelopmentDashboard {
                     // Show expert mode option for age-locked chemicals
                     this.showExpertModeDialog(data.error, data.warnings);
                 } else if (data.warnings && data.warnings.length > 0) {
-                    this.showNotification('error', 'Chemical Issues', 
-                        `Cannot start development: ${data.warnings.join(', ')}`);
+                    // Simplify chemical warning message
+                    const hasLowChemicals = data.warnings.some(w => w.includes('low') || w.includes('capacity'));
+                    const hasExpiredChemicals = data.warnings.some(w => w.includes('expired') || w.includes('age'));
+                    
+                    let shortMessage = 'Cannot start development: ';
+                    if (hasExpiredChemicals) {
+                        shortMessage += 'Chemicals expired and need replacement.';
+                    } else if (hasLowChemicals) {
+                        shortMessage += 'Chemical levels too low for development.';
+                    } else {
+                        shortMessage += 'Chemical system not ready.';
+                    }
+                    
+                    this.showNotification('error', 'Chemical System Error', shortMessage);
                 } else {
                     this.showNotification('error', 'Error', data.error || 'Failed to start development');
                 }
@@ -1944,8 +1956,20 @@ class DevelopmentDashboard {
                     // Show expert mode option for age-locked chemicals
                     this.showExpertModeDialog(data.error, data.warnings);
                 } else if (data.warnings && data.warnings.length > 0) {
-                    this.showNotification('error', 'Chemical Issues', 
-                        `Cannot start development: ${data.warnings.join(', ')}`);
+                    // Simplify chemical warning message
+                    const hasLowChemicals = data.warnings.some(w => w.includes('low') || w.includes('capacity'));
+                    const hasExpiredChemicals = data.warnings.some(w => w.includes('expired') || w.includes('age'));
+                    
+                    let shortMessage = 'Cannot start development: ';
+                    if (hasExpiredChemicals) {
+                        shortMessage += 'Chemicals expired and need replacement.';
+                    } else if (hasLowChemicals) {
+                        shortMessage += 'Chemical levels too low for development.';
+                    } else {
+                        shortMessage += 'Chemical system not ready.';
+                    }
+                    
+                    this.showNotification('error', 'Chemical System Error', shortMessage);
                 } else {
                     this.showNotification('error', 'Error', data.error || 'Failed to start development');
                 }
@@ -2107,13 +2131,18 @@ class DevelopmentDashboard {
         // Create notification element
         const notification = document.createElement('div');
         notification.className = `notification ${type}`;
+        
+        // Escape HTML in message to prevent issues
+        const escapedTitle = this.escapeHtml(title);
+        const escapedMessage = this.escapeHtml(message);
+        
         notification.innerHTML = `
             <div class="notification-icon">
                 <i class="${this.getNotificationIcon(type)}"></i>
             </div>
             <div class="notification-content">
-                <div class="notification-title">${title}</div>
-                <div class="notification-message">${message}</div>
+                <div class="notification-title">${escapedTitle}</div>
+                <div class="notification-message">${escapedMessage}</div>
             </div>
             <button class="notification-close">&times;</button>
         `;
@@ -2123,20 +2152,44 @@ class DevelopmentDashboard {
         if (container) {
             container.appendChild(notification);
             
-            // Auto-remove after 5 seconds
+            // Show notification with animation
+            setTimeout(() => {
+                notification.style.opacity = '1';
+                notification.style.transform = 'translateX(0)';
+            }, 10);
+            
+            // Auto-remove after 8 seconds (increased from 5 for chemical warnings)
+            const autoRemoveTimeout = setTimeout(() => {
+                this.removeNotification(notification);
+            }, type === 'error' ? 10000 : 8000); // Keep error notifications longer
+            
+            // Add close button functionality
+            notification.querySelector('.notification-close').addEventListener('click', () => {
+                clearTimeout(autoRemoveTimeout);
+                this.removeNotification(notification);
+            });
+            
+            // Store timeout for potential clearing
+            notification._autoRemoveTimeout = autoRemoveTimeout;
+        }
+    }
+    
+    removeNotification(notification) {
+        if (notification && notification.parentNode) {
+            notification.style.opacity = '0';
+            notification.style.transform = 'translateX(100%)';
             setTimeout(() => {
                 if (notification.parentNode) {
                     notification.parentNode.removeChild(notification);
                 }
-            }, 5000);
-            
-            // Add close button functionality
-            notification.querySelector('.notification-close').addEventListener('click', () => {
-                if (notification.parentNode) {
-                    notification.parentNode.removeChild(notification);
-                }
-            });
+            }, 300);
         }
+    }
+    
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
     
     getNotificationIcon(type) {

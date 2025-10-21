@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analyze Page Test</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/analyze/analyze.css">
+    <style>
+        body { margin: 0; padding: 20px; background: #f5f7fa; }
+        .test-container { max-width: 1200px; margin: 0 auto; }
+        .test-note { background: #e3f2fd; padding: 10px; border-radius: 4px; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="test-note">
+            <strong>Test Note:</strong> This is a simplified test page to verify the fixes work properly.
+            <br>Check the browser console for debug output.
+        </div>
+        
+        <!-- Mock analyze page structure -->
+        <div class="analyze-container">
+            <!-- Header Section -->
+            <div class="analyze-header">
+                <div class="header-content">
+                    <div class="header-text">
+                        <h1>Project Analysis Dashboard</h1>
+                        <p class="analyze-description">Discover, analyze, and register projects</p>
+                    </div>
+                    <div class="header-stats">
+                        <div class="stat-card">
+                            <div class="stat-number">15</div>
+                            <div class="stat-label">Unanalyzed</div>
+                            <div class="stat-details">
+                                <small>120 PDFs • 45 Excel • 2.5 GB</small>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">8</div>
+                            <div class="stat-label">Analyzed</div>
+                            <div class="stat-details">
+                                <small>5 × 16mm • 3 × 35mm • 85% util • 12 temp</small>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">22</div>
+                            <div class="stat-label">Registered</div>
+                            <div class="stat-details">
+                                <small>156 rolls • 15.2 GB</small>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">2,431</div>
+                            <div class="stat-label">Total Documents</div>
+                            <div class="stat-details">
+                                <small>12,845 pages • 23 oversized</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section Navigation -->
+            <div class="section-navigation">
+                <div class="section-tabs">
+                    <button class="section-tab active" onclick="switchSection('all')">
+                        <i class="fas fa-th-large"></i> All
+                    </button>
+                    <button class="section-tab" onclick="switchSection('unanalyzed')">
+                        <i class="fas fa-folder-open"></i> Unanalyzed (15)
+                    </button>
+                    <button class="section-tab" onclick="switchSection('analyzed')">
+                        <i class="fas fa-chart-line"></i> Analyzed (8)
+                    </button>
+                    <button class="section-tab" onclick="switchSection('registered')">
+                        <i class="fas fa-check-circle"></i> Registered (22)
+                    </button>
+                </div>
+                
+                <!-- Search and Controls -->
+                <div class="controls-container">
+                    <div class="search-container">
+                        <div class="search-input-wrapper">
+                            <i class="fas fa-search search-icon"></i>
+                            <input type="text" placeholder="Search folders and projects..." class="search-input">
+                        </div>
+                    </div>
+                    <!-- Controls will be dynamically added here -->
+                </div>
+            </div>
+
+            <!-- Content Section -->
+            <div id="real-content">
+                <div class="section-container unanalyzed-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-folder-open"></i> Unanalyzed Folders</h2>
+                        <p class="section-description">Folders that haven't been analyzed yet - unknown content</p>
+                    </div>
+                    
+                    <div class="cards-grid">
+                        <!-- Sample unanalyzed card -->
+                        <div class="folder-card unanalyzed">
+                            <div class="card-header">
+                                <div class="card-title">
+                                    <h3>Project Alpha</h3>
+                                    <div class="card-meta">
+                                        <span class="status-badge status-unanalyzed">Unanalyzed</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="folder-path">
+                                    <i class="fas fa-folder-open"></i>
+                                    <span title="/path/to/project/alpha">/path/to/project/alpha</span>
+                                </div>
+                                <div class="key-metrics">
+                                    <div class="metric">
+                                        <i class="fas fa-file metric-icon"></i>
+                                        <div class="metric-content">
+                                            <div class="metric-value">120</div>
+                                            <div class="metric-label">Total Files</div>
+                                        </div>
+                                    </div>
+                                    <div class="metric">
+                                        <i class="fas fa-file-pdf metric-icon"></i>
+                                        <div class="metric-content">
+                                            <div class="metric-value">95</div>
+                                            <div class="metric-label">PDFs</div>
+                                        </div>
+                                    </div>
+                                    <div class="metric">
+                                        <i class="fas fa-file-excel metric-icon"></i>
+                                        <div class="metric-content">
+                                            <div class="metric-value">15</div>
+                                            <div class="metric-label">Excel</div>
+                                        </div>
+                                    </div>
+                                    <div class="metric">
+                                        <i class="fas fa-file-alt metric-icon"></i>
+                                        <div class="metric-content">
+                                            <div class="metric-value">10</div>
+                                            <div class="metric-label">Others</div>
+                                        </div>
+                                    </div>
+                                    <div class="metric">
+                                        <i class="fas fa-hdd metric-icon"></i>
+                                        <div class="metric-content">
+                                            <div class="metric-value">1.2 GB</div>
+                                            <div class="metric-label">Size</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-footer">
+                                <div class="card-actions">
+                                    <button class="btn btn-primary">
+                                        <i class="fas fa-chart-line"></i> Analyze
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        // Mock global variables
+        window.SKELETON_MODE = false;
+        window.SECTION_FILTER = 'all';
+        window.SEARCH_QUERY = '';
+        window.SORT_FIELD = 'name';
+        window.SORT_DIRECTION = 'asc';
+
+        // Mock functions
+        function switchSection(section) {
+            console.log('Switch to section:', section);
+            window.SECTION_FILTER = section;
+            
+            // Update active tab
+            document.querySelectorAll('.section-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Re-initialize controls for new section
+            initializeSortingAndViewControls();
+        }
+    </script>
+    <script src="analyze.js"></script>
+    <script>
+        // Initialize the page after scripts load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Test page loaded, initializing controls...');
+            initializeAnalyzePage();
+        });
+    </script>
+</body>
+</html>

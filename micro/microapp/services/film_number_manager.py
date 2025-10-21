@@ -76,6 +76,15 @@ class FilmNumberManager:
         """
         # Ensure only one film allocation process runs per project at a time
         with self._get_project_lock(project_id):
+            # Check if film allocation is already complete to prevent duplicate processing
+            try:
+                project = Project.objects.get(pk=project_id)
+                if project.film_allocation_complete:
+                    self.logger.info(f"Film allocation already complete for project {project.archive_id}, skipping")
+                    return project, None
+            except Project.DoesNotExist:
+                pass  # Continue with normal processing
+            
             return self._allocate_film_numbers_with_retry(project_id, project_data, analysis_data, allocation_data, index_data)
     
     def _get_project_lock(self, project_id):
@@ -448,18 +457,27 @@ class FilmNumberManager:
                 else:
                     self.logger.info(f"Using original roll_id={roll_id_to_use} for document {doc_id} from allocation data")
                 
-                # Create a new roll
-                roll = Roll.objects.create(
-                    project=project,
-                    roll_id=roll_id_to_use,  # Use the original roll_id from allocation data when possible
+                # Create a new roll with duplicate protection
+                roll, created = Roll.objects.get_or_create(
                     film_number=film_number,
-                    film_type=FilmType.FILM_35MM,
-                    capacity=CAPACITY_35MM,
-                    pages_used=doc_pages,
-                    pages_remaining=CAPACITY_35MM - doc_pages,
-                    status="active",
-                    film_number_source="new"
+                    defaults={
+                        'project': project,
+                        'roll_id': roll_id_to_use,  # Use the original roll_id from allocation data when possible
+                        'film_type': FilmType.FILM_35MM,
+                        'capacity': CAPACITY_35MM,
+                        'pages_used': doc_pages,
+                        'pages_remaining': CAPACITY_35MM - doc_pages,
+                        'status': "active",
+                        'film_number_source': "new"
+                    }
                 )
+                
+                if not created:
+                    self.logger.warning(f"Roll with film number {film_number} already exists, using existing roll")
+                    # Update the existing roll's pages if needed
+                    roll.pages_used += doc_pages
+                    roll.pages_remaining -= doc_pages
+                    roll.save()
                 
                 # Create reference info for this roll
                 roll_ref_info = RollReferenceInfo.objects.create(
@@ -556,14 +574,19 @@ class FilmNumberManager:
                 temp_roll_id, source_roll_id, usable_capacity = temp_roll
                 temp_roll_obj = TempRoll.objects.get(pk=temp_roll_id)
                 
-                # Get new film number
-                film_number = self._get_next_film_number(location_code)
-                self.logger.info(f"Processing partial roll with film number: {film_number}")
-                
-                # Update roll with film number
-                roll.film_number = film_number
-                roll.source_temp_roll = temp_roll_obj
-                roll.film_number_source = "temp_roll"
+                # Check if roll already has a film number (prevent duplicates on retry)
+                if not roll.film_number:
+                    # Get new film number
+                    film_number = self._get_next_film_number(location_code)
+                    self.logger.info(f"Processing partial roll with film number: {film_number}")
+                    
+                    # Update roll with film number
+                    roll.film_number = film_number
+                    roll.source_temp_roll = temp_roll_obj
+                    roll.film_number_source = "temp_roll"
+                else:
+                    self.logger.info(f"Roll {roll.roll_id} already has film number {roll.film_number}, skipping assignment")
+                    film_number = roll.film_number
                 
                 # IMPORTANT FIX: Set the roll's capacity to the temp roll's usable capacity
                 # instead of using the total capacity
@@ -608,12 +631,15 @@ class FilmNumberManager:
                 else:
                     self.logger.info(f"\033[31mNot enough usable capacity remaining to create a new temp roll: {usable_remainder} < {TEMP_ROLL_MIN_USABLE_PAGES}\033[0m")
             else:
-                # No suitable temp roll, assign new film number
+                # No suitable temp roll, assign new film number (check for existing first)
                 self.logger.info("\033[31mNo suitable temp roll, assigning new film number\033[0m")
-                film_number = self._get_next_film_number(location_code)
-                self.logger.info(f"\033[31mNew film number: {film_number}\033[0m")
-                roll.film_number = film_number
-                roll.film_number_source = "new"
+                if not roll.film_number:
+                    film_number = self._get_next_film_number(location_code)
+                    self.logger.info(f"\033[31mNew film number: {film_number}\033[0m")
+                    roll.film_number = film_number
+                    roll.film_number_source = "new"
+                else:
+                    self.logger.info(f"\033[31mRoll {roll.roll_id} already has film number {roll.film_number}, skipping assignment\033[0m")
                 
                 # Save roll
                 roll.save()
@@ -641,10 +667,13 @@ class FilmNumberManager:
                         roll.created_temp_roll = new_temp_roll
                         roll.save()
         else:
-            # Full roll, assign new film number
-            film_number = self._get_next_film_number(location_code)
-            roll.film_number = film_number
-            roll.film_number_source = "new"
+            # Full roll, assign new film number (check for existing first)
+            if not roll.film_number:
+                film_number = self._get_next_film_number(location_code)
+                roll.film_number = film_number
+                roll.film_number_source = "new"
+            else:
+                self.logger.info(f"Roll {roll.roll_id} already has film number {roll.film_number}, skipping assignment")
             
             # Save roll
             roll.save()
@@ -726,7 +755,7 @@ class FilmNumberManager:
     
     def _get_next_film_number(self, location_code):
         """
-        Get the next available film number.
+        Get the next available film number with race condition protection.
         
         Args:
             location_code: Location code
@@ -738,30 +767,45 @@ class FilmNumberManager:
         prefix = location_code
         self.logger.info(f"\033[31mGetting next film number for prefix: {prefix}\033[0m")
         
-        # Get the highest existing number with this prefix
-        highest_roll = Roll.objects.filter(
-            film_number__startswith=prefix
-        ).order_by('-film_number').first()
-        
-        self.logger.info(f"\033[31mHighest roll: {highest_roll}\033[0m")
-        if highest_roll and highest_roll.film_number:
-            try:
-                # Extract sequence number and increment
-                sequence = int(highest_roll.film_number[len(prefix):])
-                next_sequence = sequence + 1
-            except (ValueError, IndexError):
-                # If parsing fails, start from 1
+        # Use a loop to handle race conditions
+        max_attempts = 10
+        for attempt in range(max_attempts):
+            # Get the highest existing number with this prefix using select_for_update
+            # to prevent race conditions
+            highest_roll = Roll.objects.select_for_update().filter(
+                film_number__startswith=prefix
+            ).order_by('-film_number').first()
+            
+            self.logger.info(f"\033[31mHighest roll: {highest_roll}\033[0m")
+            if highest_roll and highest_roll.film_number:
+                try:
+                    # Extract sequence number and increment
+                    sequence = int(highest_roll.film_number[len(prefix):])
+                    next_sequence = sequence + 1
+                except (ValueError, IndexError):
+                    # If parsing fails, start from 1
+                    next_sequence = 1
+            else:
+                # No existing numbers, start from 1
                 next_sequence = 1
-        else:
-            # No existing numbers, start from 1
-            next_sequence = 1
+            
+            # Format new film number
+            film_number = f"{prefix}{next_sequence:07d}"
+            
+            # Check if this film number is already taken (race condition check)
+            if not Roll.objects.filter(film_number=film_number).exists():
+                self.logger.debug(f"Generated next film number: {film_number}")
+                return film_number
+            else:
+                self.logger.warning(f"Film number {film_number} already exists, retrying... (attempt {attempt + 1})")
+                # Small delay to reduce contention
+                time.sleep(0.1)
         
-        # Format new film number
-        film_number = f"{prefix}{next_sequence:07d}"
-        
-        self.logger.debug(f"Generated next film number: {film_number}")
-        
-        return film_number
+        # If we couldn't find a unique number after max_attempts, use timestamp
+        timestamp_suffix = int(time.time() * 1000) % 10000  # Last 4 digits of timestamp
+        fallback_film_number = f"{prefix}{next_sequence:03d}{timestamp_suffix:04d}"
+        self.logger.warning(f"Using fallback film number with timestamp: {fallback_film_number}")
+        return fallback_film_number
     
     def _find_suitable_temp_roll(self, pages_needed, film_type):
         """
@@ -1035,17 +1079,23 @@ class FilmNumberManager:
             ).first()
             
             if not existing_roll:
-                # Create new roll
-                roll = Roll.objects.create(
+                # Create new roll with roll_id uniqueness check
+                roll, created = Roll.objects.get_or_create(
                     project=project,
+                    roll_id=roll_id,
                     film_type=film_type,
-                    capacity=capacity,
-                    pages_used=pages_used,
-                    pages_remaining=pages_remaining,
-                    status='active',
-                    is_partial=roll_data.get('is_partial', False),
-                    creation_date=datetime.now()
+                    defaults={
+                        'capacity': capacity,
+                        'pages_used': pages_used,
+                        'pages_remaining': pages_remaining,
+                        'status': 'active',
+                        'is_partial': roll_data.get('is_partial', False),
+                        'creation_date': datetime.now()
+                    }
                 )
+                
+                if not created:
+                    self.logger.info(f"Roll {roll_id} already exists for project {project.archive_id}, using existing roll")
                 
                 # Create document segments
                 for seg_data in roll_data.get('document_segments', []):

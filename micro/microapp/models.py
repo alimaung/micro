@@ -228,6 +228,17 @@ class Roll(models.Model):
     
     class Meta:
         ordering = ['project', 'film_type', 'roll_id']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['film_number'],
+                condition=models.Q(film_number__isnull=False),
+                name='unique_film_number'
+            ),
+            models.UniqueConstraint(
+                fields=['project', 'roll_id', 'film_type'],
+                name='unique_project_roll_id_film_type'
+            )
+        ]
     
     def __str__(self):
         return f"Roll {self.roll_number or self.roll_id}: {self.film_number or 'No film number'} ({self.film_type})"

@@ -103,10 +103,22 @@ class ProgressMonitor:
                 except Exception as e:
                     self.logger.error(f"Error getting control values: {e}")
                 
-                # Check for stalled process
-                if time.time() - self.last_log_time > 60 and self.last_logged_verfilmt is not None:
-                    self.logger.warning("No progress for 60 seconds. Film process may be stalled or complete.")
-                    break
+                # Check for stalled process - increased timeout and added process health check
+                if time.time() - self.last_log_time > 300 and self.last_logged_verfilmt is not None:  # 5 minutes instead of 1
+                    # Before assuming stall, check if we're actually near completion
+                    if self.total_docs > 0 and self.last_logged_verfilmt >= (self.total_docs * 0.95):
+                        self.logger.info("No progress for 5 minutes but near completion (>95%) - continuing to monitor")
+                        # Reset timer to give more time for completion
+                        self.last_log_time = time.time()
+                    else:
+                        # Check if the SMA window is still active and responsive
+                        if self._is_sma_window_active():
+                            self.logger.warning("No progress for 5 minutes but SMA window is still active - continuing to monitor")
+                            # Reset timer to give more time
+                            self.last_log_time = time.time()
+                        else:
+                            self.logger.warning("No progress for 5 minutes and SMA window appears inactive. Film process may be stalled or complete.")
+                            break
                 
                 # Small delay to prevent excessive CPU usage
                 time.sleep(0.1)
@@ -331,6 +343,17 @@ class ProgressMonitor:
                 self.logger.error(f"Error sending completion notification: {e}")
         
         self.logger.info("Process monitoring completed")
+    
+    def _is_sma_window_active(self):
+        """Check if the SMA window is still active and responsive."""
+        try:
+            # Check if the film window still exists and is responsive
+            if self.film_window and hasattr(self.film_window, 'exists'):
+                return self.film_window.exists()
+            return False
+        except Exception as e:
+            self.logger.debug(f"Error checking SMA window activity: {e}")
+            return False
     
     def _cleanup(self):
         """Clean up advanced finish components."""

@@ -196,6 +196,29 @@
             </div>
         </div>
         
+        <!-- Filter Controls -->
+        <div class="filter-controls">
+            <div class="filter-group">
+                <label for="status-filter">Filter by Status:</label>
+                <select id="status-filter" class="form-control">
+                    <option value="">All Statuses</option>
+                    <option value="generated">Generated</option>
+                    <option value="downloaded">Downloaded</option>
+                    <option value="queued">Queued</option>
+                    <option value="printed">Printed</option>
+                    <option value="completed">Completed</option>
+                </select>
+            </div>
+            <div class="filter-actions">
+                <button id="apply-filters" class="btn btn-primary btn-small">
+                    <i class="fas fa-filter"></i> Apply Filters
+                </button>
+                <button id="clear-filters" class="btn btn-outline btn-small">
+                    <i class="fas fa-times"></i> Clear Filters
+                </button>
+            </div>
+        </div>
+        
         <div id="generated-labels" class="generated-labels">
             <!-- Generated labels will appear here -->
             <div class="empty-state">

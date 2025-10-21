@@ -219,6 +219,10 @@ urlpatterns = [
     path('api/register/<int:project_id>/state/<str:key>/save/', views.save_register_state_key, name='save_register_state_key'),
     path('api/register/<int:project_id>/state/<str:key>/delete/', views.delete_register_state_key, name='delete_register_state_key'),
     
+    # Allocation data persistence (quota-safe)
+    path('api/allocation/<int:project_id>/save-data/', views.save_allocation_data, name='save_allocation_data'),
+    path('api/allocation/<int:project_id>/load-data/', views.load_allocation_data, name='load_allocation_data'),
+    
     # New project export endpoints
     path('api/projects/export/excel/', views.export_projects_excel, name='export_projects_excel'),
     path('api/projects/export/pdf/', views.export_projects_pdf, name='export_projects_pdf'),

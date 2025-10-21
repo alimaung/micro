@@ -130,6 +130,21 @@ class LabelManager {
         });
         }
         
+        // Filter controls
+        const applyFiltersBtn = document.getElementById('apply-filters');
+        if (applyFiltersBtn) {
+            applyFiltersBtn.addEventListener('click', () => {
+                this.applyFilters();
+            });
+        }
+        
+        const clearFiltersBtn = document.getElementById('clear-filters');
+        if (clearFiltersBtn) {
+            clearFiltersBtn.addEventListener('click', () => {
+                this.clearFilters();
+            });
+        }
+        
         // Bulk actions for uncompleted rolls
         const selectAllUncompletedBtn = document.getElementById('select-all-uncompleted');
         if (selectAllUncompletedBtn) {
@@ -827,13 +842,25 @@ class LabelManager {
         }
     }
     
-    async loadGeneratedLabels() {
+    async loadGeneratedLabels(filters = {}) {
         try {
-            const response = await fetch('/api/labels/generated/');
+            // Build query parameters
+            const params = new URLSearchParams();
+            if (filters.project_id) params.append('project_id', filters.project_id);
+            if (filters.status) params.append('status', filters.status);
+            if (filters.limit) params.append('limit', filters.limit);
+            if (filters.offset) params.append('offset', filters.offset);
+            
+            // Default to loading more labels (500 instead of 50)
+            if (!filters.limit) params.append('limit', '500');
+            
+            const url = `/api/labels/generated/?${params.toString()}`;
+            const response = await fetch(url);
             const data = await response.json();
             
             if (data.success) {
                 this.generatedLabels = data.labels;
+                this.labelsPagination = data.pagination || {};
                 console.log('Raw generated labels from API:', this.generatedLabels);
                 
                 // Organize labels by roll
@@ -894,9 +921,6 @@ class LabelManager {
             // Skip if no labels exist for this roll
             if (!rollInfo) {
                 console.log('Skipping roll', rollId, 'no rollInfo. versions keys:', Object.keys(versions));
-                // Let's try to get any label from the versions object
-                const anyLabel = Object.values(versions)[0];
-                console.log('First available label:', anyLabel);
                 return '';
             }
             
@@ -906,34 +930,56 @@ class LabelManager {
             const allVersions = Object.entries(versions);
             console.log('All versions for roll', rollId, ':', allVersions);
             
+            // Determine overall status for the card
+            const hasCompleted = allVersions.some(([_, label]) => label.status === 'completed' || label.status === 'printed');
+            
             return `
-                <div class="roll-label-container">
-                    <div class="roll-label-header">
-                        <h4>${rollInfo.film_number} - ${rollInfo.archive_id}</h4>
-                        <p>${rollInfo.doc_type}</p>
-                        <small>Generated: ${this.formatDateTime(rollInfo.generated_at)}</small>
+                <div class="label-card ${hasCompleted ? 'completed' : ''}">
+                    <div class="label-header">
+                        <div class="label-title">
+                            <div class="label-film-number">${rollInfo.film_number}</div>
+                            <div class="label-archive-id">${rollInfo.archive_id}</div>
+                        </div>
+                        <div class="label-status-badge ${rollInfo.status}">
+                            ${this.getStatusDisplayText(rollInfo.status)}
+                        </div>
+                    </div>
+                    
+                    <div class="label-details">
+                        <div class="detail-item">
+                            <span class="label">Document Type:</span>
+                            <span class="value">${rollInfo.doc_type}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">Generated:</span>
+                            <span class="value">${this.formatDateTime(rollInfo.generated_at)}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">Versions:</span>
+                            <span class="value">${allVersions.length} available</span>
+                        </div>
                     </div>
                     
                     <div class="version-containers">
                         ${allVersions.map(([versionName, label]) => `
                             <div class="version-container ${versionName}">
                                 <div class="version-header">
-                                    <h5><i class="fas fa-${versionName === 'angled' ? 'drafting-compass' : 'table'}"></i> ${versionName.charAt(0).toUpperCase() + versionName.slice(1)} Version</h5>
+                                    <h5><i class="fas fa-${versionName === 'angled' ? 'drafting-compass' : 'table'}"></i> ${versionName.charAt(0).toUpperCase() + versionName.slice(1)}</h5>
                                     <div class="version-status ${label.status}">${this.getStatusDisplayText(label.status)}</div>
-                    </div>
+                                </div>
                                 <div class="version-actions">
                                     <button class="btn btn-secondary btn-small download-label" data-label-id="${label.label_id}" data-version="${versionName}">
-                        <i class="fas fa-download"></i> Download ${label.download_count > 0 ? `(${label.download_count})` : ''}
-                    </button>
+                                        <i class="fas fa-download"></i> Download ${label.download_count > 0 ? `(${label.download_count})` : ''}
+                                    </button>
                                     <button class="btn btn-info btn-small view-label" data-label-id="${label.label_id}" data-version="${versionName}">
                                         <i class="fas fa-eye"></i> View
                                     </button>
                                     <button class="btn btn-outline btn-small open-label" data-label-id="${label.label_id}" data-version="${versionName}">
                                         <i class="fas fa-folder-open"></i> Reveal
-                        </button>
+                                    </button>
                                     <button class="btn btn-primary btn-small print-label" data-label-id="${label.label_id}" data-version="${versionName}">
-                        <i class="fas fa-print"></i> Print ${label.print_count > 0 ? `(${label.print_count})` : ''}
-                    </button>
+                                        <i class="fas fa-print"></i> Print ${label.print_count > 0 ? `(${label.print_count})` : ''}
+                                    </button>
                                 </div>
                                 ${label.printed_at ? `<small class="print-info">Printed: ${this.formatDateTime(label.printed_at)}</small>` : ''}
                             </div>
@@ -944,7 +990,13 @@ class LabelManager {
         }).filter(html => html !== '').join('');
         
         console.log('Final HTML length:', rollsHtml.length);
-        container.innerHTML = rollsHtml;
+        
+        // Wrap in grid container
+        container.innerHTML = `
+            <div class="generated-labels-grid">
+                ${rollsHtml}
+            </div>
+        `;
         console.log('Labels rendered successfully');
     }
     
@@ -1346,6 +1398,33 @@ class LabelManager {
             console.error('Error showing all labels:', error);
             this.showNotification('error', 'Error', 'Failed to load all labels');
         }
+    }
+    
+    applyFilters() {
+        const statusFilter = document.getElementById('status-filter');
+        
+        const filters = {};
+        if (statusFilter && statusFilter.value) {
+            filters.status = statusFilter.value;
+        }
+        
+        // Load labels with filters
+        this.loadGeneratedLabels(filters);
+        
+        const filterCount = Object.keys(filters).length;
+        if (filterCount > 0) {
+            this.showNotification('info', 'Filters Applied', `Showing labels filtered by ${filterCount} criteria`);
+        }
+    }
+    
+    clearFilters() {
+        const statusFilter = document.getElementById('status-filter');
+        
+        if (statusFilter) statusFilter.value = '';
+        
+        // Reload all labels without filters
+        this.loadGeneratedLabels();
+        this.showNotification('info', 'Filters Cleared', 'Showing all generated labels');
     }
 }
 

@@ -480,3 +480,98 @@ def delete_register_state_key(request, project_id, key):
     except Exception as e:
         logger.error(f"Error deleting register state key {key} for project {project_id}: {str(e)}")
         return JsonResponse({"status": "error", "message": force_str(e)}, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def save_allocation_data(request, project_id):
+    """
+    Save allocation data to project .data folder to avoid localStorage quota issues.
+    
+    This endpoint saves large allocation data directly to the project's .data folder
+    instead of localStorage, preventing quota exceeded errors for large datasets.
+    """
+    try:
+        project = get_object_or_404(Project, id=project_id)
+        data = json.loads(request.body)
+        
+        # Get project path from project or use default
+        project_path = None
+        if hasattr(project, 'project_path') and project.project_path:
+            project_path = Path(project.project_path)
+        else:
+            # Try to get from project state in the data
+            if 'projectState' in data and data['projectState'].get('destinationPath'):
+                project_path = Path(data['projectState']['destinationPath'])
+            else:
+                # Fallback to media directory
+                project_path = Path(settings.MEDIA_ROOT) / 'projects' / str(project_id)
+        
+        # Create .data directory
+        data_dir = project_path / '.data'
+        data_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Save allocation data
+        allocation_file = data_dir / 'microfilmAllocationData.json'
+        with open(allocation_file, 'w', encoding='utf-8') as f:
+            json.dump(data, f, indent=2)
+        
+        logger.info(f"Saved allocation data to {allocation_file}")
+        
+        return JsonResponse({
+            'status': 'success',
+            'message': 'Allocation data saved to project folder',
+            'path': str(allocation_file),
+            'size': len(json.dumps(data))
+        })
+        
+    except Exception as e:
+        logger.error(f"Error saving allocation data for project {project_id}: {str(e)}")
+        return JsonResponse({
+            'status': 'error', 
+            'message': str(e)
+        }, status=500)
+
+
+@require_http_methods(["GET"])
+def load_allocation_data(request, project_id):
+    """
+    Load allocation data from project .data folder.
+    
+    This endpoint loads allocation data that was saved to avoid localStorage quota issues.
+    """
+    try:
+        project = get_object_or_404(Project, id=project_id)
+        
+        # Get project path from project or use default
+        project_path = None
+        if hasattr(project, 'project_path') and project.project_path:
+            project_path = Path(project.project_path)
+        else:
+            # Fallback to media directory
+            project_path = Path(settings.MEDIA_ROOT) / 'projects' / str(project_id)
+        
+        # Look for allocation data file
+        allocation_file = project_path / '.data' / 'microfilmAllocationData.json'
+        
+        if not allocation_file.exists():
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Allocation data not found in project folder'
+            }, status=404)
+        
+        # Load and return the data
+        with open(allocation_file, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        
+        return JsonResponse({
+            'status': 'success',
+            'data': data
+        })
+        
+    except Exception as e:
+        logger.error(f"Error loading allocation data for project {project_id}: {str(e)}")
+        return JsonResponse({
+            'status': 'error',
+            'message': str(e)
+        }, status=500)

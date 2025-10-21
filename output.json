@@ -1,0 +1,66 @@
+{
+  "timestamp": "2025-10-17 10:06:46.338739+00:00",
+  "stats": {
+    "projects_checked": 82,
+    "rolls_checked": 209,
+    "documents_checked": 23118,
+    "orphaned_directories": 6,
+    "missing_directories": 0,
+    "document_mismatches": 0,
+    "valid_projects": 80
+  },
+  "issues": {
+    "Project 99 (RRD073-2025)": [
+      "Orphaned roll directory: X:\\RRD073-2025_OU_R&O WAP\\.output\\10000063",
+      "Orphaned roll directory: X:\\RRD073-2025_OU_R&O WAP\\.output\\10000064",
+      "Orphaned roll directory: X:\\RRD073-2025_OU_R&O WAP\\.output\\10000062"
+    ],
+    "Project 107 (RRD073-2025)": [
+      "Orphaned roll directory: X:\\RRD073-2025_OU_R&O WAP\\.output\\10000052",
+      "Orphaned roll directory: X:\\RRD073-2025_OU_R&O WAP\\.output\\10000053",
+      "Orphaned roll directory: X:\\RRD073-2025_OU_R&O WAP\\.output\\10000051"
+    ],
+    "Orphaned Directories": [
+      "X:\\RRD002-2025_OU_ZERTIFIKATE 2025-06",
+      "X:\\RRD002-2025_OU_ZERTIFIKATE 2025-07",
+      "X:\\RRD002-2025_OU_ZERTIFIKATE 2025-08",
+      "X:\\RRD002-2025_OU_ZERTIFIKATE 2025-09",
+      "X:\\RRD002-2025_OU_ZERTIFIKATE 2025-10",
+      "X:\\RRD002-2025_OU_ZERTIFIKATE 2025-11",
+      "X:\\RRD002-2025_OU_ZERTIFIKATE 2025-12",
+      "X:\\RRD002-2025_OU_ZERTIFIKATE 2025-13",
+      "X:\\RRD002-2025_OU_ZERTIFIKATE 2025-14",
+      "X:\\RRD002-2025_OU_ZERTIFIKATE 2025-15",
+      "X:\\RRD009-2024_DW_Engine FAI_75-8",
+      "X:\\RRD015-2024_OU_FPA-FPD-MVA",
+      "X:\\RRD016-2024_OU_NC-Programme",
+      "X:\\RRD017-2024_OU_FAIR_FARBE",
+      "X:\\RRD020-2024_DW_Technical Variances",
+      "X:\\RRD023-2024_DW_FPDMVAFPA",
+      "X:\\RRD030-2024_DW_EASA",
+      "X:\\RRD030-2025_DW_Technical_Reports",
+      "X:\\RRD038-2024_DW_Technical Reports",
+      "X:\\RRD043-2025_OU_FPA_FPD_MVA",
+      "X:\\RRD048-2023_DW_FAIR digital",
+      "X:\\RRD048-2025_OU_Technische_Handb\u00fccher",
+      "X:\\RRD050-2024_DW_FAIR",
+      "X:\\RRD054-2022_DW_Pr\u00fcferakten - digital",
+      "X:\\RRD057-2024_DW_Drawing Alteration Request COM Papier",
+      "X:\\RRD061-2024_DW_Technical Reports",
+      "X:\\RRD062-2023_DW_EASA",
+      "X:\\RRD069-2023_DW_Vertr\u00e4ge COM",
+      "X:\\RRD069-2025_OU_Drawings_of_Component_&_Design_Definition",
+      "X:\\RRD073-2021_OU_CAPP-MES",
+      "X:\\RRD075-2024_DW_EASA",
+      "X:\\RRD089-2022_OU_\u00c4nderungswesen",
+      "X:\\RRD090-2023_DW_Technical Reports",
+      "X:\\RRD090-2024_OU_Triebwerksmontagebauakten",
+      "X:\\RRD091-2022_DW_DAR",
+      "X:\\RRD094-2021_DW_FAIR",
+      "X:\\RRD116-2017_DW_FAIR digital",
+      "X:\\RRD116-2023_DW_Vertr\u00e4ge digital",
+      "X:\\RRD129-2017_OU_Fliesspl\u00e4ne",
+      "X:\\RRD130-2022_DW_Technical Variances"
+    ]
+  }
+}

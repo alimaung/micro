@@ -1029,6 +1029,7 @@ class SMACallbackHandler:
         """Update database with new workflow state."""
         try:
             from ...models import FilmingSession
+            from django.utils import timezone
             
             session = FilmingSession.objects.get(session_id=self.session_id)
             session.workflow_state = new_state
