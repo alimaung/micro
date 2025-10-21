@@ -12,5 +12,6 @@
     }
   },
   "terminal.integrated.defaultProfile.windows": "powershell",
-  "C_Cpp.errorSquiggles": "disabled"
+  "C_Cpp.errorSquiggles": "disabled",
+  "workbench.list.openMode": "doubleClick",
 }
