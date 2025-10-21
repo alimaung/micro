@@ -1,0 +1,24 @@
+{
+  "project": {
+    "id": 12,
+    "archive_id": "RRD018-2025",
+    "location": "OU",
+    "document_type": "PILS",
+    "export_date": "2025-05-23T10:20:52.682846"
+  },
+  "statistics": {
+    "total_documents": 1762,
+    "total_pages": 3552,
+    "has_oversized": false,
+    "total_rolls": 0,
+    "rolls_16mm": 0,
+    "rolls_35mm": 0
+  },
+  "export_files": {
+    "project_state": "microfilmProjectState.json",
+    "allocation_data": "microfilmAllocationData.json",
+    "film_number_data": "microfilmFilmNumberResults.json",
+    "distribution_results": "microfilmDistributionResults.json",
+    "index_csv": "RRD018-2025_index.csv"
+  }
+}

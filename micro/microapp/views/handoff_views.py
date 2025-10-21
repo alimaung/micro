@@ -559,7 +559,8 @@ def send_handoff_email(request, project_id):
                 'archive_id': data.get('archive_id', ''),
                 'film_numbers': data.get('film_numbers', ''),
                 'custom_message': data.get('custom_message', ''),
-                'use_form_data': True
+                'use_form_data': True,
+                'action': data.get('action', 'send')  # 'send' or 'save'
             }
         else:
             # Legacy structure for backward compatibility

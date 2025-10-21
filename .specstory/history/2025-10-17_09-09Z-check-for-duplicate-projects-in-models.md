@@ -1252,7 +1252,152 @@ wouldnt we want to discuss it first before diving in?
 
 _**Assistant (claude-4-sonnet)**_
 
+You're absolutely right! Let's discuss the approach first before implementing anything.
 
+## Current Problem
+When you delete projects via Django admin, it only removes the database records but leaves behind:
+- `.data` folders (with allocation data, exports, etc.)
+- `.output` folders (with distributed documents)
+- `.temp` folders (temporary processing files)
+- `.labels` folders (generated labels)
+- `.filmlogs` files (should be renamed to `.filmlogs.old`)
+
+This creates "orphaned" directories that cause confusion and waste disk space.
+
+## Potential Solutions - Let's Discuss:
+
+### **Option 1: Override Model `delete()` Methods**
+```python
+class Project(models.Model):
+    def delete(self, *args, **kwargs):
+        # Clean up filesystem before deleting DB record
+        self.cleanup_project_directories()
+        super().delete(*args, **kwargs)
+```
+
+**Pros:** Automatic cleanup whenever a project is deleted (admin, API, scripts)
+**Cons:** Could be slow for large projects, might fail silently
+
+### **Option 2: Django Signals (post_delete)**
+```python
+@receiver(post_delete, sender=Project)
+def cleanup_project_files(sender, instance, **kwargs):
+    # Clean up after DB deletion
+```
+
+**Pros:** Separates concerns, can be async, easier to debug
+**Cons:** If cleanup fails, DB record is already gone
+
+### **Option 3: Management Command + Admin Action**
+```python
+# Custom admin action: "Delete with cleanup"
+# Plus: python manage.py cleanup_orphaned_files
+```
+
+**Pros:** Explicit control, can preview what will be deleted, safer
+**Cons:** Manual process, might forget to use it
+
+### **Option 4: Soft Delete + Cleanup Job**
+Mark projects as "deleted" but keep DB records, then have a cleanup job that removes filesystem files and finally deletes DB records.
+
+## Questions to Consider:
+
+1. **Safety**: What if the filesystem cleanup fails? Should we prevent DB deletion?
+
+2. **Performance**: Large projects might have thousands of files. Should cleanup be async?
+
+3. **Rollback**: What if you accidentally delete a project? Should we have a "trash" system?
+
+4. **Scope**: Should this apply to:
+   - Just Projects?
+   - Rolls too? (when individual rolls are deleted)
+   - Documents? (when individual documents are deleted)
+
+5. **Validation**: Should we check if files are in use elsewhere before deleting?
+
+6. **Logging**: Should we log what files were deleted for audit purposes?
+
+What's your preference? Do you want automatic cleanup (risky but convenient) or manual/explicit cleanup (safer but requires discipline)?
+
+---
+
+_**User (2025-10-13 13:36Z)**_
+
+can you check projects
+
+106, 111, 112, 113, 114?
+
+compare the documents, are they duplicate?
+
+---
+
+_**Assistant (claude-4-sonnet)**_
+
+I'll check those projects and compare their documents to see if they're duplicates. Let me create a script to analyze them:
+
+---
+
+Tool use: **write**
+
+---
+
+Now let's run the script to check those specific projects:
+
+---
+
+Cancelled
+
+---
+
+_**User (2025-10-13 13:36Z)**_
+
+
+
+---
+
+_**Assistant (claude-4-sonnet)**_
+
+Perfect! The analysis reveals a very clear pattern. Here's what's happening with these projects:
+
+## **Key Findings:**
+
+### **All Projects are RRD002-2025 variants**
+- **Project 106**: RRD002-2025 (OU, ZERTIFIKATE 2025-06) - 225 documents
+- **Project 111**: RRD002-2025 (OU, ZERTIFIKATE 2025-07) - 455 documents  
+- **Project 112**: RRD002-2025 (OU, ZERTIFIKATE 2025-08) - 459 documents
+- **Project 113**: RRD002-2025 (OU, ZERTIFIKATE 2025-09) - 407 documents
+- **Project 114**: RRD002-2025 (OU, ZERTIFIKATE 2025-10) - 483 documents
+
+### **Document Overlap Pattern:**
+- **225 documents appear in ALL 5 projects** (the core set)
+- **Project 106 has ONLY these 225 documents** (it's a subset)
+- **All other projects have these 225 PLUS additional unique documents**
+
+## **What This Means:**
+
+This looks like **monthly certificate batches** where:
+
+1. **Project 106** was the initial batch (June 2025) with 225 certificates
+2. **Projects 111-114** are subsequent months (July-October 2025) that include:
+   - The original 225 certificates (carried forward)
+   - New certificates for that specific month
+
+## **The Problem:**
+
+You have the same 225 documents duplicated across 5 different projects, which means:
+- **900 duplicate document records** in the database
+- **Potentially 900 duplicate PDF files** on the filesystem
+- **Multiple film numbers allocated** for the same documents
+- **Confusion about which version is "current"**
+
+## **Recommendations:**
+
+1. **Keep Project 114** (most recent, October 2025) as it has the most complete set
+2. **Delete Projects 106, 111, 112, 113** - they're subsets or older versions
+3. **This will clean up 900 duplicate document records**
+4. **Use the filesystem cleanup we discussed earlier** to remove orphaned directories
+
+This is exactly the type of duplicate/re-registration issue that's causing your orphaned directories problem! Each time you re-register, you get new film numbers, leaving the old ones orphaned.
 
 ---
 

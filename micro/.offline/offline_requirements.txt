@@ -1,0 +1,2 @@
+# Requirements for offline assets downloader
+requests>=2.25.0

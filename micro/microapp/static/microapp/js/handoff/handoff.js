@@ -308,6 +308,12 @@ document.addEventListener('DOMContentLoaded', function() {
             sendEmailBtn.addEventListener('click', sendEmail);
         }
         
+        // Add event listener for Save as MSG button
+        const saveMsgBtn = document.getElementById('save-msg-btn');
+        if (saveMsgBtn) {
+            saveMsgBtn.addEventListener('click', saveMsgFile);
+        }
+        
         // Success modal
         const successCloseBtn = document.getElementById('success-close-btn');
         if (successCloseBtn) {
@@ -1171,6 +1177,14 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function sendEmail() {
+        processEmailAction('send');
+    }
+    
+    function saveMsgFile() {
+        processEmailAction('save');
+    }
+    
+    function processEmailAction(action) {
         if (!selectedProject || !validationResults) {
             showNotification('Please select a project and validate files first', 'error');
             return;
@@ -1179,7 +1193,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Check for validation errors (missing COM IDs, etc.)
         const actualSummary = calculateActualValidationSummary();
         if (actualSummary.errors > 0) {
-            showNotification(`Cannot send email: ${actualSummary.errors} document(s) have missing COM IDs or other critical errors. Please resolve these issues first.`, 'error');
+            showNotification(`Cannot ${action} email: ${actualSummary.errors} document(s) have missing COM IDs or other critical errors. Please resolve these issues first.`, 'error');
             return;
         }
 
@@ -1203,16 +1217,21 @@ document.addEventListener('DOMContentLoaded', function() {
             archive_id: emailArchiveId ? emailArchiveId.value.trim() : selectedProject.archive_id,
             film_numbers: emailFilmNumbers ? emailFilmNumbers.value.trim() : '',
             custom_message: emailCustomMessage ? emailCustomMessage.value.trim() : '',
-            use_form_data: true  // Flag to indicate we're using form data instead of HTML body
+            use_form_data: true,  // Flag to indicate we're using form data instead of HTML body
+            action: action  // 'send' or 'save'
         };
 
-        // Show loading state
-        if (sendEmailBtn) {
-            sendEmailBtn.disabled = true;
-            sendEmailBtn.textContent = 'Sending...';
+        // Show loading state for the appropriate button
+        const currentBtn = action === 'send' ? sendEmailBtn : document.getElementById('save-msg-btn');
+        const originalText = action === 'send' ? 'Send Email' : 'Save as MSG';
+        const loadingText = action === 'send' ? 'Sending...' : 'Saving...';
+        
+        if (currentBtn) {
+            currentBtn.disabled = true;
+            currentBtn.textContent = loadingText;
         }
 
-        // Send email
+        // Send request
         fetch(`/api/handoff/projects/${selectedProject.id}/send-email/`, {
             method: 'POST',
             headers: {
@@ -1224,31 +1243,33 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Show success notification based on whether it was sent directly or displayed for manual sending
+                // Show success notification based on method
                 const method = data.method || 'displayed';
                 if (method === 'sent') {
                     showNotification('Email sent successfully!', 'success');
+                } else if (method === 'saved_msg') {
+                    showNotification(`Email saved as MSG file: ${data.msg_filename}`, 'success');
                 } else {
                     showNotification('Email opened in Outlook. Please review and send manually.', 'success');
                 }
-                console.log('Email prepared:', data);
+                console.log('Email processed:', data);
                 
                 // Show email success dialog with data
                 showEmailSuccess(data);
             } else {
-                showNotification(`Failed to send email: ${data.error}`, 'error');
-                console.error('Email send error:', data);
+                showNotification(`Failed to ${action} email: ${data.error}`, 'error');
+                console.error('Email process error:', data);
             }
         })
         .catch(error => {
-            showNotification('Error sending email', 'error');
-            console.error('Email send error:', error);
+            showNotification(`Error ${action === 'send' ? 'sending' : 'saving'} email`, 'error');
+            console.error('Email process error:', error);
         })
         .finally(() => {
             // Reset button state
-            if (sendEmailBtn) {
-                sendEmailBtn.disabled = false;
-                sendEmailBtn.textContent = 'Send Email';
+            if (currentBtn) {
+                currentBtn.disabled = false;
+                currentBtn.textContent = originalText;
             }
         });
     }
@@ -1471,6 +1492,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const method = data && data.method || 'displayed';
             if (method === 'sent') {
                 successMessage.textContent = 'Email sent successfully!';
+            } else if (method === 'saved_msg') {
+                successMessage.textContent = `Email saved as MSG file: ${data.msg_filename || 'handoff.msg'}`;
             } else {
                 successMessage.textContent = 'Email opened in Outlook for manual sending.';
             }

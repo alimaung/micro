@@ -1245,6 +1245,8 @@ class HandoffService:
             
             outlook = None
             mail = None
+            msg_path = None
+            msg_filename = None
             
             try:
                 outlook = win32.Dispatch('Outlook.Application')
@@ -1430,31 +1432,76 @@ class HandoffService:
                 except Exception as diag_error:
                     self.logger.warning(f"Error collecting mail diagnostics: {diag_error}")
                 
-                # Send the email
-                try:
-                    self.logger.info(f"Attempting to send email directly...")
-                    mail.Display()
-                    mail.Send()
-                    self.logger.info(f"Email sent successfully for project {project.archive_id}")
-                    send_method = "sent"
-                except Exception as send_error:
-                    self.logger.warning(f"Failed to send email directly: {send_error}")
-                    # Log the error details
-                    if hasattr(send_error, 'excepinfo'):
-                        self.logger.warning(f"Exception info: {send_error.excepinfo}")
-                    
-                    # Fallback: Display the email for manual sending
+                # Check action parameter to determine whether to send or save
+                action = email_data.get('action', 'send')
+                
+                if action == 'save':
+                    # Save the email as MSG file
                     try:
-                        self.logger.info(f"Falling back to displaying email for manual sending...")
+                        self.logger.info(f"Attempting to save email as MSG file...")
+                        
+                        # Generate timestamp for filename
+                        timestamp = datetime.now().strftime('%d%m%y%H%M')
+                        archive_id = email_data.get('archive_id') or project.archive_id
+                        
+                        # Create export directory if it doesn't exist
+                        project_path = Path(project.project_path) if project.project_path else Path.cwd()
+                        export_dir = project_path / '.export'
+                        export_dir.mkdir(exist_ok=True)
+                        
+                        # Define MSG file path
+                        msg_filename = f'{archive_id}_handoff_{timestamp}.msg'
+                        msg_path = export_dir / msg_filename
+                        
+                        # Save as MSG file (3 = olMSG format)
+                        mail.SaveAs(str(msg_path), 3)
+                        
+                        self.logger.info(f"Email saved as MSG file: {msg_path}")
+                        send_method = "saved_msg"
+                    except Exception as save_error:
+                        self.logger.warning(f"Failed to save email as MSG file: {save_error}")
+                        # Log the error details
+                        if hasattr(save_error, 'excepinfo'):
+                            self.logger.warning(f"Exception info: {save_error.excepinfo}")
+                        
+                        # Fallback: Display the email for manual saving
+                        try:
+                            self.logger.info(f"Falling back to displaying email for manual saving...")
+                            mail.Display()
+                            self.logger.info(f"Email displayed for manual saving for project {project.archive_id}")
+                            send_method = "displayed"
+                        except Exception as display_error:
+                            self.logger.error(f"Failed to display email: {display_error}")
+                            raise Exception(f"Could not save or display email: {save_error}")
+                else:
+                    # Send the email
+                    try:
+                        self.logger.info(f"Attempting to send email directly...")
                         mail.Display()
-                        self.logger.info(f"Email displayed for manual sending for project {project.archive_id}")
-                        send_method = "displayed"
-                    except Exception as display_error:
-                        self.logger.error(f"Failed to display email: {display_error}")
-                        raise Exception(f"Could not send or display email: {send_error}")
+                        mail.Send()
+                        self.logger.info(f"Email sent successfully for project {project.archive_id}")
+                        send_method = "sent"
+                    except Exception as send_error:
+                        self.logger.warning(f"Failed to send email directly: {send_error}")
+                        # Log the error details
+                        if hasattr(send_error, 'excepinfo'):
+                            self.logger.warning(f"Exception info: {send_error.excepinfo}")
+                        
+                        # Fallback: Display the email for manual sending
+                        try:
+                            self.logger.info(f"Falling back to displaying email for manual sending...")
+                            mail.Display()
+                            self.logger.info(f"Email displayed for manual sending for project {project.archive_id}")
+                            send_method = "displayed"
+                        except Exception as display_error:
+                            self.logger.error(f"Failed to display email: {display_error}")
+                            raise Exception(f"Could not send or display email: {send_error}")
 
                 # Mark handoff as sent
                 if send_method == "sent":
+                    handoff_record.mark_sent()
+                elif send_method == "saved_msg":
+                    # For MSG files, mark as sent since file is ready for use
                     handoff_record.mark_sent()
                 else:
                     # For displayed emails, we'll mark as sent since user will likely send it
@@ -1469,14 +1516,41 @@ class HandoffService:
                     self.logger.error(f"Failed to update project handoff status: {project_update_error}")
                     # Don't fail the entire handoff if project update fails
                 
-                return {
-                    'success': True,
-                    'message': f'Email {"sent automatically" if send_method == "sent" else "opened in Outlook for manual sending"} to {email_data["to"]}',
-                    'method': send_method,
-                    'archive_id': archive_id,
-                    'film_numbers': film_numbers,
-                    'handoff_id': handoff_record.handoff_id
-                }
+                # Prepare return message based on method
+                if send_method == "saved_msg":
+                    message = f'Email saved as MSG file: {msg_filename}'
+                    return_data = {
+                        'success': True,
+                        'message': message,
+                        'method': send_method,
+                        'archive_id': archive_id,
+                        'film_numbers': film_numbers,
+                        'handoff_id': handoff_record.handoff_id,
+                        'msg_file_path': str(msg_path),
+                        'msg_filename': msg_filename
+                    }
+                elif send_method == "sent":
+                    message = f'Email sent automatically to {email_data["to"]}'
+                    return_data = {
+                        'success': True,
+                        'message': message,
+                        'method': send_method,
+                        'archive_id': archive_id,
+                        'film_numbers': film_numbers,
+                        'handoff_id': handoff_record.handoff_id
+                    }
+                else:
+                    message = f'Email opened in Outlook for manual sending to {email_data["to"]}'
+                    return_data = {
+                        'success': True,
+                        'message': message,
+                        'method': send_method,
+                        'archive_id': archive_id,
+                        'film_numbers': film_numbers,
+                        'handoff_id': handoff_record.handoff_id
+                    }
+                
+                return return_data
                 
             except Exception as outlook_error:
                 self.logger.error(f"Outlook COM error: {outlook_error}")
