@@ -38,6 +38,7 @@
             <a href="{% url 'label' %}" {% if request.path == '/label/' %}class="active"{% endif %}>Label</a>
             <a href="{% url 'handoff' %}" {% if request.path == '/handoff/' %}class="active"{% endif %}>Handoff</a>
             <a href="{% url 'explore' %}" {% if request.path == '/explore/' %}class="active"{% endif %}>Explore</a>
+            <a href="{% url 'admin' %}" {% if request.path == '/admin-panel/' %}class="active"{% endif %}>Admin</a>
             <!-- <a href="{% url 'report' %}" {% if request.path == '/report/' %}class="active"{% endif %}>Report</a> -->
         </div>
         
@@ -113,6 +114,7 @@
                         <li><a href="{% url 'label' %}">{% trans "Label" %}</a></li>
                         <li><a href="{% url 'handoff' %}">{% trans "Handoff" %}</a></li>
                         <li><a href="{% url 'explore' %}">{% trans "Explore" %}</a></li>
+                        <li><a href="{% url 'admin' %}">{% trans "Admin" %}</a></li>
                     </ul>
                 </div>
                 

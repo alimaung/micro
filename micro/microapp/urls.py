@@ -40,6 +40,7 @@ urlpatterns = [
     path('explore/', views.explore, name='explore'),
     path('report/', views.report, name='report'),
     path('settings/', views.settings_view, name='settings'),
+    path('admin-panel/', views.admin, name='admin'),
     path('login/', views.login, name='login'),
     path('logout/', views.logout_view, name='logout'),
     

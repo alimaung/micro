@@ -167,3 +167,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/explore/'
 LOGOUT_REDIRECT_URL = '/login/'
+
+# Allow admin to be displayed in iframe from same origin
+X_FRAME_OPTIONS = 'SAMEORIGIN'

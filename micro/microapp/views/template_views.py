@@ -155,6 +155,12 @@ def settings_view(request):
     return render(request, 'microapp/settings.html')
 
 
+@login_required
+def admin(request):
+    """Admin page view with embedded Django admin."""
+    return render(request, 'microapp/admin.html')
+
+
 def login(request):
     """Login page view and authentication handler."""
     error = None
