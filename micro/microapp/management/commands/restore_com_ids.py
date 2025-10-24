@@ -9,6 +9,7 @@ Usage:
     python manage.py restore_com_ids --batch           # Process only projects with missing COM IDs
     python manage.py restore_com_ids --project-id 123   # Process specific project
     python manage.py restore_com_ids --dry-run          # Show what would be updated without saving
+    python manage.py restore_com_ids --exclude-xrrd     # Exclude projects with XRRD in archive_id
 """
 
 from django.core.management.base import BaseCommand, CommandError
@@ -135,12 +136,18 @@ class Command(BaseCommand):
             action='store_true',
             help='Show detailed output for each document processed',
         )
+        parser.add_argument(
+            '--exclude-xrrd',
+            action='store_true',
+            help='Exclude projects with XRRD in their archive_id',
+        )
 
     def handle(self, *args, **options):
         self.dry_run = options['dry_run']
         self.force = options['force']
         self.verbose = options['verbose']
         self.batch = options['batch']
+        self.exclude_xrrd = options['exclude_xrrd']
         
         if self.dry_run:
             self.stdout.write(
@@ -158,6 +165,12 @@ class Command(BaseCommand):
             projects = self.get_projects_with_missing_com_ids()
         else:
             projects = Project.objects.filter(comlist_path__isnull=False).exclude(comlist_path='')
+        
+        # Apply XRRD exclusion filter if requested
+        if self.exclude_xrrd:
+            projects = [p for p in projects if 'XRRD' not in p.archive_id]
+            if self.verbose:
+                self.stdout.write('Excluding projects with XRRD in archive_id')
         
         if not projects:
             if self.batch:
@@ -225,6 +238,10 @@ class Command(BaseCommand):
         projects_with_missing_com_ids = []
         
         for project in projects_with_comlist:
+            # Skip XRRD projects if exclusion is enabled
+            if self.exclude_xrrd and 'XRRD' in project.archive_id:
+                continue
+                
             # Check if this project has documents without COM IDs
             documents_without_com_ids = Document.objects.filter(
                 project=project

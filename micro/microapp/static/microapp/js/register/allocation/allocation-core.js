@@ -24,7 +24,7 @@ const AllocationCore = (function() {
     /**
      * Initialize the allocation module
      */
-    function init() {
+    async function init() {
         try {
             // Get URL parameters
             const urlParams = new URLSearchParams(window.location.search);

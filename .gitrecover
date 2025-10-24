@@ -1,0 +1,30 @@
+### How to recover lost commits with new commits on different HEAD
+### Scenario: Accidental --hard reset, lost 4 unpushed commits and pushed new commits to new HEAD. 
+### Also one large file needs to be removed in an unpushed commit.
+
+# Step 1: Create backup of current HEAD
+git branch backup HEAD
+
+# Step 2: Reset to last known good commit state (origin)
+git reset --hard <hash0>
+
+# Step 3: Cherry-pick problematic commit and fix it
+git cherry-pick --no-commit <hash1>
+rm "<target-file>"
+git add -A
+git commit -m "<message>"
+
+# Step 4: Continue with good commits
+git cherry-pick <hash2> 
+git cherry-pick <hash3>
+git cherry-pick <hash4> 
+
+# Step 5: Add back backup commits
+git cherry-pick backup~1
+git cherry-pick backup
+
+# Step 6: Cleanup backup branch
+git branch -D backup
+
+# Step 7: Force push to remote
+git push --force-with-lease origin master

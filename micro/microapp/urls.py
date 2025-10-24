@@ -354,6 +354,7 @@ urlpatterns = [
     path('api/handoff/projects/<int:project_id>/validate/', views.validate_project_index, name='api_validate_project_index'),
     path('api/handoff/projects/<int:project_id>/generate-files/', views.generate_handoff_files, name='api_generate_handoff_files'),
     path('api/handoff/projects/<int:project_id>/send-email/', views.send_handoff_email, name='api_send_handoff_email'),
+    path('api/handoff/projects/<int:project_id>/download/<str:filename>/', views.download_handoff_file, name='api_download_handoff_file'),
     path('api/handoff/projects/<int:project_id>/preview-email/', views.preview_email_template, name='api_preview_email_template'),
     path('api/handoff/preview-original-template/', views.preview_original_template, name='api_preview_original_template'),
 ]

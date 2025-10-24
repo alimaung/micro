@@ -1249,6 +1249,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     showNotification('Email sent successfully!', 'success');
                 } else if (method === 'saved_msg') {
                     showNotification(`Email saved as MSG file: ${data.msg_filename}`, 'success');
+                    
+                    // Trigger browser download for MSG files
+                    if (data.msg_filename) {
+                        triggerFileDownload(data.msg_filename);
+                    }
                 } else {
                     showNotification('Email opened in Outlook. Please review and send manually.', 'success');
                 }
@@ -1976,6 +1981,44 @@ document.addEventListener('DOMContentLoaded', function() {
         
         console.warn('CSRF token not found');
         return '';
+    }
+    
+    function triggerFileDownload(filename) {
+        /**
+         * Trigger browser download for a handoff file.
+         * Creates a temporary link and clicks it to start the download.
+         */
+        if (!selectedProject || !filename) {
+            console.error('Cannot trigger download: missing project or filename');
+            return;
+        }
+        
+        try {
+            // Construct download URL
+            const downloadUrl = `/api/handoff/projects/${selectedProject.id}/download/${encodeURIComponent(filename)}/`;
+            
+            // Create temporary link element
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.download = filename; // Suggest filename for download
+            link.style.display = 'none';
+            
+            // Add to DOM, click, and remove
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            console.log(`Triggered download for: ${filename}`);
+            
+            // Show additional notification about download
+            setTimeout(() => {
+                showNotification(`Download started: ${filename}`, 'info');
+            }, 500);
+            
+        } catch (error) {
+            console.error('Error triggering file download:', error);
+            showNotification('Failed to start download. File saved to project directory.', 'warning');
+        }
     }
     
     // Expose functions for debugging

@@ -5,8 +5,9 @@ Handles project handoff functionality including validation and email delivery.
 
 import json
 import logging
+import os
 from django.shortcuts import get_object_or_404
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse, Http404
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.db.models import Q, Count, Case, When, IntegerField
@@ -14,6 +15,7 @@ from django.utils import timezone
 from ..models import Project, Roll, FilmLabel
 from django.template.loader import render_to_string
 import pandas as pd
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -704,4 +706,69 @@ def preview_original_template(request):
         })
         
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500) 
+        return JsonResponse({'error': str(e)}, status=500)
+
+@require_http_methods(["GET"])
+def download_handoff_file(request, project_id, filename):
+    """
+    Download handoff files (MSG, Excel, etc.) from project export directory.
+    Provides secure file serving with proper headers for browser download.
+    """
+    try:
+        project = get_object_or_404(Project, pk=project_id)
+        
+        # Construct file path
+        if not project.project_path:
+            raise Http404("Project path not configured")
+        
+        project_path = Path(project.project_path)
+        export_dir = project_path / '.export'
+        file_path = export_dir / filename
+        
+        # Security check: ensure file is within export directory
+        try:
+            file_path.resolve().relative_to(export_dir.resolve())
+        except ValueError:
+            logger.warning(f"Attempted path traversal attack: {filename}")
+            raise Http404("File not found")
+        
+        # Check if file exists
+        if not file_path.exists():
+            logger.warning(f"Requested file does not exist: {file_path}")
+            raise Http404("File not found")
+        
+        # Determine content type based on file extension
+        file_extension = file_path.suffix.lower()
+        content_types = {
+            '.msg': 'application/vnd.ms-outlook',
+            '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            '.xls': 'application/vnd.ms-excel',
+            '.dat': 'text/plain',
+            '.txt': 'text/plain',
+            '.zip': 'application/zip'
+        }
+        
+        content_type = content_types.get(file_extension, 'application/octet-stream')
+        
+        # Read file content
+        with open(file_path, 'rb') as f:
+            file_content = f.read()
+        
+        # Create response with proper headers for download
+        response = HttpResponse(file_content, content_type=content_type)
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        response['Content-Length'] = len(file_content)
+        
+        # Add security headers
+        response['X-Content-Type-Options'] = 'nosniff'
+        response['X-Frame-Options'] = 'DENY'
+        
+        logger.info(f"Serving download: {filename} ({len(file_content)} bytes) for project {project.archive_id}")
+        
+        return response
+        
+    except Http404:
+        raise
+    except Exception as e:
+        logger.error(f"Error serving download for project {project_id}, file {filename}: {e}")
+        raise Http404("File not found") 
