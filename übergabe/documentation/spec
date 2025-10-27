@@ -1,9 +1,20 @@
 # Mikrofilm-Management-Platform
 
 Diese Software soll als Einheitliche Management-Platform zur Verwaltung von Archivaufträgen, 
-spezifisch für alle Prozesse rund um die Erstellung von Mikrofilmen dienen.
+spezifisch für alle Prozesse rund um die Erstellung von Mikrofilmen dienen. 
 
-.
+Legacy-System-Capabilities (micro):
+
+Transfermanagement - Automatisches Kopieren der Dokumente aus RR-Netzwerk zum SMA-System
+Projektmanagement - Analyse (Seitenzahl, Übergrößen) + Registrierung von Aufträgen (Filmnummernvergabe)
+Verfilmungmanagement - Verfilmung der Dokumente (SMA-Schnittstelle, Rework(Reklamationen), Temporäre/Halb Rollenmanagement)
+Entwicklungmanagement - Verwaltung von Filmen zur Entwicklung (inkl. Chemikalienmanagement, Dichtemessung)
+Labelmanagement - Verwaltung und Erstellung der Filmlabels
+Blipmanagement - Erstellung der Blips für die Filmrolle
+Abfallmanagement - Verwaltung der Filmchemikalien
+
+
+
 
 ## Allgemein:
 
@@ -89,7 +100,8 @@ Beinhaltet:
 
 Im Prinzip die Fuktion "Akten auf eine vollständige Rolle bringen"
 Teilt den PDF Ordner in Rollen ein und kopiert diese in einen separaten Ordner mit der Filmnummer
-Gibt die Möglichkeit nochmal zu verfilmen
+Gibt die Möglichkeit nochmal zu verfilmen (z.B. bei Reklamationen)
+
 
 
 ### Entwicklungs-/ Chemikalienmanagement:
