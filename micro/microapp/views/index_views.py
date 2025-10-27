@@ -87,13 +87,16 @@ def validate_com_id(com_id) -> tuple[bool, str]:
 
 def normalize_document_id(doc_id: str) -> str:
     """
-    Normalize document ID by removing .pdf extension and ensuring proper format.
+    Normalize document ID by removing .pdf extension and suffixes like _001, _002.
+    
+    This handles cases where additional documents are added after filming with suffixes.
+    For example: 1422022600000227_001.PDF -> 1422022600000227
     
     Args:
         doc_id: Document ID to normalize
         
     Returns:
-        Normalized document ID
+        Normalized document ID (base barcode without suffix)
     """
     if not doc_id:
         return ""
@@ -104,6 +107,12 @@ def normalize_document_id(doc_id: str) -> str:
     # Remove .pdf extension (case-insensitive)
     if normalized.lower().endswith('.pdf'):
         normalized = normalized[:-4]
+    
+    # Remove suffixes like _001, _002, _003, etc. (underscore + digits)
+    # This allows documents added after filming to match their base barcode in COM list
+    import re
+    suffix_pattern = r'_\d{3,}$'  # Match underscore followed by 3+ digits at end
+    normalized = re.sub(suffix_pattern, '', normalized)
     
     return normalized
 

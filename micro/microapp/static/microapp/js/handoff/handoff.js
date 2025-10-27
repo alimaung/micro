@@ -191,13 +191,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 const emailFormData = JSON.parse(savedEmailData);
                 
                 if (emailTo) {
-                    emailTo.value = emailFormData.to || 'ali.maung@rolls-royce.com';
+                    emailTo.value = emailFormData.to || 'dilek.kursun@rolls-royce.com';
                 }
                 if (emailCc) {
-                    emailCc.value = emailFormData.cc || 'ali.maung@rolls-royce.com';
+                    emailCc.value = emailFormData.cc || 'jan.becker@rolls-royce.com; thomas.lux@rolls-royce.com';
                 }
                 if (emailBcc) {
-                    emailBcc.value = emailFormData.bcc || 'ali.maung@rolls-royce.com';
+                    emailBcc.value = emailFormData.bcc || 'michael.wuske@rolls-royce.com; tetiana.isakii@rolls-royce.com; shmaila.aslam@rolls-royce.com';
                 }
                 if (emailSubject) {
                     emailSubject.value = emailFormData.subject || `Microfilm Project Handoff - ${selectedProject?.archive_id || '[Archive ID]'}`;
@@ -642,7 +642,21 @@ document.addEventListener('DOMContentLoaded', function() {
         // Set data
         row.querySelector('.validation-row').dataset.documentId = item.document_id;
         row.querySelector('.roll-cell').textContent = item.roll || '-';
-        row.querySelector('.barcode-cell').textContent = item.barcode || '-';
+        
+        // Show full document ID (with suffix like _001 if present)
+        const documentIdCell = row.querySelector('.document-id-cell');
+        documentIdCell.textContent = item.document_id || '-';
+        
+        // Show normalized barcode (base barcode without suffix)
+        // Strip .pdf and suffix to show clean 16-digit barcode
+        let displayBarcode = item.barcode || '-';
+        if (displayBarcode !== '-') {
+            // Remove .pdf extension (case-insensitive)
+            displayBarcode = displayBarcode.replace(/\.pdf$/i, '');
+            // Remove suffix like _001, _002, etc.
+            displayBarcode = displayBarcode.replace(/_\d{3,}$/, '');
+        }
+        row.querySelector('.barcode-cell').textContent = displayBarcode;
         
         // Handle COM ID display with validation
         const comIdCell = row.querySelector('.com-id-cell');
@@ -927,15 +941,15 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Only set default recipients if fields are completely empty (first time setup)
         if (!emailTo.value) {
-            emailTo.value = 'ali.maung@rolls-royce.com';
+            emailTo.value = 'dilek.kursun@rolls-royce.com';
         }
         
         if (!emailCc.value && !emailCc.hasAttribute('data-user-modified')) {
-            emailCc.value = 'ali.maung@rolls-royce.com';
+            emailCc.value = 'jan.becker@rolls-royce.com; thomas.lux@rolls-royce.com';
         }
         
         if (!emailBcc.value && !emailBcc.hasAttribute('data-user-modified')) {
-            emailBcc.value = 'ali.maung@rolls-royce.com';
+            emailBcc.value = 'michael.wuske@rolls-royce.com; tetiana.isakii@rolls-royce.com; shmaila.aslam@rolls-royce.com';
         }
         
         // Update subject with archive ID and date
@@ -1208,7 +1222,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        // Prepare email data with form fields
+        // Prepare email data with form fields AND validation data
         const emailData = {
             to: emailTo.value.trim(),
             cc: emailCc.value.trim(),
@@ -1218,7 +1232,8 @@ document.addEventListener('DOMContentLoaded', function() {
             film_numbers: emailFilmNumbers ? emailFilmNumbers.value.trim() : '',
             custom_message: emailCustomMessage ? emailCustomMessage.value.trim() : '',
             use_form_data: true,  // Flag to indicate we're using form data instead of HTML body
-            action: action  // 'send' or 'save'
+            action: action,  // 'send' or 'save'
+            validated_data: validationData  // Include validation data with film_blip info
         };
 
         // Show loading state for the appropriate button
@@ -1594,15 +1609,15 @@ document.addEventListener('DOMContentLoaded', function() {
     function resetEmailForm() {
         // Reset form fields using the correct IDs from the HTML template
         if (emailTo) {
-            emailTo.value = 'ali.maung@rolls-royce.com';
+            emailTo.value = 'dilek.kursun@rolls-royce.com';
         }
         
         if (emailCc) {
-            emailCc.value = 'ali.maung@rolls-royce.com';
+            emailCc.value = 'jan.becker@rolls-royce.com; thomas.lux@rolls-royce.com';
         }
         
         if (emailBcc) {
-            emailBcc.value = 'ali.maung@rolls-royce.com';
+            emailBcc.value = 'michael.wuske@rolls-royce.com; tetiana.isakii@rolls-royce.com; shmaila.aslam@rolls-royce.com';
         }
         
         if (emailSubject) {

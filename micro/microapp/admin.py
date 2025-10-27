@@ -6,7 +6,7 @@ from .models import (
     DistributionResult, ReferenceSheet, ReadablePageDescription, AdjustedRange,
     ProcessedDocument, FilmingSession, FilmingSessionLog,
     DevelopmentSession, ChemicalBatch, DevelopmentLog, DensityMeasurement,
-    FilmLabel, AnalyzedFolder
+    FilmLabel, AnalyzedFolder, HandoffRecord, HandoffValidationSnapshot
 )
 
 class ProjectAdmin(admin.ModelAdmin):
@@ -642,6 +642,82 @@ class AnalyzedFolderAdmin(admin.ModelAdmin):
         }),
     )
 
+class HandoffRecordAdmin(admin.ModelAdmin):
+    list_display = ('id', 'handoff_id', 'project', 'user', 'recipient_email', 'recipient_name',
+                    'status', 'validation_status', 'total_documents', 'validated_documents',
+                    'warning_documents', 'error_documents', 'total_rolls', 'created_at', 'sent_at',
+                    'is_successful', 'has_validation_issues', 'total_file_size_mb')
+    search_fields = ('handoff_id', 'project__archive_id', 'recipient_email', 'recipient_name', 
+                     'user__username', 'film_numbers')
+    list_filter = ('status', 'validation_status', 'created_at', 'sent_at')
+    readonly_fields = ('id', 'handoff_id', 'created_at', 'sent_at', 'acknowledged_at', 'completed_at',
+                       'last_retry_at', 'is_successful', 'has_validation_issues', 'validation_summary',
+                       'total_file_size_mb', 'excel_file_size', 'dat_file_size')
+    fieldsets = (
+        ('Identification', {
+            'fields': ('id', 'handoff_id', 'project', 'user')
+        }),
+        ('Email Details', {
+            'fields': ('recipient_email', 'recipient_name', 'subject', 'custom_message')
+        }),
+        ('Validation Summary', {
+            'fields': ('validation_status', 'validation_summary', 'total_documents', 
+                      'validated_documents', 'warning_documents', 'error_documents')
+        }),
+        ('Film Roll Summary', {
+            'fields': ('total_rolls', 'film_numbers')
+        }),
+        ('File Attachments', {
+            'fields': ('excel_file_path', 'excel_file_size', 'dat_file_path', 
+                      'dat_file_size', 'total_file_size_mb')
+        }),
+        ('Status & Tracking', {
+            'fields': ('status', 'is_successful', 'has_validation_issues')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'sent_at', 'acknowledged_at', 'completed_at')
+        }),
+        ('Error Handling', {
+            'fields': ('error_message', 'retry_count', 'last_retry_at')
+        }),
+        ('Metadata', {
+            'fields': ('outlook_message_id', 'ip_address', 'user_agent')
+        }),
+    )
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('project', 'user')
+
+class HandoffValidationSnapshotAdmin(admin.ModelAdmin):
+    list_display = ('id', 'handoff_record', 'document_id', 'roll_number', 'barcode', 
+                    'com_id', 'validation_status', 'missing_com_id', 'missing_film_blip',
+                    'blip_mismatch', 'created_at')
+    search_fields = ('handoff_record__handoff_id', 'document_id', 'roll_number', 
+                     'barcode', 'com_id', 'temp_blip', 'film_blip')
+    list_filter = ('validation_status', 'missing_com_id', 'missing_film_blip', 
+                   'blip_mismatch', 'created_at')
+    readonly_fields = ('id', 'created_at')
+    fieldsets = (
+        ('Identification', {
+            'fields': ('id', 'handoff_record', 'document_id', 'roll_number', 'barcode')
+        }),
+        ('Document Details', {
+            'fields': ('com_id', 'temp_blip', 'film_blip')
+        }),
+        ('Validation Status', {
+            'fields': ('validation_status', 'validation_message')
+        }),
+        ('Issues Identified', {
+            'fields': ('missing_com_id', 'missing_film_blip', 'blip_mismatch', 'other_issues')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at',)
+        }),
+    )
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('handoff_record', 'handoff_record__project')
+
 # Register all models
 admin.site.register(Project, ProjectAdmin)
 admin.site.register(Document, DocumentAdmin)
@@ -669,3 +745,5 @@ admin.site.register(DevelopmentLog, DevelopmentLogAdmin)
 admin.site.register(DensityMeasurement, DensityMeasurementAdmin)
 admin.site.register(FilmLabel, FilmLabelAdmin)
 admin.site.register(AnalyzedFolder, AnalyzedFolderAdmin)
+admin.site.register(HandoffRecord, HandoffRecordAdmin)
+admin.site.register(HandoffValidationSnapshot, HandoffValidationSnapshotAdmin)

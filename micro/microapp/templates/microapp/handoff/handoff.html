@@ -82,6 +82,7 @@
                 <thead>
                     <tr>
                         <th scope="col">Roll</th>
+                        <th scope="col">Document ID</th>
                         <th scope="col">Barcode</th>
                         <th scope="col">COM ID (Bildnummer)</th>
                         <th scope="col">Temporary Blip</th>
@@ -141,7 +142,7 @@
                 <div class="email-field">
                     <label for="email-to">To: <span class="required">*</span></label>
                     <div class="input-with-buttons">
-                        <input type="email" id="email-to" value="ali.maung@rolls-royce.com" multiple required aria-describedby="to-help">
+                        <input type="email" id="email-to" value="Dilek.kursun@rolls-royce.com" multiple required aria-describedby="to-help">
                         <button type="button" class="add-recipient-btn" id="add-recipient" aria-label="Add recipient">
                             <i class="fas fa-plus"></i> Add Recipient
                         </button>
@@ -152,7 +153,7 @@
                 <div class="email-field">
                     <label for="email-cc">CC:</label>
                     <div class="input-with-buttons">
-                        <input type="email" id="email-cc" value="ali.maung@rolls-royce.com" multiple aria-describedby="cc-help">
+                        <input type="email" id="email-cc" value="jan.becker@rolls-royce.com; thomas.lux@rolls-royce.com" multiple aria-describedby="cc-help">
                         <button type="button" class="clear-cc-btn" id="clear-cc-btn" title="Clear CC recipients" aria-label="Clear CC recipients">
                             <i class="fas fa-times"></i> Clear CC
                         </button>
@@ -165,7 +166,7 @@
                 <div class="email-field">
                     <label for="email-bcc">BCC:</label>
                     <div class="input-with-buttons">
-                        <input type="email" id="email-bcc" value="ali.maung@rolls-royce.com" multiple aria-describedby="bcc-help">
+                        <input type="email" id="email-bcc" value="michael.wuske@rolls-royce.com; tetiana.isakii@rolls-royce.com; shmaila.aslam@rolls-royce.com" multiple aria-describedby="bcc-help">
                         <button type="button" class="clear-bcc-btn" id="clear-bcc-btn" title="Clear BCC recipients" aria-label="Clear BCC recipients">
                             <i class="fas fa-times"></i> Clear BCC
                         </button>
@@ -355,6 +356,7 @@
 <template id="validation-row-template">
     <tr class="validation-row" data-document-id="">
         <td class="roll-cell"></td>
+        <td class="document-id-cell"></td>
         <td class="barcode-cell"></td>
         <td class="com-id-cell"></td>
         <td class="temp-blip-cell"></td>

@@ -26,9 +26,9 @@ logger = logging.getLogger(__name__)
 
 # Default email recipients
 DEFAULT_EMAIL_RECIPIENTS = {
-    'to': 'ali.maung@rolls-royce.com',
-    'cc': 'ali.maung@rolls-royce.com',
-    'bcc': 'ali.maung@rolls-royce.com'
+    'to': 'Dilek.kursun@rolls-royce.com', 
+    'cc': 'jan.becker@rolls-royce.com; thomas.lux@rolls-royce.com',
+    'bcc': 'michael.wuske@rolls-royce.com; tetiana.isakii@rolls-royce.com; shmaila.aslam@rolls-royce.com'
 }
 
 def validate_barcode(barcode: str) -> Tuple[bool, str]:
@@ -96,15 +96,18 @@ def validate_com_id(com_id: Any) -> Tuple[bool, str]:
     
     return False, clean_com_id
 
-def normalize_document_id(doc_id: str) -> str:
+def remove_pdf_extension(doc_id: str) -> str:
     """
-    Normalize document ID by removing .pdf extension and ensuring proper format.
+    Remove only the .pdf extension from document ID, preserving suffixes.
+    
+    This is used for film log lookups where documents with suffixes are filmed separately.
+    For example: 1422022600000227_001.PDF -> 1422022600000227_001
     
     Args:
-        doc_id: Document ID to normalize
+        doc_id: Document ID to process
         
     Returns:
-        Normalized document ID
+        Document ID without .pdf extension but with suffix preserved
     """
     if not doc_id:
         return ""
@@ -115,6 +118,34 @@ def normalize_document_id(doc_id: str) -> str:
     # Remove .pdf extension (case-insensitive)
     if normalized.lower().endswith('.pdf'):
         normalized = normalized[:-4]
+    
+    return normalized
+
+def normalize_document_id(doc_id: str) -> str:
+    """
+    Normalize document ID by removing .pdf extension and suffixes like _001, _002.
+    
+    This handles cases where additional documents are added after filming with suffixes.
+    For example: 1422022600000227_001.PDF -> 1422022600000227
+    
+    This should ONLY be used for COM ID lookups, NOT for film log lookups.
+    
+    Args:
+        doc_id: Document ID to normalize
+        
+    Returns:
+        Normalized document ID (base barcode without suffix)
+    """
+    if not doc_id:
+        return ""
+    
+    # First remove .pdf extension
+    normalized = remove_pdf_extension(doc_id)
+    
+    # Remove suffixes like _001, _002, _003, etc. (underscore + digits)
+    # This allows documents added after filming to match their base barcode in COM list
+    suffix_pattern = r'_\d{3,}$'  # Match underscore followed by 3+ digits at end
+    normalized = re.sub(suffix_pattern, '', normalized)
     
     return normalized
 
@@ -546,23 +577,34 @@ class HandoffService:
         com_id = temp_entry.get('com_id', '')
         temp_blip = temp_entry.get('temp_blip', '')
         
-        # Normalize and validate inputs using our robust utilities
-        normalized_doc_id = normalize_document_id(document_id)
+        # IMPORTANT: For film log lookups, we need to preserve suffixes like _001, _002
+        # because these are filmed as separate documents with different blips.
+        # Only use normalize_document_id() for COM ID validation (base barcode).
         
-        # Validate and normalize barcode (should be 16 digits)
-        barcode_valid, normalized_barcode = validate_barcode(barcode)
-        if not barcode_valid and barcode:
-            self.logger.warning(f"Invalid barcode format: '{barcode}' for document {document_id}. Expected 16 digits.")
+        # Remove only .pdf extension, keep suffixes for film log lookup
+        doc_id_for_film_lookup = remove_pdf_extension(document_id)
+        
+        # For COM ID validation, normalize completely (remove suffix too)
+        normalized_doc_id_for_com = normalize_document_id(document_id)
+        
+        # Validate barcode - normalize for validation but keep original for lookup
+        barcode_for_film_lookup = remove_pdf_extension(barcode)
+        normalized_barcode_for_validation = normalize_document_id(barcode)
+        
+        # Validate and normalize barcode (should be 16 digits after removing suffix)
+        barcode_valid, normalized_barcode = validate_barcode(normalized_barcode_for_validation)
+        if not barcode_valid and normalized_barcode_for_validation:
+            self.logger.warning(f"Invalid barcode format: '{barcode}' (base: '{normalized_barcode_for_validation}') for document {document_id}. Expected 16 digits.")
         
         # Validate and normalize COM ID (should be 8 digits)
         com_id_valid, normalized_com_id = validate_com_id(com_id)
         if not com_id_valid and com_id:
             self.logger.warning(f"Invalid COM ID format: '{com_id}' for document {document_id}. Expected 8 digits.")
         
-        # Use normalized values for lookup
-        lookup_barcode = normalized_barcode if barcode_valid else normalized_doc_id.lower()
+        # Use document ID WITH suffix for film log lookup (preserves _001, _002, etc.)
+        lookup_barcode = barcode_for_film_lookup if barcode_for_film_lookup else doc_id_for_film_lookup.lower()
         
-        # Create normalized lookup key using the best available identifier
+        # Create lookup key using document ID with suffix preserved
         lookup_key = f"{roll}_{lookup_barcode}"
         
         # Try alternate keys if the main one isn't found
@@ -877,7 +919,16 @@ class HandoffService:
             if not com_id_valid and entry.com_id:
                 self.logger.warning(f"Invalid COM ID format for entry {i}: '{entry.com_id}'. Expected 8 digits.")
             
+            # Use film_blip (actual filmed blip) if available, otherwise temp_blip
+            # For warnings, we MUST use film_blip since that's the actual blip from filming
             clean_blip = entry.film_blip or entry.temp_blip or ''
+            
+            # Log which blip source is being used for warnings
+            if entry.status == 'warning':
+                if entry.film_blip:
+                    self.logger.info(f"Entry {i} (warning): Using film_blip: {entry.film_blip} (temp was: {entry.temp_blip})")
+                else:
+                    self.logger.warning(f"Entry {i} (warning): No film_blip available, using temp_blip: {entry.temp_blip}")
             
             data.append({
                 'Barcode': clean_barcode,
@@ -1183,13 +1234,13 @@ class HandoffService:
             
             # Handle default recipients
             if not email_data.get('to'):
-                email_data['to'] = 'ali.maung@rolls-royce.com'
+                email_data['to'] = DEFAULT_EMAIL_RECIPIENTS['to']
             
             if not email_data.get('cc'):
-                email_data['cc'] = 'ali.maung@rolls-royce.com'
+                email_data['cc'] = DEFAULT_EMAIL_RECIPIENTS['cc']
             
             if not email_data.get('bcc'):
-                email_data['bcc'] = 'ali.maung@rolls-royce.com'
+                email_data['bcc'] = DEFAULT_EMAIL_RECIPIENTS['bcc']
 
             # Validate email addresses before proceeding
             def validate_email_list(email_string):

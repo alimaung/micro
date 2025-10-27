@@ -191,13 +191,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 const emailFormData = JSON.parse(savedEmailData);
                 
                 if (emailTo) {
-                    emailTo.value = emailFormData.to || 'ali.maung@rolls-royce.com';
+                    emailTo.value = emailFormData.to || 'dilek.kursun@rolls-royce.com';
                 }
                 if (emailCc) {
-                    emailCc.value = emailFormData.cc || 'ali.maung@rolls-royce.com';
+                    emailCc.value = emailFormData.cc || 'jan.becker@rolls-royce.com';
                 }
                 if (emailBcc) {
-                    emailBcc.value = emailFormData.bcc || 'ali.maung@rolls-royce.com';
+                    emailBcc.value = emailFormData.bcc || 'thomas.lux@rolls-royce.com';
                 }
                 if (emailSubject) {
                     emailSubject.value = emailFormData.subject || `Microfilm Project Handoff - ${selectedProject?.archive_id || '[Archive ID]'}`;
@@ -921,15 +921,15 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Only set default recipients if fields are completely empty (first time setup)
         if (!emailTo.value) {
-            emailTo.value = 'ali.maung@rolls-royce.com';
+            emailTo.value = 'dilek.kursun@rolls-royce.com';
         }
         
         if (!emailCc.value && !emailCc.hasAttribute('data-user-modified')) {
-            emailCc.value = 'ali.maung@rolls-royce.com';
+            emailCc.value = 'jan.becker@rolls-royce.com';
         }
         
         if (!emailBcc.value && !emailBcc.hasAttribute('data-user-modified')) {
-            emailBcc.value = 'ali.maung@rolls-royce.com';
+            emailBcc.value = 'thomas.lux@rolls-royce.com';
         }
         
         // Update subject with archive ID and date
@@ -1566,15 +1566,15 @@ document.addEventListener('DOMContentLoaded', function() {
     function resetEmailForm() {
         // Reset form fields using the correct IDs from the HTML template
         if (emailTo) {
-            emailTo.value = 'ali.maung@rolls-royce.com';
+            emailTo.value = 'dilek.kursun@rolls-royce.com';
         }
         
         if (emailCc) {
-            emailCc.value = 'ali.maung@rolls-royce.com';
+            emailCc.value = 'jan.becker@rolls-royce.com';
         }
         
         if (emailBcc) {
-            emailBcc.value = 'ali.maung@rolls-royce.com';
+            emailBcc.value = 'thomas.lux@rolls-royce.com';
         }
         
         if (emailSubject) {
