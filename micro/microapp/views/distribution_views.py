@@ -32,7 +32,7 @@ def distribution_status(request, project_id):
     Returns:
         JSON response with distribution status
     """
-    project = get_object_or_404(Project, pk=project_id, owner=request.user)
+    project = get_object_or_404(Project, pk=project_id)
     
     try:
         # Check if distribution has been done
@@ -81,7 +81,7 @@ def distribute_documents(request, project_id):
     Returns:
         JSON response with distribution results
     """
-    project = get_object_or_404(Project, pk=project_id, owner=request.user)
+    project = get_object_or_404(Project, pk=project_id)
     
     # Check if film allocation has been done
     if not project.film_allocation_complete:
@@ -155,7 +155,7 @@ def generate_reference_sheets(request, project_id):
     Returns:
         JSON response with reference sheet generation results
     """
-    project = get_object_or_404(Project, pk=project_id, owner=request.user)
+    project = get_object_or_404(Project, pk=project_id)
     
     try:
         # Parse JSON payload

@@ -1189,6 +1189,12 @@ window.TransferCore = class TransferCore {
                 // Register analyzed folder as project using the proper API
                 this.ui.addLogEntry(`Registering analyzed folder (ID: ${analyzedFolderId}) as project...`);
                 
+                // Construct output_dir with .output subfolder
+                let outputDir = null;
+                if (this.state.sourceData.path) {
+                    outputDir = this.state.sourceData.path + '\\.output';
+                }
+                
                 // Create project data identical to regular registration flow
                 const projectData = {
                     archive_id: this.state.projectInfo.archiveId || '',
@@ -1197,7 +1203,7 @@ window.TransferCore = class TransferCore {
                     project_path: this.state.sourceData.path || '',
                     project_folder_name: this.state.sourceData.folderName || '',
                     comlist_path: this.state.projectInfo.comlistPath || null,
-                    output_dir: this.state.destinationPath || null,
+                    output_dir: outputDir,
                     retain_sources: true,
                     add_to_database: true,
                     pdf_folder_path: this.state.projectInfo.pdfPath || '',
@@ -1215,6 +1221,12 @@ window.TransferCore = class TransferCore {
                 }
             } else {
                 // Regular project creation
+                // Construct output_dir with .output subfolder
+                let outputDir = null;
+                if (this.state.sourceData.path) {
+                    outputDir = this.state.sourceData.path + '\\.output';
+                }
+                
                 const projectData = {
                     archive_id: this.state.projectInfo.archiveId || '',
                     location: this.state.projectInfo.location || '',
@@ -1222,7 +1234,7 @@ window.TransferCore = class TransferCore {
                     project_path: this.state.sourceData.path || '',
                     project_folder_name: this.state.sourceData.folderName || '',
                     comlist_path: this.state.projectInfo.comlistPath || null,
-                    output_dir: this.state.destinationPath || null,
+                    output_dir: outputDir,
                     
                     // Include processed metadata if available
                     has_pdf_folder: !!this.state.projectInfo.pdfPath,
