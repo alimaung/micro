@@ -1,29 +1,91 @@
 {% extends 'microapp/base.html' %}
 {% load i18n %}
+{% load static %}
 
-{% block title %}Docs · Micro{% endblock %}
+{% block title %}{% trans "Documentation" %} · Micro{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'microapp/css/docs.css' %}">
+{% endblock %}
 
 {% block content %}
-<div class="docs-layout" style="display:flex; gap:24px; align-items:stretch;">
-  <aside class="card docs-sidebar" style="flex:0 0 280px; min-height:60vh;">
-    <h3 style="margin-top:0;">{% trans "Documentation" %}</h3>
-    <div class="subtitle">{% trans "Browse files" %}</div>
-    <ul style="list-style:none; padding-left:0; margin-top:16px;">
-      {% for f in files %}
-        <li style="margin-bottom:8px;">
-          <a href="{% url 'docs' %}?file={{ f }}" class="{% if selected == f %}active{% endif %}">{{ f }}</a>
-        </li>
-      {% empty %}
-        <li class="loading-state" style="color:var(--color-text-light);">{% trans "No documentation files found." %}</li>
-      {% endfor %}
-    </ul>
+<div class="docs-layout">
+  <!-- Sidebar -->
+  <aside class="card docs-sidebar">
+    <!-- Documentation Section -->
+    <div class="docs-section">
+      <h3>
+        <i class="fas fa-book"></i>
+        {% trans "Documentation" %}
+      </h3>
+      <p class="subtitle">{% trans "Browse documentation files" %}</p>
+      
+      {% if files %}
+        <ul class="docs-file-list">
+          {% for f in files %}
+            <li class="docs-file-item">
+              <a href="{% url 'docs' %}?file={{ f }}" 
+                 class="docs-file-link {% if selected == f %}active{% endif %}">
+                <i class="fas fa-file-alt docs-file-icon"></i>
+                <span class="docs-file-name">{{ f }}</span>
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <div class="docs-empty-state" style="padding: 24px 12px;">
+          <i class="fas fa-file-alt"></i>
+          <p style="margin: 8px 0 0 0; font-size: 0.85rem;">{% trans "No documentation files found" %}</p>
+        </div>
+      {% endif %}
+    </div>
+
+    <hr class="docs-section-divider" />
+
+    <!-- Explorer Section -->
+    <div class="docs-section">
+      <h3>
+        <i class="fas fa-hdd"></i>
+        {% trans "Drive Explorer" %}
+      </h3>
+      <p class="subtitle">{% trans "Browse X:\\ folders" %}</p>
+      
+      {% if drive_folders %}
+        <ul class="docs-folder-list">
+          {% for folder in drive_folders %}
+            <li class="docs-folder-item">
+              <a href="{% url 'docs' %}?folder={{ folder }}" 
+                 class="docs-folder-link {% if selected_folder == folder %}active{% endif %}">
+                <i class="fas fa-folder docs-folder-icon"></i>
+                <span class="docs-folder-name">{{ folder }}</span>
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <div class="docs-empty-state" style="padding: 24px 12px;">
+          <i class="fas fa-hdd"></i>
+          <p style="margin: 8px 0 0 0; font-size: 0.85rem;">{% trans "No folders found on X:\\" %}</p>
+        </div>
+      {% endif %}
+    </div>
   </aside>
-  <section class="card docs-content" style="flex:1 1 auto; min-height:60vh;">
-    {% if content %}
+
+  <!-- Content Area -->
+  <section class="card docs-content">
+    {% if folder_tree_html %}
+      <!-- Explorer Tree View -->
+      {{ folder_tree_html|safe }}
+    {% elif content %}
+      <!-- Documentation Content -->
       {{ content|safe }}
     {% else %}
-      <h2 style="margin-top:0;">{% trans "Reader" %}</h2>
-      <p class="subtitle">{% trans "Select a document from the sidebar to view it here." %}</p>
+      <!-- Empty State -->
+      <div class="docs-empty-state">
+        <i class="fas fa-folder-open"></i>
+        <h3>{% trans "Welcome to Documentation" %}</h3>
+        <p>{% trans "Select a document or folder from the sidebar to view its contents." %}</p>
+      </div>
     {% endif %}
   </section>
 </div>
