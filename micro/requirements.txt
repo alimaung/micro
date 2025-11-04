@@ -1,3 +1,14 @@
 Django>=4.2.0
 openpyxl>=3.1.0
-reportlab>=4.0.0 
+reportlab>=4.0.0
+channels
+daphne
+pyserial
+pywin32
+PyPDF2
+xlrd
+pandas
+websocket
+psutil
+websockets
+markdown>=3.5

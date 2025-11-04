@@ -613,37 +613,34 @@ def process_index_initialization(task_id, project_id, allocation_results=None):
             },
             "index": []
         }
+        # Collect non-fatal issues to surface to the client
+        index_data["metadata"]["warnings"] = []
         
         # Iterate through 16mm film rolls
         for roll in pseudo_project.film_allocation.rolls_16mm:
             roll_id = roll.roll_id
             print(f"DEBUG: Processing roll {roll_id} with {len(roll.document_segments)} segments")
             
+            # Collect entries for this roll first (enables sequence checks and inference)
+            roll_entries = []
             # Iterate through document segments in this roll
             for segment in roll.document_segments:
                 doc_id = segment.doc_id
-                
                 # Get document index (position on this roll)
                 doc_index = segment.document_index
-                
                 # Get frame range for this segment
                 frame_range = segment.frame_range
-                
                 # Normalize document ID and validate it as barcode
                 normalized_doc_id = normalize_document_id(doc_id)
                 barcode_valid, validated_barcode = validate_barcode(normalized_doc_id)
-                
                 # Use validated barcode for COM ID lookup
                 lookup_key = validated_barcode if barcode_valid else normalized_doc_id
-                
                 # Get COM ID from the mapping
                 com_id = com_id_mappings.get(lookup_key, None)
-
                 # If not found, try alternative lookup methods with original format
                 if com_id is None:
                     # Try with original document ID (remove .pdf extension)
                     com_id = com_id_mappings.get(normalized_doc_id, None)
-                    
                     # Try with numeric conversion for backward compatibility
                     if com_id is None:
                         try:
@@ -651,63 +648,116 @@ def process_index_initialization(task_id, project_id, allocation_results=None):
                             com_id = com_id_mappings.get(numeric_id, None)
                         except (ValueError, TypeError):
                             pass
-
                 # Log validation results
                 if not barcode_valid and normalized_doc_id:
                     print(f"DEBUG: Document ID '{doc_id}' is not a valid 16-digit barcode: '{normalized_doc_id}'")
-
                 # If COM ID is still not found, generate a placeholder
                 if com_id is None:
-                    # Use a placeholder COM ID (negative roll_id to avoid conflicts)
-                    com_id = f"PH{roll_id:06d}"  # Use string placeholder instead of negative number
+                    com_id = f"PH{roll_id:06d}"
                     print(f"DEBUG: No COM ID found for doc_id: {doc_id} (lookup_key: {lookup_key}), using placeholder: {com_id}")
                 else:
                     print(f"DEBUG: Found COM ID: {com_id} for doc_id: {doc_id} (lookup_key: {lookup_key})")
-                
-                # Update document COM ID if available
+                # Add to buffer for this roll
+                roll_entries.append({
+                    "doc_id": doc_id,
+                    "normalized_doc_id": normalized_doc_id,
+                    "barcode_valid": barcode_valid,
+                    "validated_barcode": validated_barcode if barcode_valid else None,
+                    "com_id": com_id,
+                    "initial_index": [roll_id, frame_range[0], frame_range[1]],
+                    "final_index": None,
+                    "doc_index": doc_index
+                })
+
+            # Try to infer missing COM IDs if clearly between two sequential numbers
+            for i in range(1, len(roll_entries) - 1):
+                prev_entry = roll_entries[i - 1]
+                curr_entry = roll_entries[i]
+                next_entry = roll_entries[i + 1]
+                curr_is_placeholder = isinstance(curr_entry["com_id"], str) and curr_entry["com_id"].startswith("PH")
+                prev_com = prev_entry["com_id"]
+                next_com = next_entry["com_id"]
+                # Ensure neighbors are numeric COM IDs
+                if curr_is_placeholder and isinstance(prev_com, str) and isinstance(next_com, str) and prev_com.isdigit() and next_com.isdigit():
+                    prev_num = int(prev_com)
+                    next_num = int(next_com)
+                    # Verify barcode sequence if available
+                    barcode_gate_ok = True
+                    if prev_entry["validated_barcode"] is not None and next_entry["validated_barcode"] is not None:
+                        if isinstance(prev_entry["validated_barcode"], str) and prev_entry["validated_barcode"].isdigit() and isinstance(next_entry["validated_barcode"], str) and next_entry["validated_barcode"].isdigit():
+                            if int(next_entry["validated_barcode"]) - int(prev_entry["validated_barcode"]) != 2:
+                                barcode_gate_ok = False
+                    # If both sides indicate exactly one missing value, fill it
+                    if (next_num - prev_num == 2) and barcode_gate_ok:
+                        inferred = prev_num + 1
+                        curr_entry["com_id"] = f"{inferred:08d}"
+                        print(f"DEBUG: Inferred COM ID {curr_entry['com_id']} for doc_id: {curr_entry['doc_id']} based on neighbors {prev_com} and {next_com}")
+                    else:
+                        # Not a clean single-gap sequence; warn and keep placeholder
+                        warn_msg = (
+                            f"Roll {roll_id}: Non-sequential COM IDs around doc '{curr_entry['doc_id']}' — "
+                            f"prev={prev_com}, curr={curr_entry['com_id']}, next={next_com}"
+                        )
+                        print(f"DEBUG: WARNING: {warn_msg}")
+                        index_data["metadata"]["warnings"].append(warn_msg)
+
+            # Also verify incrementing sequences for barcodes and COM IDs for entire roll
+            for j in range(1, len(roll_entries)):
+                prev_e = roll_entries[j - 1]
+                curr_e = roll_entries[j]
+                # Barcode sequence check (if both valid)
+                if prev_e["validated_barcode"] and curr_e["validated_barcode"]:
+                    try:
+                        if int(curr_e["validated_barcode"]) - int(prev_e["validated_barcode"]) != 1:
+                            warn_b = (
+                                f"Roll {roll_id}: Barcode jump between '{prev_e['doc_id']}' and '{curr_e['doc_id']}' "
+                                f"({prev_e['validated_barcode']} -> {curr_e['validated_barcode']})"
+                            )
+                            print(f"DEBUG: WARNING: {warn_b}")
+                            index_data["metadata"]["warnings"].append(warn_b)
+                    except Exception:
+                        pass
+                # COM ID sequence check (numeric only)
+                if isinstance(prev_e["com_id"], str) and prev_e["com_id"].isdigit() and isinstance(curr_e["com_id"], str) and curr_e["com_id"].isdigit():
+                    if int(curr_e["com_id"]) - int(prev_e["com_id"]) != 1:
+                        warn_c = (
+                            f"Roll {roll_id}: COM ID jump between '{prev_e['doc_id']}' and '{curr_e['doc_id']}' "
+                            f"({prev_e['com_id']} -> {curr_e['com_id']})"
+                        )
+                        print(f"DEBUG: WARNING: {warn_c}")
+                        index_data["metadata"]["warnings"].append(warn_c)
+
+            # After inference, update pseudo project documents and DB, then emit index entries
+            for entry in roll_entries:
+                # Update pseudo project doc
                 for doc in pseudo_project.documents:
-                    if doc.doc_id == doc_id and com_id is not None:
-                        doc.com_id = com_id
-                
-                # Also update the actual Document model in the database
+                    if doc.doc_id == entry["doc_id"] and entry["com_id"] is not None:
+                        doc.com_id = entry["com_id"]
+                # Update DB document with validated COM ID
                 try:
-                    # Use validated barcode or normalized doc_id for database lookup
-                    lookup_doc_id = validated_barcode if barcode_valid else normalized_doc_id
+                    lookup_doc_id = entry["validated_barcode"] if entry["barcode_valid"] else entry["normalized_doc_id"]
                     db_document = Document.objects.filter(project=project, doc_id=lookup_doc_id).first()
-                    
-                    # Also try with original normalized doc_id if not found
-                    if not db_document and lookup_doc_id != normalized_doc_id:
-                        db_document = Document.objects.filter(project=project, doc_id=normalized_doc_id).first()
-                    
-                    if db_document and com_id is not None:
-                        # Validate COM ID before storing in database
-                        com_id_valid, validated_com_id = validate_com_id(com_id)
+                    if not db_document and lookup_doc_id != entry["normalized_doc_id"]:
+                        db_document = Document.objects.filter(project=project, doc_id=entry["normalized_doc_id"]).first()
+                    if db_document and entry["com_id"] is not None:
+                        com_id_valid, validated_com_id = validate_com_id(entry["com_id"])
                         if com_id_valid:
                             db_document.com_id = validated_com_id
                             db_document.save()
                             print(f"DEBUG: Updated COM ID {validated_com_id} for document {lookup_doc_id} in database")
                         else:
-                            print(f"DEBUG: Skipping database update - invalid COM ID format: {com_id}")
+                            print(f"DEBUG: Skipping database update - invalid COM ID format: {entry['com_id']}")
                 except Exception as e:
-                    print(f"DEBUG: Error updating COM ID for document {lookup_doc_id}: {str(e)}")
-                    # Don't fail the whole process for this error
+                    print(f"DEBUG: Error updating COM ID for document {entry['doc_id']}: {str(e)}")
                     pass
-                
-                # Create initial index array with [roll_id, frameRange_start, frameRange_end]
-                initial_index = [roll_id, frame_range[0], frame_range[1]]
-                
-                # Create index entry with document index
-                index_entry = [
-                    doc_id,                # Document ID
-                    com_id,                # COM ID
-                    initial_index,         # Initial index [roll_id, frameRange_start, frameRange_end]
-                    None,                  # Final index (to be filled later)
-                    doc_index              # Document index (position on roll)
-                ]
-                
-                # Add to index
-                index_data["index"].append(index_entry)
-                
+                # Append to final index
+                index_data["index"].append([
+                    entry["doc_id"],
+                    entry["com_id"],
+                    entry["initial_index"],
+                    entry["final_index"],
+                    entry["doc_index"]
+                ])
         
         # Update task progress
         print(f"DEBUG: Index built with {len(index_data['index'])} entries")

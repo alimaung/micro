@@ -11,7 +11,7 @@ import time
 import threading
 from datetime import datetime
 from django.db import transaction, connection
-from django.db.models import Sum, Count, Q
+from django.db.models import Sum, Count, Q, Max
 from django.conf import settings
 from django.core.cache import cache
 
@@ -302,29 +302,9 @@ class FilmNumberManager:
         # Track frame start positions for each roll
         roll_frame_positions = {}
         
-        # Map to track document ID to original roll ID 
-        # We'll use this to maintain consistent roll IDs from frontend data
-        doc_to_roll_id = {}
-        # Try to populate this map from allocation requests
-        try:
-            # Find the original allocation data if it's stored in the project
-            cache_key = f"allocation_data_{project.pk}"
-            allocation_data = cache.get(cache_key)
-            
-            if allocation_data and 'allocationResults' in allocation_data:
-                results = allocation_data['allocationResults'].get('results', {})
-                # If we have 35mm rolls in the allocation data, use those to map documents to rolls
-                if 'rolls_35mm' in results:
-                    for roll_data in results['rolls_35mm']:
-                        roll_id = roll_data.get('roll_id')
-                        if roll_id:
-                            for seg in roll_data.get('document_segments', []):
-                                doc_id = seg.get('doc_id')
-                                if doc_id:
-                                    doc_to_roll_id[doc_id] = roll_id
-                                    self.logger.info(f"Mapped document {doc_id} to roll_id {roll_id} from allocation data")
-        except Exception as e:
-            self.logger.warning(f"Could not load allocation data for document-to-roll mapping: {str(e)}")
+        # Determine next roll_id to assign for new 35mm rolls within this project
+        existing_max_roll_id = Roll.objects.filter(project=project, film_type=FilmType.FILM_35MM).aggregate(max_id=Max('roll_id'))['max_id'] or 0
+        next_roll_id = (existing_max_roll_id or 0) + 1
         
         # Process each document allocation request in order
         # This preserves the alphabetical ordering
@@ -448,14 +428,9 @@ class FilmNumberManager:
                 # Get a new film number
                 film_number = self._get_next_film_number(project.location_code)
                 
-                # Try to find the original roll_id from our mapping
-                roll_id_to_use = doc_to_roll_id.get(doc_id)
-                if roll_id_to_use is None:
-                    # If no mapping exists, use 1 as default
-                    self.logger.info(f"No original roll_id found for document {doc_id}, using default roll_id=1")
-                    roll_id_to_use = 1
-                else:
-                    self.logger.info(f"Using original roll_id={roll_id_to_use} for document {doc_id} from allocation data")
+                # Assign a sequential roll_id for 35mm within this project
+                roll_id_to_use = next_roll_id
+                self.logger.info(f"Assigning new 35mm roll_id={roll_id_to_use} for document {doc_id}")
                 
                 # Create a new roll with duplicate protection
                 roll, created = Roll.objects.get_or_create(
@@ -478,6 +453,9 @@ class FilmNumberManager:
                     roll.pages_used += doc_pages
                     roll.pages_remaining -= doc_pages
                     roll.save()
+                else:
+                    # Increment next_roll_id only when a new roll is created
+                    next_roll_id += 1
                 
                 # Create reference info for this roll
                 roll_ref_info = RollReferenceInfo.objects.create(
@@ -1060,7 +1038,7 @@ class FilmNumberManager:
         except Exception as e:
             self.logger.warning(f"Could not cache allocation data: {str(e)}")
         
-        results = allocation_data.get('allocationResults', {}).get('results', {})
+        results = allocation_data.get('allocationResults', {}).get('results') or allocation_data.get('results', {})
         
         # Process 16mm rolls
         for roll_data in results.get('rolls_16mm', []):

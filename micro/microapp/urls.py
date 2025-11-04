@@ -38,6 +38,7 @@ urlpatterns = [
     path('control/', views.control, name='control'),
     path('handoff/', views.handoff, name='handoff'),
     path('explore/', views.explore, name='explore'),
+    path('docs/', views.docs, name='docs'),
     path('report/', views.report, name='report'),
     path('settings/', views.settings_view, name='settings'),
     path('admin-panel/', views.admin, name='admin'),

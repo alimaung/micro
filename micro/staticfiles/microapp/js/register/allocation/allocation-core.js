@@ -24,7 +24,7 @@ const AllocationCore = (function() {
     /**
      * Initialize the allocation module
      */
-    function init() {
+    async function init() {
         try {
             // Get URL parameters
             const urlParams = new URLSearchParams(window.location.search);
@@ -33,17 +33,48 @@ const AllocationCore = (function() {
             
             console.log('[Allocation] Initializing module for project:', state.projectId, 'flow:', state.workflowType);
             
-            // Try to restore from dedicated allocation data storage first
-            const dedicatedAllocationData = JSON.parse(localStorage.getItem('microfilmAllocationData') || '{}');
-            console.log('DEBUGGING - Allocation data being restored:');
-            console.log('From dedicated storage:', dedicatedAllocationData);
-            
-            // If we have dedicated allocation data for this project, use it
-            if (dedicatedAllocationData.projectId === state.projectId && dedicatedAllocationData.completed) {
-                console.log('[Allocation] Restoring from dedicated allocation storage');
-                if (dedicatedAllocationData.allocationResults) {
-                    state.allocationResults = dedicatedAllocationData.allocationResults;
-                    console.log('[Allocation] Restored allocation results from dedicated storage');
+            // Try to restore allocation data using the new system
+            if (window.AllocationDataUtils) {
+                try {
+                    const allocationData = await window.AllocationDataUtils.loadAllocationData(state.projectId);
+                    if (allocationData && allocationData.allocationResults) {
+                        state.allocationResults = allocationData.allocationResults;
+                        console.log('[Allocation] Restored allocation results from project .data folder');
+                    }
+                } catch (error) {
+                    console.error('[Allocation] Error loading from project folder:', error);
+                    
+                    // Fallback to localStorage
+                    try {
+                        const dedicatedAllocationData = JSON.parse(localStorage.getItem('microfilmAllocationData') || '{}');
+                        console.log('DEBUGGING - Allocation data being restored from localStorage fallback:');
+                        console.log('From dedicated storage:', dedicatedAllocationData);
+                        
+                        // If we have dedicated allocation data for this project, use it
+                        if (dedicatedAllocationData.projectId === state.projectId && dedicatedAllocationData.completed) {
+                            console.log('[Allocation] Restoring from localStorage fallback');
+                            if (dedicatedAllocationData.allocationResults) {
+                                state.allocationResults = dedicatedAllocationData.allocationResults;
+                                console.log('[Allocation] Restored allocation results from localStorage fallback');
+                            }
+                        }
+                    } catch (localStorageError) {
+                        console.error('[Allocation] Error loading from localStorage fallback:', localStorageError);
+                    }
+                }
+            } else {
+                // Fallback when AllocationDataUtils is not available
+                const dedicatedAllocationData = JSON.parse(localStorage.getItem('microfilmAllocationData') || '{}');
+                console.log('DEBUGGING - Allocation data being restored (AllocationDataUtils not available):');
+                console.log('From dedicated storage:', dedicatedAllocationData);
+                
+                // If we have dedicated allocation data for this project, use it
+                if (dedicatedAllocationData.projectId === state.projectId && dedicatedAllocationData.completed) {
+                    console.log('[Allocation] Restoring from dedicated allocation storage');
+                    if (dedicatedAllocationData.allocationResults) {
+                        state.allocationResults = dedicatedAllocationData.allocationResults;
+                        console.log('[Allocation] Restored allocation results from dedicated storage');
+                    }
                 }
             }
             
@@ -190,26 +221,44 @@ const AllocationCore = (function() {
                     timestamp: new Date().toISOString()
                 };
                 
-                // Also save to dedicated allocation storage
+                // Save large allocation data to project .data folder to avoid localStorage quota issues
                 try {
-                    if (window.RegisterStorage) {
-                        await window.RegisterStorage.saveKey(state.projectId, 'microfilmAllocationData', {
-                            allocationResults: state.allocationResults,
-                            lastUpdated: new Date().toISOString(),
-                            projectId: state.projectId,
-                            completed: true
-                        });
+                    if (window.AllocationDataUtils) {
+                        const saved = await window.AllocationDataUtils.saveAllocationDataToProject(state.allocationResults, state.projectId);
+                        if (saved) {
+                            console.log('[Allocation] Saved allocation data to project .data folder');
+                        } else {
+                            throw new Error('Failed to save to project folder');
+                        }
                     } else {
-                        localStorage.setItem('microfilmAllocationData', JSON.stringify({
-                            allocationResults: state.allocationResults,
-                            lastUpdated: new Date().toISOString(),
-                            projectId: state.projectId,
-                            completed: true
-                        }));
+                        throw new Error('AllocationDataUtils not available');
                     }
-                    console.log('[Allocation] Saved to dedicated allocation storage');
                 } catch (error) {
-                    console.error('[Allocation] Error saving to dedicated storage:', error);
+                    console.error('[Allocation] Error saving to project folder:', error);
+                    
+                    // Fallback: try RegisterStorage service
+                    try {
+                        if (window.RegisterStorage) {
+                            await window.RegisterStorage.saveKey(state.projectId, 'microfilmAllocationData', {
+                                allocationResults: state.allocationResults,
+                                lastUpdated: new Date().toISOString(),
+                                projectId: state.projectId,
+                                completed: true
+                            });
+                            console.log('[Allocation] Saved to RegisterStorage as fallback');
+                        } else {
+                            // Last resort: direct localStorage (may cause quota error)
+                            localStorage.setItem('microfilmAllocationData', JSON.stringify({
+                                allocationResults: state.allocationResults,
+                                lastUpdated: new Date().toISOString(),
+                                projectId: state.projectId,
+                                completed: true
+                            }));
+                            console.log('[Allocation] Saved to localStorage as last resort');
+                        }
+                    } catch (fallbackError) {
+                        console.error('[Allocation] All storage methods failed:', fallbackError);
+                    }
                 }
             }
             

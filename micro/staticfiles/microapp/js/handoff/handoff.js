@@ -194,10 +194,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     emailTo.value = emailFormData.to || 'dilek.kursun@rolls-royce.com';
                 }
                 if (emailCc) {
-                    emailCc.value = emailFormData.cc || 'jan.becker@rolls-royce.com';
+                    emailCc.value = emailFormData.cc || 'jan.becker@rolls-royce.com; thomas.lux@rolls-royce.com';
                 }
                 if (emailBcc) {
-                    emailBcc.value = emailFormData.bcc || 'thomas.lux@rolls-royce.com';
+                    emailBcc.value = emailFormData.bcc || 'michael.wuske@rolls-royce.com; tetiana.isakii@rolls-royce.com; shmaila.aslam@rolls-royce.com';
                 }
                 if (emailSubject) {
                     emailSubject.value = emailFormData.subject || `Microfilm Project Handoff - ${selectedProject?.archive_id || '[Archive ID]'}`;
@@ -306,6 +306,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const sendEmailBtn = document.getElementById('send-email-btn');
         if (sendEmailBtn) {
             sendEmailBtn.addEventListener('click', sendEmail);
+        }
+        
+        // Add event listener for Save as MSG button
+        const saveMsgBtn = document.getElementById('save-msg-btn');
+        if (saveMsgBtn) {
+            saveMsgBtn.addEventListener('click', saveMsgFile);
         }
         
         // Success modal
@@ -636,7 +642,21 @@ document.addEventListener('DOMContentLoaded', function() {
         // Set data
         row.querySelector('.validation-row').dataset.documentId = item.document_id;
         row.querySelector('.roll-cell').textContent = item.roll || '-';
-        row.querySelector('.barcode-cell').textContent = item.barcode || '-';
+        
+        // Show full document ID (with suffix like _001 if present)
+        const documentIdCell = row.querySelector('.document-id-cell');
+        documentIdCell.textContent = item.document_id || '-';
+        
+        // Show normalized barcode (base barcode without suffix)
+        // Strip .pdf and suffix to show clean 16-digit barcode
+        let displayBarcode = item.barcode || '-';
+        if (displayBarcode !== '-') {
+            // Remove .pdf extension (case-insensitive)
+            displayBarcode = displayBarcode.replace(/\.pdf$/i, '');
+            // Remove suffix like _001, _002, etc.
+            displayBarcode = displayBarcode.replace(/_\d{3,}$/, '');
+        }
+        row.querySelector('.barcode-cell').textContent = displayBarcode;
         
         // Handle COM ID display with validation
         const comIdCell = row.querySelector('.com-id-cell');
@@ -925,11 +945,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         if (!emailCc.value && !emailCc.hasAttribute('data-user-modified')) {
-            emailCc.value = 'jan.becker@rolls-royce.com';
+            emailCc.value = 'jan.becker@rolls-royce.com; thomas.lux@rolls-royce.com';
         }
         
         if (!emailBcc.value && !emailBcc.hasAttribute('data-user-modified')) {
-            emailBcc.value = 'thomas.lux@rolls-royce.com';
+            emailBcc.value = 'michael.wuske@rolls-royce.com; tetiana.isakii@rolls-royce.com; shmaila.aslam@rolls-royce.com';
         }
         
         // Update subject with archive ID and date
@@ -1171,6 +1191,14 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function sendEmail() {
+        processEmailAction('send');
+    }
+    
+    function saveMsgFile() {
+        processEmailAction('save');
+    }
+    
+    function processEmailAction(action) {
         if (!selectedProject || !validationResults) {
             showNotification('Please select a project and validate files first', 'error');
             return;
@@ -1179,7 +1207,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Check for validation errors (missing COM IDs, etc.)
         const actualSummary = calculateActualValidationSummary();
         if (actualSummary.errors > 0) {
-            showNotification(`Cannot send email: ${actualSummary.errors} document(s) have missing COM IDs or other critical errors. Please resolve these issues first.`, 'error');
+            showNotification(`Cannot ${action} email: ${actualSummary.errors} document(s) have missing COM IDs or other critical errors. Please resolve these issues first.`, 'error');
             return;
         }
 
@@ -1194,7 +1222,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        // Prepare email data with form fields
+        // Prepare email data with form fields AND validation data
         const emailData = {
             to: emailTo.value.trim(),
             cc: emailCc.value.trim(),
@@ -1203,16 +1231,22 @@ document.addEventListener('DOMContentLoaded', function() {
             archive_id: emailArchiveId ? emailArchiveId.value.trim() : selectedProject.archive_id,
             film_numbers: emailFilmNumbers ? emailFilmNumbers.value.trim() : '',
             custom_message: emailCustomMessage ? emailCustomMessage.value.trim() : '',
-            use_form_data: true  // Flag to indicate we're using form data instead of HTML body
+            use_form_data: true,  // Flag to indicate we're using form data instead of HTML body
+            action: action,  // 'send' or 'save'
+            validated_data: validationData  // Include validation data with film_blip info
         };
 
-        // Show loading state
-        if (sendEmailBtn) {
-            sendEmailBtn.disabled = true;
-            sendEmailBtn.textContent = 'Sending...';
+        // Show loading state for the appropriate button
+        const currentBtn = action === 'send' ? sendEmailBtn : document.getElementById('save-msg-btn');
+        const originalText = action === 'send' ? 'Send Email' : 'Save as MSG';
+        const loadingText = action === 'send' ? 'Sending...' : 'Saving...';
+        
+        if (currentBtn) {
+            currentBtn.disabled = true;
+            currentBtn.textContent = loadingText;
         }
 
-        // Send email
+        // Send request
         fetch(`/api/handoff/projects/${selectedProject.id}/send-email/`, {
             method: 'POST',
             headers: {
@@ -1224,31 +1258,38 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Show success notification based on whether it was sent directly or displayed for manual sending
+                // Show success notification based on method
                 const method = data.method || 'displayed';
                 if (method === 'sent') {
                     showNotification('Email sent successfully!', 'success');
+                } else if (method === 'saved_msg') {
+                    showNotification(`Email saved as MSG file: ${data.msg_filename}`, 'success');
+                    
+                    // Trigger browser download for MSG files
+                    if (data.msg_filename) {
+                        triggerFileDownload(data.msg_filename);
+                    }
                 } else {
                     showNotification('Email opened in Outlook. Please review and send manually.', 'success');
                 }
-                console.log('Email prepared:', data);
+                console.log('Email processed:', data);
                 
                 // Show email success dialog with data
                 showEmailSuccess(data);
             } else {
-                showNotification(`Failed to send email: ${data.error}`, 'error');
-                console.error('Email send error:', data);
+                showNotification(`Failed to ${action} email: ${data.error}`, 'error');
+                console.error('Email process error:', data);
             }
         })
         .catch(error => {
-            showNotification('Error sending email', 'error');
-            console.error('Email send error:', error);
+            showNotification(`Error ${action === 'send' ? 'sending' : 'saving'} email`, 'error');
+            console.error('Email process error:', error);
         })
         .finally(() => {
             // Reset button state
-            if (sendEmailBtn) {
-                sendEmailBtn.disabled = false;
-                sendEmailBtn.textContent = 'Send Email';
+            if (currentBtn) {
+                currentBtn.disabled = false;
+                currentBtn.textContent = originalText;
             }
         });
     }
@@ -1471,6 +1512,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const method = data && data.method || 'displayed';
             if (method === 'sent') {
                 successMessage.textContent = 'Email sent successfully!';
+            } else if (method === 'saved_msg') {
+                successMessage.textContent = `Email saved as MSG file: ${data.msg_filename || 'handoff.msg'}`;
             } else {
                 successMessage.textContent = 'Email opened in Outlook for manual sending.';
             }
@@ -1570,11 +1613,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         if (emailCc) {
-            emailCc.value = 'jan.becker@rolls-royce.com';
+            emailCc.value = 'jan.becker@rolls-royce.com; thomas.lux@rolls-royce.com';
         }
         
         if (emailBcc) {
-            emailBcc.value = 'thomas.lux@rolls-royce.com';
+            emailBcc.value = 'michael.wuske@rolls-royce.com; tetiana.isakii@rolls-royce.com; shmaila.aslam@rolls-royce.com';
         }
         
         if (emailSubject) {
@@ -1953,6 +1996,44 @@ document.addEventListener('DOMContentLoaded', function() {
         
         console.warn('CSRF token not found');
         return '';
+    }
+    
+    function triggerFileDownload(filename) {
+        /**
+         * Trigger browser download for a handoff file.
+         * Creates a temporary link and clicks it to start the download.
+         */
+        if (!selectedProject || !filename) {
+            console.error('Cannot trigger download: missing project or filename');
+            return;
+        }
+        
+        try {
+            // Construct download URL
+            const downloadUrl = `/api/handoff/projects/${selectedProject.id}/download/${encodeURIComponent(filename)}/`;
+            
+            // Create temporary link element
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.download = filename; // Suggest filename for download
+            link.style.display = 'none';
+            
+            // Add to DOM, click, and remove
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            console.log(`Triggered download for: ${filename}`);
+            
+            // Show additional notification about download
+            setTimeout(() => {
+                showNotification(`Download started: ${filename}`, 'info');
+            }, 500);
+            
+        } catch (error) {
+            console.error('Error triggering file download:', error);
+            showNotification('Failed to start download. File saved to project directory.', 'warning');
+        }
     }
     
     // Expose functions for debugging

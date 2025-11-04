@@ -31,6 +31,7 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
     '192.168.1.96',
     '192.168.1.111',
+    '*',
 ]
 
 CSRF_TRUSTED_ORIGINS = [
@@ -39,6 +40,8 @@ CSRF_TRUSTED_ORIGINS = [
     'http://127.0.0.1',
     'http://192.168.1.96',
     'http://192.168.1.111',
+    'https://aero-labs.space',
+    'http://aero-labs.space',
 ]
 
 # Application definition
@@ -152,8 +155,8 @@ LANGUAGES = [
 LOCALE_PATHS = [BASE_DIR / 'locale']
 
 # Static files (CSS, JavaScript, Images)
-STATIC_URL = 'static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / '/staticfiles'
 STATICFILES_DIRS = [
     BASE_DIR / "microapp/static",
 ]

@@ -39,6 +39,7 @@
             <a href="{% url 'handoff' %}" {% if request.path == '/handoff/' %}class="active"{% endif %}>Handoff</a>
             <a href="{% url 'explore' %}" {% if request.path == '/explore/' %}class="active"{% endif %}>Explore</a>
             <a href="{% url 'admin' %}" {% if request.path == '/admin-panel/' %}class="active"{% endif %}>Admin</a>
+            <a href="{% url 'docs' %}" {% if request.path == '/docs/' %}class="active"{% endif %}>Docs</a>
             <!-- <a href="{% url 'report' %}" {% if request.path == '/report/' %}class="active"{% endif %}>Report</a> -->
         </div>
         

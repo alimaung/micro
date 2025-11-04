@@ -1,0 +1,30 @@
+{% extends 'microapp/base.html' %}
+{% load i18n %}
+
+{% block title %}Docs · Micro{% endblock %}
+
+{% block content %}
+<div class="docs-layout" style="display:flex; gap:24px; align-items:stretch;">
+  <aside class="card docs-sidebar" style="flex:0 0 280px; min-height:60vh;">
+    <h3 style="margin-top:0;">{% trans "Documentation" %}</h3>
+    <div class="subtitle">{% trans "Browse files" %}</div>
+    <ul style="list-style:none; padding-left:0; margin-top:16px;">
+      {% for f in files %}
+        <li style="margin-bottom:8px;">
+          <a href="{% url 'docs' %}?file={{ f }}" class="{% if selected == f %}active{% endif %}">{{ f }}</a>
+        </li>
+      {% empty %}
+        <li class="loading-state" style="color:var(--color-text-light);">{% trans "No documentation files found." %}</li>
+      {% endfor %}
+    </ul>
+  </aside>
+  <section class="card docs-content" style="flex:1 1 auto; min-height:60vh;">
+    {% if content %}
+      {{ content|safe }}
+    {% else %}
+      <h2 style="margin-top:0;">{% trans "Reader" %}</h2>
+      <p class="subtitle">{% trans "Select a document from the sidebar to view it here." %}</p>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

@@ -296,7 +296,7 @@ def results_view(request, project_id):
     
     # Get the original roll mappings from allocation data
     original_roll_mappings = {}
-    allocation_results = allocation_data['allocationResults']['results']
+    allocation_results = allocation_data.get('allocationResults', {}).get('results', allocation_data.get('results', {}))
 
     # Map 16mm rolls
     for roll in allocation_results['rolls_16mm']:
@@ -530,7 +530,7 @@ def process_film_number_allocation(task_id, project_id, project_data, analysis_d
 
         # Get the original roll mappings from allocation data
         original_roll_mappings = {}
-        allocation_results = allocation_data['allocationResults']['results']
+        allocation_results = allocation_data.get('allocationResults', {}).get('results', allocation_data.get('results', {}))
 
         # Map 16mm rolls
         for roll in allocation_results['rolls_16mm']:
@@ -657,35 +657,8 @@ def process_film_number_allocation(task_id, project_id, project_data, analysis_d
                 document__project=project
             ).order_by('document_index')
             
-            # Find the original roll_id from the segments by matching documents in allocation data
-            # Similar to how it's done for 16mm rolls
-            first_segment = segments.first()
-            original_roll_id = None
-            
-            if first_segment:
-                # Look through segments to find matching document in allocation data for 35mm
-                if 'rolls_35mm' in allocation_results:
-                    for roll_data in allocation_results['rolls_35mm']:
-                        for seg in roll_data.get('document_segments', []):
-                            if seg.get('doc_id') == first_segment.document.doc_id:
-                                original_roll_id = roll_data.get('roll_id')
-                                break
-                        if original_roll_id:
-                            break
-                
-                # If not found in 35mm rolls, check doc_allocation_requests_35mm
-                if not original_roll_id and 'doc_allocation_requests_35mm' in allocation_results:
-                    # For 35mm allocation requests, try to use doc_id to infer the original roll
-                    for i, req in enumerate(allocation_results['doc_allocation_requests_35mm']):
-                        if req.get('doc_id') == first_segment.document.doc_id:
-                            # Use index + 1 as a roll ID if nothing else is available
-                            original_roll_id = i + 1
-                            break
-            
-            # If we still don't have an original_roll_id, use a safe default
-            if original_roll_id is None:
-                # Use roll_id from the database if it's not None, otherwise default to 1
-                original_roll_id = roll.roll_id if roll.roll_id is not None else 1
+            # Use the roll's own roll_id assigned during allocation
+            original_roll_id = roll.roll_id if roll.roll_id is not None else 1
             
             formatted_segments = []
             for segment in segments:

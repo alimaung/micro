@@ -110,7 +110,7 @@ body {
 }
 
 .navbar-brand img:hover {
-    transform: scale(1.05);
+    transform: none;
 }
 
 .navbar-brand span {
@@ -143,7 +143,7 @@ body {
     font-size: 1rem;
     position: relative;
     padding: 0 8px;
-    transition: color var(--transition-speed) ease;
+    transition: none;
 }
 
 .navbar-links a::after {
@@ -155,7 +155,7 @@ body {
     height: 3px;
     background-color: var(--color-primary);
     transform: scaleX(0);
-    transition: transform var(--transition-speed) ease;
+    transition: none;
 }
 
 .navbar-links a:hover {
@@ -211,7 +211,7 @@ body {
 #dark-mode-toggle:hover {
     background-color: rgba(0, 0, 0, 0.05);
     color: var(--color-primary);
-    transform: scale(1.15);
+    transform: none;
 }
 
 .dark-mode .navbar-icons a, 
@@ -224,11 +224,12 @@ body {
 .dark-mode #restart-server:hover {
     background-color: rgba(255, 255, 255, 0.1);
     color: var(--color-primary);
+    transform: none;
 }
 
 /* Content area */
 .content {
-    padding: 0 2rem 2rem 2rem;
+    padding: 1.25rem 2rem 2rem 2rem;
     min-height: calc(100vh - 64px);
     transition: background-color var(--transition-speed) ease, 
                 color var(--transition-speed) ease,
@@ -265,9 +266,9 @@ body {
 }
 
 .card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 4px 8px var(--color-shadow), 
-                0 8px 16px var(--color-shadow);
+    transform: none;
+    box-shadow: 0 1px 3px var(--color-shadow), 
+                0 2px 8px var(--color-shadow);
 }
 
 .dark-mode .card {
@@ -279,8 +280,9 @@ body {
 }
 
 .dark-mode .card:hover {
-    box-shadow: 0 4px 8px var(--color-dark-shadow), 
-                0 8px 16px var(--color-dark-shadow);
+    transform: none;
+    box-shadow: 0 1px 3px var(--color-dark-shadow), 
+                0 2px 8px var(--color-dark-shadow);
 }
 
 .card-icon {
@@ -296,8 +298,8 @@ body {
 }
 
 .card:hover .card-icon {
-    transform: scale(1.1);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    transform: none;
+    box-shadow: none;
 }
 
 /* Headings with variable font weights */

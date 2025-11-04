@@ -10,6 +10,15 @@ from django.conf import settings
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
 from django.contrib.auth.decorators import login_required
 from ..models import Project
+from pathlib import Path
+import os
+try:
+    import markdown as md
+except Exception:  # pragma: no cover
+    md = None
+
+# Directory to read documentation files from (basis: Flask app)
+DOCS_PATH = Path(r"C:\Users\bearb\Desktop\micro\übergabe\documentation")
 
 
 def home(request):
@@ -159,6 +168,46 @@ def settings_view(request):
 def admin(request):
     """Admin page view with embedded Django admin."""
     return render(request, 'microapp/admin.html')
+
+
+@login_required
+def docs(request):
+    """Documentation page with sidebar and file viewer.
+    Lists .md and .txt files under DOCS_PATH and renders selected file.
+    """
+    files = []
+    if DOCS_PATH.exists():
+        for f in DOCS_PATH.rglob("*"):
+            if f.is_file() and f.suffix.lower() in [".md", ".txt"]:
+                rel = f.relative_to(DOCS_PATH).as_posix()  # forward slashes for URLs
+                files.append(rel)
+        files.sort()
+
+    file_name = request.GET.get("file")
+    content_html = ""
+
+    if file_name:
+        candidate = (DOCS_PATH / file_name).resolve()
+        base = DOCS_PATH.resolve()
+        # Prevent path traversal
+        if str(candidate).startswith(str(base)) and candidate.exists() and candidate.is_file():
+            try:
+                text = candidate.read_text(encoding="utf-8")
+            except Exception:
+                text = ""
+            if candidate.suffix.lower() == ".md" and md is not None:
+                try:
+                    content_html = md.markdown(text, extensions=["fenced_code", "tables", "toc"])
+                except Exception:
+                    content_html = "<pre>" + text + "</pre>"
+            else:
+                content_html = "<pre>" + text + "</pre>"
+
+    return render(request, 'microapp/docs/docs.html', {
+        'files': files,
+        'content': content_html,
+        'selected': file_name,
+    })
 
 
 def login(request):

@@ -99,7 +99,7 @@ def browse_local_folders(request):
             $dialog.Description = "Select Folder"
             $dialog.UseDescriptionForTitle = $true
             $dialog.ShowNewFolderButton = $true
-            $dialog.SelectedPath = "Y:"
+            $dialog.SelectedPath = "X:"
             if ($dialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
                 $dialog.SelectedPath
             }
@@ -123,53 +123,39 @@ def list_drives(request):
     """
     if request.method == 'GET':
         try:
-            # Get available drives by checking from A to Z
+            # Only show drive X
             drives = []
             drive_names = {}
-            
-            # Use the simple method that works reliably
-            for drive_letter in range(65, 91):  # A to Z
-                drive = f"{chr(drive_letter)}:\\"
-                if os.path.exists(drive):
-                    drives.append(drive)
-                    # Try to get volume name using ctypes
-                    try:
-                        import ctypes
-                        kernel32 = ctypes.windll.kernel32
-                        volumeNameBuffer = ctypes.create_unicode_buffer(1024)
-                        fileSystemNameBuffer = ctypes.create_unicode_buffer(1024)
-                        serial_number = ctypes.c_ulong(0)
-                        max_component_length = ctypes.c_ulong(0)
-                        file_system_flags = ctypes.c_ulong(0)
-                        
-                        rc = kernel32.GetVolumeInformationW(
-                            ctypes.c_wchar_p(drive),
-                            volumeNameBuffer,
-                            ctypes.sizeof(volumeNameBuffer),
-                            ctypes.byref(serial_number),
-                            ctypes.byref(max_component_length),
-                            ctypes.byref(file_system_flags),
-                            fileSystemNameBuffer,
-                            ctypes.sizeof(fileSystemNameBuffer)
-                        )
-                        
-                        if rc:
-                            drive_names[drive] = volumeNameBuffer.value
-                    except Exception:
-                        # If we can't get the volume name, just leave it empty
-                        drive_names[drive] = ""
-            
-            # For microfilm-transfer (green), we need to detect it by volume name
-            # since its drive letter can change (USB drive)
-            for drive, name in list(drive_names.items()):
-                # Check if any drive's volume name contains "microfilm-transfer"
-                if name and "microfilm-transit" in name.lower():
-                    drive_names[drive] = "microfilm-transit"
-                # Also check for variations in volume names for other drives
-                elif name and "microfilm-archive" in name.lower():
-                    drive_names[drive] = "microfilm-archive"
-                elif name and "microfilm-engineering" in name.lower():
-                    drive_names[drive] = "microfilm-engineering"
+
+            drive = "X:\\"
+            if os.path.exists(drive):
+                drives.append(drive)
+                # Try to get volume name using ctypes
+                try:
+                    import ctypes
+                    kernel32 = ctypes.windll.kernel32
+                    volumeNameBuffer = ctypes.create_unicode_buffer(1024)
+                    fileSystemNameBuffer = ctypes.create_unicode_buffer(1024)
+                    serial_number = ctypes.c_ulong(0)
+                    max_component_length = ctypes.c_ulong(0)
+                    file_system_flags = ctypes.c_ulong(0)
+
+                    rc = kernel32.GetVolumeInformationW(
+                        ctypes.c_wchar_p(drive),
+                        volumeNameBuffer,
+                        ctypes.sizeof(volumeNameBuffer),
+                        ctypes.byref(serial_number),
+                        ctypes.byref(max_component_length),
+                        ctypes.byref(file_system_flags),
+                        fileSystemNameBuffer,
+                        ctypes.sizeof(fileSystemNameBuffer)
+                    )
+
+                    if rc:
+                        drive_names[drive] = volumeNameBuffer.value
+                except Exception:
+                    # If we can't get the volume name, just leave it empty
+                    drive_names[drive] = ""
             
             return JsonResponse({
                 'drives': drives,
@@ -198,8 +184,8 @@ def list_drive_contents(request):
     """
     if request.method == 'GET':
         try:
-            # Get the requested path or default to Y: drive
-            path = request.GET.get('path', 'Y:\\')
+            # Get the requested path or default to X: drive
+            path = request.GET.get('path', 'X:\\')
             
             # Check if we should scan subdirectories
             scan_subdirectories = request.GET.get('scan_subdirectories', 'false').lower() == 'true'
