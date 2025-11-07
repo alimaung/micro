@@ -269,8 +269,8 @@ class AnalyzeService:
                     continue
                 
                 # Skip folders starting with RRD9
-                if folder_path.name.startswith('RRD9'):
-                    continue
+                #if folder_path.name.startswith('RRD9'):
+                #    continue
                 
                 # Skip hidden/system folders
                 if folder_path.name.startswith('.') or folder_path.name.startswith('$'):

@@ -249,7 +249,7 @@ class FilmLogger:
         console_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         console_handler.setFormatter(console_formatter)
         self.logger.addHandler(console_handler)
-        self.handlers.append(console_handler)
+        self.handlers.append(console_handler.stream)  # Append the stream, not the handler
         
         # Set up file logging if enabled and parent_folder is provided
         if log_to_file and parent_folder:
@@ -632,15 +632,15 @@ class FilmLogger:
         title_padded = f" {title} ".center(width - 4)  # Pad with spaces for better appearance
         
         for handler in self.handlers:
-            if isinstance(handler, logging.StreamHandler):
-                if hasattr(handler.stream, 'isatty') and handler.stream.isatty():
-                    # With solid background color for terminal - using bright white for better visibility
-                    handler.stream.write(f"\n{bg_color}{ColorCode.BRIGHT_WHITE}{ColorCode.BOLD}{title_padded}{ColorCode.RESET}\n")
-                else:
-                    # Plain text version for files
-                    header = f"{'-' * 5} {title} {'-' * (width - 7 - len(title))}"
-                    handler.stream.write(f"\n{header}\n")
-                handler.stream.flush()
+            # Handlers now contain stream objects directly, not StreamHandler objects
+            if hasattr(handler, 'isatty') and handler.isatty():
+                # With solid background color for terminal - using bright white for better visibility
+                handler.write(f"\n{bg_color}{ColorCode.BRIGHT_WHITE}{ColorCode.BOLD}{title_padded}{ColorCode.RESET}\n")
+            else:
+                # Plain text version for files
+                header = f"{'-' * 5} {title} {'-' * (width - 7 - len(title))}"
+                handler.write(f"\n{header}\n")
+            handler.flush()
     
     def timer(self, operation_name):
         """Context manager for timing operations"""

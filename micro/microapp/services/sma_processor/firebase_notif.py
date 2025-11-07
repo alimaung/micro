@@ -2,8 +2,8 @@ import firebase_admin
 from firebase_admin import credentials, messaging
 
 # Initialize the Firebase Admin SDK
-cred = credentials.Certificate('serviceAccountKey.json')
-firebase_admin.initialize_app(cred)
+#cred = credentials.Certificate('serviceAccountKey.json')
+#firebase_admin.initialize_app(cred)
 
 def send_notification(title, body, message_id):
     # Construct the message with a specific notification ID

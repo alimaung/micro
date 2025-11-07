@@ -366,7 +366,7 @@ def main(args=None):
         controller = SMAController(args)
         return controller.run()
     except Exception as e:
-        print(f"Fatal error in SMA automation: {e}")
+        print(f"Fataler error in SMA automation: {e}")
         return False
 
 if __name__ == "__main__":

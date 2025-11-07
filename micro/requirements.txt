@@ -12,3 +12,7 @@ websocket
 psutil
 websockets
 markdown>=3.5
+pywinauto
+pyautogui
+firebase_admin
+screeninfo
