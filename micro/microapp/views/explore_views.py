@@ -50,7 +50,7 @@ def create_roll(request):
                 roll_id=data.get('roll_id'),
                 film_number=data.get('film_number', ''),
                 film_type=data.get('film_type', '16mm'),
-                capacity=data.get('capacity', 2900),
+                capacity=data.get('capacity', 2940),
                 pages_used=data.get('pages_used', 0),
                 pages_remaining=data.get('pages_remaining'),
                 status=data.get('status', 'active'),

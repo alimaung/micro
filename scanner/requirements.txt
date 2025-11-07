@@ -1,0 +1,38 @@
+# Microfilm Quality Comparison Tool Dependencies
+
+# PDF processing
+pdf2image
+PyMuPDF
+pypdf
+
+# Image processing and computer vision
+opencv-python
+scikit-image
+scipy
+numpy
+Pillow
+
+# OCR
+pytesseract
+
+# Visualization and reporting
+matplotlib
+seaborn
+
+# Data handling
+pandas
+
+# Progress bars
+tqdm
+
+# System dependencies note:
+# You may also need to install Tesseract OCR separately:
+# 
+# Windows: Download from https://github.com/UB-Mannheim/tesseract/wiki
+# Ubuntu/Debian: sudo apt-get install tesseract-ocr
+# macOS: brew install tesseract
+#
+# For PDF processing, you may also need poppler-utils:
+# Ubuntu/Debian: sudo apt-get install poppler-utils
+# macOS: brew install poppler
+# Windows: Download from https://github.com/oschwartz10612/poppler-windows

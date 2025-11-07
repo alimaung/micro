@@ -18,7 +18,7 @@ from microapp.models import (
 )
 
 # Constants for roll capacities
-CAPACITY_16MM = 2900
+CAPACITY_16MM = 2940
 CAPACITY_35MM = 690
 PARTIAL_ROLL_THRESHOLD = 0.85  # 85% full is considered a partial roll
 

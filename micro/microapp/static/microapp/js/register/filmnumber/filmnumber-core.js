@@ -7,7 +7,7 @@
 
 const FilmNumberCore = (function() {
     // Constants
-    const CAPACITY_16MM = 2900;  // Pages per 16mm film roll
+    const CAPACITY_16MM = 2940;  // Pages per 16mm film roll
     const CAPACITY_35MM = 690;   // Pages per 35mm film roll
     
     // Module state

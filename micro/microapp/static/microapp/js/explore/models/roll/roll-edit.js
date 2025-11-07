@@ -270,7 +270,7 @@ class RollEdit {
         // Set default values
         document.getElementById('edit-film-type').value = '16mm';
         document.getElementById('edit-status').value = 'active';
-        document.getElementById('edit-capacity').value = '2900'; // Default capacity
+        document.getElementById('edit-capacity').value = '2940'; // Default capacity
     }
 
     /**

@@ -888,7 +888,7 @@ class SMAService:
                 'archive_id': 'TEST',
                 'output_dir': '/tmp',
                 'film_type': '16mm',
-                'capacity': 2900,
+                'capacity': 2940,
                 'pages_used': 0
             }
             
@@ -1050,8 +1050,8 @@ class SMAService:
                 logger.info(f"Re-filming {roll_display}: no suitable temp roll found, using new roll")
                 
                 # Standard capacities by film type
-                FILM_CAPACITIES = {'16mm': 2900, '35mm': 1450}
-                new_roll_capacity = FILM_CAPACITIES.get(roll.film_type, 2900)
+                FILM_CAPACITIES = {'16mm': 2940, '35mm': 1450}
+                new_roll_capacity = FILM_CAPACITIES.get(roll.film_type, 2940)
                 
                 # Update roll to reflect new roll usage
                 roll.capacity = new_roll_capacity
@@ -1162,11 +1162,11 @@ class SMAService:
             
             # Standard capacities by film type
             FILM_CAPACITIES = {
-                '16mm': 2900,
+                '16mm': 2940,
                 '35mm': 1450
             }
             
-            standard_capacity = FILM_CAPACITIES.get(film_type, 2900)
+            standard_capacity = FILM_CAPACITIES.get(film_type, 2940)
             
             # Determine if this is refilming based on roll's filming status
             is_refilming = roll.filming_status in ['completed', 'error'] or roll.filming_completed_at is not None

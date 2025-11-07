@@ -1,0 +1,307 @@
+{
+  "timestamp": "2025-11-07T18:05:57.280452",
+  "original_document": "Y:\\micro\\scanner\\test\\orig\\1427004500479387.pdf",
+  "microfilm_document": "Y:\\micro\\scanner\\test\\scan\\1427004500479387_SCAN_BK.pdf",
+  "total_pages": 8,
+  "overall_metrics": {
+    "average_ssim": 0.8261460921930878,
+    "average_text_similarity": 0.5020303370975696,
+    "average_layout_similarity": 0.8218650012127177,
+    "average_quality_score": 0.7280551474683583,
+    "pages_passed": 2,
+    "pages_failed": 2,
+    "pass_rate": 0.5,
+    "total_pages_processed": 8,
+    "pages_compared": 4,
+    "pages_skipped": 4,
+    "white_pages_original": 4,
+    "white_pages_film": 0,
+    "white_pages_original_list": [
+      2,
+      4,
+      6,
+      8
+    ],
+    "white_pages_film_list": [],
+    "skipped_pages_list": [
+      2,
+      4,
+      6,
+      8
+    ]
+  },
+  "page_results": [
+    {
+      "page": 1,
+      "ssim": 0.9659877227961496,
+      "text_similarity": 0.4581497797356828,
+      "layout_similarity": 0.9711514130172582,
+      "quality_score": 0.8146690779222313,
+      "original_text_length": 116,
+      "film_text_length": 144,
+      "alignment_info": {
+        "coarse_rotation": 270,
+        "fine_angle": 0.0,
+        "total_rotation": 270.0
+      },
+      "visual_path": "Y:\\micro\\scanner\\test_results\\page_001_comparison.png",
+      "skipped": false,
+      "original_white_info": {
+        "page_number": 1,
+        "rendered": true,
+        "total_pixels": 3839157,
+        "white_pixels": 3814115,
+        "white_percentage": 0.9934772138779425,
+        "is_white": false,
+        "error": null
+      },
+      "film_white_info": {
+        "page_number": 1,
+        "rendered": true,
+        "total_pixels": 3116400,
+        "white_pixels": 3048103,
+        "white_percentage": 0.9780846489539212,
+        "is_white": false,
+        "error": null
+      }
+    },
+    {
+      "page": 2,
+      "skipped": true,
+      "skip_reason": [
+        "original_white"
+      ],
+      "original_white_info": {
+        "page_number": 2,
+        "rendered": true,
+        "total_pixels": 3853434,
+        "white_pixels": 3853434,
+        "white_percentage": 1.0,
+        "is_white": true,
+        "error": null
+      },
+      "film_white_info": {
+        "page_number": 2,
+        "rendered": true,
+        "total_pixels": 3122700,
+        "white_pixels": 3108918,
+        "white_percentage": 0.995586511672591,
+        "is_white": false,
+        "error": null
+      },
+      "ssim": null,
+      "text_similarity": null,
+      "layout_similarity": null,
+      "quality_score": null,
+      "alignment_info": null
+    },
+    {
+      "page": 3,
+      "ssim": 0.7904242269064408,
+      "text_similarity": 0.45194805194805193,
+      "layout_similarity": 0.7904321755324193,
+      "quality_score": 0.6888829641441199,
+      "original_text_length": 977,
+      "film_text_length": 958,
+      "alignment_info": {
+        "coarse_rotation": 270,
+        "fine_angle": 0.0,
+        "total_rotation": 270.0
+      },
+      "visual_path": "Y:\\micro\\scanner\\test_results\\page_003_comparison.png",
+      "skipped": false,
+      "original_white_info": {
+        "page_number": 3,
+        "rendered": true,
+        "total_pixels": 3832428,
+        "white_pixels": 3650984,
+        "white_percentage": 0.952655601096746,
+        "is_white": false,
+        "error": null
+      },
+      "film_white_info": {
+        "page_number": 3,
+        "rendered": true,
+        "total_pixels": 3103800,
+        "white_pixels": 2708185,
+        "white_percentage": 0.8725385011920871,
+        "is_white": false,
+        "error": null
+      }
+    },
+    {
+      "page": 4,
+      "skipped": true,
+      "skip_reason": [
+        "original_white"
+      ],
+      "original_white_info": {
+        "page_number": 4,
+        "rendered": true,
+        "total_pixels": 3830242,
+        "white_pixels": 3830129,
+        "white_percentage": 0.9999704979476493,
+        "is_white": true,
+        "error": null
+      },
+      "film_white_info": {
+        "page_number": 4,
+        "rendered": true,
+        "total_pixels": 3122700,
+        "white_pixels": 3044166,
+        "white_percentage": 0.9748506100489961,
+        "is_white": false,
+        "error": null
+      },
+      "ssim": null,
+      "text_similarity": null,
+      "layout_similarity": null,
+      "quality_score": null,
+      "alignment_info": null
+    },
+    {
+      "page": 5,
+      "ssim": 0.7337138513043144,
+      "text_similarity": 0.5622317596566524,
+      "layout_similarity": 0.7281677286648066,
+      "quality_score": 0.6811599992821142,
+      "original_text_length": 1162,
+      "film_text_length": 1176,
+      "alignment_info": {
+        "coarse_rotation": 270,
+        "fine_angle": 0.0,
+        "total_rotation": 270.0
+      },
+      "visual_path": "Y:\\micro\\scanner\\test_results\\page_005_comparison.png",
+      "skipped": false,
+      "original_white_info": {
+        "page_number": 5,
+        "rendered": true,
+        "total_pixels": 3828876,
+        "white_pixels": 3565159,
+        "white_percentage": 0.9311241732560679,
+        "is_white": false,
+        "error": null
+      },
+      "film_white_info": {
+        "page_number": 5,
+        "rendered": true,
+        "total_pixels": 3116400,
+        "white_pixels": 2607596,
+        "white_percentage": 0.8367334103452702,
+        "is_white": false,
+        "error": null
+      }
+    },
+    {
+      "page": 6,
+      "skipped": true,
+      "skip_reason": [
+        "original_white"
+      ],
+      "original_white_info": {
+        "page_number": 6,
+        "rendered": true,
+        "total_pixels": 3827628,
+        "white_pixels": 3827443,
+        "white_percentage": 0.9999516671944086,
+        "is_white": true,
+        "error": null
+      },
+      "film_white_info": {
+        "page_number": 6,
+        "rendered": true,
+        "total_pixels": 3126900,
+        "white_pixels": 3100771,
+        "white_percentage": 0.9916438005692539,
+        "is_white": false,
+        "error": null
+      },
+      "ssim": null,
+      "text_similarity": null,
+      "layout_similarity": null,
+      "quality_score": null,
+      "alignment_info": null
+    },
+    {
+      "page": 7,
+      "ssim": 0.8144585677654463,
+      "text_similarity": 0.5357917570498916,
+      "layout_similarity": 0.7977086876363865,
+      "quality_score": 0.7275085485249679,
+      "original_text_length": 926,
+      "film_text_length": 923,
+      "alignment_info": {
+        "coarse_rotation": 270,
+        "fine_angle": 0.0,
+        "total_rotation": 270.0
+      },
+      "visual_path": "Y:\\micro\\scanner\\test_results\\page_007_comparison.png",
+      "skipped": false,
+      "original_white_info": {
+        "page_number": 7,
+        "rendered": true,
+        "total_pixels": 3837096,
+        "white_pixels": 3635875,
+        "white_percentage": 0.9475590394402433,
+        "is_white": false,
+        "error": null
+      },
+      "film_white_info": {
+        "page_number": 7,
+        "rendered": true,
+        "total_pixels": 3110100,
+        "white_pixels": 2780037,
+        "white_percentage": 0.893873830423459,
+        "is_white": false,
+        "error": null
+      }
+    },
+    {
+      "page": 8,
+      "skipped": true,
+      "skip_reason": [
+        "original_white"
+      ],
+      "original_white_info": {
+        "page_number": 8,
+        "rendered": true,
+        "total_pixels": 3830242,
+        "white_pixels": 3830149,
+        "white_percentage": 0.9999757195498352,
+        "is_white": true,
+        "error": null
+      },
+      "film_white_info": {
+        "page_number": 8,
+        "rendered": true,
+        "total_pixels": 3116400,
+        "white_pixels": 3115573,
+        "white_percentage": 0.999734629700937,
+        "is_white": false,
+        "error": null
+      },
+      "ssim": null,
+      "text_similarity": null,
+      "layout_similarity": null,
+      "quality_score": null,
+      "alignment_info": null
+    }
+  ],
+  "settings": {
+    "dpi": 200,
+    "weights": {
+      "ssim": 0.5,
+      "text_similarity": 0.3,
+      "layout_similarity": 0.2
+    },
+    "thresholds": {
+      "ssim": 0.7,
+      "text_similarity": 0.8
+    },
+    "white_page_detection": {
+      "white_threshold": 0.9999,
+      "white_pixel_threshold": 254
+    }
+  }
+}

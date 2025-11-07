@@ -532,7 +532,7 @@ class AnalyzeService:
             has_oversized = analysis_results['has_oversized']
             
             # Use consistent capacities with allocation phase
-            CAPACITY_16MM = 2900  # Pages per 16mm roll (matches allocation_views.py)
+            CAPACITY_16MM = 2940  # Pages per 16mm roll (matches allocation_views.py)
             CAPACITY_35MM = 690   # Pages per 35mm roll (matches allocation_views.py)
             
             if has_oversized:
@@ -726,7 +726,7 @@ class AnalyzeService:
         total_rolls = estimated_rolls_16mm + estimated_rolls_35mm
         
         # Constants for capacity analysis
-        CAPACITY_16MM = 2900
+        CAPACITY_16MM = 2940
         CAPACITY_35MM = 690
         TEMP_ROLL_THRESHOLD = 200  # Minimum remaining capacity to create temp roll
         

@@ -56,7 +56,7 @@ python manage.py reanalyze_folders --dry-run --batch-size 3
 
 ### 2. Roll Capacities  
 - **Before**: Mixed values (1500, 800, 2000, 3000)
-- **After**: Consistent values (2900 for 16mm, 690 for 35mm)
+- **After**: Consistent values (2940 for 16mm, 690 for 35mm)
 
 ### 3. 35mm Roll Logic
 - **Before**: Always calculated 35mm rolls

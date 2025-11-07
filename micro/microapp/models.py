@@ -1381,7 +1381,7 @@ class AnalyzedFolder(models.Model):
         overall_utilization = 0
         
         # Standard roll capacities (consistent with allocation phase)
-        CAPACITY_16MM = 2900  # pages per 16mm roll (matches allocation_views.py)
+        CAPACITY_16MM = 2940  # pages per 16mm roll (matches allocation_views.py)
         CAPACITY_35MM = 690   # pages per 35mm roll (matches allocation_views.py)
         
         if self.estimated_rolls_16mm > 0:

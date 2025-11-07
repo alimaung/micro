@@ -11,7 +11,7 @@ import { FilmNumberAPI } from './api.js';
 import { FilmNumberEvents } from './events.js';
 
 // Export constants
-export const CAPACITY_16MM = 2900;  // Pages per 16mm film roll
+export const CAPACITY_16MM = 2940;  // Pages per 16mm film roll
 export const CAPACITY_35MM = 690;   // Pages per 35mm film roll
 
 // Module state

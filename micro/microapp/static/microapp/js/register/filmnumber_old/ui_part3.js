@@ -334,7 +334,7 @@ export function showToast(message, type = 'info') {
 // Placeholders for functions that will be imported in ui.js
 function clearRollContainers() {}
 function updateAllocationSummary() {}
-const CAPACITY_16MM = 2900;
+const CAPACITY_16MM = 2940;
 const CAPACITY_35MM = 690;
 function getDomElements() {
     return {};
