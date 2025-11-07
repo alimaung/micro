@@ -2,7 +2,7 @@ from django.urls import path, include
 from . import views
 from django.views.i18n import JavaScriptCatalog
 from . import api
-from .views import external_systems_views, sma_views, analyze_views
+from .views import external_systems_views, sma_views, analyze_views, docs_views
 
 
 urlpatterns = [
@@ -38,9 +38,9 @@ urlpatterns = [
     path('control/', views.control, name='control'),
     path('handoff/', views.handoff, name='handoff'),
     path('explore/', views.explore, name='explore'),
-    path('docs/', views.docs, name='docs'),
-    path('docs/download/', views.docs_download, name='docs_download'),
-    path('docs/view/', views.docs_view, name='docs_view'),
+    path('docs/', docs_views.docs, name='docs'),
+    path('docs/download/', docs_views.docs_download, name='docs_download'),
+    path('docs/view/', docs_views.docs_view, name='docs_view'),
     path('report/', views.report, name='report'),
     path('settings/', views.settings_view, name='settings'),
     path('admin-panel/', views.admin, name='admin'),

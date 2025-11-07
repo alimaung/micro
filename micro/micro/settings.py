@@ -61,6 +61,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',  # Must be after SessionMiddleware, before CommonMiddleware
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -147,7 +148,6 @@ USE_I18N = True
 
 USE_TZ = True
 
-MIDDLEWARE   += ['django.middleware.locale.LocaleMiddleware']
 LANGUAGES = [
     ('en', 'English'),
     ('de', 'Deutsch'),
@@ -170,6 +170,15 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/explore/'
 LOGOUT_REDIRECT_URL = '/login/'
+
+# Session configuration
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_COOKIE_AGE = 1209600  # 2 weeks in seconds
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
+SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_SAVE_EVERY_REQUEST = False  # Only save when modified
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False  # Persist across browser sessions
 
 # Allow admin to be displayed in iframe from same origin
 X_FRAME_OPTIONS = 'SAMEORIGIN'

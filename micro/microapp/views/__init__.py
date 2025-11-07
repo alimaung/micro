@@ -58,3 +58,6 @@ from .analyze_views import *
 
 # Import trinamic views
 from .trinamic_views import *
+
+# Import docs views
+from .docs_views import *

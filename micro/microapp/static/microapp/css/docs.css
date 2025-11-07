@@ -116,6 +116,10 @@
     min-height: 70vh;
     max-height: calc(100vh - 120px);
     overflow-y: auto;
+    /* Reader pane padding */
+    padding: 20px 24px;
+    /* Allow flex child to shrink correctly next to sidebar */
+    min-width: 0;
 }
 
 /* Tree View Styles */
@@ -407,7 +411,6 @@
     border: 1px solid var(--color-border);
     border-radius: 6px;
     padding: 16px;
-    overflow-x: auto;
     font-size: 0.9rem;
     line-height: 1.5;
 }
@@ -422,6 +425,7 @@
     padding: 2px 6px;
     border-radius: 3px;
     font-size: 0.9em;
+    word-break: break-word;
 }
 
 .dark-mode .docs-content code {
@@ -437,6 +441,87 @@
     width: 100%;
     border-collapse: collapse;
     margin: 16px 0;
+}
+
+/* Typography and spacing normalization for markdown/README */
+.docs-content > :first-child {
+    margin-top: 0;
+}
+
+.docs-content > :last-child {
+    margin-bottom: 0;
+}
+
+.docs-content h1,
+.docs-content h2,
+.docs-content h3,
+.docs-content h4,
+.docs-content h5,
+.docs-content h6 {
+    margin: 20px 0 10px 0;
+    line-height: 1.25;
+}
+
+.docs-content h1 { font-size: 1.8rem; }
+.docs-content h2 { font-size: 1.5rem; }
+.docs-content h3 { font-size: 1.25rem; }
+.docs-content h4 { font-size: 1.1rem; }
+.docs-content h5 { font-size: 1rem; }
+.docs-content h6 { font-size: 0.95rem; }
+
+.docs-content p {
+    margin: 12px 0;
+    line-height: 1.7;
+}
+
+.docs-content ul,
+.docs-content ol {
+    margin: 12px 0 12px 0;
+    padding-left: 24px;
+}
+
+.docs-content li {
+    margin: 6px 0;
+}
+
+.docs-content a {
+    /* color: var(--color-primary); */
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.docs-content a:hover {
+    color: var(--color-primary-dark);
+}
+
+.docs-content img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 12px 0;
+    border-radius: 4px;
+}
+
+.docs-content blockquote {
+    margin: 16px 0;
+    padding: 12px 16px;
+    border-left: 4px solid var(--color-primary);
+    background: rgba(var(--color-primary-rgb), 0.06);
+    border-radius: 4px;
+}
+
+.dark-mode .docs-content blockquote {
+    background: rgba(var(--color-primary-rgb), 0.12);
+}
+
+.docs-content hr {
+    border: none;
+    border-top: 1px solid var(--color-border);
+    margin: 20px 0;
+}
+
+.dark-mode .docs-content hr {
+    border-color: var(--color-dark-border);
 }
 
 .docs-content table th,
@@ -502,6 +587,7 @@
     
     .docs-content {
         max-height: none;
+        padding: 16px;
     }
 }
 
