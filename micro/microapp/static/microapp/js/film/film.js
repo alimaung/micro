@@ -6,53 +6,175 @@ document.addEventListener('DOMContentLoaded', function() {
     let mockProgress = 30; // Starting at 30%
     let totalDocuments = 423;
     let processedDocuments = 127;
+    let allProjects = []; // Store all loaded projects
+    let filteredProjects = []; // Store filtered projects
     
-    // Initialize charts
-    initializeCharts();
+    // Initialize the application
+    initializeApp();
     
-    // Initialize event handlers
-    initializeEventHandlers();
-    
-    // Initialize interface
-    updateProgressIndicators();
-    
-    // Handle dark mode for stat-items
-    const handleDarkMode = () => {
-        const isDarkMode = document.body.classList.contains('dark-mode');
-        const statItems = document.querySelectorAll('.stat-item');
+    async function initializeApp() {
+        // Initialize charts
+        initializeCharts();
         
-        statItems.forEach(item => {
-            if (isDarkMode) {
-                item.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
-                item.style.border = '1px solid var(--color-dark-border)';
+        // Initialize event handlers
+        initializeEventHandlers();
+        
+        // Load projects from API
+        await loadProjects();
+        
+        // Initialize interface
+        updateProgressIndicators();
+        updateQuickStats();
+        
+        // Disable start filming button initially
+        document.getElementById('start-filming').disabled = true;
+        
+        // Handle dark mode for stat-items
+        handleDarkMode();
+        
+        // Observe body class changes for dark mode toggle
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.attributeName === 'class') {
+                    handleDarkMode();
+                }
+            });
+        });
+        
+        observer.observe(document.body, { attributes: true });
+    }
+    
+    // Load projects from the API
+    async function loadProjects() {
+        try {
+            showLoadingState();
+            
+            const response = await fetch('/api/projects/', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            // Handle the response format from views.list_projects
+            if (data.status === 'success') {
+                allProjects = data.results || [];
             } else {
-                item.style.backgroundColor = '';
-                item.style.border = '';
+                throw new Error(data.message || 'Failed to load projects');
             }
-        });
-    };
+            
+            // Filter projects that are ready for filming
+            filteredProjects = allProjects.filter(project => {
+                // Projects are ready for filming if they have documents and are not already completed
+                return !project.film_allocation_complete && (project.total_pages > 0 || project.has_oversized);
+            });
+            
+            displayProjects(filteredProjects);
+            hideLoadingState();
+            
+        } catch (error) {
+            console.error('Error loading projects:', error);
+            showErrorState('Failed to load projects. Please try again.');
+        }
+    }
     
-    // Run initially
-    handleDarkMode();
+    // Display projects in the list
+    function displayProjects(projects) {
+        const projectList = document.getElementById('project-list');
+        
+        if (projects.length === 0) {
+            projectList.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-folder-open"></i>
+                    <p>No projects available for filming</p>
+                    <small>Projects need to have documents processed before they can be filmed.</small>
+                </div>
+            `;
+            return;
+        }
+        
+        projectList.innerHTML = projects.map(project => {
+            const status = getProjectFilmingStatus(project);
+            const statusClass = getStatusClass(status);
+            const projectType = project.doc_type || 'Document';
+            const totalPages = project.total_pages || 0;
+            const location = project.location || 'Unknown';
+            
+            return `
+                <div class="project-item" data-id="${project.id}" data-archive-id="${project.archive_id}">
+                    <div class="project-info">
+                        <div class="project-name">${project.project_folder_name || project.archive_id}</div>
+                        <div class="project-id">${project.archive_id}</div>
+                        <div class="project-location">${location}</div>
+                        <div class="project-pages">${totalPages}</div>
+                        <div class="project-type">${projectType}</div>
+                        <div class="project-status">
+                            <span class="status-badge ${statusClass}">${status}</span>
+                        </div>
+                    </div>
+                    <div class="project-actions">
+                        ${status === 'Ready' ? `
+                            <button class="select-button" title="Select for filming">
+                                <i class="fas fa-check"></i> Select
+                            </button>
+                        ` : status === 'In Progress' ? `
+                            <button class="resume-button" title="Resume filming">
+                                <i class="fas fa-play"></i> Resume
+                            </button>
+                        ` : `
+                            <button class="view-button" title="View details">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                        `}
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
+        // Re-attach event listeners to new project items
+        attachProjectEventListeners();
+    }
     
-    // Observe body class changes for dark mode toggle
-    const observer = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-            if (mutation.attributeName === 'class') {
-                handleDarkMode();
-            }
-        });
-    });
+    // Determine project filming status
+    function getProjectFilmingStatus(project) {
+        if (project.film_allocation_complete) {
+            return 'Completed';
+        } else if (project.processing_complete && project.total_pages > 0) {
+            return 'Ready';
+        } else if (project.total_pages > 0) {
+            return 'In Progress';
+        } else {
+            return 'Pending';
+        }
+    }
     
-    observer.observe(document.body, { attributes: true });
+    // Get CSS class for status
+    function getStatusClass(status) {
+        switch (status) {
+            case 'Ready': return 'ready';
+            case 'In Progress': return 'in-progress';
+            case 'Completed': return 'completed';
+            case 'Pending': return 'pending';
+            default: return 'pending';
+        }
+    }
     
-    // Main functions
-    function initializeEventHandlers() {
+    // Attach event listeners to project items
+    function attachProjectEventListeners() {
         // Project selection functionality
-        const projectItems = document.querySelectorAll('.project-item');
-        projectItems.forEach(item => {
-            item.addEventListener('click', function() {
-                selectProject(this);
+        document.querySelectorAll('.project-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                // Don't select if clicking on action buttons
+                if (!e.target.closest('.project-actions')) {
+                    selectProject(this);
+                }
             });
         });
         
@@ -78,32 +200,138 @@ document.addEventListener('DOMContentLoaded', function() {
             button.addEventListener('click', function(e) {
                 e.stopPropagation();
                 const projectId = this.closest('.project-item').getAttribute('data-id');
-                alert(`View details for completed project ${projectId}`);
+                viewProjectDetails(projectId);
             });
         });
+    }
+    
+    // Show loading state
+    function showLoadingState() {
+        const projectList = document.getElementById('project-list');
+        projectList.innerHTML = `
+            <div class="loading-state">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Loading projects...</p>
+            </div>
+        `;
+    }
+    
+    // Hide loading state
+    function hideLoadingState() {
+        // Loading state will be replaced by displayProjects()
+    }
+    
+    // Show error state
+    function showErrorState(message) {
+        const projectList = document.getElementById('project-list');
+        projectList.innerHTML = `
+            <div class="error-state">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p>${message}</p>
+                <button onclick="location.reload()" class="retry-button">
+                    <i class="fas fa-redo"></i> Retry
+                </button>
+            </div>
+        `;
+    }
+    
+    // Update quick stats
+    function updateQuickStats() {
+        const totalProjects = allProjects.length;
+        const readyForFilming = allProjects.filter(p => getProjectFilmingStatus(p) === 'Ready').length;
+        const totalPages = allProjects.reduce((sum, p) => sum + (p.total_pages || 0), 0);
         
+        document.getElementById('total-projects').textContent = totalProjects;
+        document.getElementById('ready-filming').textContent = readyForFilming;
+        document.getElementById('total-pages').textContent = totalPages.toLocaleString();
+    }
+    
+    // Filter projects based on search and filter criteria
+    function filterProjects() {
+        const searchTerm = document.getElementById('project-search').value.toLowerCase();
+        const statusFilter = document.getElementById('project-status-filter').value;
+        const typeFilter = document.getElementById('project-type-filter').value;
+        
+        filteredProjects = allProjects.filter(project => {
+            // Search filter
+            const matchesSearch = !searchTerm || 
+                (project.archive_id && project.archive_id.toLowerCase().includes(searchTerm)) ||
+                (project.project_folder_name && project.project_folder_name.toLowerCase().includes(searchTerm)) ||
+                (project.location && project.location.toLowerCase().includes(searchTerm));
+            
+            // Status filter
+            const projectStatus = getProjectFilmingStatus(project);
+            const matchesStatus = statusFilter === 'all' || 
+                (statusFilter === 'ready' && projectStatus === 'Ready') ||
+                (statusFilter === 'in-progress' && projectStatus === 'In Progress') ||
+                (statusFilter === 'completed' && projectStatus === 'Completed');
+            
+            // Type filter
+            const projectType = (project.doc_type || 'document').toLowerCase();
+            const matchesType = typeFilter === 'all' || projectType === typeFilter;
+            
+            return matchesSearch && matchesStatus && matchesType;
+        });
+        
+        displayProjects(filteredProjects);
+    }
+    
+    // View project details
+    function viewProjectDetails(projectId) {
+        // For now, show an alert. In the future, this could open a modal or navigate to a details page
+        const project = allProjects.find(p => p.id == projectId);
+        if (project) {
+            alert(`Project Details:\n\nArchive ID: ${project.archive_id}\nLocation: ${project.location}\nType: ${project.doc_type}\nPages: ${project.total_pages}\nStatus: ${getProjectFilmingStatus(project)}`);
+        }
+    }
+    
+    // Get CSRF token for API requests
+    function getCsrfToken() {
+        const token = document.querySelector('[name=csrfmiddlewaretoken]');
+        return token ? token.value : '';
+    }
+
+    // Handle dark mode for stat-items
+    const handleDarkMode = () => {
+        const isDarkMode = document.body.classList.contains('dark-mode');
+        const statItems = document.querySelectorAll('.stat-item');
+        
+        statItems.forEach(item => {
+            if (isDarkMode) {
+                item.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
+                item.style.border = '1px solid var(--color-dark-border)';
+            } else {
+                item.style.backgroundColor = '';
+                item.style.border = '';
+            }
+        });
+    };
+    
+    // Main functions
+    function initializeEventHandlers() {
         // Start filming button
         document.getElementById('start-filming').addEventListener('click', function() {
             startFilmingProcess(false);
         });
         
-        // Recovery mode button
-        document.getElementById('recovery-mode').addEventListener('click', function() {
-            startFilmingProcess(true);
-        });
-        
         // Filming control buttons
-        document.getElementById('pause-filming').addEventListener('click', togglePauseFilming);
-        document.getElementById('cancel-filming').addEventListener('click', cancelFilming);
-        document.getElementById('mock-next-step').addEventListener('click', advanceToNextStep);
+        const pauseButton = document.getElementById('pause-filming');
+        const cancelButton = document.getElementById('cancel-filming');
+        const expandLogButton = document.getElementById('expand-log');
         
-        // Expand log button
-        document.getElementById('expand-log').addEventListener('click', toggleExpandLog);
+        if (pauseButton) pauseButton.addEventListener('click', togglePauseFilming);
+        if (cancelButton) cancelButton.addEventListener('click', cancelFilming);
+        if (expandLogButton) expandLogButton.addEventListener('click', toggleExpandLog);
         
         // Filter and search
         document.getElementById('project-search').addEventListener('input', filterProjects);
         document.getElementById('project-status-filter').addEventListener('change', filterProjects);
         document.getElementById('project-type-filter').addEventListener('change', filterProjects);
+        
+        // Search button
+        document.getElementById('search-button').addEventListener('click', function() {
+            filterProjects();
+        });
         
         // Film type toggle
         document.querySelectorAll('input[name="film-type"]').forEach(radio => {
@@ -130,6 +358,9 @@ document.addEventListener('DOMContentLoaded', function() {
         totalDocuments = pages;
         processedDocuments = 0;
         updateDocumentCounters();
+        
+        // Enable start filming button
+        document.getElementById('start-filming').disabled = false;
     }
     
     function updateFilmNumber() {
@@ -137,33 +368,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (selectedProject) {
             const projectId = selectedProject.getAttribute('data-id');
             const filmType = document.querySelector('input[name="film-type"]:checked').value;
-            const filmNumber = `F-${filmType}-${projectId.slice(-4)}`;
+            const filmNumber = `F-${filmType}-${projectId.toString().padStart(4, '0')}`;
             document.getElementById('film-number').textContent = filmNumber;
         }
-    }
-    
-    function filterProjects() {
-        const searchTerm = document.getElementById('project-search').value.toLowerCase();
-        const statusFilter = document.getElementById('project-status-filter').value;
-        const typeFilter = document.getElementById('project-type-filter').value;
-        
-        document.querySelectorAll('.project-item').forEach(project => {
-            const projectName = project.querySelector('.project-name').textContent.toLowerCase();
-            const projectId = project.querySelector('.project-id').textContent.toLowerCase();
-            const projectType = project.querySelector('.project-type').textContent.toLowerCase();
-            const statusBadge = project.querySelector('.status-badge');
-            const projectStatus = statusBadge ? statusBadge.classList[1] : '';
-            
-            const matchesSearch = projectName.includes(searchTerm) || projectId.includes(searchTerm);
-            const matchesStatus = statusFilter === 'all' || projectStatus === statusFilter;
-            const matchesType = typeFilter === 'all' || projectType === typeFilter;
-            
-            if (matchesSearch && matchesStatus && matchesType) {
-                project.style.display = '';
-            } else {
-                project.style.display = 'none';
-            }
-        });
     }
     
     function startFilmingProcess(isRecovery) {
@@ -277,7 +484,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 
                 // Update processing rate
-                document.getElementById('processing-rate').textContent = `${(Math.random() * 1.5 + 2.5).toFixed(1)} docs/sec`;
+                const processingRateElement = document.getElementById('processing-rate');
+                if (processingRateElement) {
+                    processingRateElement.textContent = `${(Math.random() * 1.5 + 2.5).toFixed(1)} docs/sec`;
+                }
             } else {
                 // Filming complete
                 clearInterval(mockInterval);
@@ -292,19 +502,23 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function advanceToNextStep() {
         // Get the current and next steps
-        const steps = ['initialization', 'preparation', 'filming', 'end-symbols', 'transport', 'completion'];
+        const steps = ['initialization', 'preparation', 'filming', 'finalization'];
         const currentIndex = steps.indexOf(currentStep);
         
         if (currentIndex < steps.length - 1) {
             // Mark current step as completed
             const currentStepElement = document.querySelector(`.progress-step[data-step="${currentStep}"]`);
-            currentStepElement.classList.remove('in-progress');
-            currentStepElement.classList.add('completed');
+            if (currentStepElement) {
+                currentStepElement.classList.remove('in-progress');
+                currentStepElement.classList.add('completed');
+            }
             
             // Move to next step
             currentStep = steps[currentIndex + 1];
             const nextStepElement = document.querySelector(`.progress-step[data-step="${currentStep}"]`);
-            nextStepElement.classList.add('in-progress');
+            if (nextStepElement) {
+                nextStepElement.classList.add('in-progress');
+            }
             
             // Update activity label
             updateActivityLabel();
@@ -313,7 +527,7 @@ document.addEventListener('DOMContentLoaded', function() {
             addLogEntry(`Starting ${formatStepName(currentStep)} phase`);
             
             // If we reached the end, show completion message
-            if (currentStep === 'completion') {
+            if (currentStep === 'finalization') {
                 mockProgress = 100;
                 processedDocuments = totalDocuments;
                 updateProgressBar();
@@ -333,30 +547,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Update buttons
                 updateControlButtons();
-            }
-            
-            // If we're at the transport step, update progress indicators
-            if (currentStep === 'transport') {
-                document.getElementById('current-activity-label').textContent = 'Film Transport';
-                addLogEntry('Film transportation started');
-                
-                // Simulate film transport completion
-                setTimeout(() => {
-                    addLogEntry('Film transportation completed');
-                    advanceToNextStep(); // Move to completion
-                }, 5000);
-            }
-            
-            // If we're at the end symbols step
-            if (currentStep === 'end-symbols') {
-                document.getElementById('current-activity-label').textContent = 'Adding End Symbols';
-                addLogEntry('Adding end symbols to film');
-                
-                // Simulate end symbols completion
-                setTimeout(() => {
-                    addLogEntry('End symbols added successfully');
-                    advanceToNextStep(); // Move to transport
-                }, 3000);
             }
         }
         
@@ -433,53 +623,58 @@ document.addEventListener('DOMContentLoaded', function() {
             case 'filming':
                 activityLabel.textContent = 'Processing Documents';
                 break;
-            case 'end-symbols':
-                activityLabel.textContent = 'Adding End Symbols';
-                break;
-            case 'transport':
-                activityLabel.textContent = 'Film Transport';
-                break;
-            case 'completion':
+            case 'finalization':
                 activityLabel.textContent = 'Process Complete';
                 break;
         }
     }
     
     function updateProgressBar() {
-        const progressBar = document.getElementById('filming-progress-bar');
-        const percentage = document.getElementById('progress-percentage');
+        const progressBar = document.querySelector('.progress-bar-fill');
+        const progressText = document.querySelector('.progress-text');
         
-        progressBar.style.width = `${mockProgress}%`;
-        percentage.textContent = `${mockProgress.toFixed(1)}%`;
+        if (progressBar) {
+            progressBar.style.width = `${mockProgress}%`;
+        }
+        if (progressText) {
+            progressText.textContent = `${mockProgress.toFixed(1)}%`;
+        }
     }
     
     function updateDocumentCounters() {
-        document.getElementById('processed-count').textContent = processedDocuments;
-        document.getElementById('remaining-count').textContent = totalDocuments - processedDocuments;
-        document.getElementById('total-count').textContent = totalDocuments;
-        document.getElementById('eta-time').textContent = calculateMockETA();
+        const processedElement = document.getElementById('processed-docs');
+        const totalElement = document.getElementById('total-docs');
+        const progressTextElement = document.querySelector('.progress-text');
+        const etaTextElement = document.querySelector('.eta-text');
+        
+        if (processedElement) processedElement.textContent = processedDocuments;
+        if (totalElement) totalElement.textContent = totalDocuments;
+        if (progressTextElement) progressTextElement.textContent = `${mockProgress.toFixed(1)}%`;
+        if (etaTextElement) etaTextElement.textContent = calculateMockETA();
     }
     
     function updateProgressIndicators() {
         // Get all steps
-        const steps = ['initialization', 'preparation', 'filming', 'end-symbols', 'transport', 'completion'];
+        const steps = ['initialization', 'preparation', 'filming', 'finalization'];
         const currentIndex = steps.indexOf(currentStep);
         
         // Update each step's status
         steps.forEach((step, index) => {
             const stepElement = document.querySelector(`.progress-step[data-step="${step}"]`);
             
-            if (index < currentIndex) {
-                // Steps before current are completed
-                stepElement.classList.remove('in-progress');
-                stepElement.classList.add('completed');
-            } else if (index === currentIndex) {
-                // Current step is in progress
-                stepElement.classList.remove('completed');
-                stepElement.classList.add('in-progress');
-            } else {
-                // Future steps are neither
-                stepElement.classList.remove('completed', 'in-progress');
+            if (stepElement) {
+                if (index < currentIndex) {
+                    // Steps before current are completed
+                    stepElement.classList.remove('in-progress');
+                    stepElement.classList.add('completed');
+                } else if (index === currentIndex) {
+                    // Current step is in progress
+                    stepElement.classList.remove('completed');
+                    stepElement.classList.add('in-progress');
+                } else {
+                    // Future steps are neither
+                    stepElement.classList.remove('completed', 'in-progress');
+                }
             }
         });
     }
@@ -487,37 +682,40 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateControlButtons() {
         const pauseButton = document.getElementById('pause-filming');
         const cancelButton = document.getElementById('cancel-filming');
-        const nextButton = document.getElementById('mock-next-step');
         
-        if (isFilmingActive) {
-            pauseButton.disabled = false;
-            cancelButton.disabled = false;
-            nextButton.disabled = false;
-            
-            // Reset pause button text
-            pauseButton.innerHTML = '<i class="fas fa-pause"></i> Pause Filming';
-        } else {
-            pauseButton.disabled = true;
-            cancelButton.disabled = true;
-            nextButton.disabled = true;
+        if (pauseButton && cancelButton) {
+            if (isFilmingActive) {
+                pauseButton.disabled = false;
+                cancelButton.disabled = false;
+                
+                // Reset pause button text
+                pauseButton.innerHTML = '<i class="fas fa-pause"></i> Pause Filming';
+            } else {
+                pauseButton.disabled = true;
+                cancelButton.disabled = true;
+            }
         }
     }
     
     function toggleExpandLog() {
-        const logContent = document.getElementById('log-content');
+        const logContent = document.querySelector('.log-content');
         const expandButton = document.getElementById('expand-log');
         
-        if (logContent.classList.contains('expanded')) {
-            logContent.classList.remove('expanded');
-            expandButton.innerHTML = '<i class="fas fa-expand-alt"></i>';
-        } else {
-            logContent.classList.add('expanded');
-            expandButton.innerHTML = '<i class="fas fa-compress-alt"></i>';
+        if (logContent && expandButton) {
+            if (logContent.classList.contains('expanded')) {
+                logContent.classList.remove('expanded');
+                expandButton.innerHTML = '<i class="fas fa-expand-alt"></i>';
+            } else {
+                logContent.classList.add('expanded');
+                expandButton.innerHTML = '<i class="fas fa-compress-alt"></i>';
+            }
         }
     }
     
     function addLogEntry(message) {
-        const logContent = document.getElementById('log-content');
+        const logContent = document.querySelector('.log-content');
+        if (!logContent) return;
+        
         const now = new Date();
         const timestamp = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
         
@@ -544,9 +742,7 @@ document.addEventListener('DOMContentLoaded', function() {
             case 'initialization': return 'Initialization';
             case 'preparation': return 'Preparation';
             case 'filming': return 'Filming';
-            case 'end-symbols': return 'End Symbols';
-            case 'transport': return 'Film Transport';
-            case 'completion': return 'Completion';
+            case 'finalization': return 'Finalization';
             default: return step;
         }
     }
