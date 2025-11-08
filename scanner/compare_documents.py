@@ -14,19 +14,18 @@ import numpy as np
 import cv2
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-from pdf2image import convert_from_path
 from skimage.metrics import structural_similarity as ssim
-from skimage.feature import match_template
 import pytesseract
 import difflib
 from typing import List, Tuple, Dict, Any
 import json
 from datetime import datetime
-from scipy import ndimage
 from decimal import Decimal, getcontext
-import fitz  # PyMuPDF for rendering PDF pages to images
-from PIL import Image
-import io
+
+# Import AOI modules
+from scanner.AOI.conversion import PDFConverter
+from scanner.AOI.whiteness import WhitePageDetector
+from scanner.AOI.orientation import ImageAligner
 
 # Set high precision for decimal calculations
 getcontext().prec = 50
@@ -36,7 +35,7 @@ class DocumentComparator:
     """Main class for comparing original and microfilm documents."""
     
     def __init__(self, dpi: int = 300, output_dir: str = "results", 
-                 white_threshold: float = 0.9999, white_pixel_threshold: int = 254):
+                 white_threshold: float = 0.997, white_pixel_threshold: int = 254):
         self.dpi = dpi
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(exist_ok=True)
@@ -55,35 +54,19 @@ class DocumentComparator:
             'text_similarity': 0.3,
             'layout_similarity': 0.2
         }
+        
+        # Initialize AOI modules
+        self.pdf_converter = PDFConverter(dpi=self.dpi)
+        self.white_detector = WhitePageDetector(
+            dpi=self.dpi,
+            white_threshold=self.white_threshold,
+            white_pixel_threshold=self.white_pixel_threshold
+        )
+        self.image_aligner = ImageAligner()
     
     def pdf_to_images(self, pdf_path: str) -> List[np.ndarray]:
         """Convert PDF pages to grayscale numpy arrays."""
-        print(f"Converting PDF to images: {pdf_path}")
-        
-        try:
-            # Convert PDF to PIL images
-            pil_images = convert_from_path(pdf_path, dpi=self.dpi)
-            
-            # Convert to grayscale numpy arrays
-            images = []
-            for pil_img in pil_images:
-                # Convert PIL to numpy array
-                img_array = np.array(pil_img)
-                
-                # Convert to grayscale if needed
-                if len(img_array.shape) == 3:
-                    gray_img = cv2.cvtColor(img_array, cv2.COLOR_RGB2GRAY)
-                else:
-                    gray_img = img_array
-                
-                images.append(gray_img)
-            
-            print(f"Converted {len(images)} pages")
-            return images
-            
-        except Exception as e:
-            print(f"Error converting PDF {pdf_path}: {e}")
-            return []
+        return self.pdf_converter.pdf_to_images(pdf_path)
     
     def normalize_images(self, img1: np.ndarray, img2: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         """Normalize two images to same size and apply preprocessing."""
@@ -104,35 +87,6 @@ class DocumentComparator:
         
         return img1_blur, img2_blur
     
-    def _render_page_to_image_for_white_detection(self, pdf_path: str, page_index: int) -> Image.Image:
-        """Render a PDF page to a PIL Image for white page detection."""
-        try:
-            pdf_doc = fitz.open(pdf_path)
-            if page_index >= len(pdf_doc):
-                pdf_doc.close()
-                return None
-            
-            # Get the page
-            page = pdf_doc[page_index]
-            
-            # Create transformation matrix for desired DPI
-            scale = self.dpi / 72.0
-            mat = fitz.Matrix(scale, scale)
-            
-            # Render page to pixmap
-            pix = page.get_pixmap(matrix=mat)
-            
-            # Convert pixmap to PIL Image
-            img_data = pix.tobytes("ppm")
-            img = Image.open(io.BytesIO(img_data))
-            
-            pdf_doc.close()
-            return img
-            
-        except Exception as e:
-            print(f"Error rendering page {page_index + 1} for white detection: {e}")
-            return None
-    
     def is_white_page(self, pdf_path: str, page_index: int) -> Tuple[bool, Dict[str, Any]]:
         """
         Check if a page is completely white.
@@ -144,235 +98,11 @@ class DocumentComparator:
         Returns:
             Tuple[bool, Dict]: (is_white, analysis_info)
         """
-        analysis = {
-            'page_number': page_index + 1,
-            'rendered': False,
-            'total_pixels': 0,
-            'white_pixels': 0,
-            'white_percentage': 0.0,
-            'is_white': False,
-            'error': None
-        }
-        
-        try:
-            # Render page to image
-            img = self._render_page_to_image_for_white_detection(pdf_path, page_index)
-            
-            if img is None:
-                analysis['error'] = 'Failed to render page'
-                return False, analysis
-            
-            analysis['rendered'] = True
-            
-            # Convert image to numpy array for efficient processing
-            img_array = np.array(img)
-            
-            # Count white pixels based on image mode
-            if img.mode == 'L':  # Grayscale
-                white_pixels = np.sum(img_array >= self.white_pixel_threshold)
-                total_pixels = img_array.size
-            elif img.mode == 'RGB':
-                # All channels must be >= threshold for white
-                white_pixels = np.sum(np.all(img_array >= self.white_pixel_threshold, axis=2))
-                total_pixels = img_array.shape[0] * img_array.shape[1]
-            elif img.mode == 'RGBA':
-                # All RGB channels must be >= threshold for white (ignore alpha)
-                white_pixels = np.sum(np.all(img_array[:, :, :3] >= self.white_pixel_threshold, axis=2))
-                total_pixels = img_array.shape[0] * img_array.shape[1]
-            elif img.mode == '1':  # 1-bit
-                white_pixels = np.sum(img_array == 1)
-                total_pixels = img_array.size
-            else:
-                # Convert to RGB and analyze
-                img_rgb = img.convert('RGB')
-                img_array = np.array(img_rgb)
-                white_pixels = np.sum(np.all(img_array >= self.white_pixel_threshold, axis=2))
-                total_pixels = img_array.shape[0] * img_array.shape[1]
-            
-            # Ensure all values are standard Python types for JSON serialization
-            analysis['white_pixels'] = int(white_pixels)
-            analysis['total_pixels'] = int(total_pixels)
-            
-            # Calculate percentage
-            if total_pixels > 0:
-                white_percentage = float(white_pixels / total_pixels)
-                analysis['white_percentage'] = white_percentage
-            else:
-                analysis['white_percentage'] = 0.0
-            
-            # Determine if page is white based on threshold
-            analysis['is_white'] = bool(analysis['white_percentage'] >= self.white_threshold)
-            
-            return analysis['is_white'], analysis
-            
-        except Exception as e:
-            analysis['error'] = str(e)
-            return False, analysis
-    
-    def detect_rotation(self, orig_img: np.ndarray, film_img: np.ndarray) -> int:
-        """Detect the rotation angle between original and film (0, 90, 180, 270 degrees)."""
-        
-        print("Detecting rotation between original and film...")
-        
-        # Resize images to smaller size for faster processing
-        height, width = orig_img.shape
-        scale_factor = min(1.0, 800 / max(height, width))
-        
-        if scale_factor < 1.0:
-            new_height = int(height * scale_factor)
-            new_width = int(width * scale_factor)
-            orig_small = cv2.resize(orig_img, (new_width, new_height))
-            film_small = cv2.resize(film_img, (new_width, new_height))
-        else:
-            orig_small = orig_img.copy()
-            film_small = film_img.copy()
-        
-        # Apply edge detection for better matching
-        orig_edges = cv2.Canny(orig_small, 50, 150)
-        film_edges = cv2.Canny(film_small, 50, 150)
-        
-        # Test different rotations (0, 90, 180, 270 degrees)
-        rotations = [0, 90, 180, 270]
-        best_score = -1
-        best_rotation = 0
-        
-        for rotation in rotations:
-            # Rotate the film image
-            if rotation == 90:
-                rotated_film = cv2.rotate(film_edges, cv2.ROTATE_90_COUNTERCLOCKWISE)
-            elif rotation == 180:
-                rotated_film = cv2.rotate(film_edges, cv2.ROTATE_180)
-            elif rotation == 270:
-                rotated_film = cv2.rotate(film_edges, cv2.ROTATE_90_CLOCKWISE)
-            else:
-                rotated_film = film_edges.copy()
-            
-            # Resize rotated image to match original if needed
-            if rotated_film.shape != orig_edges.shape:
-                rotated_film = cv2.resize(rotated_film, (orig_edges.shape[1], orig_edges.shape[0]))
-            
-            # Calculate correlation score
-            try:
-                score, _ = ssim(orig_edges, rotated_film, full=True)
-                print(f"Rotation {rotation}°: SSIM score = {score:.3f}")
-                
-                if score > best_score:
-                    best_score = score
-                    best_rotation = rotation
-            except Exception as e:
-                print(f"Error calculating SSIM for rotation {rotation}°: {e}")
-                continue
-        
-        print(f"Best rotation detected: {best_rotation}° (score: {best_score:.3f})")
-        return best_rotation
-    
-    def find_fine_angle(self, orig_img: np.ndarray, film_img: np.ndarray, 
-                       coarse_rotation: int) -> float:
-        """Find fine angle adjustment after coarse rotation."""
-        
-        print("Finding fine angle adjustment...")
-        
-        # Apply coarse rotation first
-        if coarse_rotation == 90:
-            rotated_film = cv2.rotate(film_img, cv2.ROTATE_90_COUNTERCLOCKWISE)
-        elif coarse_rotation == 180:
-            rotated_film = cv2.rotate(film_img, cv2.ROTATE_180)
-        elif coarse_rotation == 270:
-            rotated_film = cv2.rotate(film_img, cv2.ROTATE_90_CLOCKWISE)
-        else:
-            rotated_film = film_img.copy()
-        
-        # Resize to match original
-        if rotated_film.shape != orig_img.shape:
-            rotated_film = cv2.resize(rotated_film, (orig_img.shape[1], orig_img.shape[0]))
-        
-        # Test fine angles from -10 to +10 degrees
-        angles = np.arange(-10, 11, 0.5)
-        best_score = -1
-        best_angle = 0
-        
-        # Use smaller images for faster processing
-        height, width = orig_img.shape
-        scale_factor = min(1.0, 600 / max(height, width))
-        
-        if scale_factor < 1.0:
-            new_height = int(height * scale_factor)
-            new_width = int(width * scale_factor)
-            orig_small = cv2.resize(orig_img, (new_width, new_height))
-            film_small = cv2.resize(rotated_film, (new_width, new_height))
-        else:
-            orig_small = orig_img.copy()
-            film_small = rotated_film.copy()
-        
-        # Apply edge detection
-        orig_edges = cv2.Canny(orig_small, 50, 150)
-        
-        for angle in angles:
-            # Rotate the film image by fine angle
-            center = (film_small.shape[1] // 2, film_small.shape[0] // 2)
-            rotation_matrix = cv2.getRotationMatrix2D(center, angle, 1.0)
-            fine_rotated = cv2.warpAffine(film_small, rotation_matrix, 
-                                        (film_small.shape[1], film_small.shape[0]))
-            
-            # Apply edge detection
-            fine_edges = cv2.Canny(fine_rotated, 50, 150)
-            
-            # Calculate correlation score
-            try:
-                score, _ = ssim(orig_edges, fine_edges, full=True)
-                
-                if score > best_score:
-                    best_score = score
-                    best_angle = angle
-            except Exception as e:
-                continue
-        
-        print(f"Best fine angle: {best_angle:.1f}° (score: {best_score:.3f})")
-        return best_angle
+        return self.white_detector.is_white_page(pdf_path, page_index)
     
     def align_images(self, orig_img: np.ndarray, film_img: np.ndarray) -> Tuple[np.ndarray, np.ndarray, Dict[str, Any]]:
         """Align film image to original image using rotation detection."""
-        
-        print("Aligning images...")
-        
-        # Step 1: Detect coarse rotation (90-degree increments)
-        coarse_rotation = self.detect_rotation(orig_img, film_img)
-        
-        # Step 2: Find fine angle adjustment
-        fine_angle = self.find_fine_angle(orig_img, film_img, coarse_rotation)
-        
-        # Step 3: Apply transformations to film image
-        aligned_film = film_img.copy()
-        
-        # Apply coarse rotation
-        if coarse_rotation == 90:
-            aligned_film = cv2.rotate(aligned_film, cv2.ROTATE_90_COUNTERCLOCKWISE)
-        elif coarse_rotation == 180:
-            aligned_film = cv2.rotate(aligned_film, cv2.ROTATE_180)
-        elif coarse_rotation == 270:
-            aligned_film = cv2.rotate(aligned_film, cv2.ROTATE_90_CLOCKWISE)
-        
-        # Apply fine rotation
-        if abs(fine_angle) > 0.1:  # Only apply if significant
-            center = (aligned_film.shape[1] // 2, aligned_film.shape[0] // 2)
-            rotation_matrix = cv2.getRotationMatrix2D(center, fine_angle, 1.0)
-            aligned_film = cv2.warpAffine(aligned_film, rotation_matrix, 
-                                        (aligned_film.shape[1], aligned_film.shape[0]))
-        
-        # Resize to match original dimensions
-        if aligned_film.shape != orig_img.shape:
-            aligned_film = cv2.resize(aligned_film, (orig_img.shape[1], orig_img.shape[0]))
-        
-        # Store alignment info
-        alignment_info = {
-            'coarse_rotation': coarse_rotation,
-            'fine_angle': fine_angle,
-            'total_rotation': coarse_rotation + fine_angle
-        }
-        
-        print(f"Alignment complete: {coarse_rotation}° + {fine_angle:.1f}° = {coarse_rotation + fine_angle:.1f}°")
-        
-        return orig_img, aligned_film, alignment_info
+        return self.image_aligner.align_images(orig_img, film_img)
     
     def calculate_ssim(self, img1: np.ndarray, img2: np.ndarray) -> Tuple[float, np.ndarray]:
         """Calculate SSIM score and difference map."""
@@ -494,13 +224,22 @@ Status: {'PASS' if metrics['quality_score'] > 0.7 else 'FAIL'}
         return str(output_path)
     
     def compare_page(self, orig_img: np.ndarray, film_img: np.ndarray, 
-                    page_num: int) -> Dict[str, Any]:
+                    page_num: int, orig_is_white: bool = False,
+                    orig_pdf_path: str = None, film_pdf_path: str = None,
+                    orig_page_index: int = None, film_page_index: int = None) -> Dict[str, Any]:
         """Compare a single page and return metrics."""
         
         print(f"Comparing page {page_num}...")
         
         # Step 1: Align images (rotation detection and correction)
-        aligned_orig, aligned_film, alignment_info = self.align_images(orig_img, film_img)
+        aligned_orig, aligned_film, alignment_info = self.align_images(
+            orig_img, film_img,
+            orig_is_white=orig_is_white,
+            orig_pdf_path=orig_pdf_path,
+            film_pdf_path=film_pdf_path,
+            orig_page_index=orig_page_index,
+            film_page_index=film_page_index
+        )
         
         # Step 2: Calculate SSIM on aligned images
         ssim_score, diff_map = self.calculate_ssim(aligned_orig, aligned_film)
@@ -547,7 +286,17 @@ Status: {'PASS' if metrics['quality_score'] > 0.7 else 'FAIL'}
         print(f"White page threshold: {self.white_threshold * 100:.4f}%")
         print(f"White pixel threshold: {self.white_pixel_threshold}/255")
         
-        # Convert PDFs to images
+        # Step 1: Check original pages for whiteness (only original, since repro has same page order)
+        print(f"\n{'='*70}")
+        print("Step 1: Checking original pages for whiteness...")
+        print(f"{'='*70}")
+        skip_list = self.white_detector.check_original_pages(original_path)
+        skip_set = set(skip_list)  # For faster lookup
+        
+        # Step 2: Convert PDFs to images (all pages)
+        print(f"\n{'='*70}")
+        print("Step 2: Converting PDFs to images...")
+        print(f"{'='*70}")
         orig_images = self.pdf_to_images(original_path)
         film_images = self.pdf_to_images(microfilm_path)
         
@@ -558,62 +307,61 @@ Status: {'PASS' if metrics['quality_score'] > 0.7 else 'FAIL'}
             print(f"Warning: Page count mismatch - Original: {len(orig_images)}, "
                   f"Microfilm: {len(film_images)}")
         
-        # Compare each page with white page detection
+        # Step 3: Process each page
+        print(f"\n{'='*70}")
+        print("Step 3: Processing pages...")
+        print(f"{'='*70}")
         page_results = []
-        white_pages_orig = []
-        white_pages_film = []
         skipped_pages = []
         min_pages = min(len(orig_images), len(film_images))
-        
-        print(f"\nAnalyzing {min_pages} pages...")
         
         for i in range(min_pages):
             page_num = i + 1
             print(f"\nProcessing page {page_num}...")
             
-            # Check if either page is white
-            orig_is_white, orig_white_info = self.is_white_page(original_path, i)
-            film_is_white, film_white_info = self.is_white_page(microfilm_path, i)
-            
-            if orig_is_white:
-                white_pages_orig.append(page_num)
-                print(f"  Original page {page_num} is white ({orig_white_info['white_percentage']:.4f}% white)")
-            
-            if film_is_white:
-                white_pages_film.append(page_num)
-                print(f"  Film page {page_num} is white ({film_white_info['white_percentage']:.4f}% white)")
-            
-            # Skip comparison if either page is white
-            if orig_is_white or film_is_white:
-                skipped_pages.append(page_num)
-                skip_reason = []
-                if orig_is_white:
-                    skip_reason.append("original_white")
-                if film_is_white:
-                    skip_reason.append("film_white")
+            if i in skip_set:
+                # White page - use PDF metadata for orientation only, skip comparison
+                print(f"  Page {page_num} is white - using PDF metadata for orientation, skipping comparison")
+                
+                # Get orientation using PDF metadata
+                alignment_info = self.image_aligner.get_pdf_orientation(
+                    original_path, microfilm_path, i, i
+                )
+                
+                # Get white page info for reporting
+                _, orig_white_info = self.is_white_page(original_path, i)
                 
                 page_result = {
                     'page': page_num,
                     'skipped': True,
-                    'skip_reason': skip_reason,
+                    'skip_reason': ['original_white'],
                     'original_white_info': orig_white_info,
-                    'film_white_info': film_white_info,
+                    'film_white_info': None,  # Not checked for film pages
                     'ssim': None,
                     'text_similarity': None,
                     'layout_similarity': None,
                     'quality_score': None,
-                    'alignment_info': None
+                    'alignment_info': alignment_info  # Orientation info from PDF metadata
                 }
                 page_results.append(page_result)
-                print(f"  Skipping page {page_num} comparison (white page detected)")
+                skipped_pages.append(page_num)
                 continue
             
-            # Perform normal comparison for non-white pages
-            print(f"  Comparing page {page_num} (both pages have content)")
-            page_metrics = self.compare_page(orig_images[i], film_images[i], page_num)
+            # Non-white page - full processing
+            print(f"  Page {page_num} has content - performing full comparison")
+            page_metrics = self.compare_page(
+                orig_images[i], film_images[i], page_num,
+                orig_is_white=False,
+                orig_pdf_path=original_path,
+                film_pdf_path=microfilm_path,
+                orig_page_index=i,
+                film_page_index=i
+            )
             page_metrics['skipped'] = False
+            # Get white page info for reporting (even though not white, for consistency)
+            _, orig_white_info = self.is_white_page(original_path, i)
             page_metrics['original_white_info'] = orig_white_info
-            page_metrics['film_white_info'] = film_white_info
+            page_metrics['film_white_info'] = None  # Not checked for film pages
             page_results.append(page_metrics)
         
         # Calculate overall document metrics (excluding skipped pages)
@@ -625,10 +373,10 @@ Status: {'PASS' if metrics['quality_score'] > 0.7 else 'FAIL'}
             'total_pages_processed': min_pages,
             'pages_compared': len(compared_pages),
             'pages_skipped': len(skipped_pages),
-            'white_pages_original': len(white_pages_orig),
-            'white_pages_film': len(white_pages_film),
-            'white_pages_original_list': white_pages_orig,
-            'white_pages_film_list': white_pages_film,
+            'white_pages_original': len(skip_list),
+            'white_pages_film': 0,  # Not checked
+            'white_pages_original_list': [i + 1 for i in skip_list],
+            'white_pages_film_list': [],
             'skipped_pages_list': skipped_pages
         })
         
@@ -754,8 +502,8 @@ def main():
     parser.add_argument('--microfilm', required=True, help='Path to microfilm PDF')
     parser.add_argument('--dpi', type=int, default=300, help='DPI for PDF conversion (default: 300)')
     parser.add_argument('--output', default='results', help='Output directory (default: results)')
-    parser.add_argument('--white-threshold', type=float, default=0.9999, 
-                       help='White page threshold (0.0-1.0, default: 0.9999)')
+    parser.add_argument('--white-threshold', type=float, default=0.997, 
+                       help='White page threshold (0.0-1.0, default: 0.997 = 99.7%%)')
     parser.add_argument('--white-pixel-threshold', type=int, default=254,
                        help='White pixel threshold (0-255, default: 254)')
     

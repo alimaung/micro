@@ -1,7 +1,7 @@
 {
-  "timestamp": "2025-11-07T18:05:57.280452",
-  "original_document": "Y:\\micro\\scanner\\test\\orig\\1427004500479387.pdf",
-  "microfilm_document": "Y:\\micro\\scanner\\test\\scan\\1427004500479387_SCAN_BK.pdf",
+  "timestamp": "2025-11-08T22:32:26.121408",
+  "original_document": "C:\\Users\\RAVEN\\Desktop\\micro\\scanner\\test\\orig\\1427004500479387.pdf",
+  "microfilm_document": "C:\\Users\\RAVEN\\Desktop\\micro\\scanner\\test\\scan\\1427004500479387_SCAN_BK.pdf",
   "total_pages": 8,
   "overall_metrics": {
     "average_ssim": 0.8261460921930878,
@@ -44,7 +44,7 @@
         "fine_angle": 0.0,
         "total_rotation": 270.0
       },
-      "visual_path": "Y:\\micro\\scanner\\test_results\\page_001_comparison.png",
+      "visual_path": "C:\\Users\\RAVEN\\Desktop\\micro\\scanner\\test_results\\page_001_comparison.png",
       "skipped": false,
       "original_white_info": {
         "page_number": 1,
@@ -108,7 +108,7 @@
         "fine_angle": 0.0,
         "total_rotation": 270.0
       },
-      "visual_path": "Y:\\micro\\scanner\\test_results\\page_003_comparison.png",
+      "visual_path": "C:\\Users\\RAVEN\\Desktop\\micro\\scanner\\test_results\\page_003_comparison.png",
       "skipped": false,
       "original_white_info": {
         "page_number": 3,
@@ -172,7 +172,7 @@
         "fine_angle": 0.0,
         "total_rotation": 270.0
       },
-      "visual_path": "Y:\\micro\\scanner\\test_results\\page_005_comparison.png",
+      "visual_path": "C:\\Users\\RAVEN\\Desktop\\micro\\scanner\\test_results\\page_005_comparison.png",
       "skipped": false,
       "original_white_info": {
         "page_number": 5,
@@ -236,7 +236,7 @@
         "fine_angle": 0.0,
         "total_rotation": 270.0
       },
-      "visual_path": "Y:\\micro\\scanner\\test_results\\page_007_comparison.png",
+      "visual_path": "C:\\Users\\RAVEN\\Desktop\\micro\\scanner\\test_results\\page_007_comparison.png",
       "skipped": false,
       "original_white_info": {
         "page_number": 7,

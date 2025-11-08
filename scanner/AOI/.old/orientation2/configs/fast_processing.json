@@ -1,0 +1,23 @@
+{
+  "test_rotations": [0, 90, 180, 270],
+  "fine_angle_range": [-5.0, 5.0],
+  "fine_angle_step": 1.0,
+  "resize_for_speed": true,
+  "max_dimension": 400,
+  "gaussian_blur_kernel": 5,
+  "canny_low_threshold": 50,
+  "canny_high_threshold": 150,
+  "sift_n_features": 500,
+  "orb_n_features": 500,
+  "feature_match_ratio": 0.7,
+  "weights": {
+    "ssim": 0.5,
+    "feature_matching": 0.2,
+    "edge_correlation": 0.2,
+    "template_matching": 0.1
+  },
+  "min_confidence": 0.25,
+  "high_confidence": 0.6,
+  "_description": "Fast processing configuration optimized for speed over accuracy. Uses smaller images, fewer features, and coarser angle steps. Suitable for batch processing or real-time applications where speed is critical."
+}
+

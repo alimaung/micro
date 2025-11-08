@@ -1,0 +1,22 @@
+{
+  "test_rotations": [0, 90, 180, 270],
+  "fine_angle_range": [-10.0, 10.0],
+  "fine_angle_step": 0.5,
+  "resize_for_speed": true,
+  "max_dimension": 800,
+  "gaussian_blur_kernel": 3,
+  "canny_low_threshold": 50,
+  "canny_high_threshold": 150,
+  "sift_n_features": 1000,
+  "orb_n_features": 1000,
+  "feature_match_ratio": 0.75,
+  "weights": {
+    "ssim": 0.4,
+    "feature_matching": 0.3,
+    "edge_correlation": 0.2,
+    "template_matching": 0.1
+  },
+  "min_confidence": 0.3,
+  "high_confidence": 0.7,
+  "_description": "Default configuration for Automated Optical Inspection (AOI) orientation detection. Provides balanced performance between speed and accuracy for typical document comparison tasks."
+}

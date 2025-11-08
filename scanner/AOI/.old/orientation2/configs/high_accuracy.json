@@ -1,0 +1,23 @@
+{
+  "test_rotations": [0, 90, 180, 270],
+  "fine_angle_range": [-15.0, 15.0],
+  "fine_angle_step": 0.25,
+  "resize_for_speed": false,
+  "max_dimension": 1200,
+  "gaussian_blur_kernel": 3,
+  "canny_low_threshold": 30,
+  "canny_high_threshold": 100,
+  "sift_n_features": 2000,
+  "orb_n_features": 2000,
+  "feature_match_ratio": 0.8,
+  "weights": {
+    "ssim": 0.35,
+    "feature_matching": 0.35,
+    "edge_correlation": 0.2,
+    "template_matching": 0.1
+  },
+  "min_confidence": 0.4,
+  "high_confidence": 0.8,
+  "_description": "High accuracy configuration for critical orientation detection tasks. Uses higher resolution processing, more features, and finer angle steps for maximum precision. Slower but more accurate."
+}
+
