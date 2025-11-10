@@ -25,8 +25,8 @@ def main():
     # Define paths
     script_dir = Path(__file__).parent
     test_dir = script_dir / "test"
-    orig_pdf = test_dir / "orig" / "1427004500479387.pdf"
-    scan_pdf = test_dir / "scan" / "1427004500479387_SCAN_BK.pdf"
+    orig_pdf = test_dir / "orig" / "1427004805002153.pdf"
+    scan_pdf = test_dir / "scan" / "1427004805002153.pdf"
     
     # Check if test files exist
     if not orig_pdf.exists():
