@@ -820,9 +820,11 @@ class FilmNumberManager:
         """
         # Use select_for_update to prevent race conditions when multiple processes
         # are trying to allocate temp rolls simultaneously
+        # Only find temp rolls that physically exist (from previous filming)
         temp_roll = TempRoll.objects.select_for_update(skip_locked=True).filter(
             film_type=film_type,
             status="available",
+            exists=True,  # Only allocate temp rolls that physically exist
             usable_capacity__gte=pages_needed
         ).order_by('usable_capacity').first()
         
@@ -856,6 +858,7 @@ class FilmNumberManager:
                 capacity=remaining_capacity,  # This is the actual remaining capacity
                 usable_capacity=usable_capacity,  # This is the capacity after padding
                 status="available",  # Always available when created - no "created" status
+                exists=False,  # Not physically created yet - will be set to True after filming
                 source_roll=roll
             )
             
@@ -888,6 +891,7 @@ class FilmNumberManager:
                 capacity=capacity,
                 usable_capacity=usable_capacity,
                 status="available",  # Always available when created - no "created" status
+                exists=False,  # Not physically created yet - will be set to True after filming
                 source_roll=source_roll
             )
             

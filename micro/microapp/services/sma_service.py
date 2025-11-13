@@ -962,6 +962,13 @@ class SMAService:
                     cached_info = cls._get_cached_session_info(session_id)
                     is_re_filming = cached_info and cached_info.get('re_filming', False)
                     
+                    # Handle temp roll consumption: if a temp roll was used, mark it as non-existent
+                    if roll.source_temp_roll:
+                        # Temp roll was physically consumed during filming
+                        roll.source_temp_roll.exists = False
+                        roll.source_temp_roll.save(update_fields=['exists'])
+                        logger.info(f"Marked temp roll #{roll.source_temp_roll.temp_roll_id} as non-existent (consumed during filming)")
+                    
                     # Handle temp roll creation based on filming type
                     temp_roll_created = False
                     if is_re_filming:
@@ -969,8 +976,13 @@ class SMAService:
                         temp_roll_created = cls._handle_refilming_temp_roll_creation(roll)
                     else:
                         # For initial filming, temp rolls are already created as "available" by registration
-                        # No activation needed - just check if this roll created any temp rolls
-                        temp_roll_created = roll.created_temp_roll is not None
+                        # After filming completes, mark them as physically existing
+                        if roll.created_temp_roll:
+                            # Temp roll was planned during registration, now it physically exists after filming
+                            roll.created_temp_roll.exists = True
+                            roll.created_temp_roll.save(update_fields=['exists'])
+                            logger.info(f"Marked temp roll #{roll.created_temp_roll.temp_roll_id} as existing (created after filming)")
+                            temp_roll_created = True
                     
                     # Save roll (including any temp roll relationships and updated pages_remaining)
                     roll.save(update_fields=[
@@ -1030,12 +1042,12 @@ class SMAService:
                 
                 # Update temp roll capacity
                 temp_roll.usable_capacity -= pages_needed
+                # Mark as non-existent since it's been physically consumed during filming
+                temp_roll.exists = False
                 if temp_roll.usable_capacity <= 0:
                     temp_roll.status = 'exhausted'
-                    # Mark as non-existent once fully consumed to reflect physical usage
-                    temp_roll.exists = False
                 temp_roll.used_by_roll = roll
-                temp_roll.save()
+                temp_roll.save(update_fields=['usable_capacity', 'exists', 'status', 'used_by_roll'])
                 
                 # Update roll to reflect it was filmed using a temp roll
                 roll.source_temp_roll = temp_roll
