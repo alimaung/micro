@@ -4,7 +4,7 @@ from .models import (
     Roll, TempRoll, DocumentSegment, RollReferenceInfo, DocumentReferenceInfo,
     RangeReferenceInfo, FilmAllocation, DocumentAllocationRequest35mm,
     DistributionResult, ReferenceSheet, ReadablePageDescription, AdjustedRange,
-    ProcessedDocument, FilmingSession, FilmingSessionLog,
+    ProcessedDocument, FilmingSession,
     DevelopmentSession, ChemicalBatch, DevelopmentLog, DensityMeasurement,
     FilmLabel, AnalyzedFolder, HandoffRecord, HandoffValidationSnapshot
 )
@@ -399,20 +399,6 @@ class FilmingSessionAdmin(admin.ModelAdmin):
         }),
     )
     
-class FilmingSessionLogAdmin(admin.ModelAdmin):
-    list_display = ('id', 'session', 'level', 'workflow_state', 'message', 'created_at')
-    search_fields = ('session__session_id', 'message')
-    list_filter = ('level', 'workflow_state', 'created_at')
-    readonly_fields = ('id', 'created_at')
-    fieldsets = (
-        ('Identification', {
-            'fields': ('id', 'session')
-        }),
-        ('Log Information', {
-            'fields': ('level', 'workflow_state', 'message', 'created_at')
-        }),
-    )
-
 class DevelopmentSessionAdmin(admin.ModelAdmin):
     list_display = ('id', 'session_id', 'roll', 'user', 'status', 'progress_percent', 
                     'development_duration_minutes', 'started_at', 'completed_at', 
@@ -738,7 +724,6 @@ admin.site.register(ReadablePageDescription, ReadablePageDescriptionAdmin)
 admin.site.register(AdjustedRange, AdjustedRangeAdmin)
 admin.site.register(ProcessedDocument, ProcessedDocumentAdmin)
 admin.site.register(FilmingSession, FilmingSessionAdmin)
-admin.site.register(FilmingSessionLog, FilmingSessionLogAdmin)
 admin.site.register(DevelopmentSession, DevelopmentSessionAdmin)
 admin.site.register(ChemicalBatch, ChemicalBatchAdmin)
 admin.site.register(DevelopmentLog, DevelopmentLogAdmin)

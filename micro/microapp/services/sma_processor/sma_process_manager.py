@@ -953,9 +953,6 @@ class SMACallbackHandler:
     def on_log_entry(self, log_data: Dict[str, Any]):
         """Handle log entries from SMA process."""
         try:
-            # Store log entry in database
-            self._store_log_entry(log_data)
-        
             # Broadcast ALL log entries to WebSocket clients for real-time viewing
             self._broadcast_log_entry(log_data)
             
@@ -1095,23 +1092,6 @@ class SMACallbackHandler:
             
         except Exception as e:
             logger.error(f"Error updating database with completion: {e}")
-    
-    def _store_log_entry(self, log_data: Dict[str, Any]):
-        """Store log entry in database."""
-        try:
-            from ...models import FilmingSession, FilmingSessionLog
-            
-            session = FilmingSession.objects.get(session_id=self.session_id)
-            
-            FilmingSessionLog.objects.create(
-                session=session,
-                level=log_data.get('level', 'info'),
-                message=log_data.get('message', ''),
-                workflow_state=log_data.get('workflow_state', session.workflow_state)
-            )
-            
-        except Exception as e:
-            logger.error(f"Error storing log entry: {e}")
     
     def _handle_error_condition(self, log_data: Dict[str, Any]):
         """Handle error conditions detected in logs."""

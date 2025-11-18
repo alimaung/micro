@@ -648,37 +648,38 @@ class FilmingSession(models.Model):
             self.progress_percent = (self.processed_documents / self.total_documents) * 100
         self.save(update_fields=['processed_documents', 'total_documents', 'progress_percent', 'updated_at'])
 
-
-class FilmingSessionLog(models.Model):
-    """Stores log entries for filming sessions."""
-    LOG_LEVEL_CHOICES = [
-        ('debug', 'Debug'),
-        ('info', 'Info'),
-        ('warning', 'Warning'),
-        ('error', 'Error'),
-        ('critical', 'Critical'),
-    ]
-    
-    # Relationships
-    session = models.ForeignKey(FilmingSession, on_delete=models.CASCADE, related_name='logs')
-    
-    # Log information
-    level = models.CharField(max_length=10, choices=LOG_LEVEL_CHOICES, default='info')
-    message = models.TextField(help_text="Log message content")
-    workflow_state = models.CharField(max_length=20, blank=True, null=True, help_text="Workflow state when log was created")
-    
-    # Metadata
-    created_at = models.DateTimeField(auto_now_add=True)
-    
-    class Meta:
-        ordering = ['-created_at']
-        indexes = [
-            models.Index(fields=['session', '-created_at']),
-            models.Index(fields=['level']),
-        ]
-    
-    def __str__(self):
-        return f"{self.session.session_id} [{self.level}]: {self.message[:50]}..."
+# FilmingSessionLog model removed - logs are no longer stored in database
+# Logs are only streamed via WebSocket during active sessions
+# class FilmingSessionLog(models.Model):
+#     """Stores log entries for filming sessions."""
+#     LOG_LEVEL_CHOICES = [
+#         ('debug', 'Debug'),
+#         ('info', 'Info'),
+#         ('warning', 'Warning'),
+#         ('error', 'Error'),
+#         ('critical', 'Critical'),
+#     ]
+#     
+#     # Relationships
+#     session = models.ForeignKey(FilmingSession, on_delete=models.CASCADE, related_name='logs')
+#     
+#     # Log information
+#     level = models.CharField(max_length=10, choices=LOG_LEVEL_CHOICES, default='info')
+#     message = models.TextField(help_text="Log message content")
+#     workflow_state = models.CharField(max_length=20, blank=True, null=True, help_text="Workflow state when log was created")
+#     
+#     # Metadata
+#     created_at = models.DateTimeField(auto_now_add=True)
+#     
+#     class Meta:
+#         ordering = ['-created_at']
+#         indexes = [
+#             models.Index(fields=['session', '-created_at']),
+#             models.Index(fields=['level']),
+#         ]
+#     
+#     def __str__(self):
+#         return f"{self.session.session_id} [{self.level}]: {self.message[:50]}..."
 
 
 class DevelopmentSession(models.Model):

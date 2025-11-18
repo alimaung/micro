@@ -1,10 +1,10 @@
 from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
-from microapp.models import FilmingSession, FilmingSessionLog
+from microapp.models import FilmingSession
 
 
 class Command(BaseCommand):
-    help = 'Get all log messages from a specific filming session'
+    help = 'Get all log messages from a specific filming session (logs are no longer stored in database - only available via WebSocket)'
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -16,7 +16,7 @@ class Command(BaseCommand):
             '--level',
             type=str,
             choices=['debug', 'info', 'warning', 'error', 'critical'],
-            help='Filter logs by level (optional)'
+            help='Filter logs by level (optional) - not applicable, logs are not stored'
         )
         parser.add_argument(
             '--format',
@@ -28,14 +28,12 @@ class Command(BaseCommand):
         parser.add_argument(
             '--limit',
             type=int,
-            help='Limit the number of log entries returned'
+            help='Limit the number of log entries returned - not applicable, logs are not stored'
         )
 
     def handle(self, *args, **options):
         session_id = options['session_id']
-        level_filter = options.get('level')
         output_format = options['format']
-        limit = options.get('limit')
         
         try:
             # Get the filming session
@@ -43,41 +41,19 @@ class Command(BaseCommand):
         except FilmingSession.DoesNotExist:
             raise CommandError(f'Filming session with ID "{session_id}" does not exist')
         
-        # Get logs for the session in reverse order (oldest first)
-        logs_query = FilmingSessionLog.objects.filter(session=session).order_by('created_at')
+        # Logs are no longer stored in database - only available via WebSocket streaming
+        message = (
+            f"Logs for session {session_id} are not stored in the database.\n"
+            f"Logs are only available via WebSocket streaming during active sessions.\n"
+            f"No historical logs are maintained."
+        )
         
-        # Apply level filter if specified
-        if level_filter:
-            logs_query = logs_query.filter(level=level_filter)
-        
-        # Apply limit if specified
-        if limit:
-            logs_query = logs_query[:limit]
-        
-        logs = list(logs_query)
-        
-        if not logs:
-            return
-        
-        # Display logs based on format
-        if output_format == 'simple':
-            self._display_simple_format(logs, level_filter)
-        elif output_format == 'json':
-            self._display_json_format(logs)
-        else:  # detailed format
-            self._display_detailed_format(logs, level_filter)
-
-    def _display_detailed_format(self, logs, level_filter):
-        """Display logs in detailed format"""
-        for log in logs:
-            self.stdout.write(log.message)
-
-    def _display_simple_format(self, logs, level_filter):
-        """Display logs in simple format"""
-        for log in logs:
-            self.stdout.write(log.message)
-
-    def _display_json_format(self, logs):
-        """Display logs in JSON format"""
-        for log in logs:
-            self.stdout.write(log.message) 
+        if output_format == 'json':
+            import json
+            self.stdout.write(json.dumps({
+                'session_id': session_id,
+                'message': message,
+                'logs': []
+            }))
+        else:
+            self.stdout.write(self.style.WARNING(message)) 

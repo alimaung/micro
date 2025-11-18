@@ -1,0 +1,96 @@
+{
+  "scan_date": "2025-11-18T17:12:23.711909",
+  "root_path": "X:\\",
+  "page_threshold": 2900,
+  "total_pdfs_scanned": 79424,
+  "large_pdfs_count": 5,
+  "errors_count": 1,
+  "warnings": [
+    "No PDF-only folder found in RRD007-2022_DW_TAD, using folder with most PDFs: PDF (266 PDFs, 267 total files)",
+    "No PDF-only folder found in RRD009-2024_DW_Engine FAI_75-8, using folder with most PDFs: importiert (328 PDFs, 329 total files)",
+    "No PDF-only folder found in RRD013-2022_OU_Arbeitspläne, using folder with most PDFs: PDFs zum RRD013-2022 (38 PDFs, 39 total files)",
+    "No PDF-only folder found in RRD015-2024_OU_FPA-FPD-MVA, using folder with most PDFs: PDFs zu RRD015-2024 (224 PDFs, 225 total files)",
+    "No PDF-only folder found in RRD017-2024_OU_FAIR_FARBE, using folder with most PDFs: PDFs zu RRD017-2024 (201 PDFs, 202 total files)",
+    "No PDF-only folder found in RRD032-2024_DW_Source Demo Package, using folder with most PDFs: PDF (42 PDFs, 43 total files)",
+    "No PDF-only folder found in RRD039-2021_DW_OLN digital, using folder with most PDFs: PDF (319 PDFs, 320 total files)",
+    "No PDF-only folder found in RRD043-2025_OU_FPA_FPD_MVA, using folder with most PDFs: PDFs zu RRD043-2025 (113 PDFs, 114 total files)",
+    "No PDF-only folder found in RRD044-2022_DW_Prozess Work Instruction PWI für MRO, using folder with most PDFs: Importiert (302 PDFs, 303 total files)",
+    "No PDF-only folder found in RRD044-2024_OU_NC-Programme-Pause1, using folder with most PDFs: PDF´s zu RRD044-2024 (408 PDFs, 409 total files)",
+    "No PDF-only folder found in RRD048-2023_DW_FAIR digital, using folder with most PDFs: PDF - Verfilmung (992 PDFs, 993 total files)",
+    "No PDF-only folder found in RRD050-2024_DW_FAIR, using folder with most PDFs: importiert (1448 PDFs, 1449 total files)",
+    "No PDF-only folder found in RRD056-2022_DW_FAIR intern digital, using folder with most PDFs: pdfs (56 PDFs, 57 total files)",
+    "No PDF-only folder found in RRD058-2021_OU_Nacharbeitspläne, using folder with most PDFs: PDF zum Auftrag RRD058-2021 Nacharbeitspläne (130 PDFs, 131 total files)",
+    "No PDF-only folder found in RRD061-2024_DW_Technical Reports, using folder with most PDFs: pdfs (772 PDFs, 775 total files)",
+    "No PDF-only folder found in RRD067-2021_OU_COGNOS, using folder with most PDFs: PDFs zum Auftrag RRD067-2021 (41 PDFs, 42 total files)",
+    "No PDF-only folder found in RRD073-2021_OU_CAPP-MES, using folder with most PDFs: PDF zum Auftrag RRD073-2021 (1035 PDFs, 1036 total files)",
+    "No PDF-only folder found in RRD075-2022_OU_FPA_FPD_MVA, using folder with most PDFs: PDFs zum Auftrag RRD075-2022 (282 PDFs, 283 total files)",
+    "No PDF-only folder found in RRD077-2021_OU_Abschlussberichte, using folder with most PDFs: PDFs zum Auftrag RRD077-2021 (104 PDFs, 105 total files)",
+    "No PDF-only folder found in RRD089-2022_OU_Änderungswesen, using folder with most PDFs: PDFs_zu_Auftrag_RRD089-2022 (433 PDFs, 434 total files)",
+    "No PDF-only folder found in RRD094-2021_DW_FAIR, using folder with most PDFs: PDFs zu RRD094-2021 (167 PDFs, 168 total files)",
+    "No PDF-only folder found in RRD104-2023_DW_Reinigungsanalysen, using folder with most PDFs: importiert (10 PDFs, 11 total files)",
+    "No PDF-only folder found in RRD105-2021_OU_Serialnummernlisten eines DP, using folder with most PDFs: PDF zum RRD105-2021 (294 PDFs, 295 total files)",
+    "No PDF-only folder found in RRD115-2021_OU_Prüfpläne, using folder with most PDFs: PDF zum Auftrag_RRD115-2021 (671 PDFs, 672 total files)",
+    "No PDF-only folder found in RRD116-2021_OU_Setlisten, using folder with most PDFs: PDFs zum Auftrag RRD116-2021 (555 PDFs, 556 total files)",
+    "No PDF-only folder found in RRD120-2021_OU_Skizzenpläne, using folder with most PDFs: PDF zum Auftrag RRD120-2021 (347 PDFs, 348 total files)",
+    "No PDF-only folder found in RRD262-2018_DW_Gate Review Checklist_COM_fortlaufend, using folder with most PDFs: pdfs (26 PDFs, 27 total files)"
+  ],
+  "large_pdfs": [
+    {
+      "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047521.pdf",
+      "filename": "1422002101047521.pdf",
+      "page_count": 10879,
+      "file_size_bytes": 313341188,
+      "file_size_mb": 298.83,
+      "project_folder": "X:\\RRD102-2025_DW_Technical Reports",
+      "pdf_folder": "X:\\RRD102-2025_DW_Technical Reports\\pdf",
+      "relative_depth": "direct"
+    },
+    {
+      "path": "X:\\RRD048-2025_OU_Technische_Handbücher\\Pdf zu RRD048-2025\\1427003704002419.pdf",
+      "filename": "1427003704002419.pdf",
+      "page_count": 3528,
+      "file_size_bytes": 135953887,
+      "file_size_mb": 129.66,
+      "project_folder": "X:\\RRD048-2025_OU_Technische_Handbücher",
+      "pdf_folder": "X:\\RRD048-2025_OU_Technische_Handbücher\\Pdf zu RRD048-2025",
+      "relative_depth": "direct"
+    },
+    {
+      "path": "X:\\RRD048-2025_OU_Technische_Handbücher\\Pdf zu RRD048-2025\\1427003704002420.pdf",
+      "filename": "1427003704002420.pdf",
+      "page_count": 3206,
+      "file_size_bytes": 130608710,
+      "file_size_mb": 124.56,
+      "project_folder": "X:\\RRD048-2025_OU_Technische_Handbücher",
+      "pdf_folder": "X:\\RRD048-2025_OU_Technische_Handbücher\\Pdf zu RRD048-2025",
+      "relative_depth": "direct"
+    },
+    {
+      "path": "X:\\RRD048-2025_OU_Technische_Handbücher\\Pdf zu RRD048-2025\\1427003704002421.pdf",
+      "filename": "1427003704002421.pdf",
+      "page_count": 3025,
+      "file_size_bytes": 462720166,
+      "file_size_mb": 441.28,
+      "project_folder": "X:\\RRD048-2025_OU_Technische_Handbücher",
+      "pdf_folder": "X:\\RRD048-2025_OU_Technische_Handbücher\\Pdf zu RRD048-2025",
+      "relative_depth": "direct"
+    },
+    {
+      "path": "X:\\RRD048-2025_OU_Technische_Handbücher\\Pdf zu RRD048-2025\\1427003704002379.pdf",
+      "filename": "1427003704002379.pdf",
+      "page_count": 2983,
+      "file_size_bytes": 131649237,
+      "file_size_mb": 125.55,
+      "project_folder": "X:\\RRD048-2025_OU_Technische_Handbücher",
+      "pdf_folder": "X:\\RRD048-2025_OU_Technische_Handbücher\\Pdf zu RRD048-2025",
+      "relative_depth": "direct"
+    }
+  ],
+  "errors": [
+    {
+      "path": "X:\\RRD038-2024_DW_Technical Reports\\PDF\\1422002101043294.pdf",
+      "filename": "1422002101043294.pdf",
+      "error": "Could not read PDF"
+    }
+  ]
+}

@@ -19,7 +19,7 @@ from django.db import models
 # Import the real SMA process manager
 from .sma_processor.sma_process_manager import SMAProcessManager, SMACallbackHandler
 
-from ..models import FilmingSession, FilmingSessionLog, Project, Roll, TempRoll
+from ..models import FilmingSession, Project, Roll, TempRoll
 
 logger = logging.getLogger(__name__)
 
@@ -760,11 +760,7 @@ class SMAService:
                     docs_per_minute = session.processed_documents / (session.duration.total_seconds() / 60)
                     stats['processing_rate_docs_per_minute'] = round(docs_per_minute, 2)
             
-            # Log statistics
-            log_stats = FilmingSessionLog.objects.filter(session=session).values('level').annotate(
-                count=models.Count('level')
-            )
-            stats['log_counts'] = {item['level']: item['count'] for item in log_stats}
+            # Log statistics removed - logs are only streamed via WebSocket, not stored in database
             
             # Process statistics if active
             if session_id in cls._active_sessions:

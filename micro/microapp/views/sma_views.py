@@ -19,7 +19,7 @@ from django.db.models import Q
 from django.conf import settings
 
 from ..services.sma_service import SMAService
-from ..models import Project, Roll, FilmingSession, FilmingSessionLog
+from ..models import Project, Roll, FilmingSession
 
 logger = logging.getLogger(__name__)
 
@@ -454,19 +454,8 @@ def recover_session(request, session_id):
 @login_required
 @require_http_methods(["GET"])
 def session_logs(request, session_id):
-    """Get logs for a filming session with enhanced filtering and pagination."""
+    """Get logs for a filming session - logs are only available via WebSocket, not stored in database."""
     try:
-        # Validate parameters
-        try:
-            limit = min(int(request.GET.get('limit', 100)), 1000)  # Max 1000 logs
-            page = int(request.GET.get('page', 1))
-            level_filter = request.GET.get('level')
-        except ValueError:
-            return JsonResponse({
-                'success': False,
-                'error': 'Invalid parameters - limit and page must be integers'
-            }, status=400)
-        
         # Check user permissions
         session_result = SMAService.get_session_status(session_id)
         if session_result['success']:
@@ -477,7 +466,7 @@ def session_logs(request, session_id):
                     'error': 'Access denied'
                 }, status=403)
         
-        # Get session logs from database
+        # Verify session exists
         try:
             session = FilmingSession.objects.get(session_id=session_id)
         except FilmingSession.DoesNotExist:
@@ -486,38 +475,17 @@ def session_logs(request, session_id):
                 'error': 'Session not found'
             }, status=404)
         
-        # Build query
-        logs_query = FilmingSessionLog.objects.filter(session=session)
-        
-        if level_filter:
-            logs_query = logs_query.filter(level=level_filter)
-        
-        logs_query = logs_query.order_by('-created_at')
-        
-        # Paginate
-        paginator = Paginator(logs_query, limit)
-        page_obj = paginator.get_page(page)
-        
-        # Format logs
-        log_entries = []
-        for log in page_obj:
-            log_entries.append({
-                'id': log.id,
-                'timestamp': log.created_at.isoformat(),
-                'level': log.level,
-                'message': log.message,
-                'workflow_state': log.workflow_state
-            })
-        
+        # Logs are no longer stored in database - only available via WebSocket streaming
         return JsonResponse({
             'success': True,
-            'logs': log_entries,
+            'logs': [],
+            'message': 'Logs are only available via WebSocket streaming. No historical logs are stored in the database.',
             'pagination': {
-                'page': page,
-                'total_pages': paginator.num_pages,
-                'total_count': paginator.count,
-                'has_next': page_obj.has_next(),
-                'has_previous': page_obj.has_previous()
+                'page': 1,
+                'total_pages': 1,
+                'total_count': 0,
+                'has_next': False,
+                'has_previous': False
             }
         })
         

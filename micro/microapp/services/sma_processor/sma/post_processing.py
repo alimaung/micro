@@ -81,7 +81,7 @@ class PostProcessor:
     def open_log_folder(self, log_path):
         """Open the log file folder in Windows Explorer."""
         try:
-            success = open_log_file_folder(log_path)
+            #success = open_log_file_folder(log_path)
             if success:
                 self.logger.info(f"Opened log folder in Explorer: {os.path.dirname(log_path)}")
             else:
