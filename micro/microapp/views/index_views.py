@@ -435,21 +435,61 @@ def process_index_initialization(task_id, project_id, allocation_results=None):
                 print(f"DEBUG: Creating film allocation from allocation data")
                 self.film_allocation = PseudoFilmAllocation(allocation_data)
                 
-                # Extract documents
-                if 'results' in allocation_data and 'documents' in allocation_data['results']:
-                    print(f"DEBUG: Found documents in allocation results")
+                # Extract documents using the same nested structure handling
+                documents_found = False
+                
+                # Try to find documents in the nested structure
+                if 'documents' in allocation_data:
+                    print(f"DEBUG: Found documents directly in allocation_data")
+                    for doc in allocation_data['documents']:
+                        self.documents.append(PseudoDocument(doc))
+                    documents_found = True
+                elif 'allocationResults' in allocation_data:
+                    alloc_results = allocation_data['allocationResults']
+                    if 'documents' in alloc_results:
+                        print(f"DEBUG: Found documents in allocationResults")
+                        for doc in alloc_results['documents']:
+                            self.documents.append(PseudoDocument(doc))
+                        documents_found = True
+                    elif 'results' in alloc_results and 'documents' in alloc_results['results']:
+                        print(f"DEBUG: Found documents in allocationResults.results")
+                        for doc in alloc_results['results']['documents']:
+                            self.documents.append(PseudoDocument(doc))
+                        documents_found = True
+                elif 'results' in allocation_data and 'documents' in allocation_data['results']:
+                    print(f"DEBUG: Found documents in allocation_data.results")
                     for doc in allocation_data['results']['documents']:
                         self.documents.append(PseudoDocument(doc))
-                else:
+                    documents_found = True
+                
+                if not documents_found:
                     print(f"DEBUG: No documents found in allocation results")
                     print(f"DEBUG: allocation_data keys: {list(allocation_data.keys())}")
                     if 'results' in allocation_data:
                         print(f"DEBUG: allocation_data['results'] keys: {list(allocation_data['results'].keys())}")
+                    if 'allocationResults' in allocation_data:
+                        print(f"DEBUG: allocation_data['allocationResults'] keys: {list(allocation_data['allocationResults'].keys())}")
         
         class PseudoFilmAllocation:
             def __init__(self, allocation_data):
+                # Handle different data structures: direct data, wrapped in allocationResults, or nested in allocationResults.results
+                results = allocation_data
+                if 'allocationResults' in allocation_data:
+                    alloc_results = allocation_data['allocationResults']
+                    if 'results' in alloc_results:
+                        results = alloc_results['results']
+                    else:
+                        results = alloc_results
+                
+                # Additional check: if results still doesn't have rolls_16mm but has 'results' key, go deeper
+                if 'rolls_16mm' not in results and 'results' in results:
+                    print(f"DEBUG: Results doesn't have rolls_16mm directly, checking nested results")
+                    results = results['results']
+                
+                print(f"DEBUG: Using allocation results structure with keys: {list(results.keys()) if isinstance(results, dict) else 'Not a dict'}")
+                
                 # Extract data from the allocation results
-                results = allocation_data.get('results', {})
+                results = results or {}
                 
                 self.rolls_16mm = []
                 rolls_16mm_data = results.get('rolls_16mm', [])

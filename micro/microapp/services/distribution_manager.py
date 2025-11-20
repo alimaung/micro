@@ -727,6 +727,25 @@ class DistributionManager:
             self.logger.info(f"- allocation_data: {type(allocation_data).__name__}, available: {allocation_data is not None}")
             self.logger.info(f"- film_number_data: {type(film_number_data).__name__}, available: {film_number_data is not None}")
             
+            # Debug: Log film number data structure
+            if film_number_data:
+                self.logger.info(f"Film number data keys: {list(film_number_data.keys()) if isinstance(film_number_data, dict) else 'Not a dict'}")
+                if isinstance(film_number_data, dict) and 'results' in film_number_data:
+                    results = film_number_data['results']
+                    self.logger.info(f"Film number results keys: {list(results.keys()) if isinstance(results, dict) else 'Not a dict'}")
+                    if isinstance(results, dict):
+                        if 'rolls_16mm' in results:
+                            self.logger.info(f"Found {len(results['rolls_16mm'])} 16mm rolls")
+                        if 'rolls_35mm' in results:
+                            self.logger.info(f"Found {len(results['rolls_35mm'])} 35mm rolls")
+                else:
+                    # Check if rolls are at the top level
+                    if isinstance(film_number_data, dict):
+                        if 'rolls_16mm' in film_number_data:
+                            self.logger.info(f"Found {len(film_number_data['rolls_16mm'])} 16mm rolls at top level")
+                        if 'rolls_35mm' in film_number_data:
+                            self.logger.info(f"Found {len(film_number_data['rolls_35mm'])} 35mm rolls at top level")
+            
             if not project.film_allocation_complete:
                 self.log_distribution(project, 'ERROR', "Film allocation is not complete")
                 return {"status": "error", "message": "Film allocation is not complete"}
@@ -751,9 +770,22 @@ class DistributionManager:
             doc_path_prefix = None
             if project_data and 'projectInfo' in project_data and 'pdfPath' in project_data['projectInfo']:
                 doc_path_prefix = project_data['projectInfo']['pdfPath']
+                self.log_distribution(project, 'INFO', f"Using document path from frontend: {doc_path_prefix}")
             else:
                 # Use the project's document folder
                 doc_path_prefix = project.documents_path
+                self.log_distribution(project, 'INFO', f"Using document path from database: {doc_path_prefix}")
+            
+            # Check if the document path exists
+            if doc_path_prefix:
+                from pathlib import Path
+                path_obj = Path(doc_path_prefix)
+                if path_obj.exists():
+                    self.log_distribution(project, 'INFO', f"Document path exists: {doc_path_prefix}")
+                else:
+                    self.log_distribution(project, 'WARNING', f"Document path does not exist: {doc_path_prefix}")
+            else:
+                self.log_distribution(project, 'WARNING', "No document path specified")
             
             # Get reference sheet data
             reference_sheets = {}
@@ -788,9 +820,19 @@ class DistributionManager:
             processed_file_details = []
             
             # STEP 1: Process 35mm rolls - Extract oversized pages and add reference sheets
-            if film_number_data and 'results' in film_number_data and 'rolls_35mm' in film_number_data['results']:
-                rolls_35mm = film_number_data['results']['rolls_35mm']
+            rolls_35mm = None
+            if film_number_data:
+                # Try different data structures
+                if 'results' in film_number_data and isinstance(film_number_data['results'], dict):
+                    if 'rolls_35mm' in film_number_data['results']:
+                        rolls_35mm = film_number_data['results']['rolls_35mm']
+                elif 'rolls_35mm' in film_number_data:
+                    rolls_35mm = film_number_data['rolls_35mm']
+            
+            if rolls_35mm:
                 self.log_distribution(project, 'INFO', f"Processing {len(rolls_35mm)} 35mm rolls from frontend data")
+            else:
+                self.log_distribution(project, 'INFO', "No 35mm rolls found in film number data")
                 
                 # Process each 35mm roll
                 for roll_data in rolls_35mm:
@@ -885,8 +927,16 @@ class DistributionManager:
                                 )
             
             # STEP 2: Process 16mm rolls
-            if film_number_data and 'results' in film_number_data and 'rolls_16mm' in film_number_data['results']:
-                rolls_16mm = film_number_data['results']['rolls_16mm']
+            rolls_16mm = None
+            if film_number_data:
+                # Try different data structures
+                if 'results' in film_number_data and isinstance(film_number_data['results'], dict):
+                    if 'rolls_16mm' in film_number_data['results']:
+                        rolls_16mm = film_number_data['results']['rolls_16mm']
+                elif 'rolls_16mm' in film_number_data:
+                    rolls_16mm = film_number_data['rolls_16mm']
+            
+            if rolls_16mm:
                 self.log_distribution(project, 'INFO', f"Processing {len(rolls_16mm)} 16mm rolls from frontend data")
                 
                 # First, process documents with oversized pages to insert reference sheets
@@ -934,6 +984,7 @@ class DistributionManager:
                     
                     # Process each document segment in this roll
                     segments = roll_data.get('document_segments', [])
+                    self.log_distribution(project, 'INFO', f"Roll {film_number} has {len(segments)} document segments")
                     for segment in segments:
                         doc_id = segment.get('doc_id')
                         if not doc_id:
@@ -944,6 +995,9 @@ class DistributionManager:
                         if not document:
                             self.log_distribution(project, 'ERROR', f"Failed to get document {doc_id}")
                             continue
+                        
+                        # Debug: Log the full document path being used
+                        self.log_distribution(project, 'DEBUG', f"Document {doc_id} path: {document.path}")
                         
                         # Check if this is a document with reference sheets
                         if doc_id in processed_paths_16mm:
@@ -1096,6 +1150,8 @@ class DistributionManager:
                                         f"Failed to copy document {doc_id}",
                                         document=document
                                     )
+            else:
+                self.log_distribution(project, 'INFO', "No 16mm rolls found in film number data")
             
             # Calculate total reference sheets
             total_sheets = 0

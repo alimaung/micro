@@ -157,13 +157,28 @@ class FilmNumberManager:
                     self.logger.info("Using data provided from frontend for film number allocation")
                     
                     # Create or update film allocation record for this project
+                    # Handle different data structures: direct data, wrapped in allocationResults, or nested in allocationResults.results
+                    def get_allocation_value(key, default=0):
+                        # Try direct access first
+                        if key in allocation_data:
+                            return allocation_data.get(key, default)
+                        # Try allocationResults.key
+                        if 'allocationResults' in allocation_data:
+                            alloc_results = allocation_data['allocationResults']
+                            if key in alloc_results:
+                                return alloc_results.get(key, default)
+                            # Try allocationResults.results.key
+                            if 'results' in alloc_results and key in alloc_results['results']:
+                                return alloc_results['results'].get(key, default)
+                        return default
+                    
                     film_allocation, created = FilmAllocation.objects.get_or_create(
                         project=project,
                         defaults={
-                            'total_rolls_16mm': allocation_data.get('allocationResults', {}).get('results', {}).get('total_rolls_16mm', 0),
-                            'total_rolls_35mm': allocation_data.get('allocationResults', {}).get('results', {}).get('total_rolls_35mm', 0),
-                            'total_pages_16mm': allocation_data.get('allocationResults', {}).get('results', {}).get('total_pages_16mm', 0),
-                            'total_pages_35mm': allocation_data.get('allocationResults', {}).get('results', {}).get('total_pages_35mm', 0)
+                            'total_rolls_16mm': get_allocation_value('total_rolls_16mm', 0),
+                            'total_rolls_35mm': get_allocation_value('total_rolls_35mm', 0),
+                            'total_pages_16mm': get_allocation_value('total_pages_16mm', 0),
+                            'total_pages_35mm': get_allocation_value('total_pages_35mm', 0)
                         }
                     )
                     
@@ -1064,7 +1079,32 @@ class FilmNumberManager:
         except Exception as e:
             self.logger.warning(f"Could not cache allocation data: {str(e)}")
         
-        results = allocation_data.get('allocationResults', {}).get('results', {})
+        # Handle different data structures: direct data, wrapped in allocationResults, or nested in allocationResults.results
+        results = allocation_data
+        if 'allocationResults' in allocation_data:
+            alloc_results = allocation_data['allocationResults']
+            if 'results' in alloc_results:
+                results = alloc_results['results']
+            else:
+                results = alloc_results
+        
+        # Additional check: if results still doesn't have rolls_16mm but has 'results' key, go deeper
+        if 'rolls_16mm' not in results and 'results' in results:
+            self.logger.info("Results doesn't have rolls_16mm directly, checking nested results")
+            results = results['results']
+        
+        self.logger.info(f"Using allocation results structure with keys: {list(results.keys()) if isinstance(results, dict) else 'Not a dict'}")
+        
+        # Validate that we have the expected structure
+        if 'rolls_16mm' not in results:
+            self.logger.error(f"No rolls_16mm found in results. Available keys: {list(results.keys()) if isinstance(results, dict) else 'Not a dict'}")
+            # Log the full structure for debugging (truncated to avoid huge logs)
+            try:
+                structure_preview = json.dumps(allocation_data, indent=2)[:2000]
+                self.logger.error(f"Full allocation_data structure preview: {structure_preview}...")
+            except Exception as e:
+                self.logger.error(f"Could not serialize allocation_data for debugging: {str(e)}")
+            raise ValueError("Invalid allocation data structure: missing rolls_16mm")
         
         # Process 16mm rolls
         for roll_data in results.get('rolls_16mm', []):

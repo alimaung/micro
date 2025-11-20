@@ -295,8 +295,20 @@ def results_view(request, project_id):
     paginated_rolls = rolls_to_display[start_idx:end_idx]
     
     # Get the original roll mappings from allocation data
+    # Handle different data structures: direct data, wrapped in allocationResults, or nested in allocationResults.results
     original_roll_mappings = {}
-    allocation_results = allocation_data['allocationResults']['results']
+    allocation_results = allocation_data
+    if 'allocationResults' in allocation_data:
+        alloc_results = allocation_data['allocationResults']
+        if 'results' in alloc_results:
+            allocation_results = alloc_results['results']
+        else:
+            allocation_results = alloc_results
+    
+    # Additional check: if allocation_results still doesn't have rolls_16mm but has 'results' key, go deeper
+    if 'rolls_16mm' not in allocation_results and 'results' in allocation_results:
+        logger.info("Allocation results doesn't have rolls_16mm directly, checking nested results")
+        allocation_results = allocation_results['results']
 
     # Map 16mm rolls
     for roll in allocation_results['rolls_16mm']:
@@ -529,8 +541,22 @@ def process_film_number_allocation(task_id, project_id, project_data, analysis_d
         formatted_rolls_35mm = []
 
         # Get the original roll mappings from allocation data
+        # Handle different data structures: direct data, wrapped in allocationResults, or nested in allocationResults.results
         original_roll_mappings = {}
-        allocation_results = allocation_data['allocationResults']['results']
+        allocation_results = allocation_data
+        if 'allocationResults' in allocation_data:
+            alloc_results = allocation_data['allocationResults']
+            if 'results' in alloc_results:
+                allocation_results = alloc_results['results']
+            else:
+                allocation_results = alloc_results
+        
+        # Additional check: if allocation_results still doesn't have rolls_16mm but has 'results' key, go deeper
+        if 'rolls_16mm' not in allocation_results and 'results' in allocation_results:
+            logger.info("Allocation results doesn't have rolls_16mm directly, checking nested results")
+            allocation_results = allocation_results['results']
+        
+        logger.info(f"Using allocation results structure with keys: {list(allocation_results.keys()) if isinstance(allocation_results, dict) else 'Not a dict'}")
 
         # Map 16mm rolls
         for roll in allocation_results['rolls_16mm']:
@@ -732,7 +758,8 @@ def process_film_number_allocation(task_id, project_id, project_data, analysis_d
         task['results'] = allocation_stats
         task['lastUpdateTime'] = time.time()
         
-        logger.info(f"Film number allocation completed successfully for project {project.archive_id}")
+        # Film number allocation completion is already logged by FilmNumberManager
+        # logger.info(f"Film number allocation completed successfully for project {project.archive_id}")
         
     except Exception as e:
         logger.error(f"Error in film number allocation: {str(e)}")

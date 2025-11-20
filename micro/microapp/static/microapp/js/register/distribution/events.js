@@ -157,7 +157,7 @@ const MicroDistributionEvents = (function() {
     /**
      * Handle starting the distribution process
      */
-    function handleStartDistribution() {
+    async function handleStartDistribution() {
         // Get UI references
         const startButton = document.querySelector('#start-distribution-btn');
         const filmTypeSelect = document.querySelector('#film-type-select');
@@ -170,13 +170,132 @@ const MicroDistributionEvents = (function() {
         config.ui.setStatusInProgress(0);
         config.ui.addLogEntry('info', 'Starting distribution process...');
         
-        // Get core data
-        const projectData = config.core.getProjectData();
-        const allocationData = config.core.getAllocationData();
-        const referenceData = config.core.getReferenceData();
+        // Verify project ID is valid
+        const projectId = config.api.getProjectId();
+        if (!projectId) {
+            config.ui.addLogEntry('error', 'Invalid project ID. Please reload the page.');
+            config.ui.setStatusError();
+            if (startButton) startButton.disabled = false;
+            return;
+        }
         
-        // Get film number data from localStorage
-        const filmNumberData = getDataFromLocalStorage('microfilmFilmNumberResults');
+        config.ui.addLogEntry('info', `Using project ID: ${projectId}`);
+        config.ui.addLogEntry('info', 'Collecting required data for distribution...');
+        
+        // Get core data first
+        let projectData = config.core.getProjectData();
+        let allocationData = config.core.getAllocationData();
+        let referenceData = config.core.getReferenceData();
+        let filmNumberData = null;
+        
+        try {
+            // If core data is missing, try to load from storage
+            if (!projectData) {
+                projectData = getDataFromLocalStorage('microfilmProjectData');
+                if (projectData) {
+                    config.ui.addLogEntry('info', 'Loaded project data from localStorage');
+                    config.core.setProjectData(projectData);
+                }
+            }
+            
+            if (!allocationData) {
+                // Try RegisterStorage first, then localStorage
+                if (window.RegisterStorage) {
+                    try {
+                        allocationData = await window.RegisterStorage.loadKey(projectId, 'microfilmAllocationData');
+                        if (allocationData) {
+                            config.ui.addLogEntry('info', 'Loaded allocation data from RegisterStorage');
+                            config.core.setAllocationData(allocationData);
+                        }
+                    } catch (error) {
+                        config.ui.addLogEntry('warning', 'Failed to load allocation data from RegisterStorage, trying localStorage');
+                    }
+                }
+                
+                if (!allocationData) {
+                    allocationData = getDataFromLocalStorage('microfilmAllocationData');
+                    if (allocationData) {
+                        config.ui.addLogEntry('info', 'Loaded allocation data from localStorage');
+                        config.core.setAllocationData(allocationData);
+                    }
+                }
+            }
+            
+            if (!referenceData) {
+                referenceData = getDataFromLocalStorage('microfilmReferenceData');
+                if (referenceData) {
+                    config.ui.addLogEntry('info', 'Loaded reference data from localStorage');
+                    config.core.setReferenceData(referenceData);
+                } else {
+                    config.ui.addLogEntry('info', 'No reference data found - this is normal for projects without oversized documents');
+                }
+            }
+            
+            // Get film number data - try multiple sources and keys
+            if (window.RegisterStorage) {
+                try {
+                    // Try microfilmFilmNumberResults first
+                    filmNumberData = await window.RegisterStorage.loadKey(projectId, 'microfilmFilmNumberResults');
+                    if (filmNumberData) {
+                        config.ui.addLogEntry('info', 'Loaded film number results from RegisterStorage');
+                    } else {
+                        // Try microfilmFilmData as fallback
+                        const filmData = await window.RegisterStorage.loadKey(projectId, 'microfilmFilmData');
+                        if (filmData && filmData.filmNumberResults) {
+                            filmNumberData = filmData.filmNumberResults;
+                            config.ui.addLogEntry('info', 'Loaded film number data from microfilmFilmData in RegisterStorage');
+                        }
+                    }
+                } catch (error) {
+                    config.ui.addLogEntry('warning', 'Failed to load film number data from RegisterStorage, trying localStorage');
+                }
+            }
+            
+            if (!filmNumberData) {
+                // Try localStorage with multiple keys
+                filmNumberData = getDataFromLocalStorage('microfilmFilmNumberResults');
+                if (filmNumberData) {
+                    config.ui.addLogEntry('info', 'Loaded film number results from localStorage');
+                } else {
+                    // Try microfilmFilmData as fallback
+                    const filmData = getDataFromLocalStorage('microfilmFilmData');
+                    if (filmData && filmData.filmNumberResults) {
+                        filmNumberData = filmData.filmNumberResults;
+                        config.ui.addLogEntry('info', 'Loaded film number data from microfilmFilmData in localStorage');
+                    } else {
+                        // Try workflow state as last resort
+                        const workflowState = getDataFromLocalStorage('microfilmWorkflowState');
+                        if (workflowState && workflowState.filmNumberResults) {
+                            filmNumberData = workflowState.filmNumberResults;
+                            config.ui.addLogEntry('info', 'Loaded film number data from workflow state');
+                        }
+                    }
+                }
+            }
+            
+            // Validate required data
+            if (!allocationData) {
+                config.ui.addLogEntry('error', 'Allocation data is required for distribution. Please complete film allocation first.');
+                config.ui.setStatusError();
+                if (startButton) startButton.disabled = false;
+                return;
+            }
+            
+            if (!filmNumberData) {
+                config.ui.addLogEntry('error', 'Film number data is required for distribution.');
+                config.ui.addLogEntry('info', 'Please complete film number allocation first, or check that the film number results were saved properly.');
+                config.ui.addLogEntry('info', 'Checked keys: microfilmFilmNumberResults, microfilmFilmData, microfilmWorkflowState');
+                config.ui.setStatusError();
+                if (startButton) startButton.disabled = false;
+                return;
+            }
+            
+        } catch (error) {
+            config.ui.addLogEntry('error', `Error collecting data: ${error.message}`);
+            config.ui.setStatusError();
+            if (startButton) startButton.disabled = false;
+            return;
+        }
         
         // Get distribution options
         const options = {
@@ -188,16 +307,7 @@ const MicroDistributionEvents = (function() {
             filmNumberData: filmNumberData
         };
         
-        // Verify project ID is valid
-        const projectId = config.api.getProjectId();
-        if (!projectId) {
-            config.ui.addLogEntry('error', 'Invalid project ID. Please reload the page.');
-            config.ui.setStatusError();
-            if (startButton) startButton.disabled = false;
-            return;
-        }
-        
-        config.ui.addLogEntry('info', `Using project ID: ${projectId}`);
+        config.ui.addLogEntry('info', `Data collection complete. Starting distribution...`);
         
         // Update distribution state
         config.core.updateDistributionState({

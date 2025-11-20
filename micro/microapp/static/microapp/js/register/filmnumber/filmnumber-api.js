@@ -20,6 +20,9 @@ const FilmNumberAPI = (function() {
     function startFilmNumberAllocationProcess() {
         const state = getCore().getState();
         
+        // Reset completion flag for new allocation
+        state.completionHandled = false;
+        
         // Prepare data for API request
         const requestData = {
             projectId: state.projectId,
@@ -56,8 +59,24 @@ const FilmNumberAPI = (function() {
                 state.taskId = data.taskId;
                 sessionStorage.setItem('filmNumberTaskId', data.taskId);
                 
-                // Start polling for status
-                setTimeout(() => startStatusPolling(), 2000);
+                // Check if the task is already completed (synchronous processing)
+                if (data.status === 'completed') {
+                    console.log('Task completed synchronously, fetching results directly');
+                    // Fetch the task results directly instead of polling
+                    fetch(`/api/filmnumber/status/?taskId=${data.taskId}`)
+                        .then(response => response.json())
+                        .then(async (taskData) => {
+                            console.log('Retrieved task data for completed task:', taskData);
+                            await handleAllocationCompleted(taskData);
+                        })
+                        .catch(error => {
+                            console.error('Error fetching completed task data:', error);
+                            getUI().showError(`Error fetching results: ${error.message}`);
+                        });
+                } else {
+                    // Start polling for status only if not already completed
+                    setTimeout(() => startStatusPolling(), 2000);
+                }
             } else {
                 getUI().showError('No task ID received from server');
             }
@@ -105,12 +124,19 @@ const FilmNumberAPI = (function() {
     /**
      * Check the status of the film number allocation
      */
-    function checkAllocationStatus() {
+    async function checkAllocationStatus() {
         const state = getCore().getState();
         const ui = getUI();
         
         // If we're not allocating anymore, stop polling
         if (!state.isAllocating || !state.taskId) {
+            stopStatusPolling();
+            return;
+        }
+        
+        // If completion was already handled, stop polling
+        if (state.completionHandled) {
+            console.log('Completion already handled, stopping status polling');
             stopStatusPolling();
             return;
         }
@@ -122,7 +148,7 @@ const FilmNumberAPI = (function() {
                 }
                 return response.json();
             })
-            .then(data => {
+            .then(async (data) => {
                 console.log('Film number allocation status:', data);
                 
                 // Update UI with progress
@@ -132,7 +158,7 @@ const FilmNumberAPI = (function() {
                 // Handle completed or error states
                 if (data.status === 'completed') {
                     stopStatusPolling();  // Stop polling before handling completion
-                    handleAllocationCompleted(data);
+                    await handleAllocationCompleted(data);
                 } else if (data.status === 'error') {
                     stopStatusPolling();  // Stop polling before handling error
                     handleAllocationError(data);
@@ -159,8 +185,23 @@ const FilmNumberAPI = (function() {
     /**
      * Handle successful allocation completion
      */
-    function handleAllocationCompleted(data) {
+    async function handleAllocationCompleted(data) {
         const state = getCore().getState();
+        
+        // Prevent duplicate processing with stronger checks
+        if (state.completionHandled) {
+            console.log('Completion already handled, skipping duplicate processing');
+            return;
+        }
+        
+        // Also check if we already have film number results
+        if (state.filmNumberResults && Object.keys(state.filmNumberResults).length > 0) {
+            console.log('Film number results already exist, skipping duplicate processing');
+            return;
+        }
+        
+        state.completionHandled = true;
+        console.log('Processing film number allocation completion...');
         
         // Stop polling
         if (state.intervalId) {
@@ -189,7 +230,7 @@ const FilmNumberAPI = (function() {
         }
         
         // Update index data with film numbers
-        mergeFilmNumberResults(state.filmNumberResults);
+        await mergeFilmNumberResults(state.filmNumberResults);
         
         state.isAllocating = false;
         
@@ -216,7 +257,7 @@ const FilmNumberAPI = (function() {
         // Create dedicated film data object
         try {
             // Create the dedicated microfilmFilmData object
-            const filmData = getCore().createFilmDataObject();
+            const filmData = await getCore().createFilmDataObject();
             console.log('Film data object created:', filmData);
             
             // Temporarily disable next button (for testing purposes)
@@ -243,7 +284,7 @@ const FilmNumberAPI = (function() {
     /**
      * Merge film number results with index data
      */
-    function mergeFilmNumberResults(results) {
+    async function mergeFilmNumberResults(results) {
         const state = getCore().getState();
         if (!state.indexData || !state.indexData.entries || !results) return;
 
@@ -304,33 +345,62 @@ const FilmNumberAPI = (function() {
         // Store the new data in a separate state property
         state.filmIndexData = filmIndexData;
         
-        // Save to separate localStorage item instead of overwriting the original
+        // Save to RegisterStorage instead of localStorage to avoid quota issues
         try {
-            localStorage.setItem('microfilmFilmIndexData', JSON.stringify({
-                projectId: state.projectId,
-                indexData: filmIndexData,
-                timestamp: new Date().toISOString()
-            }));
+            // Save film index data
+            if (window.RegisterStorage) {
+                await window.RegisterStorage.saveKey(state.projectId, 'microfilmFilmIndexData', {
+                    projectId: state.projectId,
+                    indexData: filmIndexData,
+                    timestamp: new Date().toISOString()
+                });
+                
+                // Save complete film number results
+                await window.RegisterStorage.saveKey(state.projectId, 'microfilmFilmNumberResults', {
+                    projectId: state.projectId,
+                    results: results,
+                    timestamp: new Date().toISOString()
+                });
+                
+                console.log('Film index data saved to RegisterStorage (original index data preserved)');
+                console.log('Complete film number allocation results saved to RegisterStorage');
+            } else {
+                // Fallback to localStorage with error handling
+                try {
+                    localStorage.setItem('microfilmFilmIndexData', JSON.stringify({
+                        projectId: state.projectId,
+                        indexData: filmIndexData,
+                        timestamp: new Date().toISOString()
+                    }));
+                } catch (quotaError) {
+                    console.warn('Failed to save film index data to localStorage (quota exceeded), data will be lost on refresh');
+                }
+                
+                try {
+                    localStorage.setItem('microfilmFilmNumberResults', JSON.stringify({
+                        projectId: state.projectId,
+                        results: results,
+                        timestamp: new Date().toISOString()
+                    }));
+                } catch (quotaError) {
+                    console.warn('Failed to save film number results to localStorage (quota exceeded), data will be lost on refresh');
+                }
+            }
             
-            // Also save the complete server response to a dedicated storage key
-            localStorage.setItem('microfilmFilmNumberResults', JSON.stringify({
-                projectId: state.projectId,
-                results: results,
-                timestamp: new Date().toISOString()
-            }));
+            // Update workflow state to record completion (this should be small enough for localStorage)
+            try {
+                const workflowState = JSON.parse(localStorage.getItem('microfilmWorkflowState') || '{}');
+                workflowState.filmNumberAllocation = {
+                    completed: true,
+                    timestamp: new Date().toISOString()
+                };
+                localStorage.setItem('microfilmWorkflowState', JSON.stringify(workflowState));
+            } catch (quotaError) {
+                console.warn('Failed to update workflow state in localStorage (quota exceeded)');
+            }
             
-            // Update workflow state to record completion
-            const workflowState = JSON.parse(localStorage.getItem('microfilmWorkflowState') || '{}');
-            workflowState.filmNumberAllocation = {
-                completed: true,
-                timestamp: new Date().toISOString()
-            };
-            localStorage.setItem('microfilmWorkflowState', JSON.stringify(workflowState));
-            
-            console.log('Film index data saved to localStorage (original index data preserved)');
-            console.log('Complete film number allocation results saved separately');
         } catch (error) {
-            console.error('Error saving film data to localStorage:', error);
+            console.error('Error saving film data:', error);
         }
         
         console.log('Created film index data from original:', filmIndexData);

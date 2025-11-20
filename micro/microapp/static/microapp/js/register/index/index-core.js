@@ -23,7 +23,7 @@ const IndexCore = (function() {
     /**
      * Initialize the index module
      */
-    function init() {
+    async function init() {
         try {
             // Get URL parameters - check both project_id and id (for backward compatibility)
             const urlParams = new URLSearchParams(window.location.search);
@@ -33,8 +33,8 @@ const IndexCore = (function() {
             
             console.log(`Initializing index module for project ${state.projectId} (${state.workflowType})`);
             
-            // Try to restore state from localStorage
-            loadFromLocalStorage();
+            // Try to restore state from localStorage and RegisterStorage
+            await loadFromLocalStorage();
             
             // Make sure DOM elements are loaded before using them
             if (document.readyState === 'loading') {
@@ -52,9 +52,9 @@ const IndexCore = (function() {
     }
     
     /**
-     * Load state data from localStorage
+     * Load state data from localStorage and RegisterStorage
      */
-    function loadFromLocalStorage() {
+    async function loadFromLocalStorage() {
         try {
             // Load workflow state (for allocation results and index data)
             const workflowState = JSON.parse(localStorage.getItem('microfilmWorkflowState') || '{}');
@@ -64,9 +64,23 @@ const IndexCore = (function() {
             const projectState = JSON.parse(localStorage.getItem('microfilmProjectState') || '{}');
             console.log('Project state from localStorage:', projectState);
 
-            // Load allocation state (for allocation results)
-            const allocationState = JSON.parse(localStorage.getItem('microfilmAllocationState') || '{}');
-            console.log('Allocation state from localStorage:', allocationState);
+            // Try to load allocation data from RegisterStorage first, then fallback to localStorage
+            let allocationData = null;
+            try {
+                if (window.RegisterStorage && state.projectId) {
+                    allocationData = await window.RegisterStorage.loadKey(state.projectId, 'microfilmAllocationData');
+                    console.log('Allocation data from RegisterStorage:', allocationData);
+                }
+            } catch (error) {
+                console.warn('Failed to load allocation data from RegisterStorage, trying localStorage:', error);
+            }
+            
+            // Fallback to localStorage if RegisterStorage failed
+            if (!allocationData) {
+                const allocationState = JSON.parse(localStorage.getItem('microfilmAllocationData') || '{}');
+                console.log('Allocation data from localStorage:', allocationState);
+                allocationData = allocationState;
+            }
             
             // Try to get the project ID from project state if not in URL
             if (!state.projectId && projectState.projectId) {
@@ -86,14 +100,28 @@ const IndexCore = (function() {
                 }
             }
             
-            // If we have a workflow state for this project, use it
+            // Handle allocation data from different sources
+            if (allocationData) {
+                // Handle different data structures from register_state vs localStorage
+                if (allocationData.allocationResults) {
+                    // Data from register_state has wrapper structure
+                    state.allocationResults = allocationData.allocationResults;
+                    console.log('Using wrapped allocation results from register_state');
+                } else {
+                    // Direct allocation data from localStorage
+                    state.allocationResults = allocationData;
+                    console.log('Using direct allocation results from localStorage');
+                }
+            }
+            
+            // If we have a workflow state for this project, use it for other data
             if (workflowState.projectId === state.projectId) {
                 console.log('Found workflow state for this project');
                 
-                // Restore allocation results if available
-                if (workflowState.allocationResults) {
+                // Only restore allocation results from workflow state if we didn't get them from RegisterStorage
+                if (!state.allocationResults && workflowState.allocationResults) {
                     state.allocationResults = workflowState.allocationResults;
-                    console.log('Restored allocation results from workflow state');
+                    console.log('Restored allocation results from workflow state as fallback');
                 }
                 
                 // Restore index data if available
@@ -484,4 +512,10 @@ const IndexCore = (function() {
 })();
 
 // Initialize the module
-IndexCore.init(); 
+(async () => {
+    try {
+        await IndexCore.init();
+    } catch (error) {
+        console.error('Error initializing IndexCore:', error);
+    }
+})(); 

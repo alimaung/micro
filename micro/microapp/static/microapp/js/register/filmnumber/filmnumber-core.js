@@ -36,7 +36,7 @@ const FilmNumberCore = (function() {
     /**
      * Initialize the film number allocation module
      */
-    function init() {
+    async function init() {
         try {
             // Get URL parameters
             const urlParams = new URLSearchParams(window.location.search);
@@ -52,8 +52,8 @@ const FilmNumberCore = (function() {
                 console.warn('Progress component not available for mode update');
             }
             
-            // Load data from localStorage
-            loadDataFromStorage();
+            // Load data from localStorage/RegisterStorage
+            await loadDataFromStorage();
             
             // Check for task ID in session storage
             const storedTaskId = sessionStorage.getItem('filmNumberTaskId');
@@ -66,7 +66,7 @@ const FilmNumberCore = (function() {
         }
     }
     
-    function loadDataFromStorage() {
+    async function loadDataFromStorage() {
         console.log('Loading data from storage...');
         
         // Project data
@@ -83,11 +83,34 @@ const FilmNumberCore = (function() {
             state.analysisResults = analysisData;
         }
         
-        // Allocation data
-        const allocationData = getLocalStorageData('microfilmAllocationData');
-        console.log('Allocation data from storage:', allocationData);
+        // Allocation data - try RegisterStorage first, then fallback to localStorage
+        let allocationData = null;
+        try {
+            if (window.RegisterStorage && state.projectId) {
+                allocationData = await window.RegisterStorage.loadKey(state.projectId, 'microfilmAllocationData');
+                console.log('Allocation data from RegisterStorage:', allocationData);
+            }
+        } catch (error) {
+            console.warn('Failed to load from RegisterStorage, trying localStorage:', error);
+        }
+        
+        // Fallback to localStorage if RegisterStorage failed
+        if (!allocationData) {
+            allocationData = getLocalStorageData('microfilmAllocationData');
+            console.log('Allocation data from localStorage:', allocationData);
+        }
+        
         if (allocationData) {
-            state.allocationResults = allocationData;
+            // Handle different data structures from register_state vs localStorage
+            if (allocationData.allocationResults) {
+                // Data from register_state has wrapper structure
+                state.allocationResults = allocationData.allocationResults;
+                console.log('Using wrapped allocation results from register_state');
+            } else {
+                // Direct allocation data from localStorage
+                state.allocationResults = allocationData;
+                console.log('Using direct allocation results from localStorage');
+            }
         }
         
         // Load and transform index data into unified structure
@@ -167,7 +190,7 @@ const FilmNumberCore = (function() {
     /**
      * Initialize after DOM is fully loaded
      */
-    function initAfterDOM() {
+    async function initAfterDOM() {
         try {
             console.log('Initializing after DOM loaded...');
             console.log('Current state:', state);
@@ -346,7 +369,7 @@ const FilmNumberCore = (function() {
      * Create a dedicated film number data object to preserve state
      * This is called after successful allocation to capture complete state
      */
-    function createFilmDataObject() {
+    async function createFilmDataObject() {
         console.log('Creating dedicated microfilmFilmData object...');
         
         const filmData = {
@@ -366,10 +389,23 @@ const FilmNumberCore = (function() {
             originalIndexData: state.indexData
         };
         
-        // Save to localStorage
-        localStorage.setItem('microfilmFilmData', JSON.stringify(filmData));
-        
-        console.log('Saved complete microfilmFilmData:', filmData);
+        // Save to RegisterStorage first, fallback to localStorage
+        try {
+            if (window.RegisterStorage) {
+                await window.RegisterStorage.saveKey(state.projectId, 'microfilmFilmData', filmData);
+                console.log('Saved complete microfilmFilmData to RegisterStorage');
+            } else {
+                // Fallback to localStorage with error handling
+                try {
+                    localStorage.setItem('microfilmFilmData', JSON.stringify(filmData));
+                    console.log('Saved complete microfilmFilmData to localStorage');
+                } catch (quotaError) {
+                    console.warn('Failed to save film data to localStorage (quota exceeded), data will be lost on refresh');
+                }
+            }
+        } catch (error) {
+            console.error('Error saving film data object:', error);
+        }
         
         return filmData;
     }
