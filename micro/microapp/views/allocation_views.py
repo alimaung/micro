@@ -424,18 +424,23 @@ def allocate_no_oversized(film_allocation, documents):
         has_oversized = document.get('hasOversized', False)
         
         # Check if document exceeds roll capacity (needs splitting)
-        if doc_pages > CAPACITY_16MM:
+        # Use 2900 as threshold for large documents that need splitting
+        if doc_pages > 2900:
             # Document requires splitting
             pages_left_to_allocate = doc_pages
             start_page = 1
             doc_roll_count = 0
             
             # Continue allocating pages until the entire document is allocated
+            # IMPORTANT: For large documents, we use remaining space in current roll first,
+            # then create new rolls as needed. This maximizes roll utilization.
             while pages_left_to_allocate > 0:
                 current_roll = film_allocation['rolls_16mm'][-1]  # Get the last roll
                 
                 # Calculate how many pages can fit in the current roll
-                pages_to_allocate = min(pages_left_to_allocate, current_roll['pages_remaining'])
+                # This ensures we use any remaining space in the current roll before creating a new one
+                pages_available = current_roll['pages_remaining']
+                pages_to_allocate = min(pages_left_to_allocate, pages_available)
                 
                 if pages_to_allocate > 0:
                     end_page = start_page + pages_to_allocate - 1
@@ -443,6 +448,9 @@ def allocate_no_oversized(film_allocation, documents):
                     # Add document segment to roll
                     add_document_segment(current_roll, doc_id, doc_path, pages_to_allocate, 
                                         (start_page, end_page), has_oversized)
+                    
+                    print(f"Large document {doc_id}: Allocated {pages_to_allocate} pages to roll {current_roll['roll_id']} "
+                          f"(using {pages_available} remaining pages from current roll)")
                     
                     # Update tracking variables
                     pages_left_to_allocate -= pages_to_allocate
@@ -708,8 +716,9 @@ def allocate_16mm_with_oversized(film_allocation, documents):
         print(f"Processing document {doc_id} with {doc_pages} total pages (including {reference_count} references)")
         
         # Check if document exceeds roll capacity (needs splitting)
-        if doc_pages > CAPACITY_16MM:
-            print(f"Document {doc_id} exceeds roll capacity, will be split across rolls")
+        # Use 2900 as threshold for large documents that need splitting
+        if doc_pages > 2900:
+            print(f"Document {doc_id} exceeds roll capacity ({doc_pages} > 2900), will be split across rolls")
             
             # Document requires splitting
             pages_left_to_allocate = doc_pages
@@ -717,11 +726,15 @@ def allocate_16mm_with_oversized(film_allocation, documents):
             doc_roll_count = 0
             
             # Continue allocating pages until the entire document is allocated
+            # IMPORTANT: For large documents, we use remaining space in current roll first,
+            # then create new rolls as needed. This maximizes roll utilization.
             while pages_left_to_allocate > 0:
                 current_roll = film_allocation['rolls_16mm'][-1]  # Get the last roll
                 
                 # Calculate how many pages can fit in the current roll
-                pages_to_allocate = min(pages_left_to_allocate, current_roll['pages_remaining'])
+                # This ensures we use any remaining space in the current roll before creating a new one
+                pages_available = current_roll['pages_remaining']
+                pages_to_allocate = min(pages_left_to_allocate, pages_available)
                 
                 if pages_to_allocate > 0:
                     end_page = start_page + pages_to_allocate - 1
@@ -730,7 +743,8 @@ def allocate_16mm_with_oversized(film_allocation, documents):
                     add_document_segment(current_roll, doc_id, doc_path, pages_to_allocate, 
                                         (start_page, end_page), has_oversized)
                     
-                    print(f"Added {pages_to_allocate} pages of document {doc_id} to roll {current_roll['roll_id']}")
+                    print(f"Large document {doc_id}: Allocated {pages_to_allocate} pages to roll {current_roll['roll_id']} "
+                          f"(using {pages_available} remaining pages from current roll)")
                     
                     # Update tracking variables
                     pages_left_to_allocate -= pages_to_allocate

@@ -1,0 +1,2215 @@
+{
+  "allocationResults": {
+    "status": "completed",
+    "projectId": "194",
+    "progress": 100,
+    "hasOversized": false,
+    "documentCount": 128,
+    "totalPages": 19901,
+    "totalPagesWithRefs": 0,
+    "totalOversized": 0,
+    "documentsWithOversized": 0,
+    "results": {
+      "archive_id": "RRD00-194",
+      "project_name": "Project-194",
+      "rolls_16mm": [
+        {
+          "roll_id": 1,
+          "film_type": "16mm",
+          "capacity": 2940,
+          "pages_used": 2898,
+          "pages_remaining": 42,
+          "document_segments": [
+            {
+              "doc_id": "1422002101047414.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047414.pdf",
+              "pages": 16,
+              "page_range": [
+                1,
+                16
+              ],
+              "frame_range": [
+                1,
+                16
+              ],
+              "document_index": 1,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047415.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047415.pdf",
+              "pages": 22,
+              "page_range": [
+                1,
+                22
+              ],
+              "frame_range": [
+                17,
+                38
+              ],
+              "document_index": 2,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047416.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047416.pdf",
+              "pages": 80,
+              "page_range": [
+                1,
+                80
+              ],
+              "frame_range": [
+                39,
+                118
+              ],
+              "document_index": 3,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047417.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047417.pdf",
+              "pages": 72,
+              "page_range": [
+                1,
+                72
+              ],
+              "frame_range": [
+                119,
+                190
+              ],
+              "document_index": 4,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047418.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047418.pdf",
+              "pages": 16,
+              "page_range": [
+                1,
+                16
+              ],
+              "frame_range": [
+                191,
+                206
+              ],
+              "document_index": 5,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047419.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047419.pdf",
+              "pages": 60,
+              "page_range": [
+                1,
+                60
+              ],
+              "frame_range": [
+                207,
+                266
+              ],
+              "document_index": 6,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047420.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047420.pdf",
+              "pages": 30,
+              "page_range": [
+                1,
+                30
+              ],
+              "frame_range": [
+                267,
+                296
+              ],
+              "document_index": 7,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047421.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047421.pdf",
+              "pages": 18,
+              "page_range": [
+                1,
+                18
+              ],
+              "frame_range": [
+                297,
+                314
+              ],
+              "document_index": 8,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047422.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047422.pdf",
+              "pages": 42,
+              "page_range": [
+                1,
+                42
+              ],
+              "frame_range": [
+                315,
+                356
+              ],
+              "document_index": 9,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047423.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047423.pdf",
+              "pages": 8,
+              "page_range": [
+                1,
+                8
+              ],
+              "frame_range": [
+                357,
+                364
+              ],
+              "document_index": 10,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047424.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047424.pdf",
+              "pages": 16,
+              "page_range": [
+                1,
+                16
+              ],
+              "frame_range": [
+                365,
+                380
+              ],
+              "document_index": 11,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047425.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047425.pdf",
+              "pages": 8,
+              "page_range": [
+                1,
+                8
+              ],
+              "frame_range": [
+                381,
+                388
+              ],
+              "document_index": 12,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047426.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047426.pdf",
+              "pages": 54,
+              "page_range": [
+                1,
+                54
+              ],
+              "frame_range": [
+                389,
+                442
+              ],
+              "document_index": 13,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047427.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047427.pdf",
+              "pages": 12,
+              "page_range": [
+                1,
+                12
+              ],
+              "frame_range": [
+                443,
+                454
+              ],
+              "document_index": 14,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047428.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047428.pdf",
+              "pages": 72,
+              "page_range": [
+                1,
+                72
+              ],
+              "frame_range": [
+                455,
+                526
+              ],
+              "document_index": 15,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047429.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047429.pdf",
+              "pages": 16,
+              "page_range": [
+                1,
+                16
+              ],
+              "frame_range": [
+                527,
+                542
+              ],
+              "document_index": 16,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047430.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047430.pdf",
+              "pages": 8,
+              "page_range": [
+                1,
+                8
+              ],
+              "frame_range": [
+                543,
+                550
+              ],
+              "document_index": 17,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047431.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047431.pdf",
+              "pages": 36,
+              "page_range": [
+                1,
+                36
+              ],
+              "frame_range": [
+                551,
+                586
+              ],
+              "document_index": 18,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047432.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047432.pdf",
+              "pages": 18,
+              "page_range": [
+                1,
+                18
+              ],
+              "frame_range": [
+                587,
+                604
+              ],
+              "document_index": 19,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047433.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047433.pdf",
+              "pages": 14,
+              "page_range": [
+                1,
+                14
+              ],
+              "frame_range": [
+                605,
+                618
+              ],
+              "document_index": 20,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047434.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047434.pdf",
+              "pages": 12,
+              "page_range": [
+                1,
+                12
+              ],
+              "frame_range": [
+                619,
+                630
+              ],
+              "document_index": 21,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047435.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047435.pdf",
+              "pages": 14,
+              "page_range": [
+                1,
+                14
+              ],
+              "frame_range": [
+                631,
+                644
+              ],
+              "document_index": 22,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047436.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047436.pdf",
+              "pages": 38,
+              "page_range": [
+                1,
+                38
+              ],
+              "frame_range": [
+                645,
+                682
+              ],
+              "document_index": 23,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047437.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047437.pdf",
+              "pages": 40,
+              "page_range": [
+                1,
+                40
+              ],
+              "frame_range": [
+                683,
+                722
+              ],
+              "document_index": 24,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047438.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047438.pdf",
+              "pages": 32,
+              "page_range": [
+                1,
+                32
+              ],
+              "frame_range": [
+                723,
+                754
+              ],
+              "document_index": 25,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047439.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047439.pdf",
+              "pages": 54,
+              "page_range": [
+                1,
+                54
+              ],
+              "frame_range": [
+                755,
+                808
+              ],
+              "document_index": 26,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047440.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047440.pdf",
+              "pages": 18,
+              "page_range": [
+                1,
+                18
+              ],
+              "frame_range": [
+                809,
+                826
+              ],
+              "document_index": 27,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047441.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047441.pdf",
+              "pages": 30,
+              "page_range": [
+                1,
+                30
+              ],
+              "frame_range": [
+                827,
+                856
+              ],
+              "document_index": 28,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047442.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047442.pdf",
+              "pages": 36,
+              "page_range": [
+                1,
+                36
+              ],
+              "frame_range": [
+                857,
+                892
+              ],
+              "document_index": 29,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047443.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047443.pdf",
+              "pages": 72,
+              "page_range": [
+                1,
+                72
+              ],
+              "frame_range": [
+                893,
+                964
+              ],
+              "document_index": 30,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047444.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047444.pdf",
+              "pages": 24,
+              "page_range": [
+                1,
+                24
+              ],
+              "frame_range": [
+                965,
+                988
+              ],
+              "document_index": 31,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047445.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047445.pdf",
+              "pages": 172,
+              "page_range": [
+                1,
+                172
+              ],
+              "frame_range": [
+                989,
+                1160
+              ],
+              "document_index": 32,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047446.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047446.pdf",
+              "pages": 14,
+              "page_range": [
+                1,
+                14
+              ],
+              "frame_range": [
+                1161,
+                1174
+              ],
+              "document_index": 33,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047447.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047447.pdf",
+              "pages": 14,
+              "page_range": [
+                1,
+                14
+              ],
+              "frame_range": [
+                1175,
+                1188
+              ],
+              "document_index": 34,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047448.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047448.pdf",
+              "pages": 34,
+              "page_range": [
+                1,
+                34
+              ],
+              "frame_range": [
+                1189,
+                1222
+              ],
+              "document_index": 35,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047449.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047449.pdf",
+              "pages": 20,
+              "page_range": [
+                1,
+                20
+              ],
+              "frame_range": [
+                1223,
+                1242
+              ],
+              "document_index": 36,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047450.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047450.pdf",
+              "pages": 118,
+              "page_range": [
+                1,
+                118
+              ],
+              "frame_range": [
+                1243,
+                1360
+              ],
+              "document_index": 37,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047451.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047451.pdf",
+              "pages": 108,
+              "page_range": [
+                1,
+                108
+              ],
+              "frame_range": [
+                1361,
+                1468
+              ],
+              "document_index": 38,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047452.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047452.pdf",
+              "pages": 100,
+              "page_range": [
+                1,
+                100
+              ],
+              "frame_range": [
+                1469,
+                1568
+              ],
+              "document_index": 39,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047453.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047453.pdf",
+              "pages": 12,
+              "page_range": [
+                1,
+                12
+              ],
+              "frame_range": [
+                1569,
+                1580
+              ],
+              "document_index": 40,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047454.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047454.pdf",
+              "pages": 8,
+              "page_range": [
+                1,
+                8
+              ],
+              "frame_range": [
+                1581,
+                1588
+              ],
+              "document_index": 41,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047455.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047455.pdf",
+              "pages": 44,
+              "page_range": [
+                1,
+                44
+              ],
+              "frame_range": [
+                1589,
+                1632
+              ],
+              "document_index": 42,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047456.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047456.pdf",
+              "pages": 30,
+              "page_range": [
+                1,
+                30
+              ],
+              "frame_range": [
+                1633,
+                1662
+              ],
+              "document_index": 43,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047457.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047457.pdf",
+              "pages": 120,
+              "page_range": [
+                1,
+                120
+              ],
+              "frame_range": [
+                1663,
+                1782
+              ],
+              "document_index": 44,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047458.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047458.pdf",
+              "pages": 18,
+              "page_range": [
+                1,
+                18
+              ],
+              "frame_range": [
+                1783,
+                1800
+              ],
+              "document_index": 45,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047459.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047459.pdf",
+              "pages": 16,
+              "page_range": [
+                1,
+                16
+              ],
+              "frame_range": [
+                1801,
+                1816
+              ],
+              "document_index": 46,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047460.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047460.pdf",
+              "pages": 924,
+              "page_range": [
+                1,
+                924
+              ],
+              "frame_range": [
+                1817,
+                2740
+              ],
+              "document_index": 47,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047461.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047461.pdf",
+              "pages": 28,
+              "page_range": [
+                1,
+                28
+              ],
+              "frame_range": [
+                2741,
+                2768
+              ],
+              "document_index": 48,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047462.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047462.pdf",
+              "pages": 84,
+              "page_range": [
+                1,
+                84
+              ],
+              "frame_range": [
+                2769,
+                2852
+              ],
+              "document_index": 49,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047463.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047463.pdf",
+              "pages": 18,
+              "page_range": [
+                1,
+                18
+              ],
+              "frame_range": [
+                2853,
+                2870
+              ],
+              "document_index": 50,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047464.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047464.pdf",
+              "pages": 28,
+              "page_range": [
+                1,
+                28
+              ],
+              "frame_range": [
+                2871,
+                2898
+              ],
+              "document_index": 51,
+              "has_oversized": false
+            }
+          ],
+          "film_number": null,
+          "status": "active",
+          "has_split_documents": false,
+          "is_partial": true,
+          "remaining_capacity": 42,
+          "usable_capacity": -108,
+          "creation_date": "2025-11-19T11:04:45+0100"
+        },
+        {
+          "roll_id": 2,
+          "film_type": "16mm",
+          "capacity": 2940,
+          "pages_used": 2488,
+          "pages_remaining": 452,
+          "document_segments": [
+            {
+              "doc_id": "1422002101047465.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047465.pdf",
+              "pages": 140,
+              "page_range": [
+                1,
+                140
+              ],
+              "frame_range": [
+                1,
+                140
+              ],
+              "document_index": 1,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047466.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047466.pdf",
+              "pages": 52,
+              "page_range": [
+                1,
+                52
+              ],
+              "frame_range": [
+                141,
+                192
+              ],
+              "document_index": 2,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047467.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047467.pdf",
+              "pages": 72,
+              "page_range": [
+                1,
+                72
+              ],
+              "frame_range": [
+                193,
+                264
+              ],
+              "document_index": 3,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047468.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047468.pdf",
+              "pages": 138,
+              "page_range": [
+                1,
+                138
+              ],
+              "frame_range": [
+                265,
+                402
+              ],
+              "document_index": 4,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047469.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047469.pdf",
+              "pages": 44,
+              "page_range": [
+                1,
+                44
+              ],
+              "frame_range": [
+                403,
+                446
+              ],
+              "document_index": 5,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047470.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047470.pdf",
+              "pages": 152,
+              "page_range": [
+                1,
+                152
+              ],
+              "frame_range": [
+                447,
+                598
+              ],
+              "document_index": 6,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047471.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047471.pdf",
+              "pages": 52,
+              "page_range": [
+                1,
+                52
+              ],
+              "frame_range": [
+                599,
+                650
+              ],
+              "document_index": 7,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047472.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047472.pdf",
+              "pages": 14,
+              "page_range": [
+                1,
+                14
+              ],
+              "frame_range": [
+                651,
+                664
+              ],
+              "document_index": 8,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047473.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047473.pdf",
+              "pages": 56,
+              "page_range": [
+                1,
+                56
+              ],
+              "frame_range": [
+                665,
+                720
+              ],
+              "document_index": 9,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047474.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047474.pdf",
+              "pages": 26,
+              "page_range": [
+                1,
+                26
+              ],
+              "frame_range": [
+                721,
+                746
+              ],
+              "document_index": 10,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047475.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047475.pdf",
+              "pages": 20,
+              "page_range": [
+                1,
+                20
+              ],
+              "frame_range": [
+                747,
+                766
+              ],
+              "document_index": 11,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047476.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047476.pdf",
+              "pages": 32,
+              "page_range": [
+                1,
+                32
+              ],
+              "frame_range": [
+                767,
+                798
+              ],
+              "document_index": 12,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047477.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047477.pdf",
+              "pages": 16,
+              "page_range": [
+                1,
+                16
+              ],
+              "frame_range": [
+                799,
+                814
+              ],
+              "document_index": 13,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047478.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047478.pdf",
+              "pages": 8,
+              "page_range": [
+                1,
+                8
+              ],
+              "frame_range": [
+                815,
+                822
+              ],
+              "document_index": 14,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047479.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047479.pdf",
+              "pages": 18,
+              "page_range": [
+                1,
+                18
+              ],
+              "frame_range": [
+                823,
+                840
+              ],
+              "document_index": 15,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047480.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047480.pdf",
+              "pages": 16,
+              "page_range": [
+                1,
+                16
+              ],
+              "frame_range": [
+                841,
+                856
+              ],
+              "document_index": 16,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047481.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047481.pdf",
+              "pages": 20,
+              "page_range": [
+                1,
+                20
+              ],
+              "frame_range": [
+                857,
+                876
+              ],
+              "document_index": 17,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047482.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047482.pdf",
+              "pages": 26,
+              "page_range": [
+                1,
+                26
+              ],
+              "frame_range": [
+                877,
+                902
+              ],
+              "document_index": 18,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047483.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047483.pdf",
+              "pages": 24,
+              "page_range": [
+                1,
+                24
+              ],
+              "frame_range": [
+                903,
+                926
+              ],
+              "document_index": 19,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047484.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047484.pdf",
+              "pages": 222,
+              "page_range": [
+                1,
+                222
+              ],
+              "frame_range": [
+                927,
+                1148
+              ],
+              "document_index": 20,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047485.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047485.pdf",
+              "pages": 60,
+              "page_range": [
+                1,
+                60
+              ],
+              "frame_range": [
+                1149,
+                1208
+              ],
+              "document_index": 21,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047486.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047486.pdf",
+              "pages": 16,
+              "page_range": [
+                1,
+                16
+              ],
+              "frame_range": [
+                1209,
+                1224
+              ],
+              "document_index": 22,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047487.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047487.pdf",
+              "pages": 8,
+              "page_range": [
+                1,
+                8
+              ],
+              "frame_range": [
+                1225,
+                1232
+              ],
+              "document_index": 23,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047488.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047488.pdf",
+              "pages": 40,
+              "page_range": [
+                1,
+                40
+              ],
+              "frame_range": [
+                1233,
+                1272
+              ],
+              "document_index": 24,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047489.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047489.pdf",
+              "pages": 58,
+              "page_range": [
+                1,
+                58
+              ],
+              "frame_range": [
+                1273,
+                1330
+              ],
+              "document_index": 25,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047490.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047490.pdf",
+              "pages": 22,
+              "page_range": [
+                1,
+                22
+              ],
+              "frame_range": [
+                1331,
+                1352
+              ],
+              "document_index": 26,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047491.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047491.pdf",
+              "pages": 18,
+              "page_range": [
+                1,
+                18
+              ],
+              "frame_range": [
+                1353,
+                1370
+              ],
+              "document_index": 27,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047492.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047492.pdf",
+              "pages": 18,
+              "page_range": [
+                1,
+                18
+              ],
+              "frame_range": [
+                1371,
+                1388
+              ],
+              "document_index": 28,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047493.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047493.pdf",
+              "pages": 208,
+              "page_range": [
+                1,
+                208
+              ],
+              "frame_range": [
+                1389,
+                1596
+              ],
+              "document_index": 29,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047494.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047494.pdf",
+              "pages": 18,
+              "page_range": [
+                1,
+                18
+              ],
+              "frame_range": [
+                1597,
+                1614
+              ],
+              "document_index": 30,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047495.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047495.pdf",
+              "pages": 16,
+              "page_range": [
+                1,
+                16
+              ],
+              "frame_range": [
+                1615,
+                1630
+              ],
+              "document_index": 31,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047496.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047496.pdf",
+              "pages": 24,
+              "page_range": [
+                1,
+                24
+              ],
+              "frame_range": [
+                1631,
+                1654
+              ],
+              "document_index": 32,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047497.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047497.pdf",
+              "pages": 12,
+              "page_range": [
+                1,
+                12
+              ],
+              "frame_range": [
+                1655,
+                1666
+              ],
+              "document_index": 33,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047498.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047498.pdf",
+              "pages": 40,
+              "page_range": [
+                1,
+                40
+              ],
+              "frame_range": [
+                1667,
+                1706
+              ],
+              "document_index": 34,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047499.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047499.pdf",
+              "pages": 18,
+              "page_range": [
+                1,
+                18
+              ],
+              "frame_range": [
+                1707,
+                1724
+              ],
+              "document_index": 35,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047500.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047500.pdf",
+              "pages": 4,
+              "page_range": [
+                1,
+                4
+              ],
+              "frame_range": [
+                1725,
+                1728
+              ],
+              "document_index": 36,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047501.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047501.pdf",
+              "pages": 72,
+              "page_range": [
+                1,
+                72
+              ],
+              "frame_range": [
+                1729,
+                1800
+              ],
+              "document_index": 37,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047502.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047502.pdf",
+              "pages": 192,
+              "page_range": [
+                1,
+                192
+              ],
+              "frame_range": [
+                1801,
+                1992
+              ],
+              "document_index": 38,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047503.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047503.pdf",
+              "pages": 96,
+              "page_range": [
+                1,
+                96
+              ],
+              "frame_range": [
+                1993,
+                2088
+              ],
+              "document_index": 39,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047504.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047504.pdf",
+              "pages": 378,
+              "page_range": [
+                1,
+                378
+              ],
+              "frame_range": [
+                2089,
+                2466
+              ],
+              "document_index": 40,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047505.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047505.pdf",
+              "pages": 22,
+              "page_range": [
+                1,
+                22
+              ],
+              "frame_range": [
+                2467,
+                2488
+              ],
+              "document_index": 41,
+              "has_oversized": false
+            }
+          ],
+          "film_number": null,
+          "status": "active",
+          "has_split_documents": false,
+          "is_partial": true,
+          "remaining_capacity": 452,
+          "usable_capacity": 302,
+          "creation_date": "2025-11-19T11:04:45+0100"
+        },
+        {
+          "roll_id": 3,
+          "film_type": "16mm",
+          "capacity": 2940,
+          "pages_used": 2940,
+          "pages_remaining": 0,
+          "document_segments": [
+            {
+              "doc_id": "1422002101047506.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047506.pdf",
+              "pages": 1536,
+              "page_range": [
+                1,
+                1536
+              ],
+              "frame_range": [
+                1,
+                1536
+              ],
+              "document_index": 1,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047507.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047507.pdf",
+              "pages": 18,
+              "page_range": [
+                1,
+                18
+              ],
+              "frame_range": [
+                1537,
+                1554
+              ],
+              "document_index": 2,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047508.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047508.pdf",
+              "pages": 18,
+              "page_range": [
+                1,
+                18
+              ],
+              "frame_range": [
+                1555,
+                1572
+              ],
+              "document_index": 3,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047509.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047509.pdf",
+              "pages": 40,
+              "page_range": [
+                1,
+                40
+              ],
+              "frame_range": [
+                1573,
+                1612
+              ],
+              "document_index": 4,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047510.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047510.pdf",
+              "pages": 4,
+              "page_range": [
+                1,
+                4
+              ],
+              "frame_range": [
+                1613,
+                1616
+              ],
+              "document_index": 5,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047511.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047511.pdf",
+              "pages": 10,
+              "page_range": [
+                1,
+                10
+              ],
+              "frame_range": [
+                1617,
+                1626
+              ],
+              "document_index": 6,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047512.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047512.pdf",
+              "pages": 22,
+              "page_range": [
+                1,
+                22
+              ],
+              "frame_range": [
+                1627,
+                1648
+              ],
+              "document_index": 7,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047513.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047513.pdf",
+              "pages": 16,
+              "page_range": [
+                1,
+                16
+              ],
+              "frame_range": [
+                1649,
+                1664
+              ],
+              "document_index": 8,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047514.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047514.pdf",
+              "pages": 58,
+              "page_range": [
+                1,
+                58
+              ],
+              "frame_range": [
+                1665,
+                1722
+              ],
+              "document_index": 9,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047515.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047515.pdf",
+              "pages": 10,
+              "page_range": [
+                1,
+                10
+              ],
+              "frame_range": [
+                1723,
+                1732
+              ],
+              "document_index": 10,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047516.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047516.pdf",
+              "pages": 146,
+              "page_range": [
+                1,
+                146
+              ],
+              "frame_range": [
+                1733,
+                1878
+              ],
+              "document_index": 11,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047517.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047517.pdf",
+              "pages": 96,
+              "page_range": [
+                1,
+                96
+              ],
+              "frame_range": [
+                1879,
+                1974
+              ],
+              "document_index": 12,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047518.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047518.pdf",
+              "pages": 38,
+              "page_range": [
+                1,
+                38
+              ],
+              "frame_range": [
+                1975,
+                2012
+              ],
+              "document_index": 13,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047519.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047519.pdf",
+              "pages": 114,
+              "page_range": [
+                1,
+                114
+              ],
+              "frame_range": [
+                2013,
+                2126
+              ],
+              "document_index": 14,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047520.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047520.pdf",
+              "pages": 16,
+              "page_range": [
+                1,
+                16
+              ],
+              "frame_range": [
+                2127,
+                2142
+              ],
+              "document_index": 15,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047521.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047521.pdf",
+              "pages": 798,
+              "page_range": [
+                1,
+                798
+              ],
+              "frame_range": [
+                2143,
+                2940
+              ],
+              "document_index": 16,
+              "has_oversized": false
+            }
+          ],
+          "film_number": null,
+          "status": "active",
+          "has_split_documents": true,
+          "is_partial": false,
+          "remaining_capacity": 0,
+          "usable_capacity": 0,
+          "creation_date": "2025-11-19T11:04:45+0100"
+        },
+        {
+          "roll_id": 4,
+          "film_type": "16mm",
+          "capacity": 2940,
+          "pages_used": 2940,
+          "pages_remaining": 0,
+          "document_segments": [
+            {
+              "doc_id": "1422002101047521.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047521.pdf",
+              "pages": 2940,
+              "page_range": [
+                799,
+                3738
+              ],
+              "frame_range": [
+                1,
+                2940
+              ],
+              "document_index": 1,
+              "has_oversized": false
+            }
+          ],
+          "film_number": null,
+          "status": "active",
+          "has_split_documents": true,
+          "is_partial": false,
+          "remaining_capacity": 0,
+          "usable_capacity": 0,
+          "creation_date": "2025-11-19T11:04:45+0100"
+        },
+        {
+          "roll_id": 5,
+          "film_type": "16mm",
+          "capacity": 2940,
+          "pages_used": 2940,
+          "pages_remaining": 0,
+          "document_segments": [
+            {
+              "doc_id": "1422002101047521.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047521.pdf",
+              "pages": 2940,
+              "page_range": [
+                3739,
+                6678
+              ],
+              "frame_range": [
+                1,
+                2940
+              ],
+              "document_index": 1,
+              "has_oversized": false
+            }
+          ],
+          "film_number": null,
+          "status": "active",
+          "has_split_documents": true,
+          "is_partial": false,
+          "remaining_capacity": 0,
+          "usable_capacity": 0,
+          "creation_date": "2025-11-19T11:04:45+0100"
+        },
+        {
+          "roll_id": 6,
+          "film_type": "16mm",
+          "capacity": 2940,
+          "pages_used": 2940,
+          "pages_remaining": 0,
+          "document_segments": [
+            {
+              "doc_id": "1422002101047521.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047521.pdf",
+              "pages": 2940,
+              "page_range": [
+                6679,
+                9618
+              ],
+              "frame_range": [
+                1,
+                2940
+              ],
+              "document_index": 1,
+              "has_oversized": false
+            }
+          ],
+          "film_number": null,
+          "status": "active",
+          "has_split_documents": true,
+          "is_partial": false,
+          "remaining_capacity": 0,
+          "usable_capacity": 0,
+          "creation_date": "2025-11-19T11:04:45+0100"
+        },
+        {
+          "roll_id": 7,
+          "film_type": "16mm",
+          "capacity": 2940,
+          "pages_used": 2755,
+          "pages_remaining": 185,
+          "document_segments": [
+            {
+              "doc_id": "1422002101047521.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047521.pdf",
+              "pages": 1261,
+              "page_range": [
+                9619,
+                10879
+              ],
+              "frame_range": [
+                1,
+                1261
+              ],
+              "document_index": 1,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047522.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047522.pdf",
+              "pages": 138,
+              "page_range": [
+                1,
+                138
+              ],
+              "frame_range": [
+                1262,
+                1399
+              ],
+              "document_index": 2,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047523.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047523.pdf",
+              "pages": 16,
+              "page_range": [
+                1,
+                16
+              ],
+              "frame_range": [
+                1400,
+                1415
+              ],
+              "document_index": 3,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047524.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047524.pdf",
+              "pages": 116,
+              "page_range": [
+                1,
+                116
+              ],
+              "frame_range": [
+                1416,
+                1531
+              ],
+              "document_index": 4,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047525.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047525.pdf",
+              "pages": 98,
+              "page_range": [
+                1,
+                98
+              ],
+              "frame_range": [
+                1532,
+                1629
+              ],
+              "document_index": 5,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047526.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047526.pdf",
+              "pages": 108,
+              "page_range": [
+                1,
+                108
+              ],
+              "frame_range": [
+                1630,
+                1737
+              ],
+              "document_index": 6,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047527.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047527.pdf",
+              "pages": 14,
+              "page_range": [
+                1,
+                14
+              ],
+              "frame_range": [
+                1738,
+                1751
+              ],
+              "document_index": 7,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047528.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047528.pdf",
+              "pages": 362,
+              "page_range": [
+                1,
+                362
+              ],
+              "frame_range": [
+                1752,
+                2113
+              ],
+              "document_index": 8,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047529.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047529.pdf",
+              "pages": 34,
+              "page_range": [
+                1,
+                34
+              ],
+              "frame_range": [
+                2114,
+                2147
+              ],
+              "document_index": 9,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047530.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047530.pdf",
+              "pages": 22,
+              "page_range": [
+                1,
+                22
+              ],
+              "frame_range": [
+                2148,
+                2169
+              ],
+              "document_index": 10,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047531.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047531.pdf",
+              "pages": 82,
+              "page_range": [
+                1,
+                82
+              ],
+              "frame_range": [
+                2170,
+                2251
+              ],
+              "document_index": 11,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047532.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047532.pdf",
+              "pages": 24,
+              "page_range": [
+                1,
+                24
+              ],
+              "frame_range": [
+                2252,
+                2275
+              ],
+              "document_index": 12,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047533.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047533.pdf",
+              "pages": 22,
+              "page_range": [
+                1,
+                22
+              ],
+              "frame_range": [
+                2276,
+                2297
+              ],
+              "document_index": 13,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047534.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047534.pdf",
+              "pages": 32,
+              "page_range": [
+                1,
+                32
+              ],
+              "frame_range": [
+                2298,
+                2329
+              ],
+              "document_index": 14,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047535.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047535.pdf",
+              "pages": 18,
+              "page_range": [
+                1,
+                18
+              ],
+              "frame_range": [
+                2330,
+                2347
+              ],
+              "document_index": 15,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047536.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047536.pdf",
+              "pages": 48,
+              "page_range": [
+                1,
+                48
+              ],
+              "frame_range": [
+                2348,
+                2395
+              ],
+              "document_index": 16,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047537.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047537.pdf",
+              "pages": 18,
+              "page_range": [
+                1,
+                18
+              ],
+              "frame_range": [
+                2396,
+                2413
+              ],
+              "document_index": 17,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047538.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047538.pdf",
+              "pages": 10,
+              "page_range": [
+                1,
+                10
+              ],
+              "frame_range": [
+                2414,
+                2423
+              ],
+              "document_index": 18,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047539.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047539.pdf",
+              "pages": 36,
+              "page_range": [
+                1,
+                36
+              ],
+              "frame_range": [
+                2424,
+                2459
+              ],
+              "document_index": 19,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047540.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047540.pdf",
+              "pages": 46,
+              "page_range": [
+                1,
+                46
+              ],
+              "frame_range": [
+                2460,
+                2505
+              ],
+              "document_index": 20,
+              "has_oversized": false
+            },
+            {
+              "doc_id": "1422002101047541.pdf",
+              "path": "X:\\RRD102-2025_DW_Technical Reports\\pdf\\1422002101047541.pdf",
+              "pages": 250,
+              "page_range": [
+                1,
+                250
+              ],
+              "frame_range": [
+                2506,
+                2755
+              ],
+              "document_index": 21,
+              "has_oversized": false
+            }
+          ],
+          "film_number": null,
+          "status": "active",
+          "has_split_documents": false,
+          "is_partial": true,
+          "remaining_capacity": 185,
+          "usable_capacity": 35,
+          "creation_date": "2025-11-19T11:04:45+0100"
+        }
+      ],
+      "rolls_35mm": [],
+      "split_documents_16mm": {
+        "1422002101047521.pdf": [
+          {
+            "roll": 3,
+            "pageRange": [
+              1,
+              798
+            ],
+            "frameRange": [
+              2143,
+              2940
+            ]
+          },
+          {
+            "roll": 4,
+            "pageRange": [
+              799,
+              3738
+            ],
+            "frameRange": [
+              1,
+              2940
+            ]
+          },
+          {
+            "roll": 5,
+            "pageRange": [
+              3739,
+              6678
+            ],
+            "frameRange": [
+              1,
+              2940
+            ]
+          },
+          {
+            "roll": 6,
+            "pageRange": [
+              6679,
+              9618
+            ],
+            "frameRange": [
+              1,
+              2940
+            ]
+          },
+          {
+            "roll": 7,
+            "pageRange": [
+              9619,
+              10879
+            ],
+            "frameRange": [
+              1,
+              1261
+            ]
+          }
+        ]
+      },
+      "split_documents_35mm": {},
+      "partial_rolls_16mm": [
+        {
+          "roll_id": 1,
+          "remainingCapacity": 42,
+          "usableCapacity": -108,
+          "isAvailable": true,
+          "creation_date": "2025-11-19T11:04:45+0100"
+        },
+        {
+          "roll_id": 2,
+          "remainingCapacity": 452,
+          "usableCapacity": 302,
+          "isAvailable": true,
+          "creation_date": "2025-11-19T11:04:45+0100"
+        },
+        {
+          "roll_id": 7,
+          "remainingCapacity": 185,
+          "usableCapacity": 35,
+          "isAvailable": true,
+          "creation_date": "2025-11-19T11:04:45+0100"
+        }
+      ],
+      "partial_rolls_35mm": [],
+      "total_rolls_16mm": 7,
+      "total_pages_16mm": 19901,
+      "total_partial_rolls_16mm": 3,
+      "total_split_documents_16mm": 1,
+      "total_rolls_35mm": 0,
+      "total_pages_35mm": 0,
+      "total_partial_rolls_35mm": 0,
+      "total_split_documents_35mm": 0,
+      "doc_allocation_requests_35mm": [],
+      "creation_date": "2025-11-19T11:04:45+0100",
+      "version": "1.0",
+      "avg_utilization_16mm": 97,
+      "avg_utilization_35mm": 0
+    },
+    "errors": [],
+    "startTime": 1763546685.858901,
+    "lastUpdateTime": 1763546685.8606179
+  },
+  "lastUpdated": "2025-11-19T10:04:50.061Z",
+  "projectId": "194",
+  "completed": true
+}

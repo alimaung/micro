@@ -648,8 +648,8 @@ class DistributionManager:
             return False
         
         try:
-            # Create a filename for the split document
-            split_filename = f"{source_path.stem}_p{start_page}-{end_page}{source_path.suffix}"
+            # Use the identical document name for split documents
+            split_filename = source_path.name
             dest_path = destination_dir / split_filename
             
             # Split the PDF
@@ -670,20 +670,27 @@ class DistributionManager:
             if not blip and segment.roll and segment.roll.film_number:
                 blip = segment.roll.generate_blip(segment.document_index, segment.start_frame)
                 segment.blip = blip
-                segment.save()
+                # Only save if segment has a save method (database object)
+                if hasattr(segment, 'save'):
+                    segment.save()
             
-            # Create a ProcessedDocument record
-            ProcessedDocument.objects.create(
-                document=document,
-                path=str(dest_path),
-                processing_type='split',
-                start_page=start_page,
-                end_page=end_page,
-                roll=segment.roll,
-                segment=segment,
-                copied_to_output=True,
-                output_path=str(dest_path)
-            )
+            # Create a ProcessedDocument record (only if we have a roll object)
+            if segment.roll:
+                try:
+                    ProcessedDocument.objects.create(
+                        document=document,
+                        path=str(dest_path),
+                        processing_type='split',
+                        start_page=start_page,
+                        end_page=end_page,
+                        roll=segment.roll,
+                        segment=segment if hasattr(segment, 'pk') else None,
+                        copied_to_output=True,
+                        output_path=str(dest_path)
+                    )
+                except Exception as e:
+                    # Log but don't fail if ProcessedDocument creation fails
+                    self.logger.warning(f"Could not create ProcessedDocument record: {str(e)}")
             
             if blip:
                 self.logger.debug(f"Split and copied {split_filename} to {destination_dir} with blip {blip}")
@@ -980,9 +987,39 @@ class DistributionManager:
                             start_page = segment.get('start_page', 1)
                             end_page = segment.get('end_page', None)
                             
-                            if start_page > 1 or (end_page and end_page < document.pages):
-                                # This is a split document
-                                # Create segment object with needed properties
+                            # Check if this document is split by counting how many segments it has across ALL rolls
+                            all_doc_segments = []
+                            for roll in rolls_16mm:
+                                roll_segments = [s for s in roll.get('document_segments', []) if s.get('doc_id') == doc_id]
+                                all_doc_segments.extend(roll_segments)
+                            is_split_document = len(all_doc_segments) > 1
+                            
+                            # Also check traditional split indicators
+                            is_traditional_split = start_page > 1 or (end_page and end_page < document.pages)
+                            
+                            # Log split detection details
+                            self.log_distribution(
+                                project, 'INFO',
+                                f"Checking split for {doc_id} on roll {film_number}: "
+                                f"start_page={start_page}, end_page={end_page}, document.pages={document.pages}, "
+                                f"segment_keys={list(segment.keys())}"
+                            )
+                            
+                            if is_split_document or is_traditional_split:
+                                self.log_distribution(
+                                    project, 'INFO',
+                                    f"Document {doc_id} detected as SPLIT on roll {film_number}: "
+                                    f"{'multiple segments' if is_split_document else f'start_page ({start_page}) > 1' if start_page > 1 else f'end_page ({end_page}) < document.pages ({document.pages})'}"
+                                )
+                            else:
+                                self.log_distribution(
+                                    project, 'INFO',
+                                    f"Document {doc_id} detected as NOT SPLIT on roll {film_number}"
+                                )
+                            
+                            if is_split_document or is_traditional_split:
+                                # This is a split document - need to actually split the PDF
+                                # Create segment object with needed properties for splitting
                                 segment_obj = type('Segment', (), {
                                     'document': document,
                                     'start_page': start_page,
@@ -990,17 +1027,20 @@ class DistributionManager:
                                     'blip': segment.get('blip'),
                                     'document_index': int(segment.get('document_index', 0)),
                                     'start_frame': int(segment.get('start_frame', 0)),
+                                    'roll': None,  # Roll object not available in frontend data path
                                 })
                                 
-                                # Split and copy
-                                dest_filename = doc_id if doc_id.lower().endswith('.pdf') else f"{doc_id}.pdf"
-                                output_file_path = roll_dir / dest_filename
-                                result = self._copy_file_directly(document.path, output_file_path)
+                                # Actually split and copy the document
+                                result = self._split_and_copy_document(document, segment_obj, roll_dir)
                                 
                                 if result:
+                                    # Use the identical document name for split documents
+                                    dest_filename = doc_id if doc_id.lower().endswith('.pdf') else f"{doc_id}.pdf"
+                                    output_file_path = roll_dir / dest_filename
+                                    
                                     self.log_distribution(
-                                        project, 'INFO',
-                                        f"Copied document {doc_id} to {film_number}",
+                                        project, 'SUCCESS',
+                                        f"Split and copied document {doc_id} (pages {start_page}-{end_page or document.pages}) to {film_number}",
                                         document=document
                                     )
                                     copied_16mm += 1

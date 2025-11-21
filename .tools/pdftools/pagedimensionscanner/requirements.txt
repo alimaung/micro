@@ -1,0 +1,6 @@
+PyMuPDF>=1.23.0
+tqdm>=4.65.0
+colorama>=0.4.6
+
+
+

@@ -16,7 +16,6 @@ _**Agent (model default, mode Agent)**_
 
 ---
 
-
 Researching how 35mm rolls are allocated across projects. Reviewing the relevant code.
 
 
@@ -84,7 +83,6 @@ Output mode: content
 
 ---
 
-
 Reviewing how `_process_35mm_rolls` uses `_find_active_35mm_roll`:
 
 
@@ -119,7 +117,6 @@ Reviewing how `_process_35mm_rolls` uses `_find_active_35mm_roll`:
 
 ---
 
-
 Checking the Roll model to see how rolls are linked to projects:
 
 
@@ -136,7 +133,6 @@ Checking the Roll model to see how rolls are linked to projects:
 
 
 ---
-
 
 ## Current 35mm Roll Allocation Behavior
 
@@ -189,7 +185,6 @@ _**Agent (model default, mode Agent)**_
 
 
 ---
-
 
 Reviewing the current system to understand how film numbers are assigned and how temp rolls work, then proposing a more dynamic approach.
 
@@ -539,7 +534,6 @@ Output mode: content
 
 ---
 
-
 Checking when filming occurs and how it uses pre-assigned film numbers:
 
 
@@ -575,7 +569,6 @@ Checking when filming occurs and how it uses pre-assigned film numbers:
 
 
 ---
-
 
 ## Current System Analysis
 
@@ -651,7 +644,6 @@ _**Agent (model default, mode Agent)**_
 
 ---
 
-
 Consecutive film numbers per project explain the rigidity. Reviewing how the current system ensures consecutive numbering:
 
 
@@ -687,7 +679,55 @@ Consecutive film numbers per project explain the rigidity. Reviewing how the cur
 
 ---
 
+Consecutive numbering per project explains the rigidity. The current system assigns film numbers during registration to ensure a project's rolls get consecutive numbers (e.g., 10000001, 10000002, 10000003).
 
+## Revised Understanding
+
+**Current problem:**
+- Film numbers are assigned during registration (before filming)
+- This locks in assignments early
+- But it ensures consecutive numbering per project
+
+**What you want:**
+- Keep consecutive numbering per project (for oversight)
+- Assign film numbers when ready to film, not during registration
+- More flexibility to handle changes
+
+## Proposed Solution: "Block Reservation" Approach
+
+Instead of assigning individual film numbers during registration, reserve a block of consecutive numbers when the project is ready to film.
+
+**New workflow:**
+
+1. **Registration Phase (Analysis):**
+   - Analyze project → estimate roll counts (e.g., "needs 3 rolls of 16mm, 1 roll of 35mm")
+   - No film numbers assigned yet
+   - Store: "Project A needs ~3 film numbers for 16mm, ~1 for 35mm"
+
+2. **When Project is Ready to Film:**
+   - Reserve a block of consecutive film numbers for the project
+   - Example: Project A needs 3 rolls → reserve 10000001-10000003
+   - Assign them to rolls as filming happens
+   - If the project needs more rolls later, extend the block
+
+3. **Benefits:**
+   - Consecutive numbering per project maintained
+   - Film numbers assigned when needed, not during registration
+   - Can adjust if roll counts change
+   - Less rigid overall
+
+**Implementation approach:**
+- Add a "film number block reservation" step before filming starts
+- Reserve a block based on estimated roll count (with some buffer)
+- Assign from the reserved block as rolls are filmed
+- If more rolls are needed, extend the block
+
+**Questions:**
+1. Should we reserve the full estimated block upfront, or reserve smaller blocks and extend as needed?
+2. How should we handle projects that need more rolls than estimated? (Extend the block, or allow gaps?)
+3. For temp rolls: keep simplified, or eliminate?
+
+Should I proceed with designing this block reservation system?
 
 ---
 

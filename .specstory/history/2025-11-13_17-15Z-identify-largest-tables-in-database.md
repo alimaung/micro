@@ -2537,7 +2537,6 @@ _**Agent (model default, mode Agent)**_
 
 ---
 
-
 The table was already dropped, so the migration is trying to remove a field from a non-existent table. Updating the migration to handle this:
 
 
@@ -2634,7 +2633,6 @@ Lint results
 
 
 ---
-
 
 Simplifying: since the table is already dropped, removing the `RemoveField` operation and making `DeleteModel` conditional:
 
@@ -2755,7 +2753,6 @@ Lint results
 
 ---
 
-
 Updated the migration to handle the already-dropped table. Using `SeparateDatabaseAndState`:
 
 - **Database operations**: None (table already dropped)
@@ -2782,7 +2779,6 @@ _**Agent (model default, mode Agent)**_
 
 
 ---
-
 
 The constraint already exists. Updating the migration to add it only if it doesn't exist:
 
@@ -2820,7 +2816,6 @@ The constraint already exists. Updating the migration to add it only if it doesn
 
 
 ---
-
 
 Making the constraint additions conditional so they're only added if they don't already exist:
 
@@ -2957,7 +2952,6 @@ Lint results
 
 ---
 
-
 Updated the migration to handle existing constraints:
 
 1. **Checks if constraints exist** before adding them
@@ -2985,7 +2979,6 @@ _**Agent (model default, mode Agent)**_
 
 
 ---
-
 
 Yes. Dropping the table deleted all entries in it.
 
@@ -3020,7 +3013,6 @@ _**Agent (model default, mode Agent)**_
 
 
 ---
-
 
 SQLite doesn't automatically reclaim space when you drop a table. The space is marked as free, but the file size doesn't shrink until you run `VACUUM`.
 
@@ -3121,7 +3113,6 @@ Lines added: 57, lines removed: 1
 
 ---
 
-
 SQLite doesn't automatically reclaim space when you drop a table. The space is marked as free, but the file size doesn't shrink until you run `VACUUM`.
 
 The database is still 217.09 MB because:
@@ -3168,7 +3159,6 @@ _**Agent (model default, mode Agent)**_
 
 
 ---
-
 
 Creating a Django management command to vacuum the database:
 
@@ -3348,7 +3338,6 @@ Lint results
 
 
 ---
-
 
 Created a Django management command to vacuum the database. Usage:
 

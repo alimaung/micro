@@ -133,3 +133,4 @@ class Command(BaseCommand):
             self.stdout.write('  - Database file permissions issue')
             raise
 
+
